@@ -46,7 +46,13 @@ Alle Datenquellen und potenzielle Standorte wurden/werden innerhalb einer umap-K
 Hierbei besitzt die Karte die Standorte der TEU-Sensoren, Fahrradzählstellen, potenzielle Telraam-Standorte sowie alternativen Standorten und die momentan bereits aktiven Telraams. 
 Zudem sind die Umrisslinien von Treptow-Köpenick gekennzeichnet. 
 Die Karte kann als geojson-Datei heruntergeladen aber auch bearbeitet hochgeladen werden. 
-Es lassen sich in der Karte die einzelnen Ebenen ein- und ausblenden. 
+Es lassen sich in der Karte die einzelnen Ebenen ein- und ausblenden.
+Die einzelnen Elemente der Ebenen sind in den unterschiedlichen Files gespeichert. 
+
+Zusätzlich besitzt die Karte Daten vom Radnetz der Verbände des ADFCs. Dieser hat seit 2018 eine Radnetzkarte mit dem Fokus Treptow-Köpenick erstellt.
+Hierbei wird unterschieden zwischen dem Vorrangnetz, Nebennetz, Sonderwege und Radverkehrsanlagen im gesamten Berliner Hauptstraßennetz.
+Die Karte wird stetig weiterentwickelt. Die Bestimmung der Positionen und der Kategoriesierung beruhen auf den Berliner Mobilitätsgesetz. 
+(https://adfc-tk.de/2020/05/das-radnetz-der-verbaende-fuer-berlin-und-treptow-koepenick/)
 
 english
 data and documentation for the "we count" project with ADFC
@@ -91,3 +97,7 @@ The map has the locations of the TEU sensors, bicycle counting points, potential
 The outlines of Treptow-Köpenick are also marked.
 The map can be downloaded as a geojson file, but it can also be uploaded edited.
 The individual levels can be shown and hidden on the map.
+
+In addition, the card has data from the cycling network of the ADFC associations. Since 2018, they has created a cycle network map with the focus on Treptow-Köpenick.
+A distinction is made between the priority network, secondary network, special routes and bicycle traffic facilities in the entire Berlin main road network.
+The map is constantly being developed. The determination of the positions and the categorization are based on the Berlin Mobility Act.

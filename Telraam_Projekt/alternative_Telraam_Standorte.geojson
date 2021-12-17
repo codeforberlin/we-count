@@ -1,0 +1,1090 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.667462,
+          52.414616
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "iconClass": "Ball",
+          "color": "Red"
+        },
+        "description": "Mehrfamilienhäuser, mittelgroße Fenster "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.616333,
+          52.455199
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "iconClass": "Ball",
+          "color": "Red"
+        },
+        "description": "Finanzamt Treptow-Köpenick, keine Parkfläche davor, mehrere Etagen "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.589833,
+          52.455592
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Asia Haus Sushi Bar 65 ",
+        "description": "große Fenster, Erdgeschoss "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.481465,
+          52.461188
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Back & Coffee",
+        "description": "große Fenster, Erdgeschoss "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.509556,
+          52.453532
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Bäckerei Menzer ",
+        "description": "große Fenster "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.632217,
+          52.447082
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Bäckerei Schmidt ",
+        "description": "keine Bäume"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.66285,
+          52.412162
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Berlinbar Gastronomie",
+        "description": "Erdgeschoss, große Fenster "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.590733,
+          52.413892
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Bestatter ABD-Allg.",
+        "description": "großes Fenster, keine Bäume davor "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.688925,
+          52.44077
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Cafe Rose",
+        "description": "Erdgeschoss, große Fenster "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.487432,
+          52.465495
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "CARA GmbH Wirtschaftsprüfstelle "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.590013,
+          52.419865
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Die Bahnfüchse ",
+        "description": "große Fenster, keine Parkfläche davor \nErdgeschoss"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.580299,
+          52.459273
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Ergothrapie Juliane Eickhoff",
+        "description": "großes Fenster, Erdgeschoss, keine Parkmöglichkeit "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.559317,
+          52.400612
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Fahrradladen Pedalerie "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.577264,
+          52.445302
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Ferienwohnung Apartment Berlin ",
+        "description": "normale Fenster, Erdgeschoss "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.55541,
+          52.399795
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Fertighaus Neuenhagen "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.665669,
+          52.410066
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "description": "große Fenster, Erdgeschoss",
+        "name": "Freak Computer "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.577962,
+          52.455566
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Frisörteam Pahl",
+        "description": "große Fenster, keine Bäume "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.532757,
+          52.421677
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Frühlingsblüte",
+        "description": "große Fenster, Erdgeschoss, keine Bäume "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.508108,
+          52.44994
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Gaststätte Ebel ",
+        "description": "große Fenster, keine Parkplätze\nwenig Bäume "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.53908,
+          52.421396
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Gaststätte Zum Bohnsdorfer Eck",
+        "description": "große Fenster, Erdgeschoss "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.546245,
+          52.399767
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Glaserei Thiel GmbH",
+        "description": "große Fenster, mehrere Etagen, keine Bäume davor "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.584153,
+          52.466307
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Günter Görsdorf Ferienwohnung "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.654006,
+          52.409096
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "H & D Sparmarkt ",
+        "description": "große Fenster, keine Bäume, ggf. Parkplätze davor "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.582127,
+          52.441833
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Imbiss am alten Flugplatz ",
+        "description": "Erdgeschoss, große Fenster, Zaun"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.507183,
+          52.439869
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Jü-Bao-Yuan Restaurant "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.652197,
+          52.37549
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "iconClass": "Ball",
+          "color": "Red"
+        },
+        "name": "Kino Union Friedrichshagen ",
+        "description": "direkt an der Straße, keine Parkmöglichkeit davor "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.625675,
+          52.456302
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "La Dolce Vita & IL Porto ",
+        "description": "große Fenster "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.573276,
+          52.404992
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Lebensmittelmarkt Dong ",
+        "description": "direkt am Markplatz, Fahrradfahrer "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.575828,
+          52.444943
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Mia Mambo Bar ",
+        "description": "Eckgebäude, große Fenster "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.586347,
+          52.444766
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Mokkafee Friedrichshagen "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.624606,
+          52.447776
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Pauline P.",
+        "description": "Erdgeschoss, große Fenster "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.48679,
+          52.466067
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Privathaushalt ",
+        "description": "Mehrfamilienhäuser, mittelgroße Fenster "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.583633,
+          52.462648
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Privathaushalt ",
+        "description": "Mehrfamilienhäuser, mittelgroße Fenster "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.569284,
+          52.453338
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Privathaushalt ",
+        "description": "Mehrfamilenhäuser"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.51658,
+          52.455753
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Privathaushalt ",
+        "description": "Mehrfamilienhäuser, keine Bäume davor "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.513472,
+          52.466343
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Privathaushalt ",
+        "description": "Ein- und Mehrfamilienhäuser, mittelgroße Fenster "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.501614,
+          52.456318
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Privathaushalt ",
+        "description": "Mehrfamilienhäuser, mittelgroße Fenster "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.505519,
+          52.446533
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Privathaushalt ",
+        "description": "Mehrfamilienhäuser, mittelgroße Fenster "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.507513,
+          52.445925
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Privathaushalt ",
+        "description": "Mehrfamilienhäuser, normale Fenster, keine Bäume "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.505143,
+          52.436955
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Privathaushalt ",
+        "description": "Mehrfamilienhäuser, normale Fenster, keine Parkfläche "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.530627,
+          52.422408
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Privathaushalt ",
+        "description": "Einfamilienhäuser"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.537971,
+          52.412783
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Privathaushalt ",
+        "description": "Mehrfamilienhäuser, normale Fenster "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.550301,
+          52.418083
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Privathaushalt ",
+        "description": "Mehrfamilienhaus, großes Fenster im Erdgeschoss "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.549314,
+          52.415897
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Privathaushalt ",
+        "description": "normale Fenster, mehrere Etagen "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.576237,
+          52.404011
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Privathaushalt ",
+        "description": "Mehrfamilienhaus, normale Fenster "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.573964,
+          52.400522
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Privathaushalt ",
+        "description": "mehrere Etagen, größere Fenster "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.701202,
+          52.441511
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Privathaushalt ",
+        "description": "mehrere Etagen, ein großes Fenster zur Straße "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.719439,
+          52.438
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Privathaushalt ",
+        "description": "Mehrfamilienhäuser, normale Fenster, keine Bäume "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.593283,
+          52.42723
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Privathaushalt ",
+        "description": "Mehrfamilienhäuser"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.585264,
+          52.441214
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Pucko GmbH",
+        "description": "Eckgebäude "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.714934,
+          52.43573
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Reha-Zentrum Köpenick",
+        "description": "mittelgroße Fenster, mehrere Etagen"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.552788,
+          52.455764
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Ristorante Al Dente ",
+        "description": "große Fenster, Erdgeschoss leicht erhöht "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.587702,
+          52.469252
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Skircke GbR- Kinderbekleidung"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.594084,
+          52.433052
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Spätkauf",
+        "description": "Eckgebäude, große Fenster "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.514672,
+          52.455265
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Sushi and Friends ",
+        "description": "große Fenster, Erdgeschoss leicht erhhöt"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.507567,
+          52.448
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Unverpackt Bölschestraße "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.624246,
+          52.449374
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Vedi´s",
+        "description": "Mehrere Etagen, normale Fenster, kleine Hecke davor "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.534488,
+          52.408747
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Villa Toscana ",
+        "description": "große Fenster, jedoch kleine Hecke "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.648844,
+          52.375932
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "Zahnarztpraxis Schümberg"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.662401,
+          52.412334
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red",
+          "iconClass": "Ball"
+        },
+        "name": "zooport online shop",
+        "description": "normale Fenster, keine Bäume "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.579659,
+          52.43398
+        ]
+      }
+    }
+  ]
+}

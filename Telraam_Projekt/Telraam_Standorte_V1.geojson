@@ -1,0 +1,807 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Salon Rundum"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.569349,
+          52.47686
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.528826,
+          52.403113
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Bäckerei Orlowski, große Fenster, Erdgeschoss "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.573667,
+          52.395552
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "?"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.593693,
+          52.432833
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Haarstudio Jessica Senk, große Fenster "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.582696,
+          52.434056
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Margrit Behnnfeldt Eisladen, \nErdgeschoss, gute Sicht auf die Straße "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.591209,
+          52.423704
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Sommerfeld Kosmetik, große Fenster, Erdgeschoss "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.650523,
+          52.37594
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Radstation Schmöckwitz, keine Bäume, Erdgeschoss "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.647573,
+          52.376935
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Fahrrad-Werk Der Fahrradladen in Köpenick "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.660694,
+          52.412515
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.675779,
+          52.420652
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Eiscafe Müggelheim, kleinere Fenster, keine Bäume "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.663446,
+          52.412197
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Coepenicker Coiffeure, große Fenster, keine Bäume, Erdgeschoss leicht erhöht,"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.665512,
+          52.410162
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Blumen und Pflanzen, große Fenster, Erdgeschoss, Eckgebäude "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.719134,
+          52.437477
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Family Salon Lange, große Fenster "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.696395,
+          52.441104
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Manfred Lehmann Fliesenleger, normal große Fenster, mehrgeschossiges Gebäude "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.699844,
+          52.435567
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Atlantic Pool, große Fenster, Eckgebäude, keine Parkplätze davor, keine Bäume "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.687597,
+          52.441519
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "U. Rödiger Uhrmacher, \ngroße Fenster "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.580861,
+          52.459151
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Layout-Druck-Kopie Ihr Copyshop in Köpenick\ngroße Fenster, wenig Bepflanzung davor "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.582717,
+          52.461658
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Phine Photo- Das Fotostudio \netwas größere Fenster, keine großen Parkplätze davor "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.579847,
+          52.455689
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Fahrschule Banek, Erdgeschoss leicht erhöht "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.581612,
+          52.455293
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Saborowski Raumgestaltung \ngroße Fenster \nkeine Parkfläche davor "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.608531,
+          52.453486
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Der Weinladen M. Baltzer\ngroße Fenster, keine Parkplätze und Bäume \nan der Ecke gelegen "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.627419,
+          52.446823
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Cyclomania Fahrradhaus, große Fenster (Parkplätze davor)"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.625434,
+          52.454702
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Mauna Kea, große Fenster \nErdgeschoss jedoch leicht erhöht \n"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.625177,
+          52.452538
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Paint your Style\ngroße Fensterfront, wenig bis keine Bäume "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.624667,
+          52.452221
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Frisuersalon"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.549846,
+          52.418163
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Einfamilienhäuser "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.576331,
+          52.403501
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Zahnarztpraxis Dr. Stephan Kressin"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.556833,
+          52.399557
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "MHPLab\nkeine bis wenig Bepflanzung, Unternehmen für Digitalisierung "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.460217,
+          52.498368
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "TomTom\nHochhaus komplett mit Glasfront "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.461799,
+          52.495362
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Sportclub Berlin-Koepnick e.V.,\nkleines Fenster, Erdgeschoss "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.549313,
+          52.456579
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Stella del Koep,\ngroße Fensterfront, etwas versetzt von der Straße \nparkende Autos möglich, leichte Bepflanzung"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.552555,
+          52.455807
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Mehrfamilienhaus (Plattenbau), direkt an der Brücke\nParkfläche vor den Fenstern, Bäume "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.51909,
+          52.457448
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "BEST-Sabel Schule, Cafeteria\nbreite Fensterfront im Erdgeschoss,\nkeine Bäume, direkter Blick auf die Straße inkl. Radweg"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.572302,
+          52.451577
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Behappy-Lokal,\nErdgeschoss, Fensterfront,\nkeine Bäume "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.568544,
+          52.453399
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Kuechenhaus-Koepenick,\nbreite Fensterfront, Erdgeschoss,\nkeine Bäume "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.569743,
+          52.452314
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Friseur La Bella, \nErdgeschoss, Fensterfront,\nErdgeschoss jedoch leicht erhöht "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.575851,
+          52.453979
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Bildungswerk Nordost Chemie e.V., \nnicht direkt an der Straße, wenig Bäume \nmehrere Etagen "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.552893,
+          52.428256
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Shops erkunden"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.58553,
+          52.441215
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Zahnarztpraxis, erste Etage \nkeine Bäume, \ngroße Fensterfront "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.585225,
+          52.466538
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "DHL Paketshop 479,\nErdgeschoss "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.513387,
+          52.46673
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Eck-Bar, \neher kleinere Fensterfronten,\nErdgeschoss jedoch leicht erhöht"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.51298,
+          52.467162
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Stop and Go Auto Werkstatt, \n\nkeine Bäume jedoch Parkplätze "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.45804,
+          52.453394
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Senioren-Domizil Britz e.K.,\n\nmehrere Etagen, wenig Bäume "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.453085,
+          52.450988
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Mr. Haidar Barber, \nErdgeschoss, breite Fensterfront"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.501669,
+          52.435601
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "goodies deli Berlin Treptow, \nFensterfront, Erdgeschoss "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.468599,
+          52.484006
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "auf A113 Fahrräder erlaubt?"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.521818,
+          52.423004
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Berliner BioEisDiele \nErdgeschoss, teilweise gute Sicht auf die Straße "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.503382,
+          52.455454
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Bäckerei Matthes\ngroße Fensterfront, Erdgeschoss \nguter Blick auf die Straße "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.488102,
+          52.465083
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "TotalEnergies Tankstelle "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.630606,
+          52.387721
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "FrozenFire Kaffeehaus, direkt an der Straße "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.564815,
+          52.402082
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "ILOYA Inh. IT-Systemtechnik"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.544336,
+          52.411004
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Auto-Zellmann GmbH, große Fensterfront, direkt an der Straße "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.528176,
+          52.422596
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Allonge Studio für Bewegung und Tanz, größere Fenster vorhanden, mehrere Etagen "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.57788,
+          52.452427
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Astra Filmpalast, Eckgebäude, größere Fenster "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.507075,
+          52.446548
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Radsporthaus Johannisthal, größere Fenster "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.507812,
+          52.448884
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Privathaushalt fragen "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.482834,
+          52.452004
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Tio Bito Bistro, größere Fenster, direkt an der Straße "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.482126,
+          52.474894
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Anfragen"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.629559,
+          52.426752
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Anfragen "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.633924,
+          52.420443
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Privathaushalt anfragen"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.594268,
+          52.414507
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Biergarten Kuhle Wampe anfragen "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.650749,
+          52.389767
+        ]
+      }
+    }
+  ]
+}

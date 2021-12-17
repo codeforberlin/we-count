@@ -1,0 +1,770 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia",
+          "iconClass": "Drop"
+        },
+        "name": "1A Anglershop "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.576668,
+          52.421982
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia",
+          "iconClass": "Drop"
+        },
+        "name": "Beauty Line "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.575536,
+          52.423561
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia",
+          "iconClass": "Drop"
+        },
+        "name": "Berliner Bootsausstattung "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.571582,
+          52.432764
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia",
+          "iconClass": "Drop"
+        },
+        "name": "Bewegte Schule "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.567977,
+          52.453902
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia",
+          "iconClass": "Drop"
+        },
+        "name": "Bistro Rübezahl "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.629992,
+          52.42679
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia",
+          "iconClass": "Drop"
+        },
+        "name": "Can Spätkauf"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.568179,
+          52.444646
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia",
+          "iconClass": "Drop"
+        },
+        "name": "Gewerbegebiet "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.566239,
+          52.469386
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "iconClass": "Drop",
+          "color": "Fuchsia"
+        },
+        "name": "Hafenbar"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.62721,
+          52.444174
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia",
+          "iconClass": "Drop"
+        },
+        "name": "Hotel Müggelsee"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.641478,
+          52.426165
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia",
+          "iconClass": "Drop"
+        },
+        "name": "Jörg Brandherm Automobil "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.718396,
+          52.431721
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia",
+          "iconClass": "Drop"
+        },
+        "name": "Käpt´n Mosers Wassersportschule "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.625783,
+          52.401204
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia",
+          "iconClass": "Drop"
+        },
+        "name": "Lenbor GmbH"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.584953,
+          52.412842
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia",
+          "iconClass": "Drop"
+        },
+        "name": "Licht & Schatten "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.634804,
+          52.390604
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia",
+          "iconClass": "Drop"
+        },
+        "name": "Pizza Max"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.569344,
+          52.44235
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia",
+          "iconClass": "Drop"
+        },
+        "name": "Pizzawerk"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.569005,
+          52.443795
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia",
+          "iconClass": "Drop"
+        },
+        "name": "Post?/ Forum Köpenick "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.5765,
+          52.45864
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia",
+          "iconClass": "Drop"
+        },
+        "name": "Privathaushalt "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.626936,
+          52.445895
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "iconClass": "Drop",
+          "color": "Fuchsia"
+        },
+        "name": "Privathaushalt "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.674176,
+          52.431543
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "iconClass": "Drop",
+          "color": "Fuchsia"
+        },
+        "name": "Privathaushalt "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.684324,
+          52.439293
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia",
+          "iconClass": "Drop"
+        },
+        "name": "Privathaushalt "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.573071,
+          52.450008
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia",
+          "iconClass": "Drop"
+        },
+        "name": "Privathaushalt "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.570964,
+          52.466858
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia",
+          "iconClass": "Drop"
+        },
+        "name": "Privathaushalt "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.569301,
+          52.468141
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia",
+          "iconClass": "Drop"
+        },
+        "name": "Privathaushalt "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.567185,
+          52.473651
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia",
+          "iconClass": "Drop"
+        },
+        "name": "Privathaushalt "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.60298,
+          52.441613
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "iconClass": "Drop",
+          "color": "Fuchsia"
+        },
+        "name": "Privathaushalt "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.598472,
+          52.441113
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia",
+          "iconClass": "Drop"
+        },
+        "name": "Privathaushalt "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.712896,
+          52.430815
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia",
+          "iconClass": "Drop"
+        },
+        "name": "Privathaushalt "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.71013,
+          52.427032
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia",
+          "iconClass": "Drop"
+        },
+        "name": "Privathaushalt "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.705345,
+          52.424454
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia",
+          "iconClass": "Drop"
+        },
+        "name": "Privathaushalt "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.571449,
+          52.43625
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia",
+          "iconClass": "Drop"
+        },
+        "name": "Privathaushalt "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.609408,
+          52.408139
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia",
+          "iconClass": "Drop"
+        },
+        "name": "Privathaushalt "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.631244,
+          52.395483
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia",
+          "iconClass": "Drop"
+        },
+        "name": "Privathaushalt "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.63295,
+          52.393311
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia",
+          "iconClass": "Drop"
+        },
+        "name": "Privathaushalt "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.634809,
+          52.388426
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia",
+          "iconClass": "Drop"
+        },
+        "name": "Privathaushalte"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.689747,
+          52.425395
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia",
+          "iconClass": "Drop"
+        },
+        "name": "Rahnsdorfer Blumenwelt "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.688677,
+          52.44117
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "iconClass": "Drop",
+          "color": "Fuchsia"
+        },
+        "name": "Restaurant Ehrlich "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.626153,
+          52.444963
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia",
+          "iconClass": "Drop"
+        },
+        "name": "Ruderverein "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.595143,
+          52.411164
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia",
+          "iconClass": "Drop"
+        },
+        "name": "Sauna R"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.588953,
+          52.411317
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia",
+          "iconClass": "Drop"
+        },
+        "name": "Seglergemeinschaft am Müggelsee"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.623452,
+          52.442702
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia",
+          "iconClass": "Drop"
+        },
+        "name": "Shell-Tankstelle "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.567322,
+          52.455209
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia",
+          "iconClass": "Drop"
+        },
+        "name": "Steinecke Bäcker "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.57463,
+          52.446089
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia",
+          "iconClass": "Drop"
+        },
+        "name": "Tous les jours "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.575148,
+          52.424913
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia",
+          "iconClass": "Drop"
+        },
+        "name": "Vila Toscana "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.648897,
+          52.375939
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia",
+          "iconClass": "Drop"
+        },
+        "name": "Winklers Eis-Cafe "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.645167,
+          52.378723
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia",
+          "iconClass": "Drop"
+        },
+        "name": "Zur alten Laterne "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.574345,
+          52.445128
+        ]
+      }
+    }
+  ]
+}

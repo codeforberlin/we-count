@@ -1,0 +1,277 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LightCoral",
+          "iconUrl": "/uploads/pictogram/bicycle-24_OfIM8RO.png"
+        },
+        "name": "2RadCenter am S-Bhf Grünau"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.571951,
+          52.413263
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LightCoral",
+          "iconUrl": "/uploads/pictogram/bicycle-24_OfIM8RO.png"
+        },
+        "name": "AdW e.V. Abt. Radsport "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.48496,
+          52.471533
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "iconUrl": "/uploads/pictogram/bicycle-24_OfIM8RO.png",
+          "color": "LightCoral"
+        },
+        "name": "Bike Werk- Fahrradverleih "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.676704,
+          52.420303
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LightCoral",
+          "iconUrl": "/uploads/pictogram/bicycle-24_OfIM8RO.png"
+        },
+        "name": "Cyclomania Fahrradhaus "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.625455,
+          52.454689
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LightCoral",
+          "iconUrl": "/uploads/pictogram/bicycle-24_OfIM8RO.png"
+        },
+        "name": "DRAHTELSE"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.454298,
+          52.48939
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LightCoral",
+          "iconUrl": "/uploads/pictogram/bicycle-24_OfIM8RO.png"
+        },
+        "name": "Fahrrad Design Berlin "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.508292,
+          52.469396
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LightCoral",
+          "iconUrl": "/uploads/pictogram/bicycle-24_OfIM8RO.png"
+        },
+        "name": "Fahrrad im Kietz"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.624795,
+          52.4494
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LightCoral",
+          "iconUrl": "/uploads/pictogram/bicycle-24_OfIM8RO.png"
+        },
+        "name": "Fahrrad-Werk der Fahrradladen in Köpenick- Müggelheim"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.660765,
+          52.412518
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LightCoral",
+          "iconUrl": "/uploads/pictogram/bicycle-24_OfIM8RO.png"
+        },
+        "name": "Fahrradladen Pedalerie "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.577238,
+          52.445298
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LightCoral",
+          "iconUrl": "/uploads/pictogram/bicycle-24_OfIM8RO.png"
+        },
+        "name": "Fahrradpraxis Jürgen Albrecht "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.448739,
+          52.490136
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LightCoral",
+          "iconUrl": "/uploads/pictogram/bicycle-24_OfIM8RO.png"
+        },
+        "name": "nanobike"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.568953,
+          52.444865
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LightCoral",
+          "iconUrl": "/uploads/pictogram/bicycle-24_OfIM8RO.png"
+        },
+        "name": "Radschmiede "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.576271,
+          52.445666
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LightCoral",
+          "iconUrl": "/uploads/pictogram/bicycle-24_OfIM8RO.png"
+        },
+        "name": "Radsport Heinze"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.477237,
+          52.46033
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LightCoral",
+          "iconUrl": "/uploads/pictogram/bicycle-24_OfIM8RO.png"
+        },
+        "name": "Radsporthaus Johannisthal"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.507815,
+          52.448857
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LightCoral",
+          "iconUrl": "/uploads/pictogram/bicycle-24_OfIM8RO.png"
+        },
+        "name": "Radtreff Köpenick "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.578544,
+          52.443739
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LightCoral",
+          "iconUrl": "/uploads/pictogram/bicycle-24_OfIM8RO.png"
+        },
+        "name": "Zweiradshop OSW"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.521833,
+          52.460668
+        ]
+      }
+    }
+  ]
+}

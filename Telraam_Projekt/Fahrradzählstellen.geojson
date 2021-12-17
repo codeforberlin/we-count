@@ -1,0 +1,525 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "ZaehlID": "12-PA-SCH",
+        "Location": "Schwedter Steg",
+        "Direction": "-",
+        "Start of Operation": "01.03.2012",
+        "_umap_options": {
+          "color": "Red",
+          "showLabel": true
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.400367,
+          52.548836
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ZaehlID": "02-MI-JAN-N",
+        "Location": "Jannowitzbruecke",
+        "Direction": "Nord",
+        "Start of Operation": "01.04.2015",
+        "_umap_options": {
+          "color": "Red",
+          "showLabel": true
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.417835,
+          52.513932
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ZaehlID": "02-MI-JAN-S",
+        "Location": "Jannowitzbruecke",
+        "Direction": "Sued",
+        "Start of Operation": "01.04.2015",
+        "_umap_options": {
+          "color": "Red",
+          "showLabel": true
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.417611,
+          52.513943
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ZaehlID": "13-CW-PRI",
+        "Location": "Prinzregentenstraße",
+        "Direction": "-",
+        "Start of Operation": "01.04.2015",
+        "_umap_options": {
+          "color": "Red",
+          "showLabel": true
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.33312,
+          52.488136
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ZaehlID": "18-TS-YOR-O",
+        "Location": "Yorckstraße",
+        "Direction": "Ost",
+        "Start of Operation": "01.04.2015",
+        "_umap_options": {
+          "color": "Red",
+          "showLabel": true
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.373472,
+          52.491938
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ZaehlID": "18-TS-YOR-W",
+        "Location": "Yorckstraße",
+        "Direction": "West",
+        "Start of Operation": "01.04.2015",
+        "_umap_options": {
+          "color": "Red",
+          "showLabel": true
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.37321,
+          52.49228
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ZaehlID": "19-TS-MON",
+        "Location": "Monumentenstraße",
+        "Direction": "-",
+        "Start of Operation": "01.05.2015",
+        "_umap_options": {
+          "color": "Red",
+          "showLabel": true
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.369785,
+          52.488117
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ZaehlID": "27-RE-MAR",
+        "Location": "Markstraße",
+        "Direction": "-",
+        "Start of Operation": "01.05.2015",
+        "_umap_options": {
+          "color": "Red",
+          "showLabel": true
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.364944,
+          52.55819
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ZaehlID": "03-MI-SAN-O",
+        "Location": "Invalidenstraße",
+        "Direction": "Ost",
+        "Start of Operation": "01.06.2015",
+        "_umap_options": {
+          "color": "Red",
+          "showLabel": true
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.372016,
+          52.527177
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ZaehlID": "03-MI-SAN-W",
+        "Location": "Invalidenstraße",
+        "Direction": "West",
+        "Start of Operation": "01.06.2015",
+        "_umap_options": {
+          "color": "Red",
+          "showLabel": true
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.373105,
+          52.527686
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ZaehlID": "05-FK-OBB-O",
+        "Location": "Oberbaumbrücke",
+        "Direction": "Ost",
+        "Start of Operation": "01.06.2015",
+        "_umap_options": {
+          "color": "Red",
+          "showLabel": true
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.44506,
+          52.501199
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ZaehlID": "05-FK-OBB-W",
+        "Location": "Oberbaumbrücke",
+        "Direction": "West",
+        "Start of Operation": "01.06.2015",
+        "_umap_options": {
+          "color": "Red",
+          "showLabel": true
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.444867,
+          52.501276
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ZaehlID": "26-LI-PUP",
+        "Location": "Paul-und-Paula-Uferweg",
+        "Direction": "-",
+        "Start of Operation": "01.06.2015",
+        "_umap_options": {
+          "color": "Red",
+          "showLabel": true
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.47438,
+          52.50025
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ZaehlID": "24-MH-ALB",
+        "Location": "Alberichstraße",
+        "Direction": "-",
+        "Start of Operation": "01.07.2015",
+        "_umap_options": {
+          "color": "Red",
+          "showLabel": true
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.55849,
+          52.4925
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ZaehlID": "10-PA-BER-N",
+        "Location": "Berliner Straße",
+        "Direction": "Nord",
+        "Start of Operation": "01.05.2016",
+        "_umap_options": {
+          "color": "Red",
+          "showLabel": true
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.412489,
+          52.566924
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ZaehlID": "10-PA-BER-S",
+        "Location": "Berliner Straße",
+        "Direction": "Sued",
+        "Start of Operation": "01.05.2016",
+        "_umap_options": {
+          "color": "Red",
+          "showLabel": true
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.412166,
+          52.566813
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ZaehlID": "15-SP-KLO-S",
+        "Location": "Klosterstraße",
+        "Direction": "Sued",
+        "Start of Operation": "01.05.2016",
+        "_umap_options": {
+          "color": "Red",
+          "showLabel": true
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.198488,
+          52.533308
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ZaehlID": "15-SP-KLO-N",
+        "Location": "Klosterstraße",
+        "Direction": "Nord",
+        "Start of Operation": "01.06.2016",
+        "_umap_options": {
+          "color": "Red",
+          "showLabel": true
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.199053,
+          52.533512
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ZaehlID": "17-SK-BRE-O",
+        "Location": "Breitenbachplatz",
+        "Direction": "Ost",
+        "Start of Operation": "01.05.2016",
+        "_umap_options": {
+          "color": "Red",
+          "showLabel": true
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.309165,
+          52.46676
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ZaehlID": "17-SK-BRE-W",
+        "Location": "Breitenbachplatz",
+        "Direction": "West",
+        "Start of Operation": "01.05.2016",
+        "_umap_options": {
+          "color": "Red",
+          "showLabel": true
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.30836,
+          52.467215
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ZaehlID": "20-TS-MAR-N",
+        "Location": "Mariendorfer Damm",
+        "Direction": "Nord",
+        "Start of Operation": "01.05.2016",
+        "_umap_options": {
+          "color": "Red",
+          "showLabel": true
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.387845,
+          52.437894
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ZaehlID": "20-TS-MAR-S",
+        "Location": "Mariendorfer Damm",
+        "Direction": "Sued",
+        "Start of Operation": "01.05.2016",
+        "_umap_options": {
+          "color": "Red",
+          "showLabel": true
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.387987,
+          52.438192
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ZaehlID": "21-NK-MAY",
+        "Location": "Maybachufer",
+        "Direction": "-",
+        "Start of Operation": "01.05.2016",
+        "_umap_options": {
+          "color": "Red",
+          "showLabel": true
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.429,
+          52.493
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ZaehlID": "23-TK-KAI",
+        "Location": "Kaisersteg",
+        "Direction": "-",
+        "Start of Operation": "01.05.2016",
+        "_umap_options": {
+          "color": "Red",
+          "showLabel": true
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.5187,
+          52.45727
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ZaehlID": "06-FK-FRA-O",
+        "Location": "Frankfurter Allee",
+        "Direction": "Ost",
+        "Start of Operation": "01.06.2016",
+        "_umap_options": {
+          "color": "Red",
+          "showLabel": true
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.474242,
+          52.513584
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ZaehlID": "06-FK-FRA-W",
+        "Location": "Frankfurter Allee",
+        "Direction": "West",
+        "Start of Operation": "01.06.2016",
+        "_umap_options": {
+          "color": "Red",
+          "showLabel": true
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.474414,
+          52.51379
+        ]
+      }
+    }
+  ]
+}

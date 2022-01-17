@@ -54,6 +54,16 @@ Hierbei wird unterschieden zwischen dem Vorrangnetz, Nebennetz, Sonderwege und R
 Die Karte wird stetig weiterentwickelt. Die Bestimmung der Positionen und der Kategoriesierung beruhen auf den Berliner Mobilitätsgesetz. 
 (https://adfc-tk.de/2020/05/das-radnetz-der-verbaende-fuer-berlin-und-treptow-koepenick/)
 
+Legende der Karte:
+- blaue Stecknaldeln zeigen die potenziellen Standorte 
+- rote Stecknadeln zeigen die alternativen Standorte 
+- die pinken "Tropfen" zeigen Standorte entlang der Fahrradrouten in Köpenick 
+- die gelben Stecknadeln zeigen Standorte, welche sich am ADFC Fahrradnetz orientieren 
+- die blauen Vierecke sind die aktuellen Standorte der TEU-Sensoren in Berlin 
+- die roten Vierecke sind die Dauerzählstellen für den Radverkehr 
+- die rosafarbenden Fahrradsymbole zeigen die Standorte von Fahrradläden in Köpenick 
+- die grünen Vierecke sind bereits aktive Telraam-Sensoren 
+
 english
 data and documentation for the "we count" project with ADFC
 We-count is a DLR project in cooperation with the Allgemeine Deutsche Fahrrad-Club e.V. (ADFC). The aim is to model a simulation model in SUMO from the Berlin district of Treptow-Köpenick with the help of counting data that is / was recorded by Telraam cameras.

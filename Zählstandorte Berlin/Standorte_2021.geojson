@@ -1,0 +1,187 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "A113 Johannisthaler Chaussee/ Späthstraße ",
+        "description": "Q 0092\nPkw+Lfw, Lkw(1), Lkw(2), Bus, Krad"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.46808,
+          52.448396
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "A113 Johannisthaler Chaussee/Stubenrauchstr. ",
+        "description": "Q 0093\nPkw+Lfw, Lkw(1), Lkw(2), Bus, Krad"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.489812,
+          52.437848
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "A113 Stubenrauchstr./ AS Adlershof ",
+        "description": "Q 0094\nPkw+Lfw, Lkw(1), Lkw(2), Bus, Krad"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.505141,
+          52.430196
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "AD Neukölln/ AS Grenzallee A100 ",
+        "description": "Q 0090\nPkw+Lfw, Lkw(1), Lkw(2), Bus, Krad"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.456789,
+          52.465125
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "B96a Adlergestell/ AS Treptow ",
+        "description": "Q 0027\nPkw+Lfw, Lkw(1), Lkw(2), Bus, Krad, Radf"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.550855,
+          52.428992
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "B96a Am Seegraben/Köpenicker Straße ",
+        "description": "Q 0026\nPkw+Lfw, Lkw(1), Lkw(2), Bus, Krad, Radf"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.547233,
+          52.400486
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "B96a AS Schönefeld Süd/AS Treptow ",
+        "description": "Q 0028 \nPkw+Lfw, Lkw(1), Lkw(2), Bus, Krad, Radf"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.522359,
+          52.39282
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Eisenhutweg 117 ",
+        "description": "Q 28634\nPkw+Lfw, Lkw(1), Lkw(2), Bus, Krad, Radf"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.515142,
+          52.429047
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Kiefholzstr. / Hänselstr. ",
+        "description": "Q 0915142\nPkw+Lfw, Lkw(1), Lkw(2), Bus, Krad, Radf"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.480325,
+          52.470375
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Lange Brücke ",
+        "description": "Q 111201 \nRadf"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.571824,
+          52.444432
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Rahnsdorfer Str./ Pilgramer Str. ",
+        "description": "K 2826\nPkw+Lfw, Lkw(1), Lkw(2), Bus, Krad, Radf"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.618944,
+          52.496123
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Sterndamm 128 ",
+        "description": "Q 9240573\nPkw+Lfw, Lkw(1), Lkw(2), Bus, Krad, Radf"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.499842,
+          52.440651
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Treskowallee 222 ",
+        "description": "Q 9240572 \nPkw+Lfw, Lkw(1), Lkw(2), Bus, Krad, Radf"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.516879,
+          52.4711
+        ]
+      }
+    }
+  ]
+}

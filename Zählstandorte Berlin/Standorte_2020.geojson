@@ -1,0 +1,696 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.62569,
+          52.476708
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LimeGreen"
+        },
+        "name": "A113 - Zubr. Schönefeld (südl. AS Stubenrauchstr., incl. Zu-Abf.) ",
+        "description": "Q 1216051 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.518848,
+          52.397289
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LimeGreen"
+        },
+        "name": "Adlergestell (Stelling-Janitzky-Brücke, Teltowkanal)",
+        "description": "Q 121604"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.555262,
+          52.42608
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LimeGreen"
+        },
+        "name": "Adlergestell / Godbersenstraße",
+        "description": "K 822103"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.64532,
+          52.378317
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LimeGreen"
+        },
+        "name": "Am Seegraben ",
+        "description": "Q 169006 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.546563,
+          52.40025
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LimeGreen"
+        },
+        "name": "An der Wuhlheide / Spindlersfelder Straße",
+        "description": "K 2749"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.558376,
+          52.455772
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LimeGreen"
+        },
+        "name": "AS Adlershof (Ernst-Ruska-Ufer / Zu- u. Abf. A113)",
+        "description": "K 2810"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.513347,
+          52.427968
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LimeGreen"
+        },
+        "name": "Bohnsdorfer Chaussee",
+        "description": "Q 169008 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.537186,
+          52.399921
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LimeGreen"
+        },
+        "name": "Dahlwitzer Landstraße",
+        "description": "Q 119001 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.629948,
+          52.469947
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LimeGreen"
+        },
+        "name": "Fürstenwalder Allee - Berliner Straße",
+        "description": "Q 119005 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.742283,
+          52.428008
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LimeGreen"
+        },
+        "name": "Fürstenwalder Damm / Hartlebenstraße",
+        "description": "K 2313\nPkw+Lfw, Lkw(l), Lkw(s), Bus, Krad, Radf"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.632844,
+          52.456649
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LimeGreen"
+        },
+        "name": "Glienicker Straße / Adlershofer Straße - Mahlower Straße",
+        "description": "K 2441\nPkw+Lfw, Lkw(l), Lkw(s), Bus, Krad, Radf"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.567622,
+          52.440462
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LimeGreen"
+        },
+        "name": "Glienicker Weg / Wassermannstraße",
+        "description": "K 2436\nPkw+Lfw, Lkw(l), Lkw(s), Bus, Krad, Radf"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.55829,
+          52.434807
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LimeGreen"
+        },
+        "name": "Groß-Berliner-Damm 144",
+        "description": "Q 924021 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.530086,
+          52.435289
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LimeGreen"
+        },
+        "name": "Grünauer Straße - Regattastraße (Grünauer Brücke) ",
+        "description": "Q 121601"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.572806,
+          52.428192
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LimeGreen"
+        },
+        "name": "Karlshorster Straße - Siemensstraße (Stubenrauchbrücke) ",
+        "description": "Q 041201"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.506521,
+          52.462346
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LimeGreen"
+        },
+        "name": "Kaulsdorfer Straße",
+        "description": "Q 101103 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.569845,
+          52.474637
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LimeGreen"
+        },
+        "name": "Kiefholzstraße (zw. Elsenstraße und Treptower Straße)",
+        "description": "Q 924058"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.45663,
+          52.487079
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LimeGreen"
+        },
+        "name": "Königsheideweg / Johannisthaler Chaussee",
+        "description": "K 635702 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.488546,
+          52.451275
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LimeGreen"
+        },
+        "name": "Köpenicker Straße (Altglienicker Brücke, Teltowkanal)",
+        "description": "Q 121602 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.544842,
+          52.424949
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LimeGreen"
+        },
+        "name": "Köpenicker Straße / Am Studio",
+        "description": "K 3016"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.546432,
+          52.42646
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LimeGreen"
+        },
+        "name": "Köpenicker Straße zwischen Semmelweisstraße und Korkedamm",
+        "description": "Q 0924005 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.541851,
+          52.423365
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LimeGreen"
+        },
+        "name": "Lange Brücke ",
+        "description": "Q 111201"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.571572,
+          52.444444
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LimeGreen"
+        },
+        "name": "Lindenstr. zw. Bahnhofstr. und Rudolf Rühl-Allee",
+        "description": "Q 0916148"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.570804,
+          52.451937
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LimeGreen"
+        },
+        "name": "Lindenstr.-Zeutherner Straße",
+        "description": "Q 169004 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.64408,
+          52.378108
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LimeGreen"
+        },
+        "name": "Ludwigshöheweg ",
+        "description": "K 2230 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.655759,
+          52.415455
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LimeGreen"
+        },
+        "name": "Mahlsdorfer Straße - Hultschiner Damm (südl. Waldprom.) ",
+        "description": "Q 101102 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.590805,
+          52.470849
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LimeGreen"
+        },
+        "name": "Müggelheimer Damm / Straße zum Müggelturm",
+        "description": "K 2227"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.615918,
+          52.429475
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LimeGreen"
+        },
+        "name": "Parchwitzer Straße / Waltersdorfer Straße",
+        "description": "K 2297\nPkw+Lfw, Lkw(l), Lkw(s), Bus, Krad, Radf"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.573638,
+          52.394358
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LimeGreen"
+        },
+        "name": "Radickestraße / Nipkowstraße",
+        "description": "Q 2459 (1-4)"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.550086,
+          52.436327
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LimeGreen"
+        },
+        "name": "Regattastraße bei Teichmummelring",
+        "description": "Q 924055"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.575413,
+          52.42438
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LimeGreen"
+        },
+        "name": "Rudolf-Rühl-Allee",
+        "description": "Q 041101 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.548462,
+          52.473497
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LimeGreen"
+        },
+        "name": "Rudower Chaussee / Groß-Berliner-Damm",
+        "description": "K 2971"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.53518,
+          52.432418
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LimeGreen"
+        },
+        "name": "Rudower Chaussee / Max-Born-Straße ",
+        "description": "K 3003 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.529346,
+          52.429448
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LimeGreen"
+        },
+        "name": "Rudower Chaussee / Wagner-Régeny-Straße ",
+        "description": "K 3010\nPkw+Lfw, Lkw(l), Lkw(s), Bus, Krad, Radf"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.538946,
+          52.434416
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LimeGreen"
+        },
+        "name": "Schönefelder Chaussee Höhe Nr. 225",
+        "description": "Q 924022 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.523314,
+          52.404142
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LimeGreen"
+        },
+        "name": "Schöneicher Landstraße",
+        "description": "Q 119006 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.636222,
+          52.45949
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LimeGreen"
+        },
+        "name": "Sterndamm / Winckelmannstraße",
+        "description": "K 2429"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.505116,
+          52.445189
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LimeGreen"
+        },
+        "name": "Wegedornstraße",
+        "description": "Q 121603"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.526653,
+          52.426294
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LimeGreen"
+        },
+        "name": "Wernsdorfer Straße - Dorfanger ",
+        "description": "Q 169003"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.658117,
+          52.373945
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "LimeGreen"
+        },
+        "name": "Wilhelm-Spindler-Brücke",
+        "description": "Q 924047 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.558373,
+          52.453836
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,736 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia"
+        },
+        "name": "A117 - Zubr. Dresden (AD Treptow) / Am Seegraben ",
+        "description": "K 2707"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.554399,
+          52.402355
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia"
+        },
+        "name": "Alt-Müggelheim / Odernheimer Straße",
+        "description": "K 2212"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.662945,
+          52.412012
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia"
+        },
+        "name": "Alt-Müggelheim / Sobernheimer Straße",
+        "description": "K 2166"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.66238,
+          52.411605
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia"
+        },
+        "name": "Alt-Treptow - Neue Krugallee / Bulgarische Straße ",
+        "description": "Q 6445011"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.479456,
+          52.484511
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia"
+        },
+        "name": "Am Falkenberg / Bruno-Taut-Straße ",
+        "description": "K 724703"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.569386,
+          52.411181
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia"
+        },
+        "name": "Am Seegraben / Grünbergallee - Schwalbenweg",
+        "description": "K 722502"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.544469,
+          52.399228
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia"
+        },
+        "name": "An der Wuhlheide",
+        "description": "Q 0916134 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.520848,
+          52.46641
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia"
+        },
+        "name": "An der Wuhlheide / Rudolf-Rühl-Allee",
+        "description": "K 733802"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.562463,
+          52.456584
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia"
+        },
+        "name": "Bohnsdorfer Weg / Schönefelder Chaussee - Köpenicker Straße ",
+        "description": "K 2198"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.535774,
+          52.39943
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia"
+        },
+        "name": "Bulgarische Straße / Erwin-Bennewitz-Weg",
+        "description": "Q 21121-4"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.476332,
+          52.48287
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia"
+        },
+        "name": "Buntzelstr. - Waltersdorfer Straße / Schulzendorfer Straße",
+        "description": "K 724603"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.573467,
+          52.405785
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia"
+        },
+        "name": "Dammweg (zw. Erich-Lodemann-Straße und Bergausstraße)",
+        "description": "Q 0917173 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.476409,
+          52.476427
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia"
+        },
+        "name": "Edisonstraße (Treskowbrücke) ",
+        "description": "Q 41204 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.513141,
+          52.460185
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia"
+        },
+        "name": "Elsenstraße",
+        "description": "Q 0925193"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.45399,
+          52.488939
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia"
+        },
+        "name": "Ernst-Ruska-Ufer / Wegedornstraße",
+        "description": "K 2822 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.527122,
+          52.426367
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia"
+        },
+        "name": "Fürstenwalder Allee 71",
+        "description": "Q 910622 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.692651,
+          52.439029
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia"
+        },
+        "name": "Germanenstraße (nordwestl. Schirmerstraße)",
+        "description": "Q 0916135 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.555944,
+          52.41141
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia"
+        },
+        "name": "Gosener Landstraße 1 (höhe Friedhof)",
+        "description": "Q 0910591"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.675459,
+          52.407348
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia"
+        },
+        "name": "Groß-Berliner Damm / Segelfliegerdamm - Landfliegerstraße ",
+        "description": "K 637601"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.51451,
+          52.446554
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia"
+        },
+        "name": "Groß-Berliner-Damm / Hermann-Dorner-Allee",
+        "description": "K 2972"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.52682,
+          52.437657
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia"
+        },
+        "name": "Grünauer Straße - Regattastraße ",
+        "description": "Q 121601 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.572879,
+          52.428123
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia"
+        },
+        "name": "Hermann-Dorner-Allee / Ernst-Ruska-Ufer",
+        "description": "K 2094 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.520114,
+          52.426906
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia"
+        },
+        "name": "Hultschiner Damm - Mahlsdorfer Straße ",
+        "description": "Q 0923136 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.590672,
+          52.470858
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia"
+        },
+        "name": "Johannisthaler Chaussee / Zu- und Abfahrt A113 ",
+        "description": "K 2808 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.47871,
+          52.443214
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia"
+        },
+        "name": "Karlshorster Straße - Siemensstraße (Stubenrauchbrücke)",
+        "description": "Q 41201"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.50606,
+          52.46236
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia"
+        },
+        "name": "Kaulsdorfer Straße (südl. Bischofstaler Straße)",
+        "description": "Q 101103 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.569733,
+          52.474597
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia"
+        },
+        "name": "Köpenicker Straße (Altglienicker Brücke)",
+        "description": "Q 121602"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.544748,
+          52.424909
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia"
+        },
+        "name": "Köpenicker Straße / Semmelweisstraße - Besenbinderstraße an vorh. Mittelinsel",
+        "description": "Q 0910772 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.539261,
+          52.421529
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia"
+        },
+        "name": "Köpenicker Straße 44 / Parkplatz Action-Markt",
+        "description": "Q 0910761 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.539435,
+          52.422588
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia"
+        },
+        "name": "Lange Brücke ",
+        "description": "Q 0111201"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.571423,
+          52.444453
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia"
+        },
+        "name": "Marggraffbrücke",
+        "description": "Q 1075"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.495245,
+          52.466335
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia"
+        },
+        "name": "Michael-Brückner-Straße / Sterndamm",
+        "description": "K 637801"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.512162,
+          52.454881
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia"
+        },
+        "name": "Nalepastraße/ Kunheimstraße - Helmholzstraße",
+        "description": "Q 20951"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.50651,
+          52.465999
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia"
+        },
+        "name": "Richterstraße / Buntzelstraße",
+        "description": "K 724702"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.572162,
+          52.410866
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia"
+        },
+        "name": "Rummelsburger Straße / Mentelinstraße ",
+        "description": "Q 21131"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.512231,
+          52.47074
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia"
+        },
+        "name": "Salvador-Allende-Straße - Bellevuestraße / Fürstenwalder Damm",
+        "description": "K 736701"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.59595,
+          52.452923
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia"
+        },
+        "name": "Salvador-Allende-Straße / Friedrichshagener Straße",
+        "description": "K 736702 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.593186,
+          52.451536
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia"
+        },
+        "name": "Schönefelder Chaussee / Siriusstraße",
+        "description": "K 2184"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.522252,
+          52.402408
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia"
+        },
+        "name": "Spindlersfelder Straße (Wilhelm-Spindler-Brücke)",
+        "description": "Q 111202 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.558369,
+          52.453528
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia"
+        },
+        "name": "Sterndamm / Königsheideweg ",
+        "description": "K 636601"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.506588,
+          52.446458
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia"
+        },
+        "name": "Wassersportallee / Regattastraße ",
+        "description": "K 2582"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.581217,
+          52.416877
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia"
+        },
+        "name": "Wegedornstraße 210",
+        "description": "Q 0916142 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.538544,
+          52.412576
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Fuchsia"
+        },
+        "name": "Wendenschloßstraße",
+        "description": "Q 0923132 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.582436,
+          52.438037
+        ]
+      }
+    }
+  ]
+}

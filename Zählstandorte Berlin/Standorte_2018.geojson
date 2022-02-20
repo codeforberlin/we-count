@@ -1,0 +1,974 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "A113 (Höhe Stubenrauchstr.(ohne Zu- Abf.))",
+        "description": "Q 169001 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.498528,
+          52.433887
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Adlergestell / Dörpfeldstraße - Rudower Chaussee ",
+        "description": "K 731402 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.541609,
+          52.435454
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Alt Treptow - Puschkinallee",
+        "description": "Q 642761/2"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.458904,
+          52.492907
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Am Seegraben (Stadtgrenze) ",
+        "description": "Q 169006"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.544117,
+          52.39903
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Bahnhofstraße / Friedrichshagener Straße ",
+        "description": "K 734703 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.574746,
+          52.452785
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Baumschulenstraße - Späthstraße / Königsheideweg ",
+        "description": "K 634861 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.47551,
+          52.456191
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Baumschulenstraße (nordöstl. Forsthausallee)",
+        "description": "Q 25484 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.480515,
+          52.460274
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Baumschulenstraße / Forsthausallee   ",
+        "description": "K 2548 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.480613,
+          52.460283
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Bohnsdorfer Chaussee ",
+        "description": "Q 169008 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.536547,
+          52.399678
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Dahlwitzer Landstr.- Bölschestr. / Schöneicher Str.  ",
+        "description": "K 831801 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.625644,
+          52.457537
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Dahlwitzer Landstraße (Stadtgrenze) ",
+        "description": "Q 119001"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.625884,
+          52.458526
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Edisonstr. / Siemensstr. - Griechische Allee",
+        "description": "K 647102 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.513784,
+          52.46479
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Elsenstraße / Karl-Kunger-Straße ",
+        "description": "K 2919 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.452862,
+          52.488075
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Elstersteg - südl. Tauchersteig & nördl. Alkenweg ",
+        "description": "Q 0915222 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.568557,
+          52.426724
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Fürstenwalder Allee - Berliner Str. (Stadtgrenze)",
+        "description": "Q 119005"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.738935,
+          52.428819
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Groß-Berliner-Damm (nördl. Abram-Joffe-Straße)",
+        "description": "Q 0915209/10"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.531762,
+          52.434502
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Hämmerlingstraße / Annenallee ",
+        "description": "K 2848 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.574214,
+          52.454092
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Kaulsdorfer Straße (Höhe Nr 151; südl. Kleinschewskystraße) ",
+        "description": "Q 0923114"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.573162,
+          52.470358
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Kaulsdorfer Straße (Höhe Nr 166; südl. Argenauer Straße) ",
+        "description": "Q 0923113"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.573589,
+          52.467945
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Königsheideweg / Johannisthaler Chaussee",
+        "description": "K 635702 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.488409,
+          52.451224
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Köpenicker Landstraße (Höhe Nr. 254, südl. Baumschulenstr.)",
+        "description": "Q 0915217"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.492028,
+          52.468249
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Köpenicker Landstraße / Baumschulenstraße  ",
+        "description": "K 645201 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.491325,
+          52.469094
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Köpenicker Landstraße / Minna-Todenhagen-Straße ",
+        "description": "K 2042 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.49603,
+          52.466123
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Lange Brücke ",
+        "description": "Q 111201 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.57183,
+          52.444462
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Lindenstr.-Zeutherner Str. (südl. Mariannenstr. (Stadtgrenze)) ",
+        "description": "Q 169004 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.642824,
+          52.377399
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Lindenstraße / Bahnhofstraße ",
+        "description": "K 734702 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.571952,
+          52.451009
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Mahlsdorfer Str. - Bahnhofstr. / Am Bahnda. - Stellingda. ",
+        "description": "K 735802 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.580078,
+          52.459015
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Mahlsdorfer Straße / Gehsener Straße - Mittelheide ",
+        "description": "K 745101 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.583689,
+          52.463156
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Michael-Brückner-Straße / Spreestraße",
+        "description": "K 2743 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.510952,
+          52.455807
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Müggelheimer Damm / Salvador-Allende-Straße - Mayschweg ",
+        "description": "K 736401 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.592577,
+          52.438583
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Müggelheimer Straße / Wendenschloßstraße ",
+        "description": "K 735503 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.582359,
+          52.44271
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Müggelschlößchenweg (östl. Salvador-Allende-Str.) ",
+        "description": "Q 25003"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.593482,
+          52.441279
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Oberspreestraße - Köllnischer Platz / Gutenbergstraße",
+        "description": "K 734601 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.569257,
+          52.444553
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Oberspreestraße / Ottomar-Geschke-Straße  ",
+        "description": "K 733601 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.562749,
+          52.445815
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Ortolfstraße (südl. Dankmarsteig; Höhe Nr. 77)  ",
+        "description": "Q 0915207"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.535697,
+          52.410905
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Otto-Franke-Straße (nördl. Moissistraße)",
+        "description": "Q 0915215/16"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.54961,
+          52.432545
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Regattastraße (Höhe Nr. 38, südl. Friedrich-Wolf-Str.) ",
+        "description": "Q 0915218 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.575292,
+          52.424599
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Rixdorfer Straße / Schnellerstraße",
+        "description": "K 2045 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.502498,
+          52.461276
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Rummelsb. Str. - A.d. Wuhlheide / Edisonstr. - Treskowall. ",
+        "description": "K 647202 \nQ 0915088"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.514583,
+          52.468789
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Salvador-Allende-Straße / Wendenschloßstraße",
+        "description": "K 736601"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.593719,
+          52.447421
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Schnellerstr. - M.-Brückner-Straße. / Brückenstraße  ",
+        "description": "K 2632 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.511225,
+          52.456117
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Schnellerstraße / Fennstraße    ",
+        "description": "K 637703 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.517389,
+          52.454431
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Schnellerstraße / Karlshorster Straße",
+        "description": "K 646101 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.503622,
+          52.460646
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Schönefelder Chaussee - Altglienicker Chaussee (Stadtgrenze)",
+        "description": "Q 169002 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.518612,
+          52.397064
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Schönefelder Chaussee / Wegedornstraße",
+        "description": "K 628861 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.531242,
+          52.415501
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Schöneicher Landstraße (Stadtgrenze, südl. Waldstraße)",
+        "description": "Q 119006"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.628986,
+          52.457759
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Siemensstr. / Nalepastr. - Wilhelminenhofstr.",
+        "description": "K 2669 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.508635,
+          52.463666
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Sonnenallee - Südostallee / Baumschulenstraße",
+        "description": "K 644161 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.481407,
+          52.460796
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Sonnenallee / Heidekampweg ",
+        "description": "K 2758 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.480677,
+          52.46111
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Sterndamm / Südostallee - Groß-Berliner Damm",
+        "description": "K 637701 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.508624,
+          52.452683
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Stubenrauchstraße / Springbornstraße - Eisenhutweg ",
+        "description": "K 636463"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.500811,
+          52.435216
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Waltersdorfer Straße (Stadtgrenze) ",
+        "description": "Q 169007"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.570853,
+          52.389454
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Waltersdorfer Straße (südl. Krumme Str.)   ",
+        "description": "Q 0916132/33"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.574784,
+          52.399673
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Waltersdorfer Straße / Dahmestraße  ",
+        "description": "K 724601 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.573922,
+          52.401831
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Wendenschloßstraße (nördl. Dregerhoffstraße) ",
+        "description": "Q 27161/3/4"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.585142,
+          52.427816
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Wernsdorfer Straße - Dorfanger (Stadtgrenze)  ",
+        "description": "Q 169003 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.656311,
+          52.374598
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "_umap_options": {
+          "color": "Red"
+        },
+        "name": "Wilhelminenhofstraße / Edisonstraße",
+        "description": "K 647101 "
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.514093,
+          52.462466
+        ]
+      }
+    }
+  ]
+}

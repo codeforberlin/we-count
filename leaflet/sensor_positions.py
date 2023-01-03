@@ -23,27 +23,44 @@
 
 import http.client
 import json
+import time
 
-with open('../umriss_tk.geojson') as tk_json:
-    tk = json.load(tk_json)
-    bbox = [1000, 1000, -1000, -1000]
-    for line in tk["features"][0]["geometry"]["coordinates"]:
-        for p in line:
-            bbox[0] = min(bbox[0], p[0])
-            bbox[1] = min(bbox[1], p[1])
-            bbox[2] = max(bbox[2], p[0])
-            bbox[3] = max(bbox[3], p[1])
-print(bbox)
-conn = http.client.HTTPSConnection("telraam-api.net")
-with open('telraam-token.txt') as token:
-    headers = { 'X-Api-Key': token.read() }
-# conn.request("GET", "/v1/cameras", '', headers)
-# conn.request("GET", "/v1/segments/id/348917", '', headers)
-payload = '{"time":"live", "contents":"minimal", "area":"%s"}' % (str(bbox)[1:-1])
-conn.request("POST", "/v1/reports/traffic_snapshot", payload, headers)
-data = conn.getresponse().read().decode("utf-8")
-with open("sensor-geojson.js", "w") as sensor_js:
-    print("var sensors = ", file=sensor_js, end='')
-    res = json.loads(data)
-    json.dump(res, sensor_js, indent=2)
-    print(";", file=sensor_js)
+
+def add_camera(conn, headers, res):
+    for sens in res["features"]:
+        segment = sens["properties"]["segment_id"]
+        time.sleep(1)
+        conn.request("GET", "/v1/cameras/segment/%s" % segment, '', headers)
+        sensors = json.loads(conn.getresponse().read())
+        print(sensors)
+        sens["properties"]["instance_id"] = sensors["camera"][0]["instance_id"]
+
+
+def main():
+    with open('../umriss_tk.geojson') as tk_json:
+        tk = json.load(tk_json)
+        bbox = [1000, 1000, -1000, -1000]
+        for line in tk["features"][0]["geometry"]["coordinates"]:
+            for p in line:
+                bbox[0] = min(bbox[0], p[0])
+                bbox[1] = min(bbox[1], p[1])
+                bbox[2] = max(bbox[2], p[0])
+                bbox[3] = max(bbox[3], p[1])
+    print(bbox)
+    conn = http.client.HTTPSConnection("telraam-api.net")
+    with open('telraam-token.txt') as token:
+        headers = { 'X-Api-Key': token.read() }
+    # conn.request("GET", "/v1/cameras", '', headers)
+    # conn.request("GET", "/v1/segments/id/348917", '', headers)
+    payload = '{"time":"live", "contents":"minimal", "area":"%s"}' % (str(bbox)[1:-1])
+    conn.request("POST", "/v1/reports/traffic_snapshot", payload, headers)
+    res = json.loads(conn.getresponse().read())
+    with open("sensor-geojson.js", "w") as sensor_js:
+        print("var sensors = ", file=sensor_js, end='')
+        # add_camera(conn, headers, res)
+        json.dump(res, sensor_js, indent=2)
+        print(";", file=sensor_js)
+
+
+if __name__ == "__main__":
+    main()

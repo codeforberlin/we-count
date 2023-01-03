@@ -42,7 +42,7 @@
 	}).addTo(map);
 
 	function onEachFeature(feature, layer) {
-		let popupContent = `<p>Telraam sensor on segment ${feature.properties.segment_id}</p>`;
+		let popupContent = `<a href="https://telraam.net/home/location/${feature.properties.segment_id}">Telraam sensor on segment ${feature.properties.segment_id}</a>`;
 
 		if (feature.properties && feature.properties.popupContent) {
 			popupContent += feature.properties.popupContent;

@@ -1,71 +1,70 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<base target="_top">
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	
-	<title>Telraam Treptow-Köpenick - Leaflet</title>
-	
-	<link rel="shortcut icon" type="image/x-icon" href="docs/images/favicon.ico" />
+    <base target="_top">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Telraam Treptow-Köpenick - Leaflet</title>
+
+    <link rel="shortcut icon" type="image/x-icon" href="docs/images/favicon.ico" />
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI=" crossorigin=""/>
     <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js" integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM=" crossorigin=""></script>
+    <script src="TileLayer.Grayscale.js"></script>
 
-	<style>
-		html, body {
-			height: 100%;
-			margin: 0;
-		}
-		.leaflet-container {
-			height: 100%;
-			width: 100%;
-		}
-	</style>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+        .leaflet-container {
+            height: 100%;
+            width: 100%;
+        }
+    </style>
 
-	
 </head>
-<body>
 
+<body>
 <div id='map'></div>
 
 <script src="sensor-geojson.js" type="text/javascript"></script>
 
 <script>
-	const map = L.map('map').setView([52.45, 13.55], 12);
+    const map = L.map('map').setView([52.45, 13.55], 11);
 
-	const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-		maxZoom: 19,
-		attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> | <a href="https://telraam.net">Telraam</a>'
-	}).addTo(map);
+    // const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    const tiles = L.tileLayer.grayscale('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>&nbsp;|&nbsp;<a href="https://telraam.net">Telraam</a>'
+    }).addTo(map);
 
-	function onEachFeature(feature, layer) {
-		let popupContent = `<a href="https://telraam.net/home/location/${feature.properties.segment_id}">Telraam sensor on segment ${feature.properties.segment_id}</a>`;
+    function onEachFeature(feature, layer) {
+        let popupContent = `<a href="https://telraam.net/home/location/${feature.properties.segment_id}">Telraam sensor on segment ${feature.properties.segment_id}</a>`;
 
-		if (feature.properties && feature.properties.popupContent) {
-			popupContent += feature.properties.popupContent;
-		}
+        if (feature.properties && feature.properties.popupContent) {
+            popupContent += feature.properties.popupContent;
+        }
 
-		layer.bindPopup(popupContent);
-	}
+        layer.bindPopup(popupContent);
+    }
 
-	/* global sensors */
-	const sensorLayer = L.geoJSON(sensors, {
+    /* global sensors */
+    const sensorLayer = L.geoJSON(sensors, {
 
-		filter(feature, layer) {
-			if (feature.properties) {
-				// If the property "uptime" exists and is not empty and > 0 return true (don't render inactive sensors)
-				return feature.properties.uptime !== undefined ? feature.properties.uptime >= 0 : true;
-			}
-			return false;
-		},
+        filter(feature, layer) {
+            if (feature.properties) {
+                // If the property "uptime" exists and is not empty and > 0 return true (don't render inactive sensors)
+                return feature.properties.uptime !== undefined ? feature.properties.uptime >= 0 : true;
+            }
+            return false;
+        },
 
-		onEachFeature
-	}).addTo(map);
+        onEachFeature
+    }).addTo(map);
 
 </script>
-
-
 
 </body>
 </html>

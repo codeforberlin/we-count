@@ -37,16 +37,7 @@ def add_camera(conn, headers, res):
 
 
 def main():
-    with open('../umriss_tk.geojson') as tk_json:
-        tk = json.load(tk_json)
-        bbox = [1000, 1000, -1000, -1000]
-        for line in tk["features"][0]["geometry"]["coordinates"]:
-            for p in line:
-                bbox[0] = min(bbox[0], p[0])
-                bbox[1] = min(bbox[1], p[1])
-                bbox[2] = max(bbox[2], p[0])
-                bbox[3] = max(bbox[3], p[1])
-    print(bbox)
+    bbox = (12.78509,52.17841,13.84308,52.82727)  # Berlin as in https://github.com/DLR-TS/sumo-berlin
     conn = http.client.HTTPSConnection("telraam-api.net")
     with open('telraam-token.txt') as token:
         headers = { 'X-Api-Key': token.read() }

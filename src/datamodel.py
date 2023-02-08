@@ -21,10 +21,14 @@
 # @date    2023-01-11
 
 import datetime
-from sqlalchemy import Column, Integer, Float, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, Float, DateTime, ForeignKey, Boolean, String
 from sqlalchemy.orm import declarative_base, relationship
 
 Base = declarative_base()
+
+
+def parse_utc(date):
+    return None if date is None else datetime.datetime.fromisoformat(date.replace("Z", "+00:00"))
 
 
 class TrafficCount(Base):
@@ -34,7 +38,7 @@ class TrafficCount(Base):
         for attr, val in table.items():
             if hasattr(self, attr):
                 setattr(self, attr, None if val == -1 else val)
-        self.date_utc = datetime.datetime.fromisoformat(table["date"][:-1])
+        self.date_utc = parse_utc(table["date"])
         self.interval_seconds = 3600 if table["interval"] == "hourly" else None
         self.uptime_rel = table["uptime"]
         for i, v in enumerate(table["car_speed_hist_0to120plus"]):
@@ -42,11 +46,11 @@ class TrafficCount(Base):
                 s_low = 5 * i
                 s_high = 1000 if s_low == 120 else 5 * (i + 1)
                 hist = SpeedHistogram(low_kmh=s_low, up_kmh=s_high, percent=v)
-                self.car_speed_hist.append(hist)
+                self.car_speed_histogram.append(hist)
     
     id = Column(Integer, primary_key=True)
     instance_id = Column(Integer)
-    segment_id = Column(Integer)
+    segment_id = Column(Integer, ForeignKey("segment.id"))
     date_utc = Column(DateTime)
     interval_seconds = Column(Integer)
     uptime_rel = Column(Float)
@@ -61,14 +65,80 @@ class TrafficCount(Base):
     direction = Column(Integer)
     v85 = Column(Float)
 
-    car_speed_hist = relationship("SpeedHistogram")
+    car_speed_histogram = relationship("SpeedHistogram")
 
 
 class SpeedHistogram(Base):
-    __tablename__ = "speed_hist"
+    __tablename__ = "speed_histogram"
 
     id = Column(Integer, primary_key=True)
     traffic_count_id = Column(Integer, ForeignKey("traffic_count.id"))
     low_kmh = Column(Integer)
     up_kmh = Column(Integer)
     percent = Column(Float)
+
+
+class Segment(Base):
+    __tablename__ = "segment"
+
+    def __init__(self, properties, geometry):
+        self.id = properties["segment_id"]
+        self.last_data_utc = parse_utc(properties["last_data_package"])
+        for i, p in enumerate(geometry):
+            point = SegmentGeometry(lon=p[0], lat=p[1], seq=i)
+            self.geom.append(point)
+
+    def add_camera(self, table):
+        self.cameras.append(Camera(table))
+
+    id = Column(Integer, primary_key=True)
+    last_data_utc = Column(DateTime)
+    last_backup_utc = Column(DateTime)
+
+    geom = relationship("SegmentGeometry")
+    cameras = relationship("Camera")
+    counts = relationship("TrafficCount")
+
+
+class SegmentGeometry(Base):
+    __tablename__ = "segment_geom"
+
+    id = Column(Integer, primary_key=True)
+    segment_id = Column(Integer, ForeignKey("segment.id"))
+    lon = Column(Float)
+    lat = Column(Float)
+    seq = Column(Integer)
+
+
+class Camera(Base):
+    __tablename__ = "camera"
+
+    def __init__(self, table):
+        for attr, val in table.items():
+            if hasattr(self, attr):
+                setattr(self, attr, None if val == -1 else val)
+        self.id = table["instance_id"]
+        self.added_utc = parse_utc(table["time_added"])
+        self.end_utc = parse_utc(table["time_end"])
+        self.last_data_utc = parse_utc(table["last_data_package"])
+        self.first_data_utc = parse_utc(table["first_data_package"])
+
+    id = Column(Integer, primary_key=True)
+    mac = Column(Integer)
+    user_id = Column(Integer)
+    segment_id = Column(Integer, ForeignKey("segment.id"))
+    direction = Column(Boolean)
+    status = Column(String)
+    manual = Column(Boolean)
+    added_utc = Column(DateTime)
+    end_utc = Column(DateTime)
+    last_data_utc = Column(DateTime)
+    first_data_utc = Column(DateTime)
+    pedestrians_left = Column(Boolean)
+    pedestrians_right = Column(Boolean)
+    bikes_left = Column(Boolean)
+    bikes_right = Column(Boolean)
+    cars_left = Column(Boolean)
+    cars_right = Column(Boolean)
+    is_calibration_done = Column(String)
+    hardware_version = Column(Integer)

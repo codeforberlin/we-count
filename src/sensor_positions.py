@@ -37,13 +37,14 @@ def add_camera(conn, headers, res):
 
 
 def main():
-    bbox = (12.78509,52.17841,13.84308,52.82727)  # Berlin as in https://github.com/DLR-TS/sumo-berlin
+    bbox = "12.78509,52.17841,13.84308,52.82727"  # Berlin as in https://github.com/DLR-TS/sumo-berlin
     conn = http.client.HTTPSConnection("telraam-api.net")
     with open('telraam-token.txt') as token:
         headers = { 'X-Api-Key': token.read() }
     # conn.request("GET", "/v1/cameras", '', headers)
     # conn.request("GET", "/v1/segments/id/348917", '', headers)
-    payload = '{"time":"live", "contents":"minimal", "area":"%s"}' % (str(bbox)[1:-1])
+    # conn.request("GET", "/v1/reports/traffic_snapshot_live", '', headers)
+    payload = '{"time":"live", "contents":"minimal", "area":"%s"}' % bbox
     conn.request("POST", "/v1/reports/traffic_snapshot", payload, headers)
     res = json.loads(conn.getresponse().read())
     with open("sensor-geojson.js", "w") as sensor_js:

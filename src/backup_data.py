@@ -21,28 +21,82 @@
 # @author  Michael Behrisch
 # @date    2023-01-11
 
+import sys
 import http.client
 import json
+import datetime
+import time
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
-from datamodel import Base, TrafficCount
+from datamodel import Base, TrafficCount, Segment, Camera
+
+
+def get_segments(session, conn, headers):
+    segments = {}
+    bbox = (12.78509,52.17841,13.84308,52.82727)  # Berlin as in https://github.com/DLR-TS/sumo-berlin
+    # utc_old = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=30)
+    conn.request("GET", "/v1/reports/traffic_snapshot_live", '', headers)
+    snap = json.loads(conn.getresponse().read())
+    # snap = json.load(open('sensor.geojson'))
+    if not "features" in snap:
+        print("Format error: %s." % snap.get("message"), file=sys.stderr)
+        return
+    for segment in snap["features"]:
+        inside = False
+        if len(segment["geometry"]["coordinates"]) > 1:
+            print("Warning! Real multiline for segment", segment["properties"]["segment_id"])
+        for p in segment["geometry"]["coordinates"][0]:
+            inside = (bbox[0] < p[0] < bbox[2] and bbox[1] < p[1] < bbox[3])
+            if not inside:
+                break
+        if inside:
+            id = segment["properties"]["segment_id"]
+            s = session.get(Segment, id)
+            if s is None:
+                s = Segment(segment["properties"], segment["geometry"]["coordinates"][0])
+            segments[id] = s
+    return segments
+
+
+def get_cameras(session, conn, headers, segments):
+    time.sleep(1)
+    conn.request("GET", "/v1/cameras", '', headers)
+    cameras = json.loads(conn.getresponse().read())
+    # cameras = json.load(open('cameras.json'))
+    if not "cameras" in cameras:
+        print("Format error: %s." % cameras.get("message"), file=sys.stderr)
+        return
+    for camera in cameras["cameras"]:
+        if camera["segment_id"] in segments:
+            id = camera["instance_id"]
+            c = session.get(Camera, id)
+            if c is None:
+                segments[camera["segment_id"]].add_camera(camera)
+
 
 def main():
-    conn = http.client.HTTPSConnection("telraam-api.net")
-    with open('telraam-token.txt') as token:
-        headers = { 'X-Api-Key': token.read() }
-    payload = '{"level": "segments", "format": "per-hour", "id": "348917", "time_start": "2020-10-30 07:00:00Z", "time_end": "2020-12-30 09:00:00Z"}'
-    conn.request("POST", "/v1/reports/traffic", payload, headers)
-    res = json.loads(conn.getresponse().read())
-
     engine = create_engine("sqlite+pysqlite:///test.db", echo=True, future=True)
     Base.metadata.create_all(engine)
     session = Session(engine)
-    for entry in res["report"]:
-        if entry["uptime"] > 0:
-            tc = TrafficCount(entry)
-            session.add(tc)
+    conn = http.client.HTTPSConnection("telraam-api.net")
+    with open('telraam-token.txt') as token:
+        headers = { 'X-Api-Key': token.read() }
+    segments = get_segments(session, conn, headers)
+    get_cameras(session, conn, headers, segments)
+    for s in segments.values():
+        session.add(s)
+        last = s.last_data_utc
+        ago = last - datetime.timedelta(days=90)
+        # payload = '{"level": "segments", "format": "per-hour", "id": "%s", "time_start": "%s", "time_end": "%s"}' % (s.id, ago, last)
+        # conn.request("POST", "/v1/reports/traffic", payload, headers)
+        # res = json.loads(conn.getresponse().read())
+
+        # for entry in res["report"]:
+        #     if entry["uptime"] > 0:
+        #         tc = TrafficCount(entry)
+        #         session.add(tc)
+        # time.sleep(1)
     session.commit()
 
 

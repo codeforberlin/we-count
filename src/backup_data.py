@@ -76,7 +76,7 @@ def get_cameras(session, conn, headers, segments):
 
 
 def main():
-    engine = create_engine("sqlite+pysqlite:///test.db", echo=True, future=True)
+    engine = create_engine("sqlite+pysqlite:///backup.db", echo=True, future=True)
     Base.metadata.create_all(engine)
     session = Session(engine)
     conn = http.client.HTTPSConnection("telraam-api.net")
@@ -84,19 +84,31 @@ def main():
         headers = { 'X-Api-Key': token.read() }
     segments = get_segments(session, conn, headers)
     get_cameras(session, conn, headers, segments)
+    print("retrieving data for %s segments" % len(segments))
     for s in segments.values():
         session.add(s)
+        active = [c.first_data_utc for c in s.cameras if c.first_data_utc is not None]
+        if not active:
+            print("no active camera for segment %s." % s.id)
+            continue
+        first = s.last_backup_utc if s.last_backup_utc else min(active)
         last = s.last_data_utc
-        ago = last - datetime.timedelta(days=90)
-        # payload = '{"level": "segments", "format": "per-hour", "id": "%s", "time_start": "%s", "time_end": "%s"}' % (s.id, ago, last)
-        # conn.request("POST", "/v1/reports/traffic", payload, headers)
-        # res = json.loads(conn.getresponse().read())
-
-        # for entry in res["report"]:
-        #     if entry["uptime"] > 0:
-        #         tc = TrafficCount(entry)
-        #         session.add(tc)
-        # time.sleep(1)
+        print(first, last)
+        while first < last:
+            time.sleep(1)
+            interval_end = first + datetime.timedelta(days=90)
+            payload = '{"level": "segments", "format": "per-hour", "id": "%s", "time_start": "%s", "time_end": "%s"}' % (s.id, first, interval_end)
+            conn.request("POST", "/v1/reports/traffic", payload, headers)
+            res = json.loads(conn.getresponse().read())
+            if not "report" in res:
+                print("Format error: %s." % res.get("message"), file=sys.stderr)
+                continue
+            for entry in res["report"]:
+                if entry["uptime"] > 0:
+                    tc = TrafficCount(entry)
+                    session.add(tc)
+            first = interval_end
+        s.last_backup_utc = s.last_data_utc
     session.commit()
 
 

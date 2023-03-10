@@ -26,16 +26,16 @@ import http.client
 import json
 import datetime
 import time
+import argparse
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from datamodel import Base, TrafficCount, Segment, Camera
 
 
-def get_segments(session, conn, headers):
+def get_segments(session, conn, headers, options):
     segments = {}
-    bbox = (12.78509,52.17841,13.84308,52.82727)  # Berlin as in https://github.com/DLR-TS/sumo-berlin
-    # utc_old = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=30)
+    bbox = [float(f) for f in options.bbox.split(",")]
     conn.request("GET", "/v1/reports/traffic_snapshot_live", '', headers)
     snap = json.loads(conn.getresponse().read())
     # snap = json.load(open('sensor.geojson'))
@@ -60,7 +60,7 @@ def get_segments(session, conn, headers):
 
 
 def get_cameras(session, conn, headers, segments):
-    time.sleep(1)
+    time.sleep(1.1)
     conn.request("GET", "/v1/cameras", '', headers)
     cameras = json.loads(conn.getresponse().read())
     # cameras = json.load(open('cameras.json'))
@@ -75,14 +75,31 @@ def get_cameras(session, conn, headers, segments):
                 segments[camera["segment_id"]].add_camera(camera)
 
 
+def get_options(args=None):
+    parser = argparse.ArgumentParser()
+    # Berlin as in https://github.com/DLR-TS/sumo-berlin
+    parser.add_argument("-b", "--bbox", default="12.78509,52.17841,13.84308,52.82727",
+                        help="bounding box to retrieve in geo coordinates west,south,east,north")
+    parser.add_argument("-u", "--url", default="telraam-api.net",
+                        help="Download from the given Telraam server")
+    parser.add_argument("-t", "--token-file", default="telraam-token.txt", metavar="FILE",
+                        help="Read Telraam API token from FILE")
+    parser.add_argument("-d", "--database", default="backup.db",
+                        help="Database output file")
+    parser.add_argument("-v", "--verbose", action="store_true", default=False,
+                        help="enable verbose sqlalchemy output")
+    return parser.parse_args(args=args)
+
+
 def main():
-    engine = create_engine("sqlite+pysqlite:///backup.db", echo=True, future=True)
+    options = get_options()
+    engine = create_engine("sqlite+pysqlite:///backup.db", echo=options.verbose, future=True)
     Base.metadata.create_all(engine)
     session = Session(engine)
-    conn = http.client.HTTPSConnection("telraam-api.net")
-    with open('telraam-token.txt') as token:
+    conn = http.client.HTTPSConnection(options.url)
+    with open(options.token_file) as token:
         headers = { 'X-Api-Key': token.read().strip() }
-    segments = get_segments(session, conn, headers)
+    segments = get_segments(session, conn, headers, options)
     get_cameras(session, conn, headers, segments)
     print("retrieving data for %s segments" % len(segments))
     for s in segments.values():
@@ -93,9 +110,10 @@ def main():
             continue
         first = s.last_backup_utc if s.last_backup_utc else min(active)
         last = s.last_data_utc
-        print(first, last)
+        if options.verbose:
+            print("Retrieving data for segment %s between %s and %s." % (s.id, first, last))
         while first < last:
-            time.sleep(1)
+            time.sleep(1.1)
             interval_end = first + datetime.timedelta(days=90)
             payload = '{"level": "segments", "format": "per-hour", "id": "%s", "time_start": "%s", "time_end": "%s"}' % (s.id, first, interval_end)
             conn.request("POST", "/v1/reports/traffic", payload, headers)

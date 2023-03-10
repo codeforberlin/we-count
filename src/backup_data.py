@@ -81,7 +81,7 @@ def main():
     session = Session(engine)
     conn = http.client.HTTPSConnection("telraam-api.net")
     with open('telraam-token.txt') as token:
-        headers = { 'X-Api-Key': token.read() }
+        headers = { 'X-Api-Key': token.read().strip() }
     segments = get_segments(session, conn, headers)
     get_cameras(session, conn, headers, segments)
     print("retrieving data for %s segments" % len(segments))

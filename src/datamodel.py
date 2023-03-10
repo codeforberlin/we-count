@@ -28,7 +28,7 @@ Base = declarative_base()
 
 
 def parse_utc(date):
-    return None if date is None else datetime.datetime.fromisoformat(date.replace("Z", "+00:00"))
+    return datetime.datetime.fromisoformat(date.replace("Z", "+00:00")) if date else None
 
 
 class TrafficCount(Base):

@@ -31,6 +31,7 @@ import argparse
 
 def get_options(args=None):
     base = os.path.abspath(os.path.dirname(__file__))
+    is_web_server = base.endswith("/cgi-bin")
     parser = argparse.ArgumentParser()
     # Berlin as in https://github.com/DLR-TS/sumo-berlin
     parser.add_argument("-b", "--bbox", default="12.78509,52.17841,13.84308,52.82727",
@@ -39,11 +40,14 @@ def get_options(args=None):
                         help="Download from the given Telraam server")
     parser.add_argument("-t", "--token-file", default=os.path.join(base, "telraam-token.txt"),
                         metavar="FILE", help="Read Telraam API token from FILE")
-    parser.add_argument("-j", "--json-file", default=os.path.join(base, "..", "sensor-geojson.js"),
+    out_file = os.path.join(base, "..", "sensor-geojson.js") if is_web_server else "sensor-geojson.js"
+    parser.add_argument("-j", "--json-file", default=out_file,
                         metavar="FILE", help="Write Geo-JSON output to FILE")
     parser.add_argument("--camera", action="store_true", default=False,
                         help="include individual cameras")
-    parser.add_argument("-v", "--verbose", action="store_true", default=False,
+    parser.add_argument("--web-server", action="store_true", default=is_web_server,
+                        help="behave like running in web server")
+    parser.add_argument("-v", "--verbose", action="store_true", default=is_web_server,
                         help="enable verbose output")
     return parser.parse_args(args=args)
 
@@ -60,6 +64,8 @@ def add_camera(conn, headers, res):
 
 def main():
     options = get_options()
+    if options.web_server:
+        print("Content-Type: text/html\n")
     if os.path.exists(options.json_file):
         last_mod = datetime.datetime.fromtimestamp(os.path.getmtime(options.json_file))
         delta = datetime.timedelta(hours=1)
@@ -74,6 +80,8 @@ def main():
     conn.request("POST", "/v1/reports/traffic_snapshot", payload, headers)
     res = json.loads(conn.getresponse().read())
     with open(options.json_file, "w", encoding="utf8") as sensor_js:
+        if options.verbose and "features" in res:
+            print(f"{len(res['features'])} sensor positions read.")
         print("var sensors = ", file=sensor_js, end='')
         if options.camera:
             add_camera(conn, headers, res)

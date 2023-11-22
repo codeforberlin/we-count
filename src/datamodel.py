@@ -91,6 +91,9 @@ class Segment(Base):
     def add_camera(self, table):
         self.cameras.append(Camera(table))
 
+    def update(self, properties):
+        self.last_data_utc = parse_utc(properties["last_data_package"])
+
     id = Column(Integer, primary_key=True)
     last_data_utc = Column(DateTime(True))
     last_backup_utc = Column(DateTime(True))

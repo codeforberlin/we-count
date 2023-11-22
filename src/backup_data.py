@@ -27,17 +27,37 @@ import json
 import datetime
 import time
 import argparse
+import pprint
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from datamodel import Base, TrafficCount, Segment, Camera
 
 
-def get_segments(session, conn, headers, options):
+class ConnProvider:
+    def __init__(self, token_file, url):
+        with open(token_file, encoding="utf8") as tokens:
+            self._connections = [(http.client.HTTPSConnection(url), { 'X-Api-Key': t.strip() })
+                                 for t in tokens.readlines() if t.strip()]
+        self._index = 0
+        self._num_queries = 0
+
+    def request(self, path, method='GET', payload=''):
+        self._num_queries += 1
+        time.sleep(1.1 / len(self._connections))
+        conn, headers = self._connections[self._index]
+        self._index = (self._index + 1) % len(self._connections)
+        conn.request(method, path, payload, headers)
+        return json.loads(conn.getresponse().read())
+
+    def print_stats(self):
+        print(len(self._connections), "connections", self._num_queries, "queries")
+
+
+def get_segments(session, conns, options):
     segments = {}
     bbox = [float(f) for f in options.bbox.split(",")]
-    conn.request("GET", "/v1/reports/traffic_snapshot_live", '', headers)
-    snap = json.loads(conn.getresponse().read())
+    snap = conns.request("/v1/reports/traffic_snapshot_live")
     # snap = json.load(open('sensor.geojson'))
     if not "features" in snap:
         print("Format error: %s." % snap.get("message"), file=sys.stderr)
@@ -59,10 +79,8 @@ def get_segments(session, conn, headers, options):
     return segments
 
 
-def get_cameras(session, conn, headers, segments):
-    time.sleep(1.1)
-    conn.request("GET", "/v1/cameras", '', headers)
-    cameras = json.loads(conn.getresponse().read())
+def get_cameras(session, conns, segments):
+    cameras = conns.request("/v1/cameras")
     # cameras = json.load(open('cameras.json'))
     if not "cameras" in cameras:
         print("Format error: %s." % cameras.get("message"), file=sys.stderr)
@@ -86,21 +104,23 @@ def get_options(args=None):
                         help="Read Telraam API token from FILE")
     parser.add_argument("-d", "--database", default="backup.db",
                         help="Database output file")
-    parser.add_argument("-v", "--verbose", action="store_true", default=False,
-                        help="enable verbose sqlalchemy output")
+    parser.add_argument("-r", "--retry", type=int, default=1,
+                        help="number of retries on failure")
+    parser.add_argument("-v", "--verbose", action="count", default=0,
+                        help="increase verbosity, twice enables verbose sqlalchemy output")
     return parser.parse_args(args=args)
 
 
 def main():
     options = get_options()
-    engine = create_engine("sqlite+pysqlite:///backup.db", echo=options.verbose, future=True)
+    engine = create_engine("sqlite+pysqlite:///" + options.database,
+                           echo=options.verbose > 1, future=True)
     Base.metadata.create_all(engine)
     session = Session(engine)
-    conn = http.client.HTTPSConnection(options.url)
-    with open(options.token_file) as token:
-        headers = { 'X-Api-Key': token.read().strip() }
-    segments = get_segments(session, conn, headers, options)
-    get_cameras(session, conn, headers, segments)
+    conns = ConnProvider(options.token_file, options.url)
+    segments = get_segments(session, conns, options)
+    get_cameras(session, conns, segments)
+    session.commit()
     print("retrieving data for %s segments" % len(segments))
     for s in segments.values():
         session.add(s)
@@ -112,22 +132,27 @@ def main():
         last = s.last_data_utc
         if options.verbose:
             print("Retrieving data for segment %s between %s and %s." % (s.id, first, last))
+        retries = options.retry
         while first < last:
-            time.sleep(1.1)
             interval_end = first + datetime.timedelta(days=90)
             payload = '{"level": "segments", "format": "per-hour", "id": "%s", "time_start": "%s", "time_end": "%s"}' % (s.id, first, interval_end)
-            conn.request("POST", "/v1/reports/traffic", payload, headers)
-            res = json.loads(conn.getresponse().read())
+            res = conns.request("/v1/reports/traffic", "POST", payload)
             if not "report" in res:
-                print("Format error: %s." % res.get("message"), file=sys.stderr)
-                continue
-            for entry in res["report"]:
+                print("Format error on %s." % payload, file=sys.stderr)
+                if options.verbose:
+                    pprint.pp(res, sys.stderr)
+                if retries > 0:
+                    retries -= 1
+                    continue
+            for entry in res.get("report", []):
                 if entry["uptime"] > 0:
                     tc = TrafficCount(entry)
                     session.add(tc)
             first = interval_end
         s.last_backup_utc = s.last_data_utc
-    session.commit()
+        session.commit()
+    if options.verbose:
+        conns.print_stats()
 
 
 if __name__ == "__main__":

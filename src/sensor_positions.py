@@ -62,8 +62,8 @@ def add_camera(conn, headers, res):
         sens["properties"]["instance_id"] = sensors["camera"][0]["instance_id"]
 
 
-def main():
-    options = get_options()
+def main(args=None):
+    options = get_options(args)
     if options.web_server:
         print("Content-Type: text/html\n")
     if os.path.exists(options.json_file):

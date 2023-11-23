@@ -110,7 +110,7 @@ def get_options(args=None):
     parser.add_argument("-t", "--token-file", default="telraam-token.txt", metavar="FILE",
                         help="Read Telraam API token from FILE")
     parser.add_argument("-d", "--database", default="backup.db",
-                        help="Database output file")
+                        help="Database output file or URL")
     parser.add_argument("-r", "--retry", type=int, default=1,
                         help="number of retries on failure")
     parser.add_argument("-v", "--verbose", action="count", default=0,
@@ -118,10 +118,11 @@ def get_options(args=None):
     return parser.parse_args(args=args)
 
 
-def main():
-    options = get_options()
-    engine = create_engine("sqlite+pysqlite:///" + options.database,
-                           echo=options.verbose > 1, future=True)
+def main(args=None):
+    options = get_options(args)
+    if "+" not in options.database and "://" not  in options.database:
+        options.database = "sqlite+pysqlite:///" + options.database
+    engine = create_engine(options.database, echo=options.verbose > 1, future=True)
     Base.metadata.create_all(engine)
     session = Session(engine)
     conns = ConnProvider(options.token_file, options.url)

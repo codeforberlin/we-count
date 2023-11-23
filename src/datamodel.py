@@ -21,7 +21,7 @@
 # @date    2023-01-11
 
 import datetime
-from sqlalchemy import Column, Integer, Float, DateTime, ForeignKey, Boolean, String
+from sqlalchemy import Column, Integer, Float, DateTime, ForeignKey, Boolean, String, BigInteger
 from sqlalchemy.orm import declarative_base, relationship
 
 Base = declarative_base()
@@ -48,9 +48,9 @@ class TrafficCount(Base):
                 hist = SpeedHistogram(low_kmh=s_low, up_kmh=s_high, percent=v)
                 self.car_speed_histogram.append(hist)
     
-    id = Column(Integer, primary_key=True)
-    instance_id = Column(Integer)
-    segment_id = Column(Integer, ForeignKey("segment.id"))
+    id = Column(BigInteger, primary_key=True)
+    instance_id = Column(BigInteger)
+    segment_id = Column(BigInteger, ForeignKey("segment.id"))
     date_utc = Column(DateTime(True))
     interval_seconds = Column(Integer)
     uptime_rel = Column(Float)
@@ -71,8 +71,8 @@ class TrafficCount(Base):
 class SpeedHistogram(Base):
     __tablename__ = "speed_histogram"
 
-    id = Column(Integer, primary_key=True)
-    traffic_count_id = Column(Integer, ForeignKey("traffic_count.id"))
+    id = Column(BigInteger, primary_key=True)
+    traffic_count_id = Column(BigInteger, ForeignKey("traffic_count.id"))
     low_kmh = Column(Integer)
     up_kmh = Column(Integer)
     percent = Column(Float)
@@ -94,7 +94,7 @@ class Segment(Base):
     def update(self, properties):
         self.last_data_utc = parse_utc(properties["last_data_package"])
 
-    id = Column(Integer, primary_key=True)
+    id = Column(BigInteger, primary_key=True, autoincrement=False)
     last_data_utc = Column(DateTime(True))
     last_backup_utc = Column(DateTime(True))
 
@@ -106,8 +106,8 @@ class Segment(Base):
 class SegmentGeometry(Base):
     __tablename__ = "segment_geom"
 
-    id = Column(Integer, primary_key=True)
-    segment_id = Column(Integer, ForeignKey("segment.id"))
+    id = Column(BigInteger, primary_key=True)
+    segment_id = Column(BigInteger, ForeignKey("segment.id"))
     lon = Column(Float)
     lat = Column(Float)
     seq = Column(Integer)
@@ -126,12 +126,12 @@ class Camera(Base):
         self.last_data_utc = parse_utc(table["last_data_package"])
         self.first_data_utc = parse_utc(table["first_data_package"])
 
-    id = Column(Integer, primary_key=True)
-    mac = Column(Integer)
-    user_id = Column(Integer)
-    segment_id = Column(Integer, ForeignKey("segment.id"))
+    id = Column(BigInteger, primary_key=True, autoincrement=False)
+    mac = Column(BigInteger)
+    user_id = Column(BigInteger)
+    segment_id = Column(BigInteger, ForeignKey("segment.id"))
     direction = Column(Boolean)
-    status = Column(String)
+    status = Column(String(length=20))  # probably one of "active", "non_active", "problematic"
     manual = Column(Boolean)
     added_utc = Column(DateTime(True))
     end_utc = Column(DateTime(True))
@@ -143,5 +143,5 @@ class Camera(Base):
     bikes_right = Column(Boolean)
     cars_left = Column(Boolean)
     cars_right = Column(Boolean)
-    is_calibration_done = Column(String)
+    is_calibration_done = Column(String(length=10))  # probably either "yes" or "no"
     hardware_version = Column(Integer)

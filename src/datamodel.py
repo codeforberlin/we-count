@@ -21,7 +21,7 @@
 # @date    2023-01-11
 
 import datetime
-from sqlalchemy import Column, Integer, Float, DateTime, ForeignKey, Boolean, String, BigInteger
+from sqlalchemy import Column, Integer, Float, DateTime, ForeignKey, Boolean, String, BigInteger, SmallInteger
 from sqlalchemy.orm import declarative_base, relationship
 
 Base = declarative_base()
@@ -62,7 +62,7 @@ class TrafficCount(Base):
     bike_rgt = Column(Float)
     pedestrian_lft = Column(Float)
     pedestrian_rgt = Column(Float)
-    direction = Column(Integer)
+    direction = Column(SmallInteger)
     v85 = Column(Float)
 
     car_speed_histogram = relationship("SpeedHistogram")
@@ -73,8 +73,8 @@ class SpeedHistogram(Base):
 
     id = Column(BigInteger, primary_key=True)
     traffic_count_id = Column(BigInteger, ForeignKey("traffic_count.id"))
-    low_kmh = Column(Integer)
-    up_kmh = Column(Integer)
+    low_kmh = Column(SmallInteger)
+    up_kmh = Column(SmallInteger)
     percent = Column(Float)
 
 
@@ -110,7 +110,7 @@ class SegmentGeometry(Base):
     segment_id = Column(BigInteger, ForeignKey("segment.id"))
     lon = Column(Float)
     lat = Column(Float)
-    seq = Column(Integer)
+    seq = Column(SmallInteger)
 
 
 class Camera(Base):

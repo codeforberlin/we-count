@@ -7,42 +7,16 @@
 # @date    2023-01-03
 
 import os
-import http.client
 import json
-import time
 import datetime
-import argparse
+
+from common import ConnectionProvider, get_options
 
 
-def get_options(args=None):
-    base = os.path.abspath(os.path.dirname(__file__))
-    is_web_server = base.endswith("/cgi-bin")
-    parser = argparse.ArgumentParser()
-    # Berlin as in https://github.com/DLR-TS/sumo-berlin
-    parser.add_argument("-b", "--bbox", default="12.78509,52.17841,13.84308,52.82727",
-                        help="bounding box to retrieve in geo coordinates west,south,east,north")
-    parser.add_argument("-u", "--url", default="telraam-api.net",
-                        help="Download from the given Telraam server")
-    parser.add_argument("-t", "--token-file", default=os.path.join(base, "telraam-token.txt"),
-                        metavar="FILE", help="Read Telraam API token from FILE")
-    out_file = os.path.join(base, "..", "sensor-geojson.js") if is_web_server else "sensor-geojson.js"
-    parser.add_argument("-j", "--json-file", default=out_file,
-                        metavar="FILE", help="Write Geo-JSON output to FILE")
-    parser.add_argument("--camera", action="store_true", default=False,
-                        help="include individual cameras")
-    parser.add_argument("--web-server", action="store_true", default=is_web_server,
-                        help="behave like running in web server")
-    parser.add_argument("-v", "--verbose", action="store_true", default=is_web_server,
-                        help="enable verbose output")
-    return parser.parse_args(args=args)
-
-
-def add_camera(conn, headers, res):
+def add_camera(conns, res):
     for sens in res["features"]:
         segment = sens["properties"]["segment_id"]
-        time.sleep(1)
-        conn.request("GET", "/v1/cameras/segment/%s" % segment, '', headers)
-        sensors = json.loads(conn.getresponse().read())
+        sensors = conns.request("/v1/cameras/segment/%s" % segment)
         print(sensors)
         sens["properties"]["instance_id"] = sensors["camera"][0]["instance_id"]
 
@@ -58,18 +32,15 @@ def main(args=None):
             if options.verbose:
                 print(f"Not recreating {options.json_file}, it is less than {delta} old.")
             return
-    conn = http.client.HTTPSConnection(options.url)
-    with open(options.token_file, encoding="utf8") as token:
-        headers = { 'X-Api-Key': token.read().strip() }
+    conns = ConnectionProvider(options.token_file, options.url)
     payload = '{"time":"live", "contents":"minimal", "area":"%s"}' % options.bbox
-    conn.request("POST", "/v1/reports/traffic_snapshot", payload, headers)
-    res = json.loads(conn.getresponse().read())
+    res = conns.request("/v1/reports/traffic_snapshot", "POST", payload)
     with open(options.json_file, "w", encoding="utf8") as sensor_js:
         if options.verbose and "features" in res:
             print(f"{len(res['features'])} sensor positions read.")
         print("var sensors = ", file=sensor_js, end='')
         if options.camera:
-            add_camera(conn, headers, res)
+            add_camera(conns, res)
         json.dump(res, sensor_js, indent=2)
         print(";", file=sensor_js)
 

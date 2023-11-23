@@ -29,7 +29,7 @@ def main(args=None):
         if datetime.datetime.now() - last_mod < delta:
             if options.verbose:
                 print(f"Not recreating {options.json_file}, it is less than {delta} old.")
-            return
+            return False
     conns = ConnectionProvider(options.token_file, options.url)
     payload = '{"time":"live", "contents":"minimal", "area":"%s"}' % options.bbox
     res = conns.request("/v1/reports/traffic_snapshot", "POST", payload)
@@ -41,6 +41,7 @@ def main(args=None):
             add_camera(conns, res)
         json.dump(res, sensor_js, indent=2)
         print(";", file=sensor_js)
+    return True
 
 
 if __name__ == "__main__":

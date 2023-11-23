@@ -23,8 +23,6 @@ def add_camera(conns, res):
 
 def main(args=None):
     options = get_options(args)
-    if options.web_server:
-        print("Content-Type: text/html\n")
     if os.path.exists(options.json_file):
         last_mod = datetime.datetime.fromtimestamp(os.path.getmtime(options.json_file))
         delta = datetime.timedelta(hours=1)

@@ -65,11 +65,11 @@ def main(args=None):
         session.add(s)
         active = [c.first_data_utc for c in s.cameras if c.first_data_utc is not None]
         if not active:
-            print("no active camera for segment %s." % s.id)
+            print("No active camera for segment %s." % s.id)
             continue
         first = s.last_backup_utc if s.last_backup_utc else min(active)
         last = s.last_data_utc
-        if options.verbose:
+        if options.verbose and first < last:
             print("Retrieving data for segment %s between %s and %s." % (s.id, first, last))
         while first < last:
             interval_end = first + datetime.timedelta(days=90)

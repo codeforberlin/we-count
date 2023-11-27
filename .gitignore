@@ -1,4 +1,5 @@
 __pycache__
 backup.db
+dashenv
 secrets.json
 sensor-geojson.js

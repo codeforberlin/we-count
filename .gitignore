@@ -1,3 +1,4 @@
 __pycache__
+backup.db
 secrets.json
 sensor-geojson.js

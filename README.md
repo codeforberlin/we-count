@@ -1,5 +1,4 @@
 # we-count
-data and documentation for the "we count" project with ADFC
 We-count ist ein Projekt des DLRs in Zusammenarbeit mit den Allgemeinen Deutschen Fahrrad-Club e.V. (ADFC).
 Ziel ist es ein Simulationsmodell in SUMO vom berliner Berzirk Treptow-Köpenick zu modellieren mithilfe von Zähldaten, welche mittels Telraam-Kameras aufgenommen werden/wurden.
 

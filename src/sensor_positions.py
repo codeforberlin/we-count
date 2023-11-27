@@ -30,7 +30,7 @@ def main(args=None):
             if options.verbose:
                 print(f"Not recreating {options.json_file}, it is less than {delta} old.")
             return False
-    conns = ConnectionProvider(options.token_file, options.url)
+    conns = ConnectionProvider(options.tokens, options.url)
     payload = '{"time":"live", "contents":"minimal", "area":"%s"}' % options.bbox
     res = conns.request("/v1/reports/traffic_snapshot", "POST", payload)
     with open(options.json_file, "w", encoding="utf8") as sensor_js:

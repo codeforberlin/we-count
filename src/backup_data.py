@@ -51,12 +51,10 @@ def get_cameras(session, conns, segments):
 
 def main(args=None):
     options = get_options(args)
-    if "+" not in options.database and "://" not  in options.database:
-        options.database = "sqlite+pysqlite:///" + options.database
     engine = create_engine(options.database, echo=options.verbose > 1, future=True)
     Base.metadata.create_all(engine)
     session = Session(engine)
-    conns = ConnectionProvider(options.token_file, options.url)
+    conns = ConnectionProvider(options.tokens, options.url)
     segments = get_segments(session, conns, options)
     get_cameras(session, conns, segments)
     session.commit()

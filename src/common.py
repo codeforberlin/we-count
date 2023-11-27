@@ -14,10 +14,8 @@ import time
 
 
 class ConnectionProvider:
-    def __init__(self, token_file, url):
-        with open(token_file, encoding="utf8") as tokens:
-            self._connections = [(http.client.HTTPSConnection(url), { 'X-Api-Key': t.strip() })
-                                 for t in tokens.readlines() if t.strip()]
+    def __init__(self, tokens, url):
+        self._connections = [(http.client.HTTPSConnection(url), { 'X-Api-Key': t }) for t in tokens]
         self._index = 0
         self._num_queries = 0
 
@@ -52,16 +50,24 @@ def get_options(args=None):
                         help="bounding box to retrieve in geo coordinates west,south,east,north")
     parser.add_argument("-u", "--url", default="telraam-api.net",
                         help="Download from the given Telraam server")
-    parser.add_argument("-t", "--token-file", default="telraam-token.txt",
-                        metavar="FILE", help="Read Telraam API token from FILE")
+    parser.add_argument("-s", "--secrets-file", default="secrets.json",
+                        metavar="FILE", help="Read Telraam API and database credentials from FILE")
     parser.add_argument("-j", "--json-file", default="sensor-geojson.js",
                         metavar="FILE", help="Write Geo-JSON output to FILE")
     parser.add_argument("--camera", action="store_true", default=False,
                         help="include individual cameras")
-    parser.add_argument("-d", "--database", default="backup.db",
+    parser.add_argument("-d", "--database",
                         help="Database output file or URL")
     parser.add_argument("-r", "--retry", type=int, default=1,
                         help="number of retries on failure")
     parser.add_argument("-v", "--verbose", action="count", default=0,
                         help="increase verbosity, twice enables verbose sqlalchemy output")
-    return parser.parse_args(args=args)
+    options = parser.parse_args(args=args)
+    with open(options.secrets_file, encoding="utf8") as sf:
+        secrets = json.load(sf)
+    options.tokens = secrets["tokens"]
+    if not options.database:
+        options.database = secrets.get("database", "backup.db")
+    if "+" not in options.database and "://" not in options.database:
+        options.database = "sqlite+pysqlite:///" + options.database
+    return options

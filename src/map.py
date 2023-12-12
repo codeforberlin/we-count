@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
+# Copyright (c) 2023 Michael Behrisch
+# SPDX-License-Identifier: MIT
 
 from dash import Dash, html, dcc, Output, Input
 from dash_extensions.javascript import assign
 import dash_leaflet as dl
-import dash_leaflet.express as dlx
 
 from api import json_api
 
@@ -14,7 +15,7 @@ from api import json_api
 
 # geojson is loaded from file for performance reasons, could be transfered to pbf someday
 # see https://www.dash-leaflet.com/components/vector_layers/geojson
-app = Dash(__name__)
+app = Dash(__name__, requests_pathname_prefix="/cgi-bin/map.cgi/" if __name__ != '__main__' else None)
 
 attribution='&nbsp;|&nbsp;'.join(['&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
                                   '<a href="https://telraam.net">Telraam</a>'])
@@ -29,7 +30,6 @@ geojson_filter = assign("""function(feature, context){
                         }""")
 # geojson_filter = assign("function(feature, context){return context.hideout.includes(feature.properties.name);}")
 # Create example app.
-app = Dash()
 app.layout = html.Div([
     dl.Map(children=[
         dl.TileLayer(className='bw', attribution=attribution),

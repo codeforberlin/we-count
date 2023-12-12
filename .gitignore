@@ -1,5 +1,7 @@
 __pycache__
 backup.db
-dashenv
+/dashenv
+dashExtensions_default.js
 secrets.json
+sensor.json
 sensor-geojson.js

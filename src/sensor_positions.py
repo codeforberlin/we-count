@@ -33,12 +33,14 @@ def main(args=None):
     conns = ConnectionProvider(options.tokens, options.url)
     payload = '{"time":"live", "contents":"minimal", "area":"%s"}' % options.bbox
     res = conns.request("/v1/reports/traffic_snapshot", "POST", payload)
-    with open(options.json_file, "w", encoding="utf8") as sensor_js:
-        if options.verbose and "features" in res:
-            print(f"{len(res['features'])} sensor positions read.")
+    if options.verbose and "features" in res:
+        print(f"{len(res['features'])} sensor positions read.")
+    if options.camera:
+        add_camera(conns, res)
+    with open(options.json_file, "w", encoding="utf8") as sensor_json:
+        json.dump(res, sensor_json, indent=2)
+    with open(options.js_file, "w", encoding="utf8") as sensor_js:
         print("var sensors = ", file=sensor_js, end='')
-        if options.camera:
-            add_camera(conns, res)
         json.dump(res, sensor_js, indent=2)
         print(";", file=sensor_js)
     return True

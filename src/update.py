@@ -2,10 +2,6 @@
 # Copyright (c) 2023 Michael Behrisch
 # SPDX-License-Identifier: MIT
 
-# @file    update.py
-# @author  Michael Behrisch
-# @date    2023-11-23
-
 import os
 import sys
 
@@ -21,6 +17,8 @@ import backup_data
 
 
 print("Content-Type: text/html\n")
-sensor_file = os.path.join(BASE, "..", "sensor-geojson.js")
-if sensor_positions.main(["-j", sensor_file, "-s", os.path.join(BASE, "secrets.json"), "-v"]):
-    backup_data.main(["-s", os.path.join(BASE, "secrets.json"), "-v"])
+secrets = os.path.join(BASE, "secrets.json")
+if sensor_positions.main(["-j", os.path.join(BASE, "assets", "sensor.json"),
+                          "--js-file", os.path.join(BASE, "..", "sensor-geojson.js"),
+                          "-s", secrets, "-v"]):
+    backup_data.main(["-s", secrets, "-v"])

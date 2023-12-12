@@ -21,4 +21,6 @@ secrets = os.path.join(BASE, "secrets.json")
 if sensor_positions.main(["-j", os.path.join(BASE, "assets", "sensor.json"),
                           "--js-file", os.path.join(BASE, "..", "sensor-geojson.js"),
                           "-s", secrets, "-v"]):
-    backup_data.main(["-s", secrets, "-v"])
+    backup_data.main(["--csv", os.path.join(BASE, "..", "csv/berlin"),
+                      "--csv-segments", os.path.join(BASE, "..", "csv/segments/berlin"),
+                      "-s", secrets, "-v"])

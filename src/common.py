@@ -60,6 +60,12 @@ def get_options(args=None):
                         help="include individual cameras")
     parser.add_argument("-d", "--database",
                         help="Database output file or URL")
+    parser.add_argument("--csv",
+                        help="Output prefix for csv files")
+    parser.add_argument("--csv-segments",
+                        help="Output prefix for csv segment files")
+    parser.add_argument("--csv-start-year", type=int,
+                        help="First year to retrieve when writing csv")
     parser.add_argument("-r", "--retry", type=int, default=1,
                         help="number of retries on failure")
     parser.add_argument("-v", "--verbose", action="count", default=0,

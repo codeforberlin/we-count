@@ -2,11 +2,11 @@
 # Copyright (c) 2023 Michael Behrisch
 # SPDX-License-Identifier: MIT
 
-# @file    backup_data.py
-# @author  Michael Behrisch
-# @date    2023-01-11
-
+import csv
 import datetime
+import glob
+import gzip
+import os
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
@@ -49,16 +49,9 @@ def get_cameras(session, conns, segments):
                 segments[camera["segment_id"]].add_camera(camera)
 
 
-def main(args=None):
-    options = get_options(args)
-    engine = create_engine(options.database, echo=options.verbose > 1, future=True)
-    Base.metadata.create_all(engine)
-    session = Session(engine)
-    conns = ConnectionProvider(options.tokens, options.url)
-    segments = get_segments(session, conns, options)
-    get_cameras(session, conns, segments)
-    session.commit()
+def update_db(segments, session, options, conns):
     print("Retrieving data for %s segments" % len(segments))
+    newest_data = None
     for s in segments.values():
         session.add(s)
         active = [c.first_data_utc for c in s.cameras if c.first_data_utc is not None]
@@ -79,7 +72,56 @@ def main(args=None):
                     session.add(tc)
             first = interval_end
         s.last_backup_utc = s.last_data_utc
+        if newest_data is None or newest_data < s.last_data_utc:
+            newest_data = s.last_data_utc
         session.commit()
+    return newest_data
+
+
+def main(args=None):
+    options = get_options(args)
+    engine = create_engine(options.database, echo=options.verbose > 1, future=True)
+    Base.metadata.create_all(engine)
+    session = Session(engine)
+    conns = ConnectionProvider(options.tokens, options.url)
+    segments = get_segments(session, conns, options)
+    get_cameras(session, conns, segments)
+    session.commit()
+    newest_data = update_db(segments, session, options, conns)
+    if options.csv:
+        if options.csv[-1] != "/":
+            os.makedirs(os.path.dirname(options.csv), exist_ok=True)
+        curr_month = (newest_data.year, newest_data.month)
+        month = (options.csv_start_year, 1) if options.csv_start_year else (curr_month[0] - 1, curr_month[1])
+        while month < curr_month:
+            with gzip.open(options.csv + "_%s_%02i.csv.gz" % month, "wt") as csv_file:
+                csv_out = csv.writer(csv_file)
+                need_header = True
+                for s in segments.values():
+                    for tc in s.counts:
+                        if (tc.date_utc.year, tc.date_utc.month) == month:
+                            if need_header:
+                                csv_out.writerow(tc.get_column_names())
+                                need_header = False
+                            csv_out.writerow(tc.get_column_values())
+            if need_header:  # no data
+                os.remove(csv_file.name)
+            month = (month[0] if month[1] < 12 else month[0] + 1,
+                     month[1] + 1 if month[1] < 12 else 1)
+
+    if options.csv_segments:
+        if options.csv_segments[-1] != "/":
+            os.makedirs(os.path.dirname(options.csv_segments), exist_ok=True)
+        for s in segments.values():
+            with gzip.open(options.csv_segments + "_%s.csv.gz" % s.id, "wt") as csv_file:
+                csv_out = csv.writer(csv_file)
+                need_header = True
+                for tc in s.counts:
+                    if need_header:
+                        csv_out.writerow(tc.get_column_names())
+                        need_header = False
+                    csv_out.writerow(tc.get_column_values())
+
     if options.verbose:
         conns.print_stats()
 

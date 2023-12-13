@@ -4,7 +4,6 @@
 
 import csv
 import datetime
-import glob
 import gzip
 import os
 
@@ -93,7 +92,7 @@ def main(args=None):
             os.makedirs(os.path.dirname(options.csv), exist_ok=True)
         curr_month = (newest_data.year, newest_data.month)
         month = (options.csv_start_year, 1) if options.csv_start_year else (curr_month[0] - 1, curr_month[1])
-        while month < curr_month:
+        while month <= curr_month:
             with gzip.open(options.csv + "_%s_%02i.csv.gz" % month, "wt") as csv_file:
                 csv_out = csv.writer(csv_file)
                 need_header = True

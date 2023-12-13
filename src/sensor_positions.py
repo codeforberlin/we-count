@@ -23,7 +23,7 @@ def add_camera(conns, res):
 
 def main(args=None):
     options = get_options(args)
-    if os.path.exists(options.json_file):
+    if os.path.exists(options.js_file):
         last_mod = datetime.datetime.fromtimestamp(os.path.getmtime(options.json_file))
         delta = datetime.timedelta(hours=1)
         if datetime.datetime.now() - last_mod < delta:

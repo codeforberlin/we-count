@@ -37,7 +37,8 @@
     // const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     const tiles = L.tileLayer.grayscale('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
-        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>&nbsp;|&nbsp;<a href="https://telraam.net">Telraam</a>'
+        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>&nbsp;|&nbsp;<a href="https://telraam.net">Telraam</a>&nbsp;|&nbsp;' +
+                     '<a href="https://berlin-zaehlt.de">Berlin z&auml;hlt Mobilit&auml;t</a>&nbsp;|&nbsp;<a href="/csv">CSV data</a> under <a href="https://creativecommons.org/licenses/by/4.0/">CC-BY 4.0</a></a>'
     }).addTo(map);
 
     function onEachFeature(feature, layer) {

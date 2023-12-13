@@ -1,0 +1,23 @@
+Diese Daten stammen aus dem bürgerwissenschaftlichen Projekt
+"Berlin zählt Mobilität" unterstützt von Telraam, dem ADFC Berlin
+sowie dem Deutschen Zentrum für Luft- und Raumfahrt.
+
+Sie umfassen die von Telraam-Sensoren gesammelten Daten für den Großraum
+Berlin und werden mehrmals täglich aktualisiert. Zur Bedeutung der einzelnen
+Spalten in den CSV-Dateieen siehe auch (englisch):
+https://documenter.getpostman.com/view/8210376/TWDRqyaV#3bb3c6bd-ea23-4329-b885-0d142403ecbb
+
+Die Daten stehen unter der Creative Commons Attribution Lizenz (CC-BY 4.0).
+Für näheres zur Lizenz bitte in die LICENSE-Datei schauen.
+
+# English version
+The data provided here originates from the citizen science project
+"Berlin zählt Mobilität" supported by Telraam, ADFC Berlin
+and the German Aerospace Center.
+
+They contain data collected by Telraam sensors in the Berlin area and get updated
+at least daily. For a documentation on the columns in the CSV see also:
+https://documenter.getpostman.com/view/8210376/TWDRqyaV#3bb3c6bd-ea23-4329-b885-0d142403ecbb
+
+The files are under the Creative Commons Attribution License (CC-BY 4.0).
+For details see the LICENSE file.

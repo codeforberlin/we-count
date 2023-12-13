@@ -37,8 +37,9 @@ def main(args=None):
         print(f"{len(res['features'])} sensor positions read.")
     if options.camera:
         add_camera(conns, res)
-    with open(options.json_file, "w", encoding="utf8") as sensor_json:
-        json.dump(res, sensor_json, indent=2)
+    for f in options.json_file:
+        with open(f, "w", encoding="utf8") as segment_json:
+            json.dump(res, segment_json, indent=2)
     with open(options.js_file, "w", encoding="utf8") as sensor_js:
         print("var sensors = ", file=sensor_js, end='')
         json.dump(res, sensor_js, indent=2)

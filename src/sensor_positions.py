@@ -24,11 +24,11 @@ def add_camera(conns, res):
 def main(args=None):
     options = get_options(args)
     if os.path.exists(options.js_file):
-        last_mod = datetime.datetime.fromtimestamp(os.path.getmtime(options.json_file))
+        last_mod = datetime.datetime.fromtimestamp(os.path.getmtime(options.js_file))
         delta = datetime.timedelta(hours=1)
         if datetime.datetime.now() - last_mod < delta:
             if options.verbose:
-                print(f"Not recreating {options.json_file}, it is less than {delta} old.")
+                print(f"Not recreating {options.js_file}, it is less than {delta} old.")
             return False
     conns = ConnectionProvider(options.tokens, options.url)
     payload = '{"time":"live", "contents":"minimal", "area":"%s"}' % options.bbox

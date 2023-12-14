@@ -85,7 +85,6 @@ def update_db(segments, session, options, conns):
         if newest_data is None or newest_data < s.last_data_utc:
             newest_data = s.last_data_utc
         session.commit()
-        break
     return newest_data
 
 

@@ -43,7 +43,7 @@
 
     function onEachFeature(feature, layer) {
         let popupContent = `<a href="https://telraam.net/home/location/${feature.properties.segment_id}">Telraam sensor on segment ${feature.properties.segment_id}</a><br/>` +
-                           `<a href="csv/segments/bzm_telraam_${feature.properties.segment_id}.csv.gz">CSV data for segment ${feature.properties.segment_id}</a>`;
+                           `<a href="csv/segments/bzm_telraam_${feature.properties.segment_id}.csv">CSV data for segment ${feature.properties.segment_id}</a>`;
 
         if (feature.properties && feature.properties.popupContent) {
             popupContent += feature.properties.popupContent;

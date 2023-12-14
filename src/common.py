@@ -9,6 +9,7 @@ import argparse
 import http.client
 import json
 import pprint
+import random
 import sys
 import time
 
@@ -16,7 +17,7 @@ import time
 class ConnectionProvider:
     def __init__(self, tokens, url):
         self._connections = [(http.client.HTTPSConnection(url), { 'X-Api-Key': t }) for t in tokens]
-        self._index = 0
+        self._index = random.randint(0, len(self._connections) - 1)
         self._num_queries = 0
 
     def request(self, path, method='GET', payload='', retries=0, required=None):

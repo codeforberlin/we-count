@@ -4,3 +4,4 @@ dash-leaflet
 mysqlclient
 plotly>=4.0
 pandas
+xlsxwriter

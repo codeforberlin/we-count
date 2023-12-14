@@ -5,3 +5,6 @@ dashExtensions_default.js
 secrets.json
 sensor.json
 sensor-geojson.js
+csv/*.csv
+csv/*.csv.gz
+csv/*.xlsx

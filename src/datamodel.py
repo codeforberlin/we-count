@@ -6,7 +6,6 @@
 # @date    2023-01-11
 
 import datetime
-from fractions import Fraction
 
 from sqlalchemy import Column, Integer, Float, DateTime, ForeignKey, Boolean, String, BigInteger, SmallInteger, TypeDecorator
 from sqlalchemy.orm import declarative_base, relationship
@@ -34,19 +33,6 @@ def parse_utc(date):
 class TrafficCount(Base):
     __tablename__ = "traffic_count"
 
-    def __init__(self, table):
-        for attr, val in table.items():
-            if hasattr(self, attr):
-                setattr(self, attr, None if val == -1 else val)
-        self.date_utc = parse_utc(table["date"])
-        self.interval_seconds = 3600 if table["interval"] == "hourly" else None
-        self.uptime_rel = table["uptime"]
-        self.car_speed_histogram_type = HISTOGRAM_0_120PLUS_5KMH
-        speed_hist = table["car_speed_hist_0to120plus"]
-        last_idx = max([i for i, v in enumerate(speed_hist) if v > 0] + [0])
-        fracs = [Fraction(v / 100).limit_denominator(9999) for v in speed_hist[:last_idx+1]]
-        self.car_speed_histogram = ",".join(["%s/%s" % (f.numerator, f.denominator) if f.denominator != 1 else str(f.numerator) for f in fracs])
-    
     id = Column(IntID, primary_key=True)
     instance_id = Column(IntID)
     segment_id = Column(IntID, ForeignKey("segment.id"))
@@ -66,6 +52,22 @@ class TrafficCount(Base):
     car_speed_histogram_type = Column(SmallInteger)
     car_speed_histogram = Column(String(length=250))
 
+    def __init__(self, table):
+        for attr, val in table.items():
+            if hasattr(self, attr):
+                setattr(self, attr, None if val == -1 else val)
+        self.date_utc = parse_utc(table["date"])
+        self.interval_seconds = 3600 if table["interval"] == "hourly" else None
+        self.uptime_rel = table["uptime"]
+        self.car_speed_histogram_type = HISTOGRAM_0_120PLUS_5KMH
+        speed_hist = table["car_speed_hist_0to120plus"]
+        last_idx = max([i for i, v in enumerate(speed_hist) if v > 0] + [0])
+        counts = [round(v / 100 * self._unscaled_car_count()) for v in speed_hist[:last_idx+1]]
+        self.car_speed_histogram = ",".join(["%s" % c for c in counts])
+
+    def _unscaled_car_count(self):
+        return round((self.car_lft + self.car_rgt) * self.uptime_rel)
+
     def get_column_names(self):
         res = ["segment_id", "date_local", "uptime"]
         for mode in ("ped", "bike", "car", "heavy"):
@@ -82,52 +84,40 @@ class TrafficCount(Base):
             result += [lft, rgt, lft + rgt]
         result += [self.v85]
         if self.car_speed_histogram_type == HISTOGRAM_0_120PLUS_5KMH:
-            fracs = [Fraction(f) for f in self.car_speed_histogram.split(",")]
+            counts = [float(f) for f in self.car_speed_histogram.split(",")]
             for low in range(0, 80, 10):
-                high = low + 10 if low < 70 else 1e15
-                p = Fraction(0)
-                for i, f in enumerate(fracs):
+                high = low + 10 if low < 70 else 1000
+                c = 0.
+                for i, f in enumerate(counts):
                     if low <= 5 * i and 5 * (i + 1) <= high:
-                        p += f
-                result.append(round(float(100 * p), 2))
+                        c += f
+                result.append(round(100 * c / self._unscaled_car_count(), 2) if c != 0. else 0.)
         return result
 
 
 class Segment(Base):
     __tablename__ = "segment"
 
+    id = Column(IntID, primary_key=True, autoincrement=False)
+    last_data_utc = Column(TZDateTime)
+    last_backup_utc = Column(TZDateTime)
+    timezone = Column(String(length=50))
+    geometry = Column(String(length=500))
+
+    cameras = relationship("Camera")
+    counts = relationship("TrafficCount")
+
     def __init__(self, properties, geometry):
         self.id = properties["segment_id"]
         self.last_data_utc = parse_utc(properties["last_data_package"])
         self.timezone = properties["timezone"]
-        for i, p in enumerate(geometry):
-            point = SegmentGeometry(lon=p[0], lat=p[1], seq=i)
-            self.geom.append(point)
+        self.geometry = geometry
 
     def add_camera(self, table):
         self.cameras.append(Camera(table))
 
     def update(self, properties):
         self.last_data_utc = parse_utc(properties["last_data_package"])
-
-    id = Column(IntID, primary_key=True, autoincrement=False)
-    last_data_utc = Column(TZDateTime)
-    last_backup_utc = Column(TZDateTime)
-    timezone = Column(String(length=50))
-
-    geom = relationship("SegmentGeometry")
-    cameras = relationship("Camera")
-    counts = relationship("TrafficCount")
-
-
-class SegmentGeometry(Base):
-    __tablename__ = "segment_geom"
-
-    id = Column(IntID, primary_key=True)
-    segment_id = Column(IntID, ForeignKey("segment.id"))
-    lon = Column(Float)
-    lat = Column(Float)
-    seq = Column(SmallInteger)
 
 
 class Camera(Base):

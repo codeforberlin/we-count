@@ -89,7 +89,31 @@ def update_db(segments, session, options, conns):
         if newest_data is None or newest_data < s.last_data_utc:
             newest_data = s.last_data_utc
         session.commit()
+        break
     return newest_data
+
+
+def round_comma(v, digits):
+    return str(round(v, digits)).replace(".", ",") if v is not None else ""
+
+
+def get_column_names():
+    res = ["segment_id", "date_local", "uptime"]
+    for mode in ("ped", "bike", "car", "heavy"):
+        res += [mode + "_lft", mode + "_rgt", mode + "_total"]
+    return res + ["v85"] + ["car_speed%s" % s for s in range(0, 80, 10)]
+
+
+def get_column_values(tc, tz):
+    result = [tc.segment_id, str(tc.date_utc.astimezone(tz))[:-9], round_comma(tc.uptime_rel, 6)]
+    for mode in ("pedestrian", "bike", "car", "heavy"):
+        lft = round(getattr(tc, mode + "_lft"))
+        rgt = round(getattr(tc, mode + "_rgt"))
+        result += [lft, rgt, lft + rgt]
+    result += [round_comma(tc.v85, 1)]
+    for v in tc.get_histogram():
+        result.append(round_comma(v, 2))
+    return result
 
 
 def write_xl(filename, segments, month):
@@ -101,12 +125,28 @@ def write_xl(filename, segments, month):
             for tc in s.counts:
                 if (tc.date_utc.year, tc.date_utc.month) == month:
                     if row == 0:
-                        worksheet.write_row(row, 0, tc.get_column_names())
+                        worksheet.write_row(row, 0, get_column_names())
                         row += 1
-                    worksheet.write_row(row, 0, tc.get_column_values(tzinfo))
+                    worksheet.write_row(row, 0, get_column_values(tc, tzinfo))
                     row += 1
     if row == 0:
         os.remove(filename)
+
+
+def write_csv(filename, segments, month=None):
+    with gzip.open(filename, "wt") as csv_file:
+        csv_out = csv.writer(csv_file, delimiter=";")
+        need_header = True
+        for s in segments:
+            tzinfo=zoneinfo.ZoneInfo(s.timezone)
+            for tc in s.counts:
+                if month is None or (tc.date_utc.year, tc.date_utc.month) == month:
+                    if need_header:
+                        csv_out.writerow(get_column_names())
+                        need_header = False
+                    csv_out.writerow(get_column_values(tc, tzinfo))
+    if need_header:  # no data
+        os.remove(csv_file.name)
 
 
 def main(args=None):
@@ -129,19 +169,7 @@ def main(args=None):
         month = (options.csv_start_year, 1) if options.csv_start_year else (curr_month[0] - 1, curr_month[1])
         while month <= curr_month:
             # write_xl(options.csv + "_%s_%02i.xlsx" % month, segments, month)
-            with gzip.open(options.csv + "_%s_%02i.csv.gz" % month, "wt") as csv_file:
-                csv_out = csv.writer(csv_file)
-                need_header = True
-                for s in segments.values():
-                    tzinfo=zoneinfo.ZoneInfo(s.timezone)
-                    for tc in s.counts:
-                        if (tc.date_utc.year, tc.date_utc.month) == month:
-                            if need_header:
-                                csv_out.writerow(tc.get_column_names())
-                                need_header = False
-                            csv_out.writerow(tc.get_column_values(tzinfo))
-            if need_header:  # no data
-                os.remove(csv_file.name)
+            write_csv(options.csv + "_%s_%02i.csv.gz" % month, segments.values(), month)
             month = (month[0] if month[1] < 12 else month[0] + 1,
                      month[1] + 1 if month[1] < 12 else 1)
 
@@ -149,15 +177,7 @@ def main(args=None):
         if os.path.dirname(options.csv_segments):
             os.makedirs(os.path.dirname(options.csv_segments), exist_ok=True)
         for s in segments.values():
-            tzinfo=zoneinfo.ZoneInfo(s.timezone)
-            with gzip.open(options.csv_segments + "_%s.csv.gz" % s.id, "wt") as csv_file:
-                csv_out = csv.writer(csv_file)
-                need_header = True
-                for tc in s.counts:
-                    if need_header:
-                        csv_out.writerow(tc.get_column_names())
-                        need_header = False
-                    csv_out.writerow(tc.get_column_values(tzinfo))
+            write_csv(options.csv_segments + "_%s.csv.gz" % s.id, [s])
 
     if conns and options.verbose:
         conns.print_stats()

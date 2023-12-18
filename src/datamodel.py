@@ -68,21 +68,8 @@ class TrafficCount(Base):
     def _unscaled_car_count(self):
         return round((self.car_lft + self.car_rgt) * self.uptime_rel)
 
-    def get_column_names(self):
-        res = ["segment_id", "date_local", "uptime"]
-        for mode in ("ped", "bike", "car", "heavy"):
-            res += [mode + "_lft", mode + "_rgt", mode + "_total"]
-        res += ["v85"]
-        return res + ["car_speed%s" % s for s in range(0, 80, 10)]
-
-    def get_column_values(self, tz):
-        result = [self.segment_id, str(self.date_utc.astimezone(tz))[:-9],
-                  round(self.uptime_rel, 6)]
-        for mode in ("pedestrian", "bike", "car", "heavy"):
-            lft = round(getattr(self, mode + "_lft"))
-            rgt = round(getattr(self, mode + "_rgt"))
-            result += [lft, rgt, lft + rgt]
-        result += [self.v85]
+    def get_histogram(self):
+        result = []
         if self.car_speed_histogram_type == HISTOGRAM_0_120PLUS_5KMH:
             counts = [float(f) for f in self.car_speed_histogram.split(",")]
             for low in range(0, 80, 10):
@@ -91,7 +78,7 @@ class TrafficCount(Base):
                 for i, f in enumerate(counts):
                     if low <= 5 * i and 5 * (i + 1) <= high:
                         c += f
-                result.append(round(100 * c / self._unscaled_car_count(), 2) if c != 0. else 0.)
+                result.append(100 * c / self._unscaled_car_count() if c != 0. else 0.)
         return result
 
 

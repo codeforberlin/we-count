@@ -106,9 +106,9 @@ def get_column_names():
 def get_column_values(tc, tz):
     result = [tc.segment_id, str(tc.date_utc.astimezone(tz))[:-9], round_comma(tc.uptime_rel, 6)]
     for mode in ("pedestrian", "bike", "car", "heavy"):
-        lft = round(getattr(tc, mode + "_lft"))
-        rgt = round(getattr(tc, mode + "_rgt"))
-        result += [lft, rgt, lft + rgt]
+        lft = getattr(tc, mode + "_lft")
+        rgt = getattr(tc, mode + "_rgt")
+        result += [round(lft), round(rgt), round(lft + rgt)]
     result += [round_comma(tc.v85, 1)]
     for v in tc.get_histogram():
         result.append(round_comma(v, 2))

@@ -10,6 +10,7 @@ import os
 import json
 import datetime
 
+import osm
 from common import ConnectionProvider, get_options
 
 
@@ -19,6 +20,13 @@ def add_camera(conns, res):
         sensors = conns.request("/v1/cameras/segment/%s" % segment)
         print(sensors)
         sens["properties"]["instance_id"] = sensors["camera"][0]["instance_id"]
+
+
+def add_osm(res):
+    for s in res["features"]:
+        edge = osm.find_edge(s)
+        del edge["geometry"]
+        s["properties"]["osm"] = edge
 
 
 def main(args=None):
@@ -33,8 +41,13 @@ def main(args=None):
     conns = ConnectionProvider(options.tokens, options.url)
     payload = '{"time":"live", "contents":"minimal", "area":"%s"}' % options.bbox
     res = conns.request("/v1/reports/traffic_snapshot", "POST", payload)
-    if options.verbose and "features" in res:
+    features = res.get("features")
+    if not features:
+        print("no features")
+        return
+    if options.verbose:
         print(f"{len(res['features'])} sensor positions read.")
+    add_osm(res)
     if options.camera:
         add_camera(conns, res)
     for f in options.json_file:

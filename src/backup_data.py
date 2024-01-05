@@ -92,8 +92,8 @@ def update_db(segments, session, options, conns):
     return newest_data
 
 
-def round_comma(v, digits):
-    return str(round(v, digits)).replace(".", ",") if v is not None else ""
+def round_separator(v, digits, sep="."):
+    return str(round(v, digits)).replace(".", sep) if v is not None else ""
 
 
 def get_column_names():
@@ -104,14 +104,14 @@ def get_column_names():
 
 
 def get_column_values(tc, tz):
-    result = [tc.segment_id, str(tc.date_utc.astimezone(tz))[:-9], round_comma(tc.uptime_rel, 6)]
+    result = [tc.segment_id, str(tc.date_utc.astimezone(tz))[:-9], round_separator(tc.uptime_rel, 6)]
     for mode in ("pedestrian", "bike", "car", "heavy"):
         lft = getattr(tc, mode + "_lft")
         rgt = getattr(tc, mode + "_rgt")
         result += [round(lft), round(rgt), round(lft + rgt)]
-    result += [round_comma(tc.v85, 1)]
+    result += [round_separator(tc.v85, 1)]
     for v in tc.get_histogram():
-        result.append(round_comma(v, 2))
+        result.append(round_separator(v, 2))
     return result
 
 
@@ -132,9 +132,9 @@ def write_xl(filename, segments, month):
         os.remove(filename)
 
 
-def write_csv(filename, segments, month=None):
+def write_csv(filename, segments, month=None, delimiter=","):
     with gzip.open(filename, "wt") as csv_file:
-        csv_out = csv.writer(csv_file, delimiter=";")
+        csv_out = csv.writer(csv_file, delimiter=delimiter)
         need_header = True
         for s in segments:
             tzinfo=zoneinfo.ZoneInfo(s.timezone)
@@ -146,6 +146,17 @@ def write_csv(filename, segments, month=None):
                     csv_out.writerow(get_column_values(tc, tzinfo))
     if need_header:  # no data
         os.remove(csv_file.name)
+
+
+def add_month(offset, year, month):
+    month += offset
+    while month > 12:
+        year += 1
+        month -= 12
+    while month < 1:
+        year -= 1
+        month += 12
+    return year, month
 
 
 def main(args=None):
@@ -165,12 +176,11 @@ def main(args=None):
         if os.path.dirname(options.csv):
             os.makedirs(os.path.dirname(options.csv), exist_ok=True)
         curr_month = (newest_data.year, newest_data.month)
-        month = (options.csv_start_year, 1) if options.csv_start_year else (curr_month[0] - 1, curr_month[1])
+        month = (options.csv_start_year, 1) if options.csv_start_year else add_month(-1, *curr_month)
         while month <= curr_month:
             # write_xl(options.csv + "_%s_%02i.xlsx" % month, segments, month)
             write_csv(options.csv + "_%s_%02i.csv.gz" % month, segments.values(), month)
-            month = (month[0] if month[1] < 12 else month[0] + 1,
-                     month[1] + 1 if month[1] < 12 else 1)
+            month = add_month(1, *month)
 
     if options.csv_segments:
         if os.path.dirname(options.csv_segments):

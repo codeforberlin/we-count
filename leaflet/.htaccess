@@ -1,0 +1,4 @@
+RewriteEngine On
+
+RewriteRule ^api/(.*)$ /cgi-bin/map.cgi/api/$1 [R=301,L]
+

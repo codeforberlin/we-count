@@ -89,4 +89,3 @@ if __name__ == "__main__":
     fig = px.line_mapbox(lat=lats, lon=lons, hover_name=names,
                          mapbox_style='open-street-map')
     fig.show()
-

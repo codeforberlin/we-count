@@ -59,6 +59,8 @@ def get_options(args=None):
                         metavar="FILE", help="Write Geo-JSON output to FILE")
     parser.add_argument("--camera", action="store_true", default=False,
                         help="include individual cameras")
+    parser.add_argument("--osm", action="store_true", default=False,
+                        help="recreate OpenStreetMap data even if it is present")
     parser.add_argument("-d", "--database",
                         help="Database output file or URL")
     parser.add_argument("--csv",

@@ -15,18 +15,23 @@ from common import ConnectionProvider, get_options
 
 
 def add_camera(conns, res):
-    for sens in res["features"]:
-        segment = sens["properties"]["segment_id"]
-        sensors = conns.request("/v1/cameras/segment/%s" % segment)
-        print(sensors)
-        sens["properties"]["instance_id"] = sensors["camera"][0]["instance_id"]
+    for segment in res["features"]:
+        segment_id = segment["properties"]["segment_id"]
+        sensors = conns.request("/v1/cameras/segment/" + segment_id)
+        # print(sensors)
+        segment["properties"]["instance_id"] = sensors["camera"][0]["instance_id"]
 
 
-def add_osm(res):
-    for s in res["features"]:
-        edge = osm.find_edge(s)
-        del edge["geometry"]
-        s["properties"]["osm"] = edge
+def add_osm(res, old_data):
+    lookup = {s["properties"]["segment_id"] : s for s in old_data["features"]}
+    for segment in res["features"]:
+        segment_id = segment["properties"]["segment_id"]
+        if segment_id in lookup and "osm" in lookup[segment_id]["properties"]:
+            osm_edge = lookup[segment_id]["properties"]["osm"]
+        else:
+            osm_edge = osm.find_edge(segment)
+            del osm_edge["geometry"]
+        segment["properties"]["osm"] = osm_edge
 
 
 def main(args=None):
@@ -47,7 +52,10 @@ def main(args=None):
         return
     if options.verbose:
         print(f"{len(res['features'])} sensor positions read.")
-    add_osm(res)
+    if options.json_file and os.path.exists(options.json_file[0]):
+        with open(options.json_file[0], encoding="utf8") as of:
+            old_data = json.load(of)
+    add_osm(res, {'features': []} if options.osm else old_data)
     if options.camera:
         add_camera(conns, res)
     for f in options.json_file:

@@ -18,10 +18,12 @@ import backup_data
 
 print("Content-Type: text/html\n")
 secrets = os.path.join(BASE, "secrets.json")
+csv_base = os.path.join(BASE, "..", "csv")
 if sensor_positions.main(["-j", os.path.join(BASE, "assets", "segments.geojson"),
-                          "-j", os.path.join(BASE, "..", "csv/bzm_telraam_segments.geojson"),
+                          "-j", os.path.join(csv_base, "bzm_telraam_segments.geojson"),
                           "--js-file", os.path.join(BASE, "..", "sensor-geojson.js"),
                           "-s", secrets, "-v"]):
-    backup_data.main(["--csv", os.path.join(BASE, "..", "csv/bzm_telraam"),
-                      "--csv-segments", os.path.join(BASE, "..", "csv/segments/bzm_telraam"),
+    backup_data.main(["-j", os.path.join(csv_base, "bzm_telraam_segments.geojson"),
+                      "--csv", os.path.join(csv_base, "bzm_telraam"),
+                      "--csv-segments", os.path.join(csv_base, "segments", "bzm_telraam"),
                       "-s", secrets, "-v"])

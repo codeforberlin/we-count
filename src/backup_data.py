@@ -18,34 +18,23 @@ from common import ConnectionProvider, get_options
 from datamodel import Base, TrafficCount, Segment, Camera
 
 
-def get_segments(session, conns, options):
+def get_segments(session, options):
     segments = {}
-    if conns is None:
+    if options.json_file and os.path.exists(options.json_file[0]):
+        with open(options.json_file[0], encoding="utf8") as of:
+            segment_data = json.load(of)
+    else:
         for s in session.execute(select(Segment)):
             segments[s.Segment.id] = s.Segment
         return segments
-    bbox = [float(f) for f in options.bbox.split(",")]
-    snap = conns.request("/v1/reports/traffic_snapshot_live", required="features")
-    # snap = json.load(open('sensor.geojson'))
-    for segment in snap.get("features", []):
-        inside = False
-        if len(segment["geometry"]["coordinates"]) > 1:
-            print("Warning! Real multiline for segment", segment["properties"]["segment_id"])
-        rounded = []
-        for p in segment["geometry"]["coordinates"][0]:
-            r = (round(p[0], 6), round(p[1], 6))
-            inside = (bbox[0] < r[0] < bbox[2] and bbox[1] < r[1] < bbox[3])
-            if not inside:
-                break
-            rounded.append(r)
-        if inside:
-            sid = segment["properties"]["segment_id"]
-            s = session.get(Segment, sid)
-            if s is None:
-                s = Segment(segment["properties"], json.dumps(rounded, separators=(",", ":")))
-            else:
-                s.update(segment["properties"])
-            segments[sid] = s
+    for segment in segment_data.get("features", []):
+        sid = segment["properties"]["segment_id"]
+        s = session.get(Segment, sid)
+        if s is None:
+            s = Segment(segment["properties"])
+        else:
+            s.update(segment["properties"])
+        segments[sid] = s
     return segments
 
 
@@ -165,7 +154,7 @@ def main(args=None):
     Base.metadata.create_all(engine)
     session = Session(engine)
     conns = ConnectionProvider(options.tokens, options.url) if options.url else None
-    segments = get_segments(session, conns, options)
+    segments = get_segments(session, options)
     if conns:
         get_cameras(session, conns, segments)
         session.commit()

@@ -5,4 +5,6 @@ mysqlclient
 osmnx
 plotly>=4.0
 pandas
+pyproj
+timezonefinder
 xlsxwriter

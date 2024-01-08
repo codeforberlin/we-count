@@ -89,16 +89,14 @@ class Segment(Base):
     last_data_utc = Column(TZDateTime)
     last_backup_utc = Column(TZDateTime)
     timezone = Column(String(length=50))
-    geometry = Column(String(length=500))
 
     cameras = relationship("Camera")
     counts = relationship("TrafficCount")
 
-    def __init__(self, properties, geometry):
+    def __init__(self, properties):
         self.id = properties["segment_id"]
         self.last_data_utc = parse_utc(properties["last_data_package"])
         self.timezone = properties["timezone"]
-        self.geometry = geometry
 
     def add_camera(self, table):
         self.cameras.append(Camera(table))

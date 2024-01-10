@@ -16,9 +16,13 @@ from api import json_api
 # geojson is loaded from file for performance reasons, could be transfered to pbf someday
 # see https://www.dash-leaflet.com/components/vector_layers/geojson
 app = Dash(__name__, requests_pathname_prefix="/cgi-bin/map.cgi/" if __name__ != '__main__' else None)
-
-attribution='&nbsp;|&nbsp;'.join(['&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-                                  '<a href="https://telraam.net">Telraam</a>'])
+sep = '&nbsp;|&nbsp;'
+attribution=(sep.join(['&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+                       '<a href="https://telraam.net">Telraam</a>',
+                       '<a href="https://berlin-zaehlt.de">Berlin z&auml;hlt Mobilit&auml;t</a>']) + '<br/>' +
+             sep.join(['<a href="https://dashboard.berlin-zaehlt.de">Dashboard</a>',
+                       '<a href="https://github.com/DLR-TS/wecount">GitHub</a>',
+                       '<a href="/csv">CSV data</a> under <a href="https://creativecommons.org/licenses/by/4.0/">CC-BY 4.0</a>']))
 
 # Create drop down options.
 dd_options = [dict(value=c, label=c) for c in ["active", "non-active"]]

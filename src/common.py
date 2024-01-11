@@ -14,6 +14,9 @@ import sys
 import time
 
 
+GEO_JSON_NAME = "bzm_telraam_segments.geojson"
+
+
 class ConnectionProvider:
     def __init__(self, tokens, url):
         self._connections = [(http.client.HTTPSConnection(url), { 'X-Api-Key': t }) for t in tokens]

@@ -7,6 +7,7 @@ from dash_extensions.javascript import assign
 import dash_leaflet as dl
 
 from api import json_api
+from common import GEO_JSON_NAME
 
 
 # css for grayscale is loaded from separate file,
@@ -15,7 +16,8 @@ from api import json_api
 
 # geojson is loaded from file for performance reasons, could be transfered to pbf someday
 # see https://www.dash-leaflet.com/components/vector_layers/geojson
-app = Dash(__name__, requests_pathname_prefix="/cgi-bin/map.cgi/" if __name__ != '__main__' else None)
+deployed = __name__ != '__main__'
+app = Dash(__name__, requests_pathname_prefix="/cgi-bin/map.cgi/" if deployed else None)
 sep = '&nbsp;|&nbsp;'
 attribution=(sep.join(['&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
                        '<a href="https://telraam.net">Telraam</a>',
@@ -37,7 +39,8 @@ geojson_filter = assign("""function(feature, context){
 app.layout = html.Div([
     dl.Map(children=[
         dl.TileLayer(className='bw', attribution=attribution),
-        dl.GeoJSON(url='assets/segments.geojson', filter=geojson_filter, hideout=dd_defaults, id="geojson")
+        dl.GeoJSON(url=('/csv/' + GEO_JSON_NAME) if deployed else 'assets/sensor.json',
+                   filter=geojson_filter, hideout=dd_defaults, id="geojson")
     ], style={'height': '80vh'}, center=(52.45, 13.55), zoom=11),
     dcc.Dropdown(id="dd", value=dd_defaults, options=dd_options, clearable=False, multi=True)
 ])

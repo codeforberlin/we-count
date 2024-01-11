@@ -14,16 +14,16 @@ for p in sys.path:
 
 import sensor_positions
 import backup_data
+from common import GEO_JSON_NAME
 
 
 print("Content-Type: text/html\n")
 secrets = os.path.join(BASE, "secrets.json")
 csv_base = os.path.join(BASE, "..", "csv")
-if sensor_positions.main(["-j", os.path.join(BASE, "assets", "segments.geojson"),
-                          "-j", os.path.join(csv_base, "bzm_telraam_segments.geojson"),
+if sensor_positions.main(["-j", os.path.join(csv_base, GEO_JSON_NAME),
                           "--js-file", os.path.join(BASE, "..", "sensor-geojson.js"),
                           "-s", secrets, "-v"]):
-    backup_data.main(["-j", os.path.join(csv_base, "bzm_telraam_segments.geojson"),
+    backup_data.main(["-j", os.path.join(csv_base, GEO_JSON_NAME),
                       "--csv", os.path.join(csv_base, "bzm_telraam"),
                       "--csv-segments", os.path.join(csv_base, "segments", "bzm_telraam"),
                       "-s", secrets, "-v"])

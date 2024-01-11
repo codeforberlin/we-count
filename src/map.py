@@ -34,13 +34,25 @@ geojson_filter = assign("""function(feature, context){
                         const active = feature.properties.uptime === 0;
                         return (active && context.hideout.includes('active')) || (!active && context.hideout.includes('non-active'));
                         }""")
-# geojson_filter = assign("function(feature, context){return context.hideout.includes(feature.properties.name);}")
-# Create example app.
+attach_popup = assign("""
+    function onEachFeature(feature, layer) {
+        let popupContent = `<a href="https://telraam.net/home/location/${feature.properties.segment_id}">Telraam sensor on segment ${feature.properties.segment_id}</a>`
+        if (feature.properties.last_data_package) {
+            popupContent += `<br/><a href="csv/segments/bzm_telraam_${feature.properties.segment_id}.csv">CSV data for segment ${feature.properties.segment_id}</a>`;
+        }
+        if (feature.properties && feature.properties.popupContent) {
+            popupContent += feature.properties.popupContent;
+        }
+        layer.bindPopup(popupContent);
+    }
+""")
+
 app.layout = html.Div([
     dl.Map(children=[
         dl.TileLayer(className='bw', attribution=attribution),
         dl.GeoJSON(url=('/csv/' + GEO_JSON_NAME) if deployed else 'assets/sensor.json',
-                   filter=geojson_filter, hideout=dd_defaults, id="geojson")
+                   filter=geojson_filter, hideout=dd_defaults, id="geojson",
+                   onEachFeature=attach_popup)
     ], style={'height': '80vh'}, center=(52.45, 13.55), zoom=11),
     dcc.Dropdown(id="dd", value=dd_defaults, options=dd_options, clearable=False, multi=True)
 ])

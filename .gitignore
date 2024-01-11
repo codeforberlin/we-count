@@ -1,5 +1,6 @@
 __pycache__
 backup.db
+/cache
 /dashenv
 dashExtensions_default.js
 secrets.json

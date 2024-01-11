@@ -53,7 +53,7 @@ app.layout = html.Div([
         dl.GeoJSON(url=('/csv/' + GEO_JSON_NAME) if deployed else 'assets/sensor.json',
                    filter=geojson_filter, hideout=dd_defaults, id="geojson",
                    onEachFeature=attach_popup)
-    ], style={'height': '80vh'}, center=(52.45, 13.55), zoom=11),
+    ], style={'height': '80vh'}, center=(52.5, 13.55), zoom=11),
     dcc.Dropdown(id="dd", value=dd_defaults, options=dd_options, clearable=False, multi=True)
 ])
 # Link drop down to geojson hideout prop (could be done with a normal callback, but clientside is more performant).

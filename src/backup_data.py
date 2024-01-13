@@ -14,9 +14,9 @@ import json
 import os
 import zoneinfo
 
+import openpyxl
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
-import xlsxwriter
 
 from common import ConnectionProvider, get_options
 from datamodel import Base, TrafficCount, Segment, Camera
@@ -85,8 +85,10 @@ def update_db(segments, session, options, conns):
     return newest_data
 
 
-def round_separator(v, digits, sep="."):
-    return str(round(v, digits)).replace(".", sep) if v is not None else ""
+def round_separator(v, digits, sep):
+    if sep:
+        return str(round(v, digits)).replace(".", sep) if v is not None else ""
+    return round(v, digits) if v is not None else None
 
 
 def get_column_names():
@@ -96,33 +98,34 @@ def get_column_names():
     return res + ["v85"] + ["car_speed%s" % s for s in range(0, 80, 10)]
 
 
-def get_column_values(tc, tz):
-    result = [tc.segment_id, str(tc.date_utc.astimezone(tz))[:-9], round_separator(tc.uptime_rel, 6)]
+def get_column_values(tc, tz, sep=None):
+    result = [tc.segment_id, str(tc.date_utc.astimezone(tz))[:-9], round_separator(tc.uptime_rel, 6, sep)]
     for mode in ("pedestrian", "bike", "car", "heavy"):
         lft = getattr(tc, mode + "_lft")
         rgt = getattr(tc, mode + "_rgt")
         result += [round(lft), round(rgt), round(lft + rgt)]
-    result += [round_separator(tc.v85, 1)]
+    result += [round_separator(tc.v85, 1, sep)]
     for v in tc.get_histogram():
-        result.append(round_separator(v, 2))
+        result.append(round_separator(v, 2, sep))
     return result
 
 
-def write_xl(filename, segments, month):
-    with xlsxwriter.Workbook(filename) as workbook:
-        row = 0
-        worksheet = workbook.add_worksheet()
-        for s in segments.values():
-            tzinfo=zoneinfo.ZoneInfo(s.timezone)
-            for tc in s.counts:
-                if (tc.date_utc.year, tc.date_utc.month) == month:
-                    if row == 0:
-                        worksheet.write_row(row, 0, get_column_names())
-                        row += 1
-                    worksheet.write_row(row, 0, get_column_values(tc, tzinfo))
+def write_xl(filename, segments, month=None):
+    wb = openpyxl.Workbook()
+    row = 1
+    for s in segments:
+        tzinfo=zoneinfo.ZoneInfo(s.timezone)
+        for tc in s.counts:
+            if month is None or (tc.date_utc.year, tc.date_utc.month) == month:
+                if row == 1:
+                    for col, val in enumerate(get_column_names(), start=1):
+                        wb.active.cell(row=row, column=col).value = val
                     row += 1
-    if row == 0:
-        os.remove(filename)
+                for col, val in enumerate(get_column_values(tc, tzinfo), start=1):
+                    wb.active.cell(row=row, column=col).value = val
+                row += 1
+    if row > 1:
+        wb.save(filename)
 
 
 def write_csv(filename, segments, month=None, delimiter=","):
@@ -158,6 +161,7 @@ def main(args=None):
     Base.metadata.create_all(engine)
     session = Session(engine)
     conns = ConnectionProvider(options.tokens, options.url) if options.url else None
+    excel = False
     segments = get_segments(session, options)
     if conns:
         get_cameras(session, conns, segments)
@@ -171,15 +175,20 @@ def main(args=None):
         curr_month = (newest_data.year, newest_data.month)
         month = (options.csv_start_year, 1) if options.csv_start_year else add_month(-1, *curr_month)
         while month <= curr_month:
-            # write_xl(options.csv + "_%s_%02i.xlsx" % month, segments, month)
-            write_csv(options.csv + "_%s_%02i.csv.gz" % month, segments.values(), month)
+            if excel:
+                write_xl(options.csv + "_%s_%02i.xlsx" % month, segments.values(), month)
+            else:
+                write_csv(options.csv + "_%s_%02i.csv.gz" % month, segments.values(), month)
             month = add_month(1, *month)
 
     if options.csv_segments:
         if os.path.dirname(options.csv_segments):
             os.makedirs(os.path.dirname(options.csv_segments), exist_ok=True)
         for s in segments.values():
-            write_csv(options.csv_segments + "_%s.csv.gz" % s.id, [s])
+            if excel:
+                write_xl(options.csv_segments + "_%s.csv.gz" % s.id, [s])
+            else:
+                write_csv(options.csv_segments + "_%s.csv.gz" % s.id, [s])
 
     if conns and options.verbose:
         conns.print_stats()

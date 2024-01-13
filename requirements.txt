@@ -2,6 +2,7 @@ dash
 dash-extensions
 dash-leaflet
 mysqlclient
+openpyxl
 osmnx
 plotly>=4.0
 pandas

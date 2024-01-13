@@ -1,3 +1,10 @@
+# Copyright (c) 2023 Berlin zaehlt Mobilitaet
+# SPDX-License-Identifier: MIT
+
+# @file    api.py
+# @author  Michael Behrisch
+# @date    2023-12-11
+
 from flask import Blueprint, jsonify, send_file, request
 
 json_api = Blueprint('json_api', __name__)

@@ -1,4 +1,4 @@
-# Copyright (c) 2023 Michael Behrisch
+# Copyright (c) 2023-2024 Berlin zaehlt Mobilitaet
 # SPDX-License-Identifier: MIT
 
 # @file    datamodel.py

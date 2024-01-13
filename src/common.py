@@ -1,9 +1,9 @@
-# Copyright (c) 2023 Michael Behrisch
+# Copyright (c) 2023-2024 Berlin zaehlt Mobilitaet
 # SPDX-License-Identifier: MIT
 
 # @file    common.py
 # @author  Michael Behrisch
-# @date    2023-01-03
+# @date    2023-01-15
 
 import argparse
 import http.client

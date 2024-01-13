@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+# Copyright (c) 2024 Berlin zaehlt Mobilitaet
+# SPDX-License-Identifier: MIT
+
+# @file    osm.py
+# @author  Michael Behrisch
+# @date    2024-01-02
+
 import json
 import os
 from collections import Counter

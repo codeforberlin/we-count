@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
-# Copyright (c) 2023 Michael Behrisch
+# Copyright (c) 2023-2024 Berlin zaehlt Mobilitaet
 # SPDX-License-Identifier: MIT
+
+# @file    map.cgi
+# @author  Michael Behrisch
+# @date    2023-12-12
 
 import os
 import sys

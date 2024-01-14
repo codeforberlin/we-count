@@ -27,6 +27,8 @@ class TZDateTime(TypeDecorator):
 
 
 def parse_utc(date):
+    if isinstance(date, datetime.datetime):
+        return date.astimezone(datetime.timezone.utc)
     return datetime.datetime.fromisoformat(date.replace("Z", "+00:00")) if date else None
 
 
@@ -59,11 +61,12 @@ class TrafficCount(Base):
         self.date_utc = parse_utc(table["date"])
         self.interval_seconds = 3600 if table["interval"] == "hourly" else None
         self.uptime_rel = table["uptime"]
-        self.car_speed_histogram_type = HISTOGRAM_0_120PLUS_5KMH
-        speed_hist = table["car_speed_hist_0to120plus"]
-        last_idx = max([i for i, v in enumerate(speed_hist) if v > 0] + [0])
-        counts = [round(v / 100 * self._unscaled_car_count()) for v in speed_hist[:last_idx+1]]
-        self.car_speed_histogram = ",".join(["%s" % c for c in counts])
+        speed_hist = table.get("car_speed_hist_0to120plus")
+        if speed_hist:
+            self.car_speed_histogram_type = HISTOGRAM_0_120PLUS_5KMH
+            last_idx = max([i for i, v in enumerate(speed_hist) if v > 0] + [0])
+            counts = [round(v / 100 * self._unscaled_car_count()) for v in speed_hist[:last_idx+1]]
+            self.car_speed_histogram = ",".join(["%s" % c for c in counts])
 
     def _unscaled_car_count(self):
         return round((self.car_lft + self.car_rgt) * self.uptime_rel)
@@ -95,14 +98,14 @@ class Segment(Base):
 
     def __init__(self, properties):
         self.id = properties["segment_id"]
-        self.last_data_utc = parse_utc(properties["last_data_package"])
+        self.last_data_utc = parse_utc(properties.get("last_data_package"))
         self.timezone = properties["timezone"]
 
     def add_camera(self, table):
         self.cameras.append(Camera(table))
 
     def update(self, properties):
-        self.last_data_utc = parse_utc(properties["last_data_package"])
+        self.last_data_utc = parse_utc(properties.get("last_data_package"))
 
 
 class Camera(Base):

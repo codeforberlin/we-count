@@ -47,7 +47,7 @@ class ConnectionProvider:
         print(len(self._connections), "connections", self._num_queries, "queries")
 
 
-def get_options(args=None):
+def get_options(args=None, json_default="sensor.json"):
     parser = argparse.ArgumentParser()
     # Berlin as in https://github.com/DLR-TS/sumo-berlin
     parser.add_argument("-b", "--bbox", default="12.78509,52.17841,13.84308,52.82727",
@@ -58,8 +58,10 @@ def get_options(args=None):
                         metavar="FILE", help="Read Telraam API and database credentials from FILE")
     parser.add_argument("--js-file", default="sensor-geojson.js",
                         metavar="FILE", help="Write Geo-JSON as javascript to FILE")
-    parser.add_argument("-j", "--json-file", action="append", default=["sensor.json"],
+    parser.add_argument("-j", "--json-file", action="append", default=[json_default],
                         metavar="FILE", help="Write Geo-JSON output to FILE")
+    parser.add_argument("--excel",
+                        help="Excel input file")
     parser.add_argument("--camera", action="store_true", default=False,
                         help="include individual cameras")
     parser.add_argument("--osm", action="store_true", default=False,

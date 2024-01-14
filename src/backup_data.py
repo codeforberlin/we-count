@@ -22,6 +22,12 @@ from common import ConnectionProvider, get_options
 from datamodel import Base, TrafficCount, Segment, Camera
 
 
+def open_session(options):
+    engine = create_engine(options.database, echo=options.verbose > 1, future=True)
+    Base.metadata.create_all(engine)
+    return Session(engine)
+
+
 def get_segments(session, options):
     segments = {}
     if options.json_file and os.path.exists(options.json_file[0]):
@@ -157,9 +163,7 @@ def add_month(offset, year, month):
 
 def main(args=None):
     options = get_options(args)
-    engine = create_engine(options.database, echo=options.verbose > 1, future=True)
-    Base.metadata.create_all(engine)
-    session = Session(engine)
+    session = open_session(options)
     conns = ConnectionProvider(options.tokens, options.url) if options.url else None
     excel = False
     segments = get_segments(session, options)

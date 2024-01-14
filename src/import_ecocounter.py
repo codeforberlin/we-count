@@ -125,7 +125,7 @@ def main(args=None):
                     feature["properties"]["eco-counter"] = ec
                     ecocounters[segment_id] = feature
                     container["features"].append(feature)
-    with open(options.json_file[0], "w", encoding="utf8") as out:
+    with open(options.json_file, "w", encoding="utf8") as out:
         json.dump(container, out, indent=2)
     session = backup_data.open_session(options)
     segments = backup_data.get_segments(session, options)

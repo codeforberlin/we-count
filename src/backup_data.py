@@ -30,8 +30,8 @@ def open_session(options):
 
 def get_segments(session, options):
     segments = {}
-    if options.json_file and os.path.exists(options.json_file[0]):
-        with open(options.json_file[0], encoding="utf8") as of:
+    if options.json_file and os.path.exists(options.json_file):
+        with open(options.json_file, encoding="utf8") as of:
             segment_data = json.load(of)
     else:
         for s in session.execute(select(Segment)):
@@ -104,12 +104,14 @@ def get_column_names():
     return res + ["v85"] + ["car_speed%s" % s for s in range(0, 80, 10)]
 
 
-def get_column_values(tc, tz, sep=None):
-    result = [tc.segment_id, str(tc.date_utc.astimezone(tz))[:-9], round_separator(tc.uptime_rel, 6, sep)]
+def get_column_values(tc, local_date, sep=None):
+    result = [tc.segment_id, str(local_date)[:-9], round_separator(tc.uptime_rel, 6, sep)]
     for mode in ("pedestrian", "bike", "car", "heavy"):
         lft = getattr(tc, mode + "_lft")
         rgt = getattr(tc, mode + "_rgt")
-        result += [round(lft), round(rgt), round(lft + rgt)]
+        result += [round(lft) if lft is not None else None,
+                   round(rgt) if rgt is not None else None,
+                   round((lft or 0) + (rgt or 0)) if lft is not None or rgt is not None else None]
     result += [round_separator(tc.v85, 1, sep)]
     for v in tc.get_histogram():
         result.append(round_separator(v, 2, sep))
@@ -122,12 +124,13 @@ def write_xl(filename, segments, month=None):
     for s in segments:
         tzinfo=zoneinfo.ZoneInfo(s.timezone)
         for tc in s.counts:
-            if month is None or (tc.date_utc.year, tc.date_utc.month) == month:
+            local_date = tc.date_utc.astimezone(tzinfo)
+            if month is None or (local_date.year, local_date.month) == month:
                 if row == 1:
                     for col, val in enumerate(get_column_names(), start=1):
                         wb.active.cell(row=row, column=col).value = val
                     row += 1
-                for col, val in enumerate(get_column_values(tc, tzinfo), start=1):
+                for col, val in enumerate(get_column_values(tc, local_date), start=1):
                     wb.active.cell(row=row, column=col).value = val
                 row += 1
     if row > 1:
@@ -141,11 +144,12 @@ def write_csv(filename, segments, month=None, delimiter=","):
         for s in segments:
             tzinfo=zoneinfo.ZoneInfo(s.timezone)
             for tc in s.counts:
-                if month is None or (tc.date_utc.year, tc.date_utc.month) == month:
+                local_date = tc.date_utc.astimezone(tzinfo)
+                if month is None or (local_date.year, local_date.month) == month:
                     if need_header:
                         csv_out.writerow(get_column_names())
                         need_header = False
-                    csv_out.writerow(get_column_values(tc, tzinfo))
+                    csv_out.writerow(get_column_values(tc, local_date))
     if need_header:  # no data
         os.remove(csv_file.name)
 

@@ -58,8 +58,8 @@ def get_options(args=None, json_default="sensor.json"):
                         metavar="FILE", help="Read Telraam API and database credentials from FILE")
     parser.add_argument("--js-file", default="sensor-geojson.js",
                         metavar="FILE", help="Write Geo-JSON as javascript to FILE")
-    parser.add_argument("-j", "--json-file", action="append", default=[json_default],
-                        metavar="FILE", help="Write Geo-JSON output to FILE")
+    parser.add_argument("-j", "--json-file", default=json_default,
+                        metavar="FILE", help="Write / read Geo-JSON for segments to / from FILE")
     parser.add_argument("--excel",
                         help="Excel input file")
     parser.add_argument("--camera", action="store_true", default=False,

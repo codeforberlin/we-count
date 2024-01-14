@@ -49,8 +49,8 @@ def main(args=None):
     conns = ConnectionProvider(options.tokens, options.url)
 
     old_data = no_data = {'features': []}
-    if options.json_file and os.path.exists(options.json_file[0]):
-        with open(options.json_file[0], encoding="utf8") as of:
+    if os.path.exists(options.json_file):
+        with open(options.json_file, encoding="utf8") as of:
             old_data = json.load(of)
 
     bbox = [float(f) for f in options.bbox.split(",")]
@@ -100,9 +100,8 @@ def main(args=None):
     add_osm(res, no_data if options.osm else old_data)
     if options.camera:
         add_camera(conns, res)
-    for f in options.json_file:
-        with open(f, "w", encoding="utf8") as segment_json:
-            json.dump(res, segment_json, indent=2)
+    with open(options.json_file, "w", encoding="utf8") as segment_json:
+        json.dump(res, segment_json, indent=2)
     with open(options.js_file, "w", encoding="utf8") as sensor_js:
         print("var sensors = ", file=sensor_js, end='')
         json.dump(res, sensor_js, indent=2)

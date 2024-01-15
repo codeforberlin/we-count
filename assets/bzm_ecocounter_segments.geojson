@@ -1,0 +1,1249 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "segment_id": 300021646,
+        "counter": [
+          {
+            "lon": 13.4175360202789,
+            "lat": 52.5219071605016,
+            "name": "01-MI-AL-W",
+            "description": "Karl-Marx-Allee",
+            "installation": "2021-12-16 00:00:00"
+          }
+        ],
+        "timezone": "Europe/Berlin",
+        "eco-counter": {
+          "id_pdc_img": 0,
+          "idPdc": 300021646,
+          "lat": 52.52173416692602,
+          "lon": 13.417755961418154,
+          "nom": "Karl-Marx-Allee",
+          "photo": [
+            {
+              "lien": "https://filer.eco-counter-tools.com/file/2f/8138219bd9fae04fea2faf051ded349e9e542c821534a2f2a2134baf0572b62f/kma5.jpg"
+            }
+          ],
+          "lienPublic": "300021646",
+          "pratique": [
+            {
+              "pratique": 2,
+              "id": 353356499
+            }
+          ],
+          "mainPratique": 2,
+          "debut": "01/01/2016",
+          "debutPeriode": "01/01/2024",
+          "current_year_default": 1,
+          "externalUrl": "https://www.berlin.de/sen/uvk/verkehr/verkehrsplanung/radverkehr/weitere-radinfrastruktur/zaehlstellen-und-fahrradbarometer/",
+          "nomOrganisme": "Verkehrsmanagement Berlin",
+          "logo": "https://filer.eco-counter-tools.com/file/3a/e826e32e25702829b4f0cf37a3df15fce1dd6c0134c61c0dae0a7eb828ddb13a/blob",
+          "pays": "de",
+          "sig": 2,
+          "today": "15/01/2024",
+          "total": 15852,
+          "lastDay": 748,
+          "moyD": 1132
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.417755961418154,
+          52.52173416692602
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "segment_id": 100024661,
+        "counter": [
+          {
+            "lon": 13.41783460946187,
+            "lat": 52.51393215939899,
+            "name": "02-MI-JAN-N",
+            "description": "Jannowitzbr\u00fccke Nord",
+            "installation": "2015-04-01 00:00:00"
+          },
+          {
+            "lon": 13.417611074205,
+            "lat": 52.5139429938464,
+            "name": "02-MI-JAN-S",
+            "description": "Jannowitzbr\u00fccke S\u00fcd",
+            "installation": "2015-04-01 00:00:00"
+          }
+        ],
+        "timezone": "Europe/Berlin",
+        "eco-counter": {
+          "id_pdc_img": 0,
+          "idPdc": 100024661,
+          "lat": 52.5140658632566,
+          "lon": 13.41775102070807,
+          "nom": "Jannowitzbr\u00fccke",
+          "photo": [
+            {
+              "lien": "https://filer.eco-counter-tools.com/file/9d/2410bb4ecfee8352f976be158c8819bfa24370309857bab03cb9e7cec3d2d19d/14677966316060.jpg"
+            }
+          ],
+          "lienPublic": "100024661",
+          "pratique": [
+            {
+              "pratique": 2,
+              "id": 101024661
+            },
+            {
+              "pratique": 2,
+              "id": 102024661
+            }
+          ],
+          "mainPratique": 2,
+          "debut": "01/01/2016",
+          "debutPeriode": "01/01/2024",
+          "current_year_default": 1,
+          "externalUrl": "https://www.berlin.de/sen/uvk/verkehr/verkehrsplanung/radverkehr/weitere-radinfrastruktur/zaehlstellen-und-fahrradbarometer/",
+          "nomOrganisme": "Verkehrsmanagement Berlin",
+          "logo": "https://filer.eco-counter-tools.com/file/3a/e826e32e25702829b4f0cf37a3df15fce1dd6c0134c61c0dae0a7eb828ddb13a/blob",
+          "pays": "de",
+          "sig": 2,
+          "today": "15/01/2024",
+          "total": 41862,
+          "lastDay": 1718,
+          "moyD": 2990
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.41775102070807,
+          52.5140658632566
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "segment_id": 100032152,
+        "counter": [
+          {
+            "lon": 13.3720158872605,
+            "lat": 52.5271768961928,
+            "name": "03-MI-SAN-O",
+            "description": "Invalidenstra\u00dfe Ost",
+            "installation": "2015-06-01 00:00:00"
+          },
+          {
+            "lon": 13.3731048641205,
+            "lat": 52.5276860197938,
+            "name": "03-MI-SAN-W",
+            "description": "Invalidenstra\u00dfe West",
+            "installation": "2015-06-01 00:00:00"
+          }
+        ],
+        "timezone": "Europe/Berlin",
+        "eco-counter": {
+          "id_pdc_img": 0,
+          "idPdc": 100032152,
+          "lat": 52.52718,
+          "lon": 13.37202,
+          "nom": "Invalidenstra\u00dfe",
+          "photo": [
+            {
+              "lien": "https://filer.eco-counter-tools.com/file/aa/2178bee7ba6814def33b13ac3efab6df809a57dc23de9445b95fa75cfb1653aa/14688318519550.jpg"
+            }
+          ],
+          "lienPublic": "100032152",
+          "pratique": [
+            {
+              "pratique": 2,
+              "id": 101032152
+            },
+            {
+              "pratique": 2,
+              "id": 102032152
+            }
+          ],
+          "mainPratique": 2,
+          "debut": "01/01/2016",
+          "debutPeriode": "01/01/2024",
+          "current_year_default": 1,
+          "externalUrl": "https://www.berlin.de/sen/uvk/verkehr/verkehrsplanung/radverkehr/weitere-radinfrastruktur/zaehlstellen-und-fahrradbarometer/",
+          "nomOrganisme": "Verkehrsmanagement Berlin",
+          "logo": "https://filer.eco-counter-tools.com/file/3a/e826e32e25702829b4f0cf37a3df15fce1dd6c0134c61c0dae0a7eb828ddb13a/blob",
+          "pays": "de",
+          "sig": 2,
+          "today": "15/01/2024",
+          "total": 25412,
+          "lastDay": 1185,
+          "moyD": 1815
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.37202,
+          52.52718
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "segment_id": 300023833,
+        "counter": [
+          {
+            "lon": 13.445060485363,
+            "lat": 52.5011988679576,
+            "name": "05-FK-OBB-O",
+            "description": "Oberbaumbr\u00fccke Ost",
+            "installation": "2015-06-01 00:00:00"
+          },
+          {
+            "lon": 13.444867366314,
+            "lat": 52.5012756085914,
+            "name": "05-FK-OBB-W",
+            "description": "Oberbaumbr\u00fccke West",
+            "installation": "2015-06-01 00:00:00"
+          }
+        ],
+        "timezone": "Europe/Berlin",
+        "eco-counter": {
+          "id_pdc_img": 0,
+          "idPdc": 300023833,
+          "lat": 52.5017288,
+          "lon": 13.445731244139708,
+          "nom": "Oberbaumbr\u00fccke",
+          "publicMessage": "aufgrund von Bauarbeiten au\u00dfer Betrieb zwischen Juni 2019 - Mai 2022 ",
+          "photo": [
+            {
+              "lien": "https://filer.eco-counter-tools.com/file/12/fa835e6c2d11dc9feca0e7fa58a4a4c3b0577a8dac4f0f1bc801034b8cf63a12/Oberbaumbr_cke.jpg"
+            }
+          ],
+          "lienPublic": "300023833",
+          "pratique": [
+            {
+              "pratique": 2,
+              "id": 353310273
+            },
+            {
+              "pratique": 2,
+              "id": 353310274
+            }
+          ],
+          "mainPratique": 2,
+          "debut": "01/01/2016",
+          "debutPeriode": "01/01/2024",
+          "current_year_default": 1,
+          "externalUrl": "https://www.berlin.de/sen/uvk/verkehr/verkehrsplanung/radverkehr/weitere-radinfrastruktur/zaehlstellen-und-fahrradbarometer/",
+          "nomOrganisme": "Verkehrsmanagement Berlin",
+          "logo": "https://filer.eco-counter-tools.com/file/3a/e826e32e25702829b4f0cf37a3df15fce1dd6c0134c61c0dae0a7eb828ddb13a/blob",
+          "pays": "de",
+          "sig": 2,
+          "today": "15/01/2024",
+          "total": 66101,
+          "lastDay": 3944,
+          "moyD": 4722
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.445731244139708,
+          52.5017288
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "segment_id": 100032154,
+        "counter": [
+          {
+            "lon": 13.474242,
+            "lat": 52.513584,
+            "name": "06-FK-FRA-O",
+            "description": "Frankfurter Allee Ost",
+            "installation": "2016-06-01 00:00:00"
+          },
+          {
+            "lon": 13.474414,
+            "lat": 52.51379,
+            "name": "06-FK-FRA-W",
+            "description": "Frankfurter Allee West",
+            "installation": "2016-06-01 00:00:00"
+          }
+        ],
+        "timezone": "Europe/Berlin",
+        "eco-counter": {
+          "id_pdc_img": 0,
+          "idPdc": 100032154,
+          "lat": 52.51373867977201,
+          "lon": 13.474367159238705,
+          "nom": "Frankfurter Allee",
+          "photo": [
+            {
+              "lien": "https://filer.eco-counter-tools.com/file/cf/5da7985776acd86c553a800e8cb5ec0e6e487eab2bdd29b1fb5c59a9ce0494cf/14679059294920.jpg"
+            }
+          ],
+          "lienPublic": "100032154",
+          "pratique": [
+            {
+              "pratique": 2,
+              "id": 101032154
+            },
+            {
+              "pratique": 2,
+              "id": 102032154
+            }
+          ],
+          "mainPratique": 2,
+          "debut": "01/01/2016",
+          "debutPeriode": "01/01/2024",
+          "current_year_default": 1,
+          "externalUrl": "https://www.berlin.de/sen/uvk/verkehr/verkehrsplanung/radverkehr/weitere-radinfrastruktur/zaehlstellen-und-fahrradbarometer/",
+          "nomOrganisme": "Verkehrsmanagement Berlin",
+          "logo": "https://filer.eco-counter-tools.com/file/3a/e826e32e25702829b4f0cf37a3df15fce1dd6c0134c61c0dae0a7eb828ddb13a/blob",
+          "pays": "de",
+          "sig": 2,
+          "today": "15/01/2024",
+          "total": 28332,
+          "lastDay": 1328,
+          "moyD": 2024
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.474367159238705,
+          52.51373867977201
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "segment_id": 100032155,
+        "counter": [
+          {
+            "lon": 13.41248937,
+            "lat": 52.56692362,
+            "name": "10-PA-BER-N",
+            "description": "Berliner Stra\u00dfe Nord",
+            "installation": "2016-05-01 00:00:00"
+          },
+          {
+            "lon": 13.41216649,
+            "lat": 52.56681286,
+            "name": "10-PA-BER-S",
+            "description": "Berliner Stra\u00dfe S\u00fcd",
+            "installation": "2016-05-01 00:00:00"
+          }
+        ],
+        "timezone": "Europe/Berlin",
+        "eco-counter": {
+          "id_pdc_img": 0,
+          "idPdc": 100032155,
+          "lat": 52.56681,
+          "lon": 13.41217,
+          "nom": "Berliner Stra\u00dfe",
+          "photo": [
+            {
+              "lien": "https://filer.eco-counter-tools.com/file/64/1e3fc2f7800aa32e01b87bbb3709024b6ce508f5a91141d46687eb47b8f9d664/14679060486370.jpg"
+            }
+          ],
+          "lienPublic": "100032155",
+          "pratique": [
+            {
+              "pratique": 2,
+              "id": 101032155
+            },
+            {
+              "pratique": 2,
+              "id": 102032155
+            }
+          ],
+          "mainPratique": 2,
+          "debut": "01/01/2016",
+          "debutPeriode": "01/01/2024",
+          "current_year_default": 1,
+          "externalUrl": "https://www.berlin.de/sen/uvk/verkehr/verkehrsplanung/radverkehr/weitere-radinfrastruktur/zaehlstellen-und-fahrradbarometer/",
+          "nomOrganisme": "Verkehrsmanagement Berlin",
+          "logo": "https://filer.eco-counter-tools.com/file/3a/e826e32e25702829b4f0cf37a3df15fce1dd6c0134c61c0dae0a7eb828ddb13a/blob",
+          "pays": "de",
+          "sig": 2,
+          "today": "15/01/2024",
+          "total": 34978,
+          "lastDay": 1384,
+          "moyD": 2498
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.41217,
+          52.56681
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "segment_id": 300028062,
+        "counter": [
+          {
+            "lon": 13.4123547323753,
+            "lat": 52.5313796245428,
+            "name": "11-PA-SE-N",
+            "description": "Senefelder Platz Nord",
+            "installation": "2022-10-06 00:00:00"
+          }
+        ],
+        "timezone": "Europe/Berlin",
+        "eco-counter": {
+          "id_pdc_img": 0,
+          "idPdc": 300028062,
+          "lat": 52.53158718690759,
+          "lon": 13.412439823150635,
+          "nom": "Senefelderplatz",
+          "publicMessage": "Beeintr\u00e4chtigung der Z\u00e4hlung durch Radfahrumleitung wegen Baustelle",
+          "photo": [
+            {
+              "lien": "https://filer.eco-counter-tools.com/file/8f/bc697f85cbc29b4a77b06986df5ddc30a3d397dadfd3033a9198ff2aab382e8f/Senefelder Platz.jpg"
+            }
+          ],
+          "lienPublic": "300028062",
+          "pratique": [
+            {
+              "pratique": 2,
+              "id": 353338596
+            }
+          ],
+          "mainPratique": 2,
+          "debut": "01/01/2016",
+          "debutPeriode": "01/01/2024",
+          "current_year_default": 1,
+          "externalUrl": "https://www.berlin.de/sen/uvk/verkehr/verkehrsplanung/radverkehr/weitere-radinfrastruktur/zaehlstellen-und-fahrradbarometer/",
+          "nomOrganisme": "Verkehrsmanagement Berlin",
+          "logo": "https://filer.eco-counter-tools.com/file/3a/e826e32e25702829b4f0cf37a3df15fce1dd6c0134c61c0dae0a7eb828ddb13a/blob",
+          "pays": "de",
+          "sig": 2,
+          "today": "15/01/2024",
+          "total": 19710,
+          "lastDay": 1003,
+          "moyD": 1408
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.412439823150635,
+          52.53158718690759
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "segment_id": 100032159,
+        "counter": [
+          {
+            "lon": 13.4003668365479,
+            "lat": 52.549071,
+            "name": "12-PA-SCH",
+            "description": "Schwedter Steg",
+            "installation": "2012-03-01 00:00:00"
+          }
+        ],
+        "timezone": "Europe/Berlin",
+        "eco-counter": {
+          "id_pdc_img": 0,
+          "idPdc": 100032159,
+          "lat": 52.54884,
+          "lon": 13.40037,
+          "nom": "Schwedter Steg",
+          "photo": [
+            {
+              "lien": "https://filer.eco-counter-tools.com/file/41/4c00415cc0dca6e1117960e5952336b9fc0e6d0039f9121998b14e66418cd941/14679068159880.jpg"
+            }
+          ],
+          "lienPublic": "100032159",
+          "pratique": [
+            {
+              "pratique": 2,
+              "id": 101032159
+            },
+            {
+              "pratique": 2,
+              "id": 102032159
+            }
+          ],
+          "mainPratique": 2,
+          "debut": "01/01/2016",
+          "debutPeriode": "01/01/2024",
+          "current_year_default": 1,
+          "externalUrl": "https://www.berlin.de/sen/uvk/verkehr/verkehrsplanung/radverkehr/weitere-radinfrastruktur/zaehlstellen-und-fahrradbarometer/",
+          "nomOrganisme": "Verkehrsmanagement Berlin",
+          "logo": "https://filer.eco-counter-tools.com/file/3a/e826e32e25702829b4f0cf37a3df15fce1dd6c0134c61c0dae0a7eb828ddb13a/blob",
+          "pays": "de",
+          "sig": 2,
+          "today": "15/01/2024",
+          "total": 14273,
+          "lastDay": 803,
+          "moyD": 1020
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.40037,
+          52.54884
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "segment_id": 100033039,
+        "counter": [
+          {
+            "lon": 13.33311990737359,
+            "lat": 52.488135580706334,
+            "name": "13-CW-PRI",
+            "description": "Prinzregentenstra\u00dfe",
+            "installation": "2015-04-01 00:00:00"
+          }
+        ],
+        "timezone": "Europe/Berlin",
+        "eco-counter": {
+          "id_pdc_img": 0,
+          "idPdc": 100033039,
+          "lat": 52.49058,
+          "lon": 13.33308,
+          "nom": "Prinzregentenstra\u00dfe",
+          "photo": [
+            {
+              "lien": "https://filer.eco-counter-tools.com/file/9f/cabe8058eba8ae6168ed44e53664607115ce1143981b704416fa1b7ebbfbf79f/14715296670160.jpg"
+            }
+          ],
+          "lienPublic": "100033039",
+          "pratique": [
+            {
+              "pratique": 2,
+              "id": 101033039
+            },
+            {
+              "pratique": 2,
+              "id": 102033039
+            }
+          ],
+          "mainPratique": 2,
+          "debut": "01/01/2016",
+          "debutPeriode": "01/01/2024",
+          "current_year_default": 1,
+          "externalUrl": "https://www.berlin.de/sen/uvk/verkehr/verkehrsplanung/radverkehr/weitere-radinfrastruktur/zaehlstellen-und-fahrradbarometer/",
+          "nomOrganisme": "Verkehrsmanagement Berlin",
+          "logo": "https://filer.eco-counter-tools.com/file/3a/e826e32e25702829b4f0cf37a3df15fce1dd6c0134c61c0dae0a7eb828ddb13a/blob",
+          "pays": "de",
+          "sig": 2,
+          "today": "15/01/2024",
+          "total": 9508,
+          "lastDay": 384,
+          "moyD": 679
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.33308,
+          52.49058
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "segment_id": 300019043,
+        "counter": [
+          {
+            "lon": 13.32663,
+            "lat": 52.51259,
+            "name": "14-CW-JU-O",
+            "description": "Stra\u00dfe des 17. Juni Ost",
+            "installation": "2021-07-27 00:00:00"
+          },
+          {
+            "lon": 13.3268451690673,
+            "lat": 52.5131325896952,
+            "name": "14-CW-JU-W",
+            "description": "Stra\u00dfe des 17. Juni West",
+            "installation": "2021-07-27 00:00:00"
+          }
+        ],
+        "timezone": "Europe/Berlin",
+        "eco-counter": {
+          "id_pdc_img": 0,
+          "idPdc": 300019043,
+          "lat": 52.51293017936524,
+          "lon": 13.326764702796938,
+          "nom": "Stra\u00dfe des 17. Juni",
+          "photo": [
+            {
+              "lien": "https://filer.eco-counter-tools.com/file/d4/e18d94ca8efd8be4a372ce4a4a6b2291642fd0158be2f6c77bad49ca6e5498d4/210727_fahrradbarometer_1700.jpg"
+            }
+          ],
+          "lienPublic": "300019043",
+          "pratique": [
+            {
+              "pratique": 2,
+              "id": 353277806
+            },
+            {
+              "pratique": 2,
+              "id": 353277807
+            }
+          ],
+          "mainPratique": 2,
+          "debut": "01/01/2016",
+          "debutPeriode": "01/01/2024",
+          "current_year_default": 1,
+          "externalUrl": "https://www.berlin.de/sen/uvk/verkehr/verkehrsplanung/radverkehr/weitere-radinfrastruktur/zaehlstellen-und-fahrradbarometer/",
+          "nomOrganisme": "Verkehrsmanagement Berlin",
+          "logo": "https://filer.eco-counter-tools.com/file/3a/e826e32e25702829b4f0cf37a3df15fce1dd6c0134c61c0dae0a7eb828ddb13a/blob",
+          "pays": "de",
+          "sig": 2,
+          "today": "15/01/2024",
+          "total": 21767,
+          "lastDay": 1186,
+          "moyD": 1555
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.326764702796938,
+          52.51293017936524
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "segment_id": 100032161,
+        "counter": [
+          {
+            "lon": 13.199052742313857,
+            "lat": 52.53351245116568,
+            "name": "15-SP-KLO-N",
+            "description": "Klosterstra\u00dfe Nord",
+            "installation": "2016-06-01 00:00:00"
+          },
+          {
+            "lon": 13.198487973304143,
+            "lat": 52.53330769478785,
+            "name": "15-SP-KLO-S",
+            "description": "Klosterstra\u00dfe S\u00fcd",
+            "installation": "2016-05-01 00:00:00"
+          }
+        ],
+        "timezone": "Europe/Berlin",
+        "eco-counter": {
+          "id_pdc_img": 0,
+          "idPdc": 100032161,
+          "lat": 52.533665,
+          "lon": 13.198963,
+          "nom": "Klosterstra\u00dfe",
+          "photo": [
+            {
+              "lien": "https://filer.eco-counter-tools.com/file/53/8ad28550c1bb9eccd1e1170b947c72e92f3399ea768d8d309bd02138ba2e2153/14679070049730.jpg"
+            }
+          ],
+          "lienPublic": "100032161",
+          "pratique": [
+            {
+              "pratique": 2,
+              "id": 101032161
+            },
+            {
+              "pratique": 2,
+              "id": 102032161
+            }
+          ],
+          "mainPratique": 2,
+          "debut": "01/01/2016",
+          "debutPeriode": "01/01/2024",
+          "current_year_default": 1,
+          "externalUrl": "https://www.berlin.de/sen/uvk/verkehr/verkehrsplanung/radverkehr/weitere-radinfrastruktur/zaehlstellen-und-fahrradbarometer/",
+          "nomOrganisme": "Verkehrsmanagement Berlin",
+          "logo": "https://filer.eco-counter-tools.com/file/3a/e826e32e25702829b4f0cf37a3df15fce1dd6c0134c61c0dae0a7eb828ddb13a/blob",
+          "pays": "de",
+          "sig": 2,
+          "today": "15/01/2024",
+          "total": 6985,
+          "lastDay": 335,
+          "moyD": 499
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.198963,
+          52.533665
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "segment_id": 100032163,
+        "counter": [
+          {
+            "lon": 13.3091647731717,
+            "lat": 52.4667601926523,
+            "name": "17-SK-BRE-O",
+            "description": "Breitenbachplatz Ost",
+            "installation": "2016-05-01 00:00:00"
+          },
+          {
+            "lon": 13.3083600753752,
+            "lat": 52.467215435872,
+            "name": "17-SK-BRE-W",
+            "description": "Breitenbachplatz West",
+            "installation": "2016-05-01 00:00:00"
+          }
+        ],
+        "timezone": "Europe/Berlin",
+        "eco-counter": {
+          "id_pdc_img": 0,
+          "idPdc": 100032163,
+          "lat": 52.46676,
+          "lon": 13.30916,
+          "nom": "Breitenbachplatz",
+          "photo": [
+            {
+              "lien": "https://filer.eco-counter-tools.com/file/96/8dec8df97daf8481ba67a36e26f35468208fc4c3fe5b751d3bf6ebc21dffec96/14679072545730.jpg"
+            }
+          ],
+          "lienPublic": "100032163",
+          "pratique": [
+            {
+              "pratique": 2,
+              "id": 101032163
+            },
+            {
+              "pratique": 2,
+              "id": 102032163
+            }
+          ],
+          "mainPratique": 2,
+          "debut": "01/01/2016",
+          "debutPeriode": "01/01/2024",
+          "current_year_default": 1,
+          "externalUrl": "https://www.berlin.de/sen/uvk/verkehr/verkehrsplanung/radverkehr/weitere-radinfrastruktur/zaehlstellen-und-fahrradbarometer/",
+          "nomOrganisme": "Verkehrsmanagement Berlin",
+          "logo": "https://filer.eco-counter-tools.com/file/3a/e826e32e25702829b4f0cf37a3df15fce1dd6c0134c61c0dae0a7eb828ddb13a/blob",
+          "pays": "de",
+          "sig": 2,
+          "today": "15/01/2024",
+          "total": 10164,
+          "lastDay": 441,
+          "moyD": 726
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.30916,
+          52.46676
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "segment_id": 100033038,
+        "counter": [
+          {
+            "lon": 13.373472267973568,
+            "lat": 52.4919379605113,
+            "name": "18-TS-YOR-O",
+            "description": "Yorckstra\u00dfe Ost",
+            "installation": "2015-04-01 00:00:00"
+          },
+          {
+            "lon": 13.37321,
+            "lat": 52.49228,
+            "name": "18-TS-YOR-W",
+            "description": "Yorkstra\u00dfe West",
+            "installation": "2015-04-01 00:00:00"
+          }
+        ],
+        "timezone": "Europe/Berlin",
+        "eco-counter": {
+          "id_pdc_img": 0,
+          "idPdc": 100033038,
+          "lat": 52.49199,
+          "lon": 13.37412,
+          "nom": "Yorckstra\u00dfe",
+          "photo": [
+            {
+              "lien": "https://filer.eco-counter-tools.com/file/1b/94511591185cef75900ee02f50a2b3f1e0f823f9fb0440e41c319e45ee62351b/14715295652770.jpg"
+            }
+          ],
+          "lienPublic": "100033038",
+          "pratique": [
+            {
+              "pratique": 2,
+              "id": 101033038
+            },
+            {
+              "pratique": 2,
+              "id": 102033038
+            }
+          ],
+          "mainPratique": 2,
+          "debut": "01/01/2016",
+          "debutPeriode": "01/01/2024",
+          "current_year_default": 1,
+          "externalUrl": "https://www.berlin.de/sen/uvk/verkehr/verkehrsplanung/radverkehr/weitere-radinfrastruktur/zaehlstellen-und-fahrradbarometer/",
+          "nomOrganisme": "Verkehrsmanagement Berlin",
+          "logo": "https://filer.eco-counter-tools.com/file/3a/e826e32e25702829b4f0cf37a3df15fce1dd6c0134c61c0dae0a7eb828ddb13a/blob",
+          "pays": "de",
+          "sig": 2,
+          "today": "15/01/2024",
+          "total": 29695,
+          "lastDay": 1355,
+          "moyD": 2121
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.37412,
+          52.49199
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "segment_id": 100032165,
+        "counter": [
+          {
+            "lon": 13.369785,
+            "lat": 52.488117,
+            "name": "19-TS-MON",
+            "description": "Monumentenstra\u00dfe",
+            "installation": "2015-05-01 00:00:00"
+          }
+        ],
+        "timezone": "Europe/Berlin",
+        "eco-counter": {
+          "id_pdc_img": 0,
+          "idPdc": 100032165,
+          "lat": 52.48812,
+          "lon": 13.36979,
+          "nom": "Monumentenstra\u00dfe",
+          "photo": [
+            {
+              "lien": "https://filer.eco-counter-tools.com/file/f2/41d5501464ab24a900ff5cb9c7b63c4d678addbe3944e4c71a15cbccde7704f2/14679074195240.jpg"
+            }
+          ],
+          "lienPublic": "100032165",
+          "pratique": [
+            {
+              "pratique": 2,
+              "id": 101032165
+            },
+            {
+              "pratique": 2,
+              "id": 102032165
+            }
+          ],
+          "mainPratique": 2,
+          "debut": "01/01/2016",
+          "debutPeriode": "01/01/2024",
+          "current_year_default": 1,
+          "externalUrl": "https://www.berlin.de/sen/uvk/verkehr/verkehrsplanung/radverkehr/weitere-radinfrastruktur/zaehlstellen-und-fahrradbarometer/",
+          "nomOrganisme": "Verkehrsmanagement Berlin",
+          "logo": "https://filer.eco-counter-tools.com/file/3a/e826e32e25702829b4f0cf37a3df15fce1dd6c0134c61c0dae0a7eb828ddb13a/blob",
+          "pays": "de",
+          "sig": 2,
+          "today": "15/01/2024",
+          "total": 21206,
+          "lastDay": 1001,
+          "moyD": 1515
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.36979,
+          52.48812
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "segment_id": 100064714,
+        "counter": [
+          {
+            "lon": 13.387953,
+            "lat": 52.438535,
+            "name": "20-TS-MAR-N",
+            "description": "Mariendorfer Damm Nord",
+            "installation": "2016-05-01 00:00:00"
+          },
+          {
+            "lon": 13.3878117799758,
+            "lat": 52.4380724598425,
+            "name": "20-TS-MAR-S",
+            "description": "Mariendorfer Damm S\u00fcd",
+            "installation": "2016-05-01 00:00:00"
+          }
+        ],
+        "timezone": "Europe/Berlin",
+        "eco-counter": {
+          "id_pdc_img": 0,
+          "idPdc": 100064714,
+          "lat": 52.43852296779607,
+          "lon": 13.387829068100944,
+          "nom": "Mariendorfer Damm",
+          "photo": [
+            {
+              "lien": "https://filer.eco-counter-tools.com/file/4d/0d39e49313f52aa8f83c81ff994394783837a8590970e436668e39f0fe6f0d4d/16030381473600.jpg"
+            }
+          ],
+          "lienPublic": "100064714",
+          "pratique": [
+            {
+              "pratique": 2,
+              "id": 101064714
+            },
+            {
+              "pratique": 2,
+              "id": 102064714
+            }
+          ],
+          "mainPratique": 2,
+          "debut": "01/01/2016",
+          "debutPeriode": "01/01/2024",
+          "current_year_default": 1,
+          "externalUrl": "https://www.berlin.de/sen/uvk/verkehr/verkehrsplanung/radverkehr/weitere-radinfrastruktur/zaehlstellen-und-fahrradbarometer/",
+          "nomOrganisme": "Verkehrsmanagement Berlin",
+          "logo": "https://filer.eco-counter-tools.com/file/3a/e826e32e25702829b4f0cf37a3df15fce1dd6c0134c61c0dae0a7eb828ddb13a/blob",
+          "pays": "de",
+          "sig": 2,
+          "today": "15/01/2024",
+          "total": 10513,
+          "lastDay": 440,
+          "moyD": 751
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.387829068100944,
+          52.43852296779607
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "segment_id": 100032236,
+        "counter": [
+          {
+            "lon": 13.429682,
+            "lat": 52.492998,
+            "name": "21-NK-MAY",
+            "description": "Maybachufer",
+            "installation": "2016-05-01 00:00:00"
+          }
+        ],
+        "timezone": "Europe/Berlin",
+        "eco-counter": {
+          "id_pdc_img": 0,
+          "idPdc": 100032236,
+          "lat": 52.49311815915883,
+          "lon": 13.429149248667873,
+          "nom": "Maybachufer",
+          "photo": [
+            {
+              "lien": "https://filer.eco-counter-tools.com/file/6c/347cc604523367efdf1c8f899417fe1dad9052924bb05f96618752e93e29b06c/14682452064800.jpg"
+            }
+          ],
+          "lienPublic": "100032236",
+          "pratique": [
+            {
+              "pratique": 2,
+              "id": 101032236
+            },
+            {
+              "pratique": 2,
+              "id": 102032236
+            }
+          ],
+          "mainPratique": 2,
+          "debut": "01/01/2016",
+          "debutPeriode": "01/01/2024",
+          "current_year_default": 1,
+          "externalUrl": "https://www.berlin.de/sen/uvk/verkehr/verkehrsplanung/radverkehr/weitere-radinfrastruktur/zaehlstellen-und-fahrradbarometer/",
+          "nomOrganisme": "Verkehrsmanagement Berlin",
+          "logo": "https://filer.eco-counter-tools.com/file/3a/e826e32e25702829b4f0cf37a3df15fce1dd6c0134c61c0dae0a7eb828ddb13a/blob",
+          "pays": "de",
+          "sig": 2,
+          "today": "15/01/2024",
+          "total": 31649,
+          "lastDay": 1672,
+          "moyD": 2261
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.429149248667873,
+          52.49311815915883
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "segment_id": 100032237,
+        "counter": [
+          {
+            "lon": 13.5187,
+            "lat": 52.45727,
+            "name": "23-TK-KAI",
+            "description": "Kaisersteg",
+            "installation": "2016-05-01 00:00:00"
+          }
+        ],
+        "timezone": "Europe/Berlin",
+        "eco-counter": {
+          "id_pdc_img": 0,
+          "idPdc": 100032237,
+          "lat": 52.45775788047353,
+          "lon": 13.519359601285744,
+          "nom": "Kaisersteg",
+          "photo": [
+            {
+              "lien": "https://filer.eco-counter-tools.com/file/95/eb35c0fb94f9bbfa448bfc195e26f39097dac30e9a580b2b89fb7cbdc042ad95/14682452952270.jpg"
+            }
+          ],
+          "lienPublic": "100032237",
+          "pratique": [
+            {
+              "pratique": 2,
+              "id": 101032237
+            },
+            {
+              "pratique": 2,
+              "id": 102032237
+            }
+          ],
+          "mainPratique": 2,
+          "debut": "01/01/2016",
+          "debutPeriode": "01/01/2024",
+          "current_year_default": 1,
+          "externalUrl": "https://www.berlin.de/sen/uvk/verkehr/verkehrsplanung/radverkehr/weitere-radinfrastruktur/zaehlstellen-und-fahrradbarometer/",
+          "nomOrganisme": "Verkehrsmanagement Berlin",
+          "logo": "https://filer.eco-counter-tools.com/file/3a/e826e32e25702829b4f0cf37a3df15fce1dd6c0134c61c0dae0a7eb828ddb13a/blob",
+          "pays": "de",
+          "sig": 2,
+          "today": "15/01/2024",
+          "total": 11437,
+          "lastDay": 461,
+          "moyD": 817
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.519359601285744,
+          52.45775788047353
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "segment_id": 100033037,
+        "counter": [
+          {
+            "lon": 13.558493,
+            "lat": 52.492534,
+            "name": "24-MH-ALB",
+            "description": "Alberichstra\u00dfe",
+            "installation": "2015-07-01 00:00:00"
+          }
+        ],
+        "timezone": "Europe/Berlin",
+        "eco-counter": {
+          "id_pdc_img": 0,
+          "idPdc": 100033037,
+          "lat": 52.4925,
+          "lon": 13.55849,
+          "nom": "Alberichstra\u00dfe",
+          "photo": [
+            {
+              "lien": "https://filer.eco-counter-tools.com/file/d4/2818d41489c414e56915efd002e97209ff05f71e1148f103e8f41272c99aead4/14715294424050.jpg"
+            }
+          ],
+          "lienPublic": "100033037",
+          "pratique": [
+            {
+              "pratique": 2,
+              "id": 101033037
+            },
+            {
+              "pratique": 2,
+              "id": 102033037
+            }
+          ],
+          "mainPratique": 2,
+          "debut": "01/01/2016",
+          "debutPeriode": "01/01/2024",
+          "current_year_default": 1,
+          "externalUrl": "https://www.berlin.de/sen/uvk/verkehr/verkehrsplanung/radverkehr/weitere-radinfrastruktur/zaehlstellen-und-fahrradbarometer/",
+          "nomOrganisme": "Verkehrsmanagement Berlin",
+          "logo": "https://filer.eco-counter-tools.com/file/3a/e826e32e25702829b4f0cf37a3df15fce1dd6c0134c61c0dae0a7eb828ddb13a/blob",
+          "pays": "de",
+          "sig": 2,
+          "today": "15/01/2024",
+          "total": 2583,
+          "lastDay": 98,
+          "moyD": 185
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.55849,
+          52.4925
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "segment_id": 100033035,
+        "counter": [
+          {
+            "lon": 13.4743022918701,
+            "lat": 52.5003234023861,
+            "name": "26-LI-PUP",
+            "description": "Paul-und-Paula-Uferweg",
+            "installation": "2015-06-01 00:00:00"
+          }
+        ],
+        "timezone": "Europe/Berlin",
+        "eco-counter": {
+          "id_pdc_img": 0,
+          "idPdc": 100033035,
+          "lat": 52.50025,
+          "lon": 13.47438,
+          "nom": "Paul- und Paula-Uferweg",
+          "photo": [
+            {
+              "lien": "https://filer.eco-counter-tools.com/file/f7/6df1a99977416791d8c60bbfe5321b6d01c02babfb288e95cad4f81dbfe047f7/14715293355830.jpg"
+            }
+          ],
+          "lienPublic": "100033035",
+          "pratique": [
+            {
+              "pratique": 2,
+              "id": 101033035
+            },
+            {
+              "pratique": 2,
+              "id": 102033035
+            }
+          ],
+          "mainPratique": 2,
+          "debut": "01/01/2016",
+          "debutPeriode": "01/01/2024",
+          "current_year_default": 1,
+          "externalUrl": "https://www.berlin.de/sen/uvk/verkehr/verkehrsplanung/radverkehr/weitere-radinfrastruktur/zaehlstellen-und-fahrradbarometer/",
+          "nomOrganisme": "Verkehrsmanagement Berlin",
+          "logo": "https://filer.eco-counter-tools.com/file/3a/e826e32e25702829b4f0cf37a3df15fce1dd6c0134c61c0dae0a7eb828ddb13a/blob",
+          "pays": "de",
+          "sig": 2,
+          "today": "15/01/2024",
+          "total": 15341,
+          "lastDay": 739,
+          "moyD": 1096
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.47438,
+          52.50025
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "segment_id": 100032169,
+        "counter": [
+          {
+            "lon": 13.3649435,
+            "lat": 52.55819,
+            "name": "27-RE-MAR",
+            "description": "Markstra\u00dfe",
+            "installation": "2015-05-01 00:00:00"
+          }
+        ],
+        "timezone": "Europe/Berlin",
+        "eco-counter": {
+          "id_pdc_img": 0,
+          "idPdc": 100032169,
+          "lat": 52.55819,
+          "lon": 13.36494,
+          "nom": "Markstra\u00dfe",
+          "photo": [
+            {
+              "lien": "https://filer.eco-counter-tools.com/file/4c/0223bf7e46d0c101a452187addcf5d4b319a13873ad4593dac491838bf39f24c/14679084718520.jpg"
+            }
+          ],
+          "lienPublic": "100032169",
+          "pratique": [
+            {
+              "pratique": 2,
+              "id": 101032169
+            },
+            {
+              "pratique": 2,
+              "id": 102032169
+            }
+          ],
+          "mainPratique": 2,
+          "debut": "01/01/2016",
+          "debutPeriode": "01/01/2024",
+          "current_year_default": 1,
+          "externalUrl": "https://www.berlin.de/sen/uvk/verkehr/verkehrsplanung/radverkehr/weitere-radinfrastruktur/zaehlstellen-und-fahrradbarometer/",
+          "nomOrganisme": "Verkehrsmanagement Berlin",
+          "logo": "https://filer.eco-counter-tools.com/file/3a/e826e32e25702829b4f0cf37a3df15fce1dd6c0134c61c0dae0a7eb828ddb13a/blob",
+          "pays": "de",
+          "sig": 2,
+          "today": "15/01/2024",
+          "total": 11447,
+          "lastDay": 423,
+          "moyD": 818
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.36494,
+          52.55819
+        ]
+      }
+    }
+  ]
+}

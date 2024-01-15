@@ -168,7 +168,7 @@ def add_month(offset, year, month):
 def main(args=None):
     options = get_options(args)
     session = open_session(options)
-    conns = ConnectionProvider(options.tokens, options.url) if options.url else None
+    conns = ConnectionProvider(options.secrets["tokens"], options.url) if options.url else None
     excel = False
     segments = get_segments(session, options)
     if conns:

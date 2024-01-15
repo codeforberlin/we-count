@@ -78,10 +78,9 @@ def get_options(args=None, json_default="sensor.json"):
                         help="increase verbosity, twice enables verbose sqlalchemy output")
     options = parser.parse_args(args=args)
     with open(options.secrets_file, encoding="utf8") as sf:
-        secrets = json.load(sf)
-    options.tokens = secrets["tokens"]
+        options.secrets = json.load(sf)
     if not options.database:
-        options.database = secrets.get("database", "backup.db")
+        options.database = options.secrets.get("database", "backup.db")
     if "+" not in options.database and "://" not in options.database:
         options.database = "sqlite+pysqlite:///" + options.database
     return options

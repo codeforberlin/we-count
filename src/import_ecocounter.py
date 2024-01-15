@@ -87,12 +87,12 @@ def update_db(segments, session, options, workbook, features):
 def main(args=None):
     options = get_options(args, "ecocounter.geojson")
     if options.excel is None:
-        url = 'https://www.berlin.de/sen/uvk/_assets/verkehr/verkehrsplanung/radverkehr/weitere-radinfrastruktur/zaehlstellen-und-fahrradbarometer/gesamtdatei-stundenwerte.xlsx'
+        url = options.secrets["eco-counter-excel"]
         options.excel = os.path.basename(url)
         if not os.path.exists(options.excel):
             print("Downloading", options.excel)
             urlretrieve(url, options.excel)
-    with urlopen('https://www.eco-visio.net/api/aladdin/1.0.0/pbl/publicwebpageplus/4728') as jin:
+    with urlopen(options.secrets["eco-counter-web-api"]) as jin:
         ecojson = json.load(jin)
 
     container = { "type":"FeatureCollection", "features":[] }

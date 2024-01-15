@@ -45,7 +45,7 @@ def main(args=None):
             if options.verbose:
                 print(f"Not recreating {options.js_file}, it is less than {delta} old.")
             return False
-    conns = ConnectionProvider(options.tokens, options.url)
+    conns = ConnectionProvider(options.secrets["tokens"], options.url)
 
     old_data = no_data = {'features': []}
     if os.path.exists(options.json_file):

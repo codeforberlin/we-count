@@ -20,9 +20,8 @@ from common import ConnectionProvider, get_options
 def add_camera(conns, res):
     for segment in res["features"]:
         segment_id = segment["properties"]["segment_id"]
-        sensors = conns.request("/v1/cameras/segment/" + segment_id)
-        # print(sensors)
-        segment["properties"]["instance_id"] = sensors["camera"][0]["instance_id"]
+        cameras = conns.request("/v1/cameras/segment/%s" % segment_id)
+        segment["properties"]["cameras"] = cameras["camera"]
 
 
 def add_osm(res, old_data):
@@ -70,14 +69,14 @@ def main(args=None):
         if inside:
             bbox_segments.add(segment_id)
     if options.verbose:
-        print(f"{len(bbox_segments)} total sensor positions.")
+        print(f"{len(bbox_segments)} total sensor positions in the bounding box.")
 
     res = conns.request("/v1/reports/traffic_snapshot_live", required="features")
     features = res.get("features")
     if not features:
         return
     if options.verbose:
-        print(f"{len(res['features'])} live sensor positions.")
+        print(f"{len(res['features'])} live sensor positions worldwide.")
     combined_segments = []
     for segment in features + old_data["features"]:
         segment_id = segment["properties"]["segment_id"]
@@ -98,8 +97,7 @@ def main(args=None):
         combined_segments.append(segment)
     res["features"] = combined_segments
     add_osm(res, no_data if options.osm else old_data)
-    if options.camera:
-        add_camera(conns, res)
+    add_camera(conns, res)
     with open(options.json_file, "w", encoding="utf8") as segment_json:
         json.dump(res, segment_json, indent=2)
     with open(options.js_file, "w", encoding="utf8") as sensor_js:

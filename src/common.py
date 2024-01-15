@@ -62,8 +62,6 @@ def get_options(args=None, json_default="sensor.json"):
                         metavar="FILE", help="Write / read Geo-JSON for segments to / from FILE")
     parser.add_argument("--excel",
                         help="Excel input file")
-    parser.add_argument("--camera", action="store_true", default=False,
-                        help="include individual cameras")
     parser.add_argument("--osm", action="store_true", default=False,
                         help="recreate OpenStreetMap data even if it is present")
     parser.add_argument("-d", "--database",

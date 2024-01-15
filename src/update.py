@@ -6,6 +6,7 @@
 # @author  Michael Behrisch
 # @date    2023-11-27
 
+import json
 import os
 import sys
 
@@ -24,10 +25,16 @@ from common import GEO_JSON_NAME
 print("Content-Type: text/html\n")
 secrets = os.path.join(BASE, "secrets.json")
 csv_base = os.path.join(BASE, "..", "csv")
-if sensor_positions.main(["-j", os.path.join(csv_base, GEO_JSON_NAME),
+json_path = os.path.join(csv_base, GEO_JSON_NAME)
+if sensor_positions.main(["-j", json_path,
                           "--js-file", os.path.join(BASE, "..", "sensor-geojson.js"),
                           "-s", secrets, "-v"]):
-    backup_data.main(["-j", os.path.join(csv_base, GEO_JSON_NAME),
+    backup_data.main(["-j", json_path,
                       "--csv", os.path.join(csv_base, "bzm_telraam"),
                       "--csv-segments", os.path.join(csv_base, "segments", "bzm_telraam"),
                       "-s", secrets, "-v"])
+    with open(json_path, encoding="utf8") as jin, open(os.path.join(csv_base, "kibana", GEO_JSON_NAME), "w", encoding="utf8") as jout:
+        j = json.load(jin)
+        for segment in j["features"]:
+            segment["properties"]["segment_id"] = str(segment["properties"]["segment_id"])
+        json.dump(j, jout)

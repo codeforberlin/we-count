@@ -38,7 +38,7 @@ geojson_filter = assign("""function(feature, context){
                         const active = feature.properties.uptime === 0;
                         return (active && context.hideout.includes('active')) || (!active && context.hideout.includes('non-active'));
                         }""")
-attach_popup = assign("""
+popup_telraam = assign("""
     function onEachFeature(feature, layer) {
         let popupContent = `<a href="https://telraam.net/home/location/${feature.properties.segment_id}">Telraam sensor on segment ${feature.properties.segment_id}</a>`
         if (feature.properties.last_data_package) {
@@ -50,18 +50,33 @@ attach_popup = assign("""
         layer.bindPopup(popupContent);
     }
 """)
+popup_ecocounter = assign("""
+    function onEachFeature(feature, layer) {
+        let popupContent = `<a href="https://data.eco-counter.com/public2/?id=${feature.properties.segment_id}">Eco-counter on segment ${feature.properties.segment_id}</a>`
+        if (feature.properties.last_data_package) {
+            popupContent += `<br/><a href="csv/segments/bzm_ecocounter_${feature.properties.segment_id}.csv">CSV data for segment ${feature.properties.segment_id}</a>`;
+        }
+        if (feature.properties && feature.properties.popupContent) {
+            popupContent += feature.properties.popupContent;
+        }
+        layer.bindPopup(popupContent);
+    }
+""")
 
 app.layout = html.Div([
     dl.Map(children=[
         dl.TileLayer(className='bw', attribution=attribution),
-        dl.GeoJSON(url=('/csv/' + GEO_JSON_NAME) if deployed else 'assets/sensor.json',
-                   filter=geojson_filter, hideout=dd_defaults, id="geojson",
-                   onEachFeature=attach_popup)
+        dl.GeoJSON(url=('/csv/' if deployed else 'assets/') + GEO_JSON_NAME,
+                   filter=geojson_filter, hideout=dd_defaults, id="telraam",
+                   onEachFeature=popup_telraam),
+        dl.GeoJSON(url=('/csv/' if deployed else 'assets/') + 'bzm_ecocounter_segments.geojson',
+                   id="ecocounter",
+                   onEachFeature=popup_ecocounter)
     ], style={'height': '80vh'}, center=(52.5, 13.55), zoom=11),
     dcc.Dropdown(id="dd", value=dd_defaults, options=dd_options, clearable=False, multi=True)
 ])
 # Link drop down to geojson hideout prop (could be done with a normal callback, but clientside is more performant).
-app.clientside_callback("function(x){return x;}", Output("geojson", "hideout"), Input("dd", "value"))
+app.clientside_callback("function(x){return x;}", Output("telraam", "hideout"), Input("dd", "value"))
 
 app.server.register_blueprint(json_api)
 

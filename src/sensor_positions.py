@@ -40,7 +40,7 @@ def main(args=None):
     options = get_options(args)
     if os.path.exists(options.js_file):
         last_mod = datetime.datetime.fromtimestamp(os.path.getmtime(options.js_file))
-        delta = datetime.timedelta(hours=1)
+        delta = datetime.timedelta(minutes=30)
         if datetime.datetime.now() - last_mod < delta:
             if options.verbose:
                 print(f"Not recreating {options.js_file}, it is less than {delta} old.")

@@ -25,10 +25,11 @@ app = Dash(__name__, requests_pathname_prefix="/cgi-bin/map.cgi/" if deployed el
 sep = '&nbsp;|&nbsp;'
 attribution=(sep.join(['&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
                        '<a href="https://telraam.net">Telraam</a>',
+                       '<a href="https://www.berlin.de/sen/uvk/mobilitaet-und-verkehr/verkehrsplanung/radverkehr/weitere-radinfrastruktur/zaehlstellen-und-fahrradbarometer/">SenUMVK Berlin</a>',
                        '<a href="https://berlin-zaehlt.de">Berlin z&auml;hlt Mobilit&auml;t</a>']) + '<br/>' +
              sep.join(['<a href="https://dashboard.berlin-zaehlt.de">Dashboard</a>',
                        '<a href="https://github.com/DLR-TS/wecount">GitHub</a>',
-                       '<a href="/csv">CSV data</a> under <a href="https://creativecommons.org/licenses/by/4.0/">CC-BY 4.0</a>']))
+                       '<a href="/csv">CSV data</a> under <a href="https://creativecommons.org/licenses/by/4.0/">CC-BY 4.0</a> and <a href="https://www.govdata.de/dl-de/by-2-0">dl-de/by-2-0</a>']))
 
 # Create drop down options.
 dd_options = [dict(value=c, label=c) for c in ["active", "non-active"]]
@@ -40,7 +41,7 @@ geojson_filter = assign("""function(feature, context){
                         }""")
 popup_telraam = assign("""
     function onEachFeature(feature, layer) {
-        let popupContent = `<a href="https://telraam.net/home/location/${feature.properties.segment_id}">Telraam sensor on segment ${feature.properties.segment_id}</a>`
+        let popupContent = `<a href="https://telraam.net/home/location/${feature.properties.segment_id}">Telraam sensor on segment ${feature.properties.segment_id}</a>`;
         if (feature.properties.last_data_package) {
             popupContent += `<br/><a href="csv/segments/bzm_telraam_${feature.properties.segment_id}.csv">CSV data for segment ${feature.properties.segment_id}</a>`;
         }
@@ -52,10 +53,8 @@ popup_telraam = assign("""
 """)
 popup_ecocounter = assign("""
     function onEachFeature(feature, layer) {
-        let popupContent = `<a href="https://data.eco-counter.com/public2/?id=${feature.properties.segment_id}">Eco-counter on segment ${feature.properties.segment_id}</a>`
-        if (feature.properties.last_data_package) {
-            popupContent += `<br/><a href="csv/segments/bzm_ecocounter_${feature.properties.segment_id}.csv">CSV data for segment ${feature.properties.segment_id}</a>`;
-        }
+        let popupContent = `<a href="https://data.eco-counter.com/public2/?id=${feature.properties.segment_id}">Eco-counter on segment ${feature.properties.segment_id}</a>` +
+                           `<br/><a href="csv/segments/bzm_ecocounter_${feature.properties.segment_id}.csv">CSV data for segment ${feature.properties.segment_id}</a>`;
         if (feature.properties && feature.properties.popupContent) {
             popupContent += feature.properties.popupContent;
         }

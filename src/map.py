@@ -43,7 +43,7 @@ popup_telraam = assign("""
     function onEachFeature(feature, layer) {
         let popupContent = `<a href="https://telraam.net/home/location/${feature.properties.segment_id}">Telraam sensor on segment ${feature.properties.segment_id}</a>`;
         if (feature.properties.last_data_package) {
-            popupContent += `<br/><a href="csv/segments/bzm_telraam_${feature.properties.segment_id}.csv">CSV data for segment ${feature.properties.segment_id}</a>`;
+            popupContent += `<br/><a href="/csv/segments/bzm_telraam_${feature.properties.segment_id}.csv">CSV data for segment ${feature.properties.segment_id}</a>`;
         }
         if (feature.properties && feature.properties.popupContent) {
             popupContent += feature.properties.popupContent;
@@ -54,7 +54,7 @@ popup_telraam = assign("""
 popup_ecocounter = assign("""
     function onEachFeature(feature, layer) {
         let popupContent = `<a href="https://data.eco-counter.com/public2/?id=${feature.properties.segment_id}">Eco-counter on segment ${feature.properties.segment_id}</a>` +
-                           `<br/><a href="csv/segments/bzm_ecocounter_${feature.properties.segment_id}.csv">CSV data for segment ${feature.properties.segment_id}</a>`;
+                           `<br/><a href="/csv/segments/bzm_ecocounter_${feature.properties.segment_id}.csv">CSV data for segment ${feature.properties.segment_id}</a>`;
         if (feature.properties && feature.properties.popupContent) {
             popupContent += feature.properties.popupContent;
         }

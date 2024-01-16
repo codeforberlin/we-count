@@ -2,13 +2,22 @@ Diese Daten stammen aus dem bürgerwissenschaftlichen Projekt
 "Berlin zählt Mobilität" unterstützt von Telraam, dem ADFC Berlin
 sowie dem Deutschen Zentrum für Luft- und Raumfahrt.
 
-Sie umfassen die von Telraam-Sensoren gesammelten Daten für den Großraum
+Sie umfassen in den mit bzm_telraam beginnenden Dateien
+die von Telraam-Sensoren gesammelten Daten für den Großraum
 Berlin und werden mehrmals täglich aktualisiert. Zur Bedeutung der einzelnen
 Spalten in den CSV-Dateieen siehe auch (englisch):
 https://documenter.getpostman.com/view/8210376/TWDRqyaV#3bb3c6bd-ea23-4329-b885-0d142403ecbb
 
-Die Daten stehen unter der Creative Commons Attribution Lizenz (CC-BY 4.0).
-Für näheres zur Lizenz bitte in die LICENSE-Datei schauen.
+Diese Daten stehen unter der Creative Commons Attribution Lizenz (CC-BY 4.0).
+Für näheres zur Lizenz bitte in die LICENSE-Datei schauen oder auf https://creativecommons.org/licenses/by/4.0/.
+
+Zusätzlich sind in den mit bzm_ecocounter beginnenden Dateien die historischen Daten der
+Eco-Counter-Zähler der Senatsverwaltung für Umwelt, Mobilität, Verbraucher- und Klimaschutz Berlin verfügbar,
+wie sie unter https://www.berlin.de/sen/uvk/_assets/verkehr/verkehrsplanung/radverkehr/weitere-radinfrastruktur/zaehlstellen-und-fahrradbarometer/gesamtdatei-stundenwerte.xlsx
+zu finden sind. Diese Daten stehen unter der "Datenlizenz Deutschland – Namensnennung – Version 2.0"
+siehe LICENSE.ecocounter oder https://www.govdata.de/dl-de/by-2-0.
+
+Die Metadaten insebsondere zur Lage der Sensoren findet man in den jeweiligen GeoJSON-Dateien.
 
 Achtung! Diese Seite befindet sich noch im Aufbau. Das Format der Daten kann sich jederzeit
 ändern.
@@ -18,11 +27,15 @@ The data provided here originates from the citizen science project
 "Berlin zählt Mobilität" supported by Telraam, ADFC Berlin
 and the German Aerospace Center.
 
-They contain data collected by Telraam sensors in the Berlin area and get updated
-at least daily. For a documentation on the columns in the CSV see also:
+They contain in the bzm_telraam files data collected by Telraam sensors in the Berlin area and get updated
+several times a day. For a documentation on the columns in the CSV see also:
 https://documenter.getpostman.com/view/8210376/TWDRqyaV#3bb3c6bd-ea23-4329-b885-0d142403ecbb
 
 The files are under the Creative Commons Attribution License (CC-BY 4.0).
-For details see the LICENSE file.
+For details see the LICENSE file or https://creativecommons.org/licenses/by/4.0/.
+
+Additionally we provide in the bzm_ecocounter format the historical data of the Eco-Counters. For source and license see the German text above.
+
+Metadata especially concerning the location of the sensors is provided in the GeoJSON format.
 
 Attention! This site is still under construction. The data format may change at any time.

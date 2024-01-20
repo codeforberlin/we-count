@@ -33,8 +33,9 @@ if sensor_positions.main(["-j", json_path,
                       "--csv", os.path.join(csv_base, "bzm_telraam"),
                       "--csv-segments", os.path.join(csv_base, "segments", "bzm_telraam"),
                       "-s", secrets, "-v"])
-    with open(json_path, encoding="utf8") as jin, open(os.path.join(csv_base, "kibana", GEO_JSON_NAME), "w", encoding="utf8") as jout:
+    kibana_path = os.path.join(csv_base, "kibana", GEO_JSON_NAME)
+    with open(json_path, encoding="utf8") as jin, open(kibana_path, "w", encoding="utf8") as jout:
         j = json.load(jin)
         for segment in j["features"]:
             segment["properties"]["segment_id"] = str(segment["properties"]["segment_id"])
-        json.dump(j, jout)
+        json.dump(j, jout, indent=2)

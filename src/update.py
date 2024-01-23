@@ -6,6 +6,8 @@
 # @author  Michael Behrisch
 # @date    2023-11-27
 
+import datetime
+import glob
 import json
 import os
 import sys
@@ -33,9 +35,11 @@ if sensor_positions.main(["-j", json_path,
                       "--csv", os.path.join(csv_base, "bzm_telraam"),
                       "--csv-segments", os.path.join(csv_base, "segments", "bzm_telraam"),
                       "-s", secrets, "-v"])
-    kibana_path = os.path.join(csv_base, "kibana", GEO_JSON_NAME)
-    with open(json_path, encoding="utf8") as jin, open(kibana_path, "w", encoding="utf8") as jout:
-        j = json.load(jin)
+for jf in glob.glob(os.path.join(csv_base, "*.geojson")):
+    kibana_path = os.path.join(csv_base, "kibana", os.path.basename(jf))
+    with open(jf, encoding="utf8") as jin, open(kibana_path, "w", encoding="utf8") as jout:
+        j = {"last_update": datetime.datetime.now(datetime.timezone.utc).isoformat(" ")}
+        j.update(json.load(jin))
         for segment in j["features"]:
             segment["properties"]["segment_id"] = str(segment["properties"]["segment_id"])
         json.dump(j, jout, indent=2)

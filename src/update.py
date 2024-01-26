@@ -26,6 +26,7 @@ from common import GEO_JSON_NAME
 
 print("Content-Type: text/html\n")
 secrets = os.path.join(BASE, "secrets.json")
+# csv_base = os.path.join("assets")
 csv_base = os.path.join(BASE, "..", "csv")
 json_path = os.path.join(csv_base, GEO_JSON_NAME)
 if sensor_positions.main(["-j", json_path,
@@ -35,11 +36,24 @@ if sensor_positions.main(["-j", json_path,
                       "--csv", os.path.join(csv_base, "bzm_telraam"),
                       "--csv-segments", os.path.join(csv_base, "segments", "bzm_telraam"),
                       "-s", secrets, "-v"])
+last_update = datetime.datetime.now(datetime.timezone.utc).isoformat(" ")[:-16]
 for jf in glob.glob(os.path.join(csv_base, "*.geojson")):
     kibana_path = os.path.join(csv_base, "kibana", os.path.basename(jf))
     with open(jf, encoding="utf8") as jin, open(kibana_path, "w", encoding="utf8") as jout:
-        j = {"last_update": datetime.datetime.now(datetime.timezone.utc).isoformat(" ")}
-        j.update(json.load(jin))
+        j = json.load(jin)
         for segment in j["features"]:
-            segment["properties"]["segment_id"] = str(segment["properties"]["segment_id"])
-        json.dump(j, jout, indent=2)
+            s = {"last_update": last_update, "geometry": segment["geometry"]}
+            s.update(segment["properties"])
+            s["segment_id"] = str(s["segment_id"])
+            if "osm" in s:
+                s["osm"]["osmid"] = str(s["osm"]["osmid"])
+            if s.get("cameras"):
+                cams = []
+                for c in s["cameras"]:
+                    cs = {}
+                    for k, v in c.items():
+                        cs[k] = str(v) if k[-3:] == "_id" else v
+                    cams.append(cs)
+                s["cameras"] = cams
+                json.dump(s, jout)
+                jout.write("\n")

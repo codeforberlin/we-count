@@ -69,9 +69,9 @@ def update_db(segments, session, options, conns):
             continue
         first = s.last_backup_utc if s.last_backup_utc else min(active)
         last = s.last_data_utc
-        if options.verbose and first < last:
+        if options.verbose and last is not None and first < last:
             print("Retrieving data for segment %s between %s and %s." % (s.id, first, last))
-        while first < last:
+        while last is not None and first < last:
             interval_end = first + datetime.timedelta(days=90)
             payload = '{"level": "segments", "format": "per-hour", "id": "%s", "time_start": "%s", "time_end": "%s"}' % (s.id, first, interval_end)
             res = conns.request("/v1/reports/traffic", "POST", payload, options.retry, "report")
@@ -85,8 +85,8 @@ def update_db(segments, session, options, conns):
                         s.counts[idx-1] = tc
             first = interval_end
         s.last_backup_utc = datetime.datetime.now(datetime.timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
-        if newest_data is None or newest_data < s.last_data_utc:
-            newest_data = s.last_data_utc
+        if last is not None and (newest_data is None or newest_data < last):
+            newest_data = last
         session.commit()
     return newest_data
 

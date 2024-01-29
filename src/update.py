@@ -55,5 +55,6 @@ for jf in glob.glob(os.path.join(csv_base, "*.geojson")):
                         cs[k] = str(v) if k[-3:] == "_id" else v
                     cams.append(cs)
                 s["cameras"] = cams
+            if s.get("cameras") or s.get("eco-counter"):
                 json.dump(s, jout)
                 jout.write("\n")

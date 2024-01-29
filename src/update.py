@@ -52,7 +52,7 @@ for jf in glob.glob(os.path.join(csv_base, "*.geojson")):
                 for c in s["cameras"]:
                     cs = {}
                     for k, v in c.items():
-                        cs[k] = str(v) if k[-3:] == "_id" else v
+                        cs[k] = str(v) if k[-3:] in ("mac", "_id") else v
                     cams.append(cs)
                 s["cameras"] = cams
             if s.get("cameras") or s.get("eco-counter"):

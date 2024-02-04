@@ -6,12 +6,13 @@
 # @date    2023-01-15
 
 import argparse
-import http.client
 import json
 import pprint
 import random
 import sys
 import time
+
+import requests
 
 
 GEO_JSON_NAME = "bzm_telraam_segments.geojson"
@@ -19,18 +20,22 @@ GEO_JSON_NAME = "bzm_telraam_segments.geojson"
 
 class ConnectionProvider:
     def __init__(self, tokens, url):
-        self._connections = [(http.client.HTTPSConnection(url), { 'X-Api-Key': t }) for t in tokens]
+        self._connections = []
+        for t in tokens:
+            s = requests.Session()
+            s.headers.update({ 'X-Api-Key': t })
+            self._connections.append(s)
         self._index = random.randint(0, len(self._connections) - 1)
         self._num_queries = 0
+        self._url = url
 
     def request(self, path, method='GET', payload='', retries=0, required=None):
         for _ in range(retries + 1):
             self._num_queries += 1
             time.sleep(1.1 / len(self._connections))
-            conn, headers = self._connections[self._index]
+            conn = self._connections[self._index]
             self._index = (self._index + 1) % len(self._connections)
-            conn.request(method, path, payload, headers)
-            response = json.loads(conn.getresponse().read())
+            response = conn.request(method, self._url + path, data=payload).json()
             if response.get("message") == "Too Many Requests":
                 print("Warning:", response["message"], file=sys.stderr)
                 continue
@@ -83,4 +88,6 @@ def get_options(args=None, json_default="sensor.json"):
         options.database = options.secrets.get("database", "backup.db")
     if "+" not in options.database and "://" not in options.database:
         options.database = "sqlite+pysqlite:///" + options.database
+    if options.url and "://" not in options.url:
+        options.url = "https://" + options.url
     return options

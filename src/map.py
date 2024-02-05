@@ -32,35 +32,29 @@ attribution=(sep.join(['&copy; <a href="http://www.openstreetmap.org/copyright">
                        '<a href="/csv">CSV data</a> under <a href="https://creativecommons.org/licenses/by/4.0/">CC-BY 4.0</a> and <a href="https://www.govdata.de/dl-de/by-2-0">dl-de/by-2-0</a>']))
 
 # Create drop down options.
-dd_options = [dict(value=c, label=c) for c in ["active", "non-active"]]
+dd_options = [{"value": c, "label": c} for c in ["active", "non-active"]]
 dd_defaults = [o["value"] for o in dd_options]
-# Create javascript function that filters on feature name.
-geojson_filter = assign("""function(feature, context){
-                        const active = feature.properties.uptime === 0;
-                        return (active && context.hideout.includes('active')) || (!active && context.hideout.includes('non-active'));
-                        }""")
+# Create javascript function that filters on activity.
+geojson_filter = assign("""
+    function(feature, context) {
+        if (feature.properties.cameras.length == 0) return false;
+        const active = feature.properties.uptime === 0;
+        return (active && context.hideout.includes('active')) || (!active && context.hideout.includes('non-active'));
+    }""")
 popup_telraam = assign("""
     function onEachFeature(feature, layer) {
         let popupContent = `<a href="https://telraam.net/home/location/${feature.properties.segment_id}">Telraam sensor on segment ${feature.properties.segment_id}</a>`;
         if (feature.properties.last_data_package) {
             popupContent += `<br/><a href="/csv/segments/bzm_telraam_${feature.properties.segment_id}.csv">CSV data for segment ${feature.properties.segment_id}</a>`;
         }
-        if (feature.properties && feature.properties.popupContent) {
-            popupContent += feature.properties.popupContent;
-        }
         layer.bindPopup(popupContent);
-    }
-""")
+    }""")
 popup_ecocounter = assign("""
     function onEachFeature(feature, layer) {
         let popupContent = `<a href="https://data.eco-counter.com/public2/?id=${feature.properties.segment_id}">Eco-counter on segment ${feature.properties.segment_id}</a>` +
                            `<br/><a href="/csv/segments/bzm_ecocounter_${feature.properties.segment_id}.csv">CSV data for segment ${feature.properties.segment_id}</a>`;
-        if (feature.properties && feature.properties.popupContent) {
-            popupContent += feature.properties.popupContent;
-        }
         layer.bindPopup(popupContent);
-    }
-""")
+    }""")
 
 app.layout = html.Div([
     dl.Map(children=[

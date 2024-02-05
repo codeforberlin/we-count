@@ -106,6 +106,7 @@ class Segment(Base):
 
     def update(self, properties):
         self.last_data_utc = parse_utc(properties.get("last_data_package"))
+        self.timezone = properties["timezone"]
 
 
 class Camera(Base):

@@ -28,7 +28,7 @@ attribution=(sep.join(['&copy; <a href="http://www.openstreetmap.org/copyright">
                        '<a href="https://www.berlin.de/sen/uvk/mobilitaet-und-verkehr/verkehrsplanung/radverkehr/weitere-radinfrastruktur/zaehlstellen-und-fahrradbarometer/">SenUMVK Berlin</a>',
                        '<a href="https://berlin-zaehlt.de">Berlin z&auml;hlt Mobilit&auml;t</a>']) + '<br/>' +
              sep.join(['<a href="https://dashboard.berlin-zaehlt.de">Dashboard</a>',
-                       '<a href="https://github.com/DLR-TS/wecount">GitHub</a>',
+                       '<a href="https://github.com/DLR-TS/we-count">GitHub</a>',
                        '<a href="/csv">CSV data</a> under <a href="https://creativecommons.org/licenses/by/4.0/">CC-BY 4.0</a> and <a href="https://www.govdata.de/dl-de/by-2-0">dl-de/by-2-0</a>']))
 
 # Create drop down options.

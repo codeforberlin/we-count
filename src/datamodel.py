@@ -75,13 +75,14 @@ class TrafficCount(Base):
         result = []
         if self.car_speed_histogram_type == HISTOGRAM_0_120PLUS_5KMH:
             counts = [float(f) for f in self.car_speed_histogram.split(",")]
+            ucc = self._unscaled_car_count()
             for low in range(0, 80, 10):
                 high = low + 10 if low < 70 else 1000
                 c = 0.
                 for i, f in enumerate(counts):
                     if low <= 5 * i and 5 * (i + 1) <= high:
                         c += f
-                result.append(100 * c / self._unscaled_car_count() if c != 0. else 0.)
+                result.append(100 * c / ucc if ucc != 0. else 0.)
         return result
 
 

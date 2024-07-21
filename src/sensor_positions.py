@@ -86,6 +86,8 @@ def main(args=None):
     tf = timezonefinder.TimezoneFinder()
     for segment_id in bbox_segments:
         segment_data = conns.request("/v1/segments/id/%s" % segment_id, required="features")
+        if 'features' not in segment:
+            continue
         segment = segment_data["features"][0]
         wgs_coords = segment["geometry"]["coordinates"][0]
         timezone = tf.timezone_at(lng=wgs_coords[0][0], lat=wgs_coords[0][1])

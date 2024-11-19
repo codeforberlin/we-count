@@ -35,13 +35,16 @@ class ConnectionProvider:
             time.sleep(1.1 / len(self._connections))
             conn = self._connections[self._index]
             self._index = (self._index + 1) % len(self._connections)
-            response = conn.request(method, self._url + path, data=payload).json()
-            if response.get("message") == "Too Many Requests":
+            r = conn.request(method, self._url + path, data=payload)
+            response = r.json()
+            if r.status_code == 429:  # too many requests, just retry
                 print("Warning:", response["message"], file=sys.stderr)
                 continue
             if "errorMessage" in response:
                 print("Error on %s %s." % (path, payload), response["errorMessage"],
                       response.get("errorType"), response.get("stackTrace"), file=sys.stderr)
+            elif r.status_code == 403:  # forbidden, probably no access to the segment in advanced mode
+                print("Warning:", response["message"], file=sys.stderr)
             elif required and required not in response:
                 print("Format error on %s %s." % (path, payload), file=sys.stderr)
                 pprint.pp(response, sys.stderr)
@@ -79,6 +82,8 @@ def get_options(args=None, json_default="sensor.json"):
                         help="First year to retrieve when writing csv")
     parser.add_argument("-r", "--retry", type=int, default=1,
                         help="number of retries on failure")
+    parser.add_argument("-a", "--advanced", action="store_true", default=False,
+                        help="use the advanced API with quarterly data")
     parser.add_argument("-v", "--verbose", action="count", default=0,
                         help="increase verbosity, twice enables verbose sqlalchemy output")
     options = parser.parse_args(args=args)

@@ -12,6 +12,7 @@ import datetime
 import gzip
 import json
 import os
+import sys
 import zoneinfo
 
 import openpyxl
@@ -65,16 +66,27 @@ def update_db(segments, session, options, conns):
         session.add(s)
         active = [c.first_data_utc for c in s.cameras if c.first_data_utc is not None]
         if not active:
-            print("No active camera for segment %s." % s.id)
+            print("No active camera for segment %s." % s.id, file=sys.stderr)
             continue
         first = s.last_backup_utc if s.last_backup_utc else min(active)
         last = s.last_data_utc
         if options.verbose and last is not None and first < last:
             print("Retrieving data for segment %s between %s and %s." % (s.id, first, last))
         while last is not None and first < last:
-            interval_end = first + datetime.timedelta(days=90)
-            payload = '{"level": "segments", "format": "per-hour", "id": "%s", "time_start": "%s", "time_end": "%s"}' % (s.id, first, interval_end)
-            res = conns.request("/v1/reports/traffic", "POST", payload, options.retry, "report")
+            if options.advanced:
+                interval_end = first + datetime.timedelta(days=20)
+                payload = '{"level": "segments", "format": "per-quarter", "id": "%s", "time_start": "%s", "time_end": "%s"}' % (s.id, first, interval_end)
+                res = conns.request("/advanced/reports/traffic", "POST", payload, options.retry, "report")
+                if res.get("status_code") == 403:
+                    print(" Skipping %s." % s.id, file=sys.stderr)
+                    break
+            else:
+                interval_end = first + datetime.timedelta(days=90)
+                payload = '{"level": "segments", "format": "per-hour", "id": "%s", "time_start": "%s", "time_end": "%s"}' % (s.id, first, interval_end)
+                res = conns.request("/v1/reports/traffic", "POST", payload, options.retry, "report")
+            # if res.get("report", []):
+            #     print(res)
+            #     exit()
             for entry in res.get("report", []):
                 if entry["uptime"] > 0:
                     tc = TrafficCount(entry)

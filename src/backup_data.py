@@ -20,7 +20,7 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
 from common import ConnectionProvider, get_options
-from datamodel import Base, TrafficCount, Segment, Camera
+from datamodel import Base, TrafficCount, TrafficCountAdvanced, Segment, Camera
 
 
 def open_session(options):
@@ -75,6 +75,7 @@ def update_db(segments, session, options, conns):
         while last is not None and first < last:
             if options.advanced:
                 interval_end = first + datetime.timedelta(days=20)
+                # TODO we can now specify the columns we need
                 payload = '{"level": "segments", "format": "per-quarter", "id": "%s", "time_start": "%s", "time_end": "%s"}' % (s.id, first, interval_end)
                 res = conns.request("/advanced/reports/traffic", "POST", payload, options.retry, "report")
                 if res.get("status_code") == 403:
@@ -89,7 +90,7 @@ def update_db(segments, session, options, conns):
             #     exit()
             for entry in res.get("report", []):
                 if entry["uptime"] > 0:
-                    tc = TrafficCount(entry)
+                    tc = TrafficCountAdvanced(entry) if options.advanced else TrafficCount(entry)
                     idx = bisect.bisect(s.counts, tc.date_utc, key=lambda t: t.date_utc)
                     if not s.counts or s.counts[idx-1].date_utc != tc.date_utc:
                         s.counts.insert(idx, tc)

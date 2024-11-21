@@ -6,13 +6,14 @@
 # @date    2023-01-11
 
 import datetime
+from typing import Optional
 
-from sqlalchemy import Column, Integer, Float, DateTime, ForeignKey, Boolean, String, BigInteger, SmallInteger, TypeDecorator
-from sqlalchemy.orm import declarative_base, relationship
+from sqlalchemy import Integer, DateTime, ForeignKey, String, BigInteger, SmallInteger, TypeDecorator
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 HISTOGRAM_0_120PLUS_5KMH = 1
+INTERVALS = {"hourly": 3600, "quarterly": 900}
 
-Base = declarative_base()
 IntID = BigInteger().with_variant(Integer, "sqlite")
 
 
@@ -32,34 +33,44 @@ def parse_utc(date):
     return datetime.datetime.fromisoformat(date.replace("Z", "+00:00")) if date else None
 
 
+class Base(DeclarativeBase):
+    pass
+
+
 class TrafficCount(Base):
     __tablename__ = "traffic_count"
 
-    id = Column(IntID, primary_key=True)
-    instance_id = Column(IntID)
-    segment_id = Column(IntID, ForeignKey("segment.id"))
-    date_utc = Column(TZDateTime)
-    interval_seconds = Column(Integer)
-    uptime_rel = Column(Float)
-    heavy_lft = Column(Float)
-    heavy_rgt = Column(Float)
-    car_lft = Column(Float)
-    car_rgt = Column(Float)
-    bike_lft = Column(Float)
-    bike_rgt = Column(Float)
-    pedestrian_lft = Column(Float)
-    pedestrian_rgt = Column(Float)
-    direction = Column(SmallInteger)
-    v85 = Column(Float)
-    car_speed_histogram_type = Column(SmallInteger)
-    car_speed_histogram = Column(String(length=250))
+    id: Mapped[int] = mapped_column(IntID, primary_key=True)
+    instance_id: Mapped[Optional[int]] = mapped_column(IntID)
+    segment_id: Mapped[int] = mapped_column(IntID, ForeignKey("segment.id"))
+    date_utc: Mapped[datetime.datetime] = mapped_column(TZDateTime)
+    interval_seconds: Mapped[Optional[int]]
+    uptime_rel: Mapped[float]
+    heavy_lft: Mapped[float]
+    heavy_rgt: Mapped[float]
+    car_lft: Mapped[float]
+    car_rgt: Mapped[float]
+    bike_lft: Mapped[float]
+    bike_rgt: Mapped[float]
+    pedestrian_lft: Mapped[float]
+    pedestrian_rgt: Mapped[float]
+    direction: Mapped[int] = mapped_column(SmallInteger)
+    v85: Mapped[Optional[float]]
+    car_speed_histogram_type: Mapped[int] = mapped_column(SmallInteger)
+    car_speed_histogram: Mapped[str] = mapped_column(String(length=250))
+    detail: Mapped[str] = mapped_column(String(length=10))  # one of "basic", "advanced"
+
+    __mapper_args__ = {
+        "polymorphic_identity": "basic",
+        "polymorphic_on": "detail",
+    }
 
     def __init__(self, table):
         for attr, val in table.items():
             if hasattr(self, attr):
                 setattr(self, attr, None if val == -1 else val)
         self.date_utc = parse_utc(table["date"])
-        self.interval_seconds = 3600 if table["interval"] == "hourly" else None
+        self.interval_seconds = INTERVALS.get(table["interval"])
         self.uptime_rel = table["uptime"]
         speed_hist = table.get("car_speed_hist_0to120plus")
         if speed_hist:
@@ -86,13 +97,26 @@ class TrafficCount(Base):
         return result
 
 
+class TrafficCountAdvanced(TrafficCount):
+    __tablename__ = "traffic_count_advanced"
+
+    id: Mapped[int] = mapped_column(ForeignKey("traffic_count.id"), primary_key=True)
+    mode_night_lft: Mapped[Optional[float]]
+    mode_night_rgt: Mapped[Optional[float]]
+
+    __mapper_args__ = {
+        "polymorphic_identity": "advanced",
+    }
+
+# the following line is due to a pylint bug which complains about the Mapped[] otherwise
+# pylint: disable=unsubscriptable-object
 class Segment(Base):
     __tablename__ = "segment"
 
-    id = Column(IntID, primary_key=True, autoincrement=False)
-    last_data_utc = Column(TZDateTime)
-    last_backup_utc = Column(TZDateTime)
-    timezone = Column(String(length=50))
+    id: Mapped[int] = mapped_column(IntID, primary_key=True, autoincrement=False)
+    last_data_utc: Mapped[datetime.datetime] = mapped_column(TZDateTime)
+    last_backup_utc: Mapped[datetime.datetime] = mapped_column(TZDateTime)
+    timezone: Mapped[str] = mapped_column(String(length=50))
 
     cameras = relationship("Camera")
     counts = relationship("TrafficCount")
@@ -113,6 +137,26 @@ class Segment(Base):
 class Camera(Base):
     __tablename__ = "camera"
 
+    id: Mapped[int] = mapped_column(IntID, primary_key=True, autoincrement=False)
+    mac: Mapped[int] = mapped_column(IntID)
+    user_id: Mapped[int] = mapped_column(IntID)
+    segment_id: Mapped[int] = mapped_column(IntID, ForeignKey("segment.id"))
+    direction: Mapped[bool]
+    status: Mapped[str] = mapped_column(String(length=20))  # probably one of "active", "non_active", "problematic", "stopped"
+    manual: Mapped[bool]
+    added_utc: Mapped[datetime.datetime] = mapped_column(TZDateTime)
+    end_utc: Mapped[Optional[datetime.datetime]] = mapped_column(TZDateTime)
+    last_data_utc: Mapped[datetime.datetime] = mapped_column(TZDateTime)
+    first_data_utc: Mapped[datetime.datetime] = mapped_column(TZDateTime)
+    pedestrians_left: Mapped[bool]
+    pedestrians_right: Mapped[bool]
+    bikes_left: Mapped[bool]
+    bikes_right: Mapped[bool]
+    cars_left: Mapped[bool]
+    cars_right: Mapped[bool]
+    is_calibration_done: Mapped[str] = mapped_column(String(length=10))  # probably one of "yes", "no", "partial"
+    hardware_version: Mapped[int]
+
     def __init__(self, table):
         for attr, val in table.items():
             if hasattr(self, attr):
@@ -122,23 +166,3 @@ class Camera(Base):
         self.end_utc = parse_utc(table["time_end"])
         self.last_data_utc = parse_utc(table["last_data_package"])
         self.first_data_utc = parse_utc(table["first_data_package"])
-
-    id = Column(IntID, primary_key=True, autoincrement=False)
-    mac = Column(IntID)
-    user_id = Column(IntID)
-    segment_id = Column(IntID, ForeignKey("segment.id"))
-    direction = Column(Boolean)
-    status = Column(String(length=20))  # probably one of "active", "non_active", "problematic", "stopped"
-    manual = Column(Boolean)
-    added_utc = Column(TZDateTime)
-    end_utc = Column(TZDateTime)
-    last_data_utc = Column(TZDateTime)
-    first_data_utc = Column(TZDateTime)
-    pedestrians_left = Column(Boolean)
-    pedestrians_right = Column(Boolean)
-    bikes_left = Column(Boolean)
-    bikes_right = Column(Boolean)
-    cars_left = Column(Boolean)
-    cars_right = Column(Boolean)
-    is_calibration_done = Column(String(length=10))  # probably one of "yes", "no", "partial"
-    hardware_version = Column(Integer)

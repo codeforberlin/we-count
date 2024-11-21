@@ -8,4 +8,5 @@ plotly>=4.0
 pandas
 pyproj
 requests
+sqlalchemy
 timezonefinder

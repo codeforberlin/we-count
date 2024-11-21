@@ -75,9 +75,18 @@ def update_db(segments, session, options, conns):
         while last is not None and first < last:
             if options.advanced:
                 interval_end = first + datetime.timedelta(days=20)
-                # TODO we can now specify the columns we need
-                payload = '{"level": "segments", "format": "per-quarter", "id": "%s", "time_start": "%s", "time_end": "%s"}' % (s.id, first, interval_end)
-                res = conns.request("/advanced/reports/traffic", "POST", payload, options.retry, "report")
+                payload = {
+                    "level": "segments", "format": "per-quarter", "id": s.id,
+                    "time_start": str(first), "time_end": str(interval_end),
+                    "columns": "instance_id,segment_id,date,interval,uptime,direction,v85,car_speed_hist_0to120plus,"
+                    "heavy_lft,heavy_rgt,car_lft,car_rgt,bike_lft,bike_rgt,pedestrian_lft,pedestrian_rgt,"
+                    "mode_bicycle_lft,mode_bicycle_rgt,mode_bus_lft,mode_bus_rgt,mode_car_lft,mode_car_rgt,"
+                    "mode_lighttruck_lft,mode_lighttruck_rgt,mode_motorcycle_lft,mode_motorcycle_rgt,"
+                    "mode_pedestrian_lft,mode_pedestrian_rgt,mode_stroller_lft,mode_stroller_rgt,"
+                    "mode_tractor_lft,mode_tractor_rgt,mode_trailer_lft,mode_trailer_rgt,"
+                    "mode_truck_lft,mode_truck_rgt,mode_night_lft,mode_night_rgt,"
+                    "speed_hist_car_lft,speed_hist_car_rgt,brightness,sharpness"}
+                res = conns.request("/advanced/reports/traffic", "POST", str(payload), options.retry, "report")
                 if res.get("status_code") == 403:
                     print(" Skipping %s." % s.id, file=sys.stderr)
                     break
@@ -90,7 +99,7 @@ def update_db(segments, session, options, conns):
             #     exit()
             for entry in res.get("report", []):
                 if entry["uptime"] > 0:
-                    tc = TrafficCountAdvanced(entry) if options.advanced else TrafficCount(entry)
+                    tc = TrafficCount(entry) if entry.get("mode_car_rgt") is None else TrafficCountAdvanced(entry)
                     idx = bisect.bisect(s.counts, tc.date_utc, key=lambda t: t.date_utc)
                     if not s.counts or s.counts[idx-1].date_utc != tc.date_utc:
                         s.counts.insert(idx, tc)
@@ -110,16 +119,16 @@ def round_separator(v, digits, sep):
     return round(v, digits) if v is not None else None
 
 
-def get_column_names():
+def get_column_names(advanced):
     res = ["segment_id", "date_local", "uptime"]
-    for mode in ("ped", "bike", "car", "heavy"):
+    for mode in TrafficCountAdvanced.modes() if advanced else TrafficCount.modes():
         res += [mode + "_lft", mode + "_rgt", mode + "_total"]
     return res + ["v85"] + ["car_speed%s" % s for s in range(0, 80, 10)]
 
 
-def get_column_values(tc, local_date, sep=None):
+def get_column_values(tc, local_date, advanced, sep=None):
     result = [tc.segment_id, str(local_date)[:-9], round_separator(tc.uptime_rel, 6, sep)]
-    for mode in ("pedestrian", "bike", "car", "heavy"):
+    for mode in TrafficCountAdvanced.modes() if advanced else TrafficCount.modes():
         lft = getattr(tc, mode + "_lft")
         rgt = getattr(tc, mode + "_rgt")
         result += [round(lft) if lft is not None else None,
@@ -131,7 +140,7 @@ def get_column_values(tc, local_date, sep=None):
     return result
 
 
-def write_xl(filename, segments, month=None):
+def _write_xl(filename, segments, advanced, month=None):
     wb = openpyxl.Workbook()
     row = 1
     for s in segments:
@@ -140,17 +149,17 @@ def write_xl(filename, segments, month=None):
             local_date = tc.date_utc.astimezone(tzinfo)
             if month is None or (local_date.year, local_date.month) == month:
                 if row == 1:
-                    for col, val in enumerate(get_column_names(), start=1):
+                    for col, val in enumerate(get_column_names(advanced), start=1):
                         wb.active.cell(row=row, column=col).value = val
                     row += 1
-                for col, val in enumerate(get_column_values(tc, local_date), start=1):
+                for col, val in enumerate(get_column_values(tc, local_date, advanced), start=1):
                     wb.active.cell(row=row, column=col).value = val
                 row += 1
     if row > 1:
         wb.save(filename)
 
 
-def write_csv(filename, segments, month=None, delimiter=","):
+def _write_csv(filename, segments, advanced, month=None, delimiter=","):
     with gzip.open(filename, "wt") as csv_file:
         csv_out = csv.writer(csv_file, delimiter=delimiter)
         need_header = True
@@ -160,9 +169,9 @@ def write_csv(filename, segments, month=None, delimiter=","):
                 local_date = tc.date_utc.astimezone(tzinfo)
                 if month is None or (local_date.year, local_date.month) == month:
                     if need_header:
-                        csv_out.writerow(get_column_names())
+                        csv_out.writerow(get_column_names(advanced))
                         need_header = False
-                    csv_out.writerow(get_column_values(tc, local_date))
+                    csv_out.writerow(get_column_values(tc, local_date, advanced))
     if need_header:  # no data
         os.remove(csv_file.name)
 
@@ -184,6 +193,9 @@ def main(args=None):
     conns = ConnectionProvider(options.secrets["tokens"], options.url) if options.url else None
     excel = False
     segments = get_segments(session, options)
+    if options.segments:
+        filtered = [int(s.strip()) for s in options.segments.split(",")]
+        segments = {k:v for k,v in segments.items() if k in filtered}
     if conns:
         get_cameras(session, conns, segments)
         session.commit()
@@ -197,9 +209,9 @@ def main(args=None):
         month = (options.csv_start_year, 1) if options.csv_start_year else add_month(-1, *curr_month)
         while month <= curr_month:
             if excel:
-                write_xl(options.csv + "_%s_%02i.xlsx" % month, segments.values(), month)
+                _write_xl(options.csv + "_%s_%02i.xlsx" % month, segments.values(), options.advanced, month)
             else:
-                write_csv(options.csv + "_%s_%02i.csv.gz" % month, segments.values(), month)
+                _write_csv(options.csv + "_%s_%02i.csv.gz" % month, segments.values(), options.advanced, month)
             month = add_month(1, *month)
 
     if options.csv_segments:
@@ -207,9 +219,9 @@ def main(args=None):
             os.makedirs(os.path.dirname(options.csv_segments), exist_ok=True)
         for s in segments.values():
             if excel:
-                write_xl(options.csv_segments + "_%s.csv.gz" % s.id, [s])
+                _write_xl(options.csv_segments + "_%s.xlsx" % s.id, [s], options.advanced)
             else:
-                write_csv(options.csv_segments + "_%s.csv.gz" % s.id, [s])
+                _write_csv(options.csv_segments + "_%s.csv.gz" % s.id, [s], options.advanced)
 
     if conns and options.verbose:
         conns.print_stats()

@@ -8,7 +8,7 @@
 import datetime
 from typing import Optional
 
-from sqlalchemy import Integer, DateTime, ForeignKey, String, BigInteger, SmallInteger, TypeDecorator
+from sqlalchemy import Integer, DateTime, ForeignKey, String, BigInteger, SmallInteger, TypeDecorator, inspect
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 HISTOGRAM_0_120PLUS_5KMH = 1
@@ -66,6 +66,7 @@ class TrafficCount(Base):
     }
 
     def __init__(self, table):
+        super().__init__()
         for attr, val in table.items():
             if hasattr(self, attr):
                 setattr(self, attr, None if val == -1 else val)
@@ -96,17 +97,46 @@ class TrafficCount(Base):
                 result.append(100 * c / ucc if ucc != 0. else 0.)
         return result
 
+    @classmethod
+    def modes(cls):
+        return ["pedestrian", "bike", "car", "heavy"]
+
 
 class TrafficCountAdvanced(TrafficCount):
     __tablename__ = "traffic_count_advanced"
 
     id: Mapped[int] = mapped_column(ForeignKey("traffic_count.id"), primary_key=True)
-    mode_night_lft: Mapped[Optional[float]]
-    mode_night_rgt: Mapped[Optional[float]]
+    mode_bicycle_lft: Mapped[float]
+    mode_bicycle_rgt: Mapped[float]
+    mode_bus_lft: Mapped[float]
+    mode_bus_rgt: Mapped[float]
+    mode_car_lft: Mapped[float]
+    mode_car_rgt: Mapped[float]
+    mode_lighttruck_lft: Mapped[float]
+    mode_lighttruck_rgt: Mapped[float]
+    mode_motorcycle_lft: Mapped[float]
+    mode_motorcycle_rgt: Mapped[float]
+    mode_pedestrian_lft: Mapped[float]
+    mode_pedestrian_rgt: Mapped[float]
+    mode_stroller_lft: Mapped[float]
+    mode_stroller_rgt: Mapped[float]
+    mode_tractor_lft: Mapped[float]
+    mode_tractor_rgt: Mapped[float]
+    mode_trailer_lft: Mapped[float]
+    mode_trailer_rgt: Mapped[float]
+    mode_truck_lft: Mapped[float]
+    mode_truck_rgt: Mapped[float]
+    mode_night_lft: Mapped[float]
+    mode_night_rgt: Mapped[float]
 
     __mapper_args__ = {
         "polymorphic_identity": "advanced",
     }
+
+    @classmethod
+    def modes(cls):
+        return TrafficCount.modes() + [a[:-4] for a in inspect(cls).columns.keys() if a.startswith("mode_") and a.endswith("_lft")]
+
 
 # the following line is due to a pylint bug which complains about the Mapped[] otherwise
 # pylint: disable=unsubscriptable-object
@@ -146,8 +176,8 @@ class Camera(Base):
     manual: Mapped[bool]
     added_utc: Mapped[datetime.datetime] = mapped_column(TZDateTime)
     end_utc: Mapped[Optional[datetime.datetime]] = mapped_column(TZDateTime)
-    last_data_utc: Mapped[datetime.datetime] = mapped_column(TZDateTime)
-    first_data_utc: Mapped[datetime.datetime] = mapped_column(TZDateTime)
+    last_data_utc: Mapped[Optional[datetime.datetime]] = mapped_column(TZDateTime)
+    first_data_utc: Mapped[Optional[datetime.datetime]] = mapped_column(TZDateTime)
     pedestrians_left: Mapped[bool]
     pedestrians_right: Mapped[bool]
     bikes_left: Mapped[bool]
@@ -158,6 +188,7 @@ class Camera(Base):
     hardware_version: Mapped[int]
 
     def __init__(self, table):
+        super().__init__()
         for attr, val in table.items():
             if hasattr(self, attr):
                 setattr(self, attr, None if val == -1 else val)

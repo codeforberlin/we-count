@@ -80,9 +80,8 @@ def update_db(segments, session, options, conns):
                     "time_start": str(first), "time_end": str(interval_end),
                     "columns": "instance_id,segment_id,date,interval,uptime,direction,v85,car_speed_hist_0to120plus,"
                     "heavy_lft,heavy_rgt,car_lft,car_rgt,bike_lft,bike_rgt,pedestrian_lft,pedestrian_rgt,"
-                    "mode_bicycle_lft,mode_bicycle_rgt,mode_bus_lft,mode_bus_rgt,mode_car_lft,mode_car_rgt,"
-                    "mode_lighttruck_lft,mode_lighttruck_rgt,mode_motorcycle_lft,mode_motorcycle_rgt,"
-                    "mode_pedestrian_lft,mode_pedestrian_rgt,mode_stroller_lft,mode_stroller_rgt,"
+                    "mode_bus_lft,mode_bus_rgt,mode_lighttruck_lft,mode_lighttruck_rgt,"
+                    "mode_motorcycle_lft,mode_motorcycle_rgt,mode_stroller_lft,mode_stroller_rgt,"
                     "mode_tractor_lft,mode_tractor_rgt,mode_trailer_lft,mode_trailer_rgt,"
                     "mode_truck_lft,mode_truck_rgt,mode_night_lft,mode_night_rgt,"
                     "speed_hist_car_lft,speed_hist_car_rgt,brightness,sharpness"}
@@ -94,12 +93,12 @@ def update_db(segments, session, options, conns):
                 interval_end = first + datetime.timedelta(days=90)
                 payload = '{"level": "segments", "format": "per-hour", "id": "%s", "time_start": "%s", "time_end": "%s"}' % (s.id, first, interval_end)
                 res = conns.request("/v1/reports/traffic", "POST", payload, options.retry, "report")
-            # if res.get("report", []):
-            #     print(res)
-            #     exit()
+            if options.dump:
+                with open(options.dump, "a", encoding="utf8") as dump:
+                    json.dump(res, dump, indent=2)
             for entry in res.get("report", []):
                 if entry["uptime"] > 0:
-                    tc = TrafficCount(entry) if entry.get("mode_car_rgt") is None else TrafficCountAdvanced(entry)
+                    tc = TrafficCount(entry) if entry.get("mode_truck_lft") is None else TrafficCountAdvanced(entry)
                     idx = bisect.bisect(s.counts, tc.date_utc, key=lambda t: t.date_utc)
                     if not s.counts or s.counts[idx-1].date_utc != tc.date_utc:
                         s.counts.insert(idx, tc)

@@ -85,7 +85,9 @@ def get_options(args=None, json_default="sensor.json"):
     parser.add_argument("-a", "--advanced", action="store_true", default=False,
                         help="use the advanced API with quarterly data")
     parser.add_argument("--segments",
-                        help="Only process the given segment(s).")
+                        help="only process the given segment(s)")
+    parser.add_argument("--dump", metavar="FILE",
+                        help="dump all JSON answers to the given file (for debugging)")
     parser.add_argument("-v", "--verbose", action="count", default=0,
                         help="increase verbosity, twice enables verbose sqlalchemy output")
     options = parser.parse_args(args=args)

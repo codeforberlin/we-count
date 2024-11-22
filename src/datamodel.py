@@ -106,18 +106,12 @@ class TrafficCountAdvanced(TrafficCount):
     __tablename__ = "traffic_count_advanced"
 
     id: Mapped[int] = mapped_column(ForeignKey("traffic_count.id"), primary_key=True)
-    mode_bicycle_lft: Mapped[float]
-    mode_bicycle_rgt: Mapped[float]
     mode_bus_lft: Mapped[float]
     mode_bus_rgt: Mapped[float]
-    mode_car_lft: Mapped[float]
-    mode_car_rgt: Mapped[float]
     mode_lighttruck_lft: Mapped[float]
     mode_lighttruck_rgt: Mapped[float]
     mode_motorcycle_lft: Mapped[float]
     mode_motorcycle_rgt: Mapped[float]
-    mode_pedestrian_lft: Mapped[float]
-    mode_pedestrian_rgt: Mapped[float]
     mode_stroller_lft: Mapped[float]
     mode_stroller_rgt: Mapped[float]
     mode_tractor_lft: Mapped[float]
@@ -128,14 +122,48 @@ class TrafficCountAdvanced(TrafficCount):
     mode_truck_rgt: Mapped[float]
     mode_night_lft: Mapped[float]
     mode_night_rgt: Mapped[float]
+    brightness: Mapped[Optional[float]]
+    sharpness: Mapped[Optional[float]]
+    car_speed_histogram_lft: Mapped[Optional[str]] = mapped_column(String(length=250))
 
     __mapper_args__ = {
         "polymorphic_identity": "advanced",
     }
 
+    def __init__(self, table):
+        super().__init__(table)
+        speed_hist = table.get("speed_hist_car_lft")
+        if speed_hist:
+            last_idx = max([i for i, v in enumerate(speed_hist) if v > 0] + [0])
+            self.car_speed_histogram_lft = ",".join(["%s" % c for c in speed_hist[:last_idx+1]])
+
+    @property
+    def mode_bicycle_lft(self):
+        return self.bike_lft - self.mode_motorcycle_lft
+
+    @property
+    def mode_bicycle_rgt(self):
+        return self.bike_rgt - self.mode_motorcycle_rgt
+
+    @property
+    def mode_car_lft(self):
+        return self.car_lft
+
+    @property
+    def mode_car_rgt(self):
+        return self.car_rgt
+
+    @property
+    def mode_pedestrian_lft(self):
+        return self.pedestrian_lft - self.mode_stroller_lft
+
+    @property
+    def mode_pedestrian_rgt(self):
+        return self.pedestrian_rgt - self.mode_stroller_rgt
+
     @classmethod
     def modes(cls):
-        return TrafficCount.modes() + [a[:-4] for a in inspect(cls).columns.keys() if a.startswith("mode_") and a.endswith("_lft")]
+        return TrafficCount.modes() + ["mode_bicycle", "mode_car", "mode_pedestrian"] + [a[:-4] for a in inspect(cls).columns.keys() if a.startswith("mode_") and a.endswith("_lft")]
 
 
 # the following line is due to a pylint bug which complains about the Mapped[] otherwise

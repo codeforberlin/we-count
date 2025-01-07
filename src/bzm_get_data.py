@@ -2,6 +2,9 @@
 # @author  Egbert Klaassen
 # @date    2025-01-05
 
+# This is a manual tool to extract and merge we-count geojson and traffic files.
+# Please note that for proper functioning, the paths and filters need to be manually adjusted.
+
 import os
 import pandas as pd
 import requests
@@ -10,9 +13,8 @@ from bs4 import BeautifulSoup
 
 
 ### Get geojson file
-
 filename_geojson = 'bzm_telraam_segments_2025.geojson'
-path_geojson = '/src' + '/' + filename_geojson
+path_geojson = 'D:/OneDrive/PycharmProjects/we-count/assets' + '/' + filename_geojson
 geojson = pdg.read_geojson(path_geojson)
 df_geojson = geojson.to_dataframe()
 df_geojson.columns = df_geojson.columns.str.replace('properties.segment_id', 'segment_id')
@@ -40,7 +42,7 @@ for link in links:
     # Warning! - all years result in too large Excel file (million+ rows)
 
     # Loop through gz files, filter by "start with" string, add to Dataframe
-    if filename[12:16] in ['2023','2024']:
+    if filename[12:16] in ['2025']:
         print('Processing: ' + filename)
         df = pd.read_csv(os.path.join(url, filename), compression='gzip', header=0, sep=',', quotechar='"')
         df_csv_append = df_csv_append._append(df, ignore_index=True)
@@ -86,6 +88,6 @@ traffic_df.insert(0, 'date', traffic_df['date_local'].dt.strftime('%Y/%m/%d'))
 
 # Save data package to file - change file name!
 print("Saving data package...")
-traffic_df.to_excel("D:/OneDrive/PycharmProjects/bzm_telraam/Data_files/traffic_df_2023-2024.xlsx", index=False)
+traffic_df.to_excel("D:/OneDrive/PycharmProjects/we-count/assets/traffic_df_2025.xlsx", index=False)
 
 print('Finished.')

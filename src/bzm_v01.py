@@ -59,7 +59,7 @@ json_df_features = json_normalize(json_df['features'])
 # Read traffic data from file
 # Using file dialog: traffic_data_file = filedialog.askopenfilename(title='Select traffic data file', filetypes=[('Excel files', '*.xlsx')])
 #traffic_data_file = 'D:/OneDrive/PycharmProjects/bzm_telraam/Data_files/bzm_telraam_traffic_data_2024YTD.xlsx'
-traffic_data_file = 'D:/OneDrive/PycharmProjects/bzm_telraam/Data_files/traffic_df_2025_YTD.xlsx'
+traffic_data_file = 'D:/OneDrive/PycharmProjects/bzm_telraam/Data_files/traffic_df_2024_2025_YTD.xlsx'
 print('Reading traffic data...')
 traffic_df = pd.read_excel(traffic_data_file)
 

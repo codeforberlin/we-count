@@ -21,6 +21,8 @@ import plotly.express as px
 from dash import Dash, html, dash_table, dcc, callback, Output, Input
 import dash_bootstrap_components as dbc
 
+DEPLOYED = __name__ != '__main__'
+
 
 # Save df files for development/debugging purposes
 def save_df(df, file_name):
@@ -34,7 +36,8 @@ def save_df(df, file_name):
 
 # Read geojson data file to access geometry coordinates - using URL
 geojson_url = 'https://berlin-zaehlt.de/csv/bzm_telraam_segments.geojson'
-print('Reading geojson data...')
+if not DEPLOYED:
+    print('Reading geojson data...')
 geo_df = gpd.read_file(geojson_url)
 
 # Read geojson data file to access geometry coordinates - using local file
@@ -52,7 +55,8 @@ geo_df = gpd.read_file(geojson_url)
 
 # Flatten json data file to access properties such as street names
 # Using url
-print('Reading json data...')
+if not DEPLOYED:
+    print('Reading json data...')
 json_df = pd.read_json(geojson_url)
 # Using local filename
 # json_df = pd.read_json(geo_json_path + geo_json_filename)
@@ -64,7 +68,8 @@ json_df_features = json_normalize(json_df['features'])
 # Using file dialog: traffic_data_file = filedialog.askopenfilename(title='Select traffic data file', filetypes=[('Excel files', '*.xlsx')])
 #traffic_data_file = 'D:/OneDrive/PycharmProjects/bzm_telraam/Data_files/bzm_telraam_traffic_data_2024YTD.xlsx'
 traffic_data_file = os.path.join(os.path.dirname(__file__), 'assets', 'traffic_df_2024_Q4_2025_YTD.xlsx')
-print('Reading traffic data...')
+if not DEPLOYED:
+    print('Reading traffic data...')
 traffic_df = pd.read_excel(traffic_data_file)
 
 
@@ -87,10 +92,12 @@ traffic_df['year']=traffic_df['year'].astype(str)
 
 
 ### Create street map ###
-print('Prepare map...')
+if not DEPLOYED:
+    print('Prepare map...')
 
 # Add column with bike/car ratio for street map representation (skip rows where car_total is 0, set to 500 i.e. most favorable bike/car ratio)
-print('Add bike/car ratio column...')
+if not DEPLOYED:
+    print('Add bike/car ratio column...')
 traffic_df['bike_car_ratio'] = ""
 for i in range(len(traffic_df)):
     if traffic_df['car_total'].values[i] != 0:
@@ -182,14 +189,14 @@ fig.update_layout(legend=dict(
 
 ### Run Dash app ###
 
-print('Start dash...')
+if not DEPLOYED:
+    print('Start dash...')
 
 # Initiate values
 init_street = 'Kastanienallee'
 
-deployed = __name__ != '__main__'
 dbc_css = "https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates/dbc.min.css"
-app = Dash(__name__, requests_pathname_prefix="/cgi-bin/bzm.cgi/" if deployed else None,
+app = Dash(__name__, requests_pathname_prefix="/cgi-bin/bzm.cgi/" if DEPLOYED else None,
            external_stylesheets=[dbc.themes.BOOTSTRAP, dbc_css],
            meta_tags=[{'name': 'viewport', 'content': 'width=device-width, initial-scale=1'}]
            )

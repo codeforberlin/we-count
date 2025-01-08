@@ -11,7 +11,7 @@
 # json_df       - json dataframe (using the same geojson as the geo_df), to access features such as street names
 
 import os
-from tkinter import filedialog
+# from tkinter import filedialog
 import pandas as pd
 import geopandas as gpd
 from pandas import json_normalize
@@ -63,7 +63,7 @@ json_df_features = json_normalize(json_df['features'])
 # Read traffic data from file
 # Using file dialog: traffic_data_file = filedialog.askopenfilename(title='Select traffic data file', filetypes=[('Excel files', '*.xlsx')])
 #traffic_data_file = 'D:/OneDrive/PycharmProjects/bzm_telraam/Data_files/bzm_telraam_traffic_data_2024YTD.xlsx'
-traffic_data_file = 'assets/traffic_df_2024_Q4_2025_YTD.xlsx'
+traffic_data_file = os.path.join(os.path.dirname(__file__), 'assets', 'traffic_df_2024_Q4_2025_YTD.xlsx')
 print('Reading traffic data...')
 traffic_df = pd.read_excel(traffic_data_file)
 
@@ -189,7 +189,8 @@ init_street = 'Kastanienallee'
 
 deployed = __name__ != '__main__'
 dbc_css = "https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates/dbc.min.css"
-app = Dash(__name__,external_stylesheets=[dbc.themes.BOOTSTRAP, dbc_css],
+app = Dash(__name__, requests_pathname_prefix="/cgi-bin/bzm.cgi/" if deployed else None,
+           external_stylesheets=[dbc.themes.BOOTSTRAP, dbc_css],
            meta_tags=[{'name': 'viewport', 'content': 'width=device-width, initial-scale=1'}]
            )
 

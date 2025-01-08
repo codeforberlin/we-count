@@ -17,6 +17,6 @@ for p in sys.path:
         sys.path = [venv] + sys.path
         break
 
-from bzm import app
+from bzm_v01 import app
 
 CGIHandler().run(app.server)

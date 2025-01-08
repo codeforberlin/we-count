@@ -4,7 +4,7 @@
 
 # This is a manual tool to extract and merge we-count geojson and traffic files.
 # Please note that for proper functioning, the paths and filters need to be manually adjusted.
-# Test Push
+# Test
 
 import os
 import pandas as pd

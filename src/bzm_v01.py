@@ -1,3 +1,7 @@
+#!/usr/bin/env python3
+# Copyright (c) 2024-2025 Berlin zaehlt Mobilitaet
+# SPDX-License-Identifier: MIT
+
 # @file    bzm_v01.py
 # @author  Egbert Klaassen
 # @date    2025-01-07
@@ -59,7 +63,7 @@ json_df_features = json_normalize(json_df['features'])
 # Read traffic data from file
 # Using file dialog: traffic_data_file = filedialog.askopenfilename(title='Select traffic data file', filetypes=[('Excel files', '*.xlsx')])
 #traffic_data_file = 'D:/OneDrive/PycharmProjects/bzm_telraam/Data_files/bzm_telraam_traffic_data_2024YTD.xlsx'
-traffic_data_file = 'D:/OneDrive/PycharmProjects/bzm_telraam/Data_files/traffic_df_2024_2025_YTD.xlsx'
+traffic_data_file = 'assets/traffic_df_2024_Q4_2025_YTD.xlsx'
 print('Reading traffic data...')
 traffic_df = pd.read_excel(traffic_data_file)
 
@@ -573,4 +577,5 @@ def update_graph(radio_x_axis, radio_y_axis, street_name_dd, start_date, end_dat
 
     return sc_experiment
 
-app.run_server(debug=False)
+if __name__ == "__main__":
+    app.run_server(debug=False)

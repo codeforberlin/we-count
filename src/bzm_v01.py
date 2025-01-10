@@ -27,7 +27,7 @@ DEPLOYED = __name__ != '__main__'
 # Save df files for development/debugging purposes
 def save_df(df, file_name):
     # Save data frame for debugging purposes
-    path = 'D:/OneDrive/PycharmProjects/bzm_telraam/Data_files/'
+    path = 'D:/OneDrive/PycharmProjects/we-count/assets/'
     print('Saving '+ path + file_name)
     df.to_excel(path + file_name + '.xlsx', index=False)
 
@@ -53,7 +53,7 @@ geo_df = gpd.read_file(geojson_url)
 # geo_json_filename = filedialog.askopenfilename(title='Select geojson data file', filetypes=[('geojson files', '*.geojson')])
 # geo_df = gpd.read_file(geo_json_path + geo_json_filename)
 
-# Flatten json data file to access properties such as street names
+# Flatten json data file to access properties such as street names for map representation
 # Using url
 if not DEPLOYED:
     print('Reading json data...')
@@ -61,31 +61,25 @@ json_df = pd.read_json(geojson_url)
 # Using local filename
 # json_df = pd.read_json(geo_json_path + geo_json_filename)
 json_df_features = json_normalize(json_df['features'])
+
+# Set data type for clean representation
+json_df_features['properties.segment_id']=json_df_features['properties.segment_id'].astype(str)
+
 # Save file
 # json_df_features.to_excel('D:/.../.../bzm/App/assets/.. .xlsx')
 
 # Read traffic data from file
-# Using file dialog: traffic_data_file = filedialog.askopenfilename(title='Select traffic data file', filetypes=[('Excel files', '*.xlsx')])
-#traffic_data_file = 'D:/OneDrive/PycharmProjects/bzm_telraam/Data_files/bzm_telraam_traffic_data_2024YTD.xlsx'
-traffic_data_file = os.path.join(os.path.dirname(__file__), 'assets', 'traffic_df_2024_Q4_2025_YTD.xlsx')
+# DEPLOYED Path assumes assets to be a sub folder of src, let's define where to put the data file
+if not DEPLOYED:
+    traffic_data_file = 'D:/OneDrive/PycharmProjects/we-count/assets/traffic_df_2024_Q4_2025_YTD.csv.gzip'
+else:
+    traffic_data_file = os.path.join(os.path.dirname(__file__), 'assets', 'traffic_df_2024_Q4_2025_YTD.csv.gzip')
+
 if not DEPLOYED:
     print('Reading traffic data...')
-traffic_df = pd.read_excel(traffic_data_file)
+traffic_df = pd.read_csv(traffic_data_file, compression='gzip')
 
-
-#### Clean and add calculated columns ####
-
-# Remove empty traffic data rows - moved to bym_get_data_.py
-# print('Drop empty rows...')
-# nan_rows = traffic_df[traffic_df['date_local'].isnull()]
-# traffic_df = traffic_df.drop(nan_rows.index)
-# nan_rows = traffic_df[traffic_df['osm.name'].isnull()]
-# traffic_df = traffic_df.drop(nan_rows.index)
-# traffic_df['weekday'] = traffic_df['weekday'].map({0: 'Mon', 1: 'Tue', 2: 'Wed', 3: 'Thu', 4: 'Fri', 5: 'Sat', 6: 'Sun'})
-# traffic_df['month'] = traffic_df['month'].map({1: 'Jan', 2: 'Feb', 3: 'Mar', 4: 'Apr', 5: 'May', 6: 'Jun', 7: 'Jul', 8: 'Aug', 9: 'Sep', 10: 'Oct', 11: 'Nov', 12: 'Dec'})
-
-# Set data type for clean representation
-json_df_features['properties.segment_id']=json_df_features['properties.segment_id'].astype(str)
+# Set data types for clean representation
 traffic_df['segment_id']=traffic_df['segment_id'].astype(str)
 traffic_df['year']=traffic_df['year'].astype(int)
 traffic_df['year']=traffic_df['year'].astype(str)
@@ -368,13 +362,6 @@ app.layout = dbc.Container(
             ),
         ]),
 
-        # dbc.Row([
-        #     dbc.Col([
-        #         dcc.Graph(id='pie_traffic', figure={}),
-        #     ], width=12
-        #     ),
-        # ]),
-
     html.Br(),
     ],
     fluid = True,
@@ -417,11 +404,11 @@ def update_graph(radio_time_division, radio_time_unit, street_name_dd, start_dat
     traffic_df_str_id.loc[traffic_df_str_id['street_selection'] != selection, 'street_selection'] = "Other"
 
     # Filter time period
-    traffic_df_str_id_time = traffic_df_str_id.loc[traffic_df_str_id['date_local'].between(pd.to_datetime(start_date), pd.to_datetime(end_date))]
+    traffic_df_str_id_time = traffic_df_str_id.loc[traffic_df_str_id['date_local'].between(start_date, end_date)]
 
     # Aggregate
     traffic_df_str_id_time_agg = traffic_df_str_id_time.groupby(by=[radio_time_division,'street_selection'], as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
-
+# last position
     # Create abs line chart
     line_abs_traffic = px.line(traffic_df_str_id_time_agg,
         x=radio_time_division, y=['ped_total', 'bike_total', 'car_total', 'heavy_total'],
@@ -515,7 +502,7 @@ def update_graph(radio_time_division, radio_time_unit, street_name_dd, start_dat
     #save_df(traffic_df_str_id,'traffic_df_str_id speed')
 
     # Filter time period
-    traffic_df_str_id_time = traffic_df_str_id.loc[traffic_df_str_id['date_local'].between(pd.to_datetime(start_date), pd.to_datetime(end_date))]
+    traffic_df_str_id_time = traffic_df_str_id.loc[traffic_df_str_id['date_local'].between(start_date, end_date)]
 
     traffic_df_str_id_time_spd = traffic_df_str_id_time.groupby(by=[radio_time_unit, 'street_selection'], as_index=False).agg({'car_speed0': 'mean', 'car_speed10': 'mean', 'car_speed20': 'mean', 'car_speed30': 'mean', 'car_speed40': 'mean', 'car_speed50': 'mean', 'car_speed60': 'mean', 'car_speed70': 'mean'})
     bar_perc_speed = px.bar(traffic_df_str_id_time_spd,
@@ -560,7 +547,7 @@ def update_graph(radio_x_axis, radio_y_axis, street_name_dd, start_date, end_dat
     ex_df.loc[ex_df['street_selection'] != selection, 'street_selection'] = "Other"
 
     # Filter time period
-    ex_df_time = ex_df.loc[ex_df['date_local'].between(pd.to_datetime(start_date), pd.to_datetime(end_date))]
+    ex_df_time = ex_df.loc[ex_df['date_local'].between(start_date, end_date)]
 
     # Aggregate
     #ex_df_time_agg = ex_df_time.groupby(by=['street_selection'], as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})

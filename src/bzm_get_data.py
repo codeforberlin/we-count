@@ -4,7 +4,6 @@
 
 # This is a manual tool to extract and merge we-count geojson and traffic files.
 # Please note that for proper functioning, the paths and filters need to be manually adjusted.
-# Test
 
 import os
 import pandas as pd
@@ -12,15 +11,26 @@ import requests
 import pandas_geojson as pdg
 from bs4 import BeautifulSoup
 
-
 ### Get geojson file
 filename_geojson = 'bzm_telraam_segments_2025.geojson'
-path_geojson = 'D:/OneDrive/PycharmProjects/we-count/assets' + '/' + filename_geojson
+# path_geojson = 'D:/OneDrive/PycharmProjects/we-count/assets' + '/' + filename_geojson
+path_geojson = os.path.join(os.path.dirname(__file__), 'assets', filename_geojson)
 geojson = pdg.read_geojson(path_geojson)
 df_geojson = geojson.to_dataframe()
 df_geojson.columns = df_geojson.columns.str.replace('properties.segment_id', 'segment_id')
 df_geojson.columns = df_geojson.columns.str.replace('properties.', '', regex=True)
 
+# Drop uptime and v85 to avoid duplicates (these will come from traffic data)
+df_geojson = df_geojson.drop(['uptime', 'v85'], axis=1)
+
+# Replace "list" entries (Telraam!) with none
+for i in range(len(df_geojson)):
+    if isinstance(df_geojson['osm.width'].values[i],list):
+        df_geojson['osm.width'].values[i]=''
+    if isinstance(df_geojson['osm.lanes'].values[i],list):
+        df_geojson['osm.lanes'].values[i]=''
+    if isinstance(df_geojson['osm.maxspeed'].values[i],list):
+        df_geojson['osm.maxspeed'].values[i]=''
 
 ### Get traffic file
 
@@ -40,21 +50,19 @@ for link in links:
     # Get filename from link
     filename = link.split('/')[-1]
 
-    # Warning! - all years result in too large Excel file (million+ rows)
-
     # Loop through gz files, filter by "start with" string, add to Dataframe
-    if filename[12:16] in ['2025']:
-        print('Processing: ' + filename)
-        df = pd.read_csv(os.path.join(url, filename), compression='gzip', header=0, sep=',', quotechar='"')
-        df_csv_append = df_csv_append._append(df, ignore_index=True)
+    #if filename[12:16] in ['2025']:
+    #    print('Processing: ' + filename)
+    #    df = pd.read_csv(os.path.join(url, filename), compression='gzip', header=0, sep=',', quotechar='"')
+    #    df_csv_append = df_csv_append._append(df, ignore_index=True)
 
     # Alternative: Loop through gz files, filter by "contains substrings", add to Dataframe
     # substrings= ['_07','_08','_09']
-    # substrings = ['2024']
-    #if any(sub in filename for sub in substrings):
-    #    print('Processing: ' + filename)
-    #    df = pd.read_csv(os.path.join(url,filename), compression='gzip', header=0, sep=',', quotechar='"')
-    #    df_csv_append = df_csv_append._append(df, ignore_index=True)
+    substrings = ['2024_10', '2024_11', '2024_12', '2025_01']
+    if any(sub in filename for sub in substrings):
+        print('Processing: ' + filename)
+        df = pd.read_csv(os.path.join(url,filename), compression='gzip', header=0, sep=',', quotechar='"')
+        df_csv_append = df_csv_append._append(df, ignore_index=True)
 
 # Merge traffic data with geojson information, select columns, define data formats and add date_time columns
 print('Combining traffic and geojson data...')
@@ -89,6 +97,7 @@ traffic_df.insert(0, 'date', traffic_df['date_local'].dt.strftime('%Y/%m/%d'))
 
 # Save data package to file - change file name!
 print("Saving data package...")
-traffic_df.to_excel("D:/OneDrive/PycharmProjects/we-count/assets/traffic_df_2025.xlsx", index=False)
+# Debug: traffic_df.to_excel("D:/OneDrive/PycharmProjects/we-count/assets/traffic_df_2025.xlsx", index=False)
+traffic_df.to_csv("D:/OneDrive/PycharmProjects/we-count/assets/traffic_df_2024_Q4_2025_YTD.csv.gzip", index=False, compression='gzip')
 
 print('Finished.')

@@ -15,8 +15,7 @@ DEBUG = False
 
 ### Get geojson file
 filename_geojson = 'bzm_telraam_segments_2025.geojson'
-# path_geojson = 'D:/OneDrive/PycharmProjects/we-count/assets' + '/' + filename_geojson
-path_geojson = os.path.join(os.path.dirname(__file__), 'assets', filename_geojson)
+path_geojson = os.path.join(os.path.dirname(__file__), 'assets/', filename_geojson)
 geojson = pdg.read_geojson(path_geojson)
 df_geojson = geojson.to_dataframe()
 df_geojson.columns = df_geojson.columns.str.replace('properties.segment_id', 'segment_id')
@@ -98,6 +97,6 @@ traffic_df['month'] = traffic_df['month'].map({1: 'Jan', 2: 'Feb', 3: 'Mar', 4: 
 print("Saving data package...")
 if DEBUG:
     traffic_df.to_excel(os.path.join(os.path.dirname(__file__), 'assets', "traffic_df_2024_Q4_2025_YTD.xlsx"), index=False)
-traffic_df.to_csv(os.path.join(os.path.dirname(__file__), 'assets', "traffic_df_2024_Q4_2025_YTD.csv.gz"), index=False, compression='gzip')
+traffic_df.to_csv(os.path.join(os.path.dirname(__file__), 'assets/', "traffic_df_2024_Q4_2025_YTD.csv.gz"), index=False, compression='gzip')
 
 print('Finished.')

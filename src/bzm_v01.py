@@ -74,6 +74,7 @@ if DEPLOYED:
     traffic_data_file = os.path.join(os.path.dirname(__file__), 'assets', 'traffic_df_2024_Q4_2025_YTD.csv.gz')
 else:
     traffic_data_file = os.path.join(os.path.dirname(__file__), '..', 'assets', 'traffic_df_2024_Q4_2025_YTD.csv.gz')
+    #traffic_data_file = 'D:/OneDrive/PycharmProjects/we-count/assets/traffic_df_2024_Q4_2025_YTD.csv.gz'
 
 if not DEPLOYED:
     print('Reading traffic data...')
@@ -168,7 +169,7 @@ fig = px.line_map(lat=lats, lon=lons, color=map_colors, hover_name=names, line_g
     'Up to 500x more cars': ADFC_crimson,
     'Over 500x more cars': ADFC_pink},
     labels={'color': 'Bike/Car ratio'},
-    map_style="open-street-map", center= dict(lat=52.5, lon=13.45), height=600, zoom=11)
+    map_style="open-street-map", center= dict(lat=52.5, lon=13.45), height=600, zoom=10)
 
 fig.update_traces(line_width=5)
 fig.update_layout(margin=dict(l=40, r=20, t=40, b=30))
@@ -408,7 +409,8 @@ def update_graph(radio_time_division, radio_time_unit, street_name_dd, start_dat
 
     # Aggregate
     traffic_df_str_id_time_agg = traffic_df_str_id_time.groupby(by=[radio_time_division,'street_selection'], as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
-# last position
+    #save_df(traffic_df_str_id_time_agg,'traffic_df_str_id_time_agg')
+
     # Create abs line chart
     line_abs_traffic = px.line(traffic_df_str_id_time_agg,
         x=radio_time_division, y=['ped_total', 'bike_total', 'car_total', 'heavy_total'],
@@ -434,32 +436,15 @@ def update_graph(radio_time_division, radio_time_unit, street_name_dd, start_dat
     # Test: line_abs_traffic.update_layout(legend=dict(orientation="h",))
 
     # Prepare pie chart data
-    pie_df = traffic_df_str_id
-    pie_df = pie_df.drop(pie_df[pie_df.street_selection=="Other"].index)
-    pie_df_traffic = pie_df[['street_selection', 'ped_total', 'bike_total', 'car_total', 'heavy_total']]
-
-    # Consolidate 4 traffic columns to one
-    pie_df_all = pd.DataFrame(index=range(len(pie_df_traffic)*4)) #, columns=range(5))
-    pie_df_all['all_traffic_type']=''
-    pie_df_all['all_traffic_value']=''
-
-    j = 0
-    for i in range(len(pie_df_traffic)):
-        pie_df_all['all_traffic_type'].values[j]='ped_total'
-        pie_df_all['all_traffic_value'].values[j]=pie_df_traffic['ped_total'].values[i]
-        pie_df_all['all_traffic_type'].values[j+1]='bike_total'
-        pie_df_all['all_traffic_value'].values[j+1]=pie_df_traffic['bike_total'].values[i]
-        pie_df_all['all_traffic_type'].values[j+2]='car_total'
-        pie_df_all['all_traffic_value'].values[j+2]=pie_df_traffic['car_total'].values[i]
-        pie_df_all['all_traffic_type'].values[j+3]='heavy_total'
-        pie_df_all['all_traffic_value'].values[j+3]=pie_df_traffic['heavy_total'].values[i]
-        j = j+4
-
-    pie_df_all = pie_df_all.rename(columns={'ped_total': 'Pedestrians', 'bike_total': 'Bikes', 'car_total': 'Cars', 'heavy_total': 'Heavy'})
+    pie_df = traffic_df_str_id_time[traffic_df_str_id_time['street_selection']==street_name_dd]
+    pie_df_traffic = pie_df[['ped_total', 'bike_total', 'car_total', 'heavy_total']]
+    pie_df_traffic.rename(columns={'ped_total': 'Pedestrians', 'bike_total': 'Bikes', 'car_total': 'Cars', 'heavy_total': 'Heavy'}, inplace=True)
+    pie_df_traffic_sum = pie_df_traffic.aggregate([sum])
+    pie_df_traffic_sum_T = pie_df_traffic_sum.transpose().reset_index()
 
     # Create pie chart
-    pie_traffic = px.pie(pie_df_all, names='all_traffic_type', values='all_traffic_value', color='all_traffic_type', height=300,
-                         color_discrete_map={'ped_total': ADFC_lightblue, 'bike_total': ADFC_green, 'car_total': ADFC_orange, 'heavy_total': ADFC_crimson})
+    pie_traffic = px.pie(pie_df_traffic_sum_T, names='index', values='sum', color='index', height=300,
+                         color_discrete_map={'Pedestrians': ADFC_lightblue, 'Bikes': ADFC_green, 'Cars': ADFC_orange, 'Heavy': ADFC_crimson})
 
     pie_traffic.update_layout(margin=dict(l=00, r=00, t=00, b=00))
     pie_traffic.update_layout(showlegend=False)

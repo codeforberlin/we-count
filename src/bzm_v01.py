@@ -27,7 +27,7 @@ DEPLOYED = __name__ != '__main__'
 # Save df files for development/debugging purposes
 def save_df(df, file_name):
     # Save data frame for debugging purposes
-    path = 'D:/OneDrive/PycharmProjects/we-count/assets/'
+    path = 'D:/OneDrive/PycharmProjects/we-count/src/assets/'
     print('Saving '+ path + file_name)
     df.to_excel(path + file_name + '.xlsx', index=False)
 
@@ -73,8 +73,8 @@ json_df_features['properties.segment_id']=json_df_features['properties.segment_i
 if DEPLOYED:
     traffic_data_file = os.path.join(os.path.dirname(__file__), 'assets', 'traffic_df_2024_Q4_2025_YTD.csv.gz')
 else:
-    traffic_data_file = os.path.join(os.path.dirname(__file__), '..', 'assets', 'traffic_df_2024_Q4_2025_YTD.csv.gz')
-    #traffic_data_file = 'D:/OneDrive/PycharmProjects/we-count/assets/traffic_df_2024_Q4_2025_YTD.csv.gz'
+    #traffic_data_file = os.path.join(os.path.dirname(__file__), '..', 'assets', 'traffic_df_2024_Q4_2025_YTD.csv.gz')
+    traffic_data_file = os.path.join(os.path.dirname(__file__), 'assets/', 'traffic_df_2024_Q4_2025_YTD.csv.gz')
 
 if not DEPLOYED:
     print('Reading traffic data...')
@@ -94,29 +94,32 @@ if not DEPLOYED:
 if not DEPLOYED:
     print('Add bike/car ratio column...')
 traffic_df['bike_car_ratio'] = ""
-for i in range(len(traffic_df)):
-    if traffic_df['car_total'].values[i] != 0:
-        traffic_df['bike_car_ratio'].values[i] = traffic_df['bike_total'].values[i] / traffic_df['car_total'].values[i]
-    else:
-        traffic_df['bike_car_ratio'].values[i] = 500
+#for i in range(len(traffic_df)):
+#    if traffic_df['car_total'].values[i] != 0:
+#        traffic_df['bike_car_ratio'].values[i] = traffic_df['bike_total'].values[i] / traffic_df['car_total'].values[i]
+#    else:
+#        traffic_df['bike_car_ratio'].values[i] = 500
 
 # Prepare consolidated bike/car ratios by segment_id
-traffic_df_agg_by_id = traffic_df.groupby('segment_id', as_index=False).agg(bike_total=('bike_total', 'mean'), car_total=('car_total', 'mean'), bike_car_ratio=('bike_car_ratio', 'mean'))
+traffic_df_agg_by_id = traffic_df.groupby('segment_id', as_index=False).agg(bike_total=('bike_total', 'sum'), car_total=('car_total', 'sum'), bike_car_ratio=('bike_car_ratio', 'sum'))
+#traffic_df_agg_by_id_sorted=traffic_df_agg_by_id.sort_values(by=['bike_car_ratio'])
+traffic_df_agg_by_id['bike_car_ratio'] = traffic_df_agg_by_id['bike_total']/traffic_df_agg_by_id['car_total']
 traffic_df_agg_by_id_sorted=traffic_df_agg_by_id.sort_values(by=['bike_car_ratio'])
 
 # Add discrete colors for street map representation
 traffic_df_agg_by_id_sorted['map_line_color'] = ""
-for i in range(len(traffic_df_agg_by_id)):
-    if traffic_df_agg_by_id_sorted['bike_car_ratio'].values[i] < 1:
-        traffic_df_agg_by_id_sorted['map_line_color'].values[i] = 'More bikes than Cars'
-    elif traffic_df_agg_by_id_sorted['bike_car_ratio'].values[i] < 10:
+for i in range(len(traffic_df_agg_by_id_sorted)):
+    if traffic_df_agg_by_id_sorted['bike_car_ratio'].values[i] < 0.1:
+        traffic_df_agg_by_id_sorted['map_line_color'].values[i] = 'Over 100x more cars'
+    elif traffic_df_agg_by_id_sorted['bike_car_ratio'].values[i] < 0.2:
         traffic_df_agg_by_id_sorted['map_line_color'].values[i] = 'Up to 10x more cars'
-    elif traffic_df_agg_by_id_sorted['bike_car_ratio'].values[i] < 50:
-        traffic_df_agg_by_id_sorted['map_line_color'].values[i] = 'Up to 50x more cars'
-    elif traffic_df_agg_by_id_sorted['bike_car_ratio'].values[i] < 100:
-        traffic_df_agg_by_id_sorted['map_line_color'].values[i] = 'Up to 500x more cars'
+    elif traffic_df_agg_by_id_sorted['bike_car_ratio'].values[i] < 0.5:
+        traffic_df_agg_by_id_sorted['map_line_color'].values[i] = 'Up to 5x more cars'
+    elif traffic_df_agg_by_id_sorted['bike_car_ratio'].values[i] < 1:
+        traffic_df_agg_by_id_sorted['map_line_color'].values[i] = 'Up to 2x more cars'
     else:
-        traffic_df_agg_by_id_sorted['map_line_color'].values[i] = 'Over 500x more cars'
+        traffic_df_agg_by_id_sorted['map_line_color'].values[i] = 'More bikes than cars'
+
 
 # Create Map figure
 lats = []
@@ -136,7 +139,6 @@ ADFC_crimson = '#B44958'
 ADFC_lightgrey = '#DEDEDE'
 ADFC_palegrey = '#F2F2F2'
 ADFC_pink = '#EB9AAC'
-
 
 for street, street_line_color in zip(traffic_df_agg_by_id_sorted['segment_id'], traffic_df_agg_by_id_sorted['map_line_color']):
 
@@ -163,11 +165,11 @@ for street, street_line_color in zip(traffic_df_agg_by_id_sorted['segment_id'], 
         else: continue
 
 fig = px.line_map(lat=lats, lon=lons, color=map_colors, hover_name=names, line_group=ids, color_discrete_map= {
-    'More bikes than Cars': ADFC_green,
-    'Up to 10x more cars': ADFC_blue,
-    'Up to 50x more cars': ADFC_orange,
-    'Up to 500x more cars': ADFC_crimson,
-    'Over 500x more cars': ADFC_pink},
+    'More bikes than cars': ADFC_green,
+    'Up to 2x more cars': ADFC_blue,
+    'Up to 5x more cars': ADFC_orange,
+    'Up to 10x more cars': ADFC_crimson,
+    'Over 100x more cars': ADFC_pink},
     labels={'color': 'Bike/Car ratio'},
     map_style="open-street-map", center= dict(lat=52.5, lon=13.45), height=600, zoom=10)
 
@@ -409,7 +411,6 @@ def update_graph(radio_time_division, radio_time_unit, street_name_dd, start_dat
 
     # Aggregate
     traffic_df_str_id_time_agg = traffic_df_str_id_time.groupby(by=[radio_time_division,'street_selection'], as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
-    #save_df(traffic_df_str_id_time_agg,'traffic_df_str_id_time_agg')
 
     # Create abs line chart
     line_abs_traffic = px.line(traffic_df_str_id_time_agg,
@@ -484,7 +485,6 @@ def update_graph(radio_time_division, radio_time_unit, street_name_dd, start_dat
     # Drop empty rows
     nan_rows = traffic_df_str_id[traffic_df_str_id['sum_speed_perc']==0]
     traffic_df_str_id = traffic_df_str_id.drop(nan_rows.index)
-    #save_df(traffic_df_str_id,'traffic_df_str_id speed')
 
     # Filter time period
     traffic_df_str_id_time = traffic_df_str_id.loc[traffic_df_str_id['date_local'].between(start_date, end_date)]

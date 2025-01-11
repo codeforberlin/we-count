@@ -70,10 +70,10 @@ json_df_features['properties.segment_id']=json_df_features['properties.segment_i
 
 # Read traffic data from file
 # DEPLOYED Path assumes assets to be a sub folder of src, let's define where to put the data file
-if not DEPLOYED:
-    traffic_data_file = 'D:/OneDrive/PycharmProjects/we-count/assets/traffic_df_2024_Q4_2025_YTD.csv.gzip'
+if DEPLOYED:
+    traffic_data_file = os.path.join(os.path.dirname(__file__), 'assets', 'traffic_df_2024_Q4_2025_YTD.csv.gz')
 else:
-    traffic_data_file = os.path.join(os.path.dirname(__file__), 'assets', 'traffic_df_2024_Q4_2025_YTD.csv.gzip')
+    traffic_data_file = os.path.join(os.path.dirname(__file__), '..', 'assets', 'traffic_df_2024_Q4_2025_YTD.csv.gz')
 
 if not DEPLOYED:
     print('Reading traffic data...')

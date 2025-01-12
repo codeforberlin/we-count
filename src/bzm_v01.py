@@ -254,6 +254,7 @@ app.layout = dbc.Container(
                     options=[
                         {'label': 'Year', 'value': 'year'},
                         {'label': 'Month', 'value': 'year_month'},
+                        {'label': 'Week', 'value': 'year_week'},
                         {'label': 'Date', 'value': 'date'}
                     ],
                     value='year_month',
@@ -376,12 +377,13 @@ app.layout = dbc.Container(
     #Output(component_id='where', component_property='children'),
     Output(component_id='street_name_dd',component_property='value'),
     Input(component_id='map', component_property='clickData'),
+    prevent_initial_call=True
 )
 
 def get_street_name(clickData):
-    #if not clickData:
-        #print('nothing')
-    street = clickData['points'][0]['hovertext']
+    global street
+    if clickData:
+        street = clickData['points'][0]['hovertext']
     return street
 
 
@@ -401,6 +403,7 @@ def get_street_name(clickData):
 def update_graph(radio_time_division, radio_time_unit, street_name_dd, start_date, end_date):
 
     # Add column with selected street and "others"
+    #save_df(traffic_df,'Debug traffic_df')
     traffic_df_str_id = traffic_df
     traffic_df_str_id['street_selection'] = traffic_df_str_id.loc[:, 'osm.name']
     selection = street_name_dd
@@ -417,8 +420,8 @@ def update_graph(radio_time_division, radio_time_unit, street_name_dd, start_dat
         x=radio_time_division, y=['ped_total', 'bike_total', 'car_total', 'heavy_total'],
         markers=True,
         facet_col='street_selection',
-        category_orders={'street_selection': ['Other'], 'weekday': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']},
-        labels={'year': 'Year', 'year_month': 'Month', 'date': 'Date'},
+        category_orders={'street_selection': [street_name_dd, 'Other'], 'weekday': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']},
+        labels={'year': 'Year', 'year_month': 'Month', 'year_week': 'Week', 'date': 'Date'},
         color_discrete_map={'ped_total': ADFC_lightblue, 'bike_total': ADFC_green, 'car_total': ADFC_orange, 'heavy_total': ADFC_crimson},
         #template='plotly_dark',
         facet_col_spacing=0.04,
@@ -439,8 +442,8 @@ def update_graph(radio_time_division, radio_time_unit, street_name_dd, start_dat
     # Prepare pie chart data
     pie_df = traffic_df_str_id_time[traffic_df_str_id_time['street_selection']==street_name_dd]
     pie_df_traffic = pie_df[['ped_total', 'bike_total', 'car_total', 'heavy_total']]
-    pie_df_traffic.rename(columns={'ped_total': 'Pedestrians', 'bike_total': 'Bikes', 'car_total': 'Cars', 'heavy_total': 'Heavy'}, inplace=True)
-    pie_df_traffic_sum = pie_df_traffic.aggregate([sum])
+    pie_df_traffic_ren = pie_df_traffic.rename(columns={'ped_total': 'Pedestrians', 'bike_total': 'Bikes', 'car_total': 'Cars', 'heavy_total': 'Heavy'})
+    pie_df_traffic_sum = pie_df_traffic_ren.aggregate(['sum'])
     pie_df_traffic_sum_T = pie_df_traffic_sum.transpose().reset_index()
 
     # Create pie chart
@@ -460,7 +463,7 @@ def update_graph(radio_time_division, radio_time_unit, street_name_dd, start_dat
         x=radio_time_unit, y=['ped_total', 'bike_total', 'car_total', 'heavy_total'],
         barmode='stack',
         facet_col='street_selection',
-        category_orders={'street_selection': ['Other'],
+        category_orders={'street_selection': [street_name_dd, 'Other'],
                          'weekday': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
                          'month': ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']},
         labels={'year': 'Yearly', 'year_month': 'Monthly', 'weekday': 'Weekly', 'day': 'Daily', 'hour': 'Hourly'},
@@ -494,7 +497,7 @@ def update_graph(radio_time_division, radio_time_unit, street_name_dd, start_dat
          x=radio_time_unit, y=cols,
          barmode='stack',
          facet_col='street_selection',
-         category_orders={'street_selection': ['Other'],
+         category_orders={'street_selection': [street_name_dd, 'Other'],
                           'weekday': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
                           'month': ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
                                     'Oct', 'Nov', 'Dec']},
@@ -520,7 +523,7 @@ def update_graph(radio_time_division, radio_time_unit, street_name_dd, start_dat
     Input(component_id='radio_y_axis', component_property='value'),
     Input(component_id='street_name_dd', component_property='value'),
     Input(component_id="date_filter", component_property="start_date"),
-    Input(component_id="date_filter", component_property="end_date")
+    Input(component_id="date_filter", component_property="end_date"),
 )
 
 def update_graph(radio_x_axis, radio_y_axis, street_name_dd, start_date, end_date):
@@ -541,6 +544,7 @@ def update_graph(radio_x_axis, radio_y_axis, street_name_dd, start_date, end_dat
     sc_experiment = px.scatter(ex_df_time,
         x=radio_x_axis, y=radio_y_axis,
         facet_col='street_selection',
+        category_orders={'street_selection': [street_name_dd, 'Other']},
         facet_col_spacing=0.04,
         color=radio_y_axis,
         color_continuous_scale='temps',

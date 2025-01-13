@@ -14,6 +14,7 @@ import os
 # from tkinter import filedialog
 import pandas as pd
 import geopandas as gpd
+from leafmap import connect_points_as_line
 from pandas import json_normalize
 import shapely.geometry
 import numpy as np
@@ -93,16 +94,10 @@ if not DEPLOYED:
 # Add column with bike/car ratio for street map representation (skip rows where car_total is 0, set to 500 i.e. most favorable bike/car ratio)
 if not DEPLOYED:
     print('Add bike/car ratio column...')
-traffic_df['bike_car_ratio'] = ""
-#for i in range(len(traffic_df)):
-#    if traffic_df['car_total'].values[i] != 0:
-#        traffic_df['bike_car_ratio'].values[i] = traffic_df['bike_total'].values[i] / traffic_df['car_total'].values[i]
-#    else:
-#        traffic_df['bike_car_ratio'].values[i] = 500
 
 # Prepare consolidated bike/car ratios by segment_id
+traffic_df['bike_car_ratio'] = ""
 traffic_df_agg_by_id = traffic_df.groupby('segment_id', as_index=False).agg(bike_total=('bike_total', 'sum'), car_total=('car_total', 'sum'), bike_car_ratio=('bike_car_ratio', 'sum'))
-#traffic_df_agg_by_id_sorted=traffic_df_agg_by_id.sort_values(by=['bike_car_ratio'])
 traffic_df_agg_by_id['bike_car_ratio'] = traffic_df_agg_by_id['bike_total']/traffic_df_agg_by_id['car_total']
 traffic_df_agg_by_id_sorted=traffic_df_agg_by_id.sort_values(by=['bike_car_ratio'])
 
@@ -181,7 +176,6 @@ fig.update_layout(legend=dict(
     xanchor="right",
     x=0.99
 ))
-#fig.show()
 
 
 ### Run Dash app ###
@@ -233,7 +227,7 @@ app.layout = dbc.Container(
                     max_date_allowed=traffic_df["date_local"].max(),
                     display_format='DD-MMM-YYYY',
                     end_date_placeholder_text='DD-MMMM-YYYY',
-                    #style = {'font-family': 'Arial', 'font-size': 24, 'font-weight': 700}
+                    minimum_nights=1
                 ),
                 html.Hr(),
                 # Pie chart
@@ -301,18 +295,26 @@ app.layout = dbc.Container(
             ], width=12
             ),
         ]),
-        html.H4('Percentage car speed', style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 00}),
         dbc.Row([
             dbc.Col([
+                html.H4('Percentage car speed - by time unit',style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 00}),
                 dcc.Graph(id='bar_perc_speed', figure={}, style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 30})
             ], width=12
             ),
         ]),
-
-        # Experiment with x- and y-axis scatter
         dbc.Row([
             dbc.Col([
-                html.H4('Experiment', style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 00}),
+                html.H4('Percentage car speed - average',style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 00}),
+                dcc.Graph(id='bar_avg_speed', figure={},
+                          style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 30})
+            ], width=12
+            ),
+        ]),
+
+        # Explore with x- and y-axis scatter
+        dbc.Row([
+            dbc.Col([
+                html.H4('Explore', style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 00}),
             ], width=12
             ),
         ]),
@@ -361,7 +363,7 @@ app.layout = dbc.Container(
         ]),
         dbc.Row([
             dbc.Col([
-                dcc.Graph(id='sc_experiment', figure={}, style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 30})
+                dcc.Graph(id='sc_explore', figure={}, style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 30})
             ], width=12
             ),
         ]),
@@ -393,6 +395,7 @@ def get_street_name(clickData):
     Output(component_id='line_abs_traffic', component_property='figure'),
     Output(component_id='bar_avg_traffic', component_property='figure'),
     Output(component_id='bar_perc_speed', component_property='figure'),
+    Output(component_id='bar_avg_speed', component_property='figure'),
     Input(component_id='radio_time_division', component_property='value'),
     Input(component_id='radio_time_unit', component_property='value'),
     Input(component_id='street_name_dd', component_property='value'),
@@ -403,17 +406,22 @@ def get_street_name(clickData):
 def update_graph(radio_time_division, radio_time_unit, street_name_dd, start_date, end_date):
 
     # Add column with selected street and "others"
-    #save_df(traffic_df,'Debug traffic_df')
     traffic_df_str_id = traffic_df
     traffic_df_str_id['street_selection'] = traffic_df_str_id.loc[:, 'osm.name']
     selection = street_name_dd
+    # Get segment no
+    for i in range(len(traffic_df_str_id)):
+        if traffic_df_str_id['osm.name'][i] == selection:
+            segment_id = traffic_df_str_id['segment_id'][i]
+            #print(segment_id)
     traffic_df_str_id.loc[traffic_df_str_id['street_selection'] != selection, 'street_selection'] = "Other"
 
     # Filter time period
     traffic_df_str_id_time = traffic_df_str_id.loc[traffic_df_str_id['date_local'].between(start_date, end_date)]
+    traffic_df_str_id_time_sorted = traffic_df_str_id_time.sort_values(by=['date_local'])
 
     # Aggregate
-    traffic_df_str_id_time_agg = traffic_df_str_id_time.groupby(by=[radio_time_division,'street_selection'], as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
+    traffic_df_str_id_time_agg = traffic_df_str_id_time_sorted.groupby(by=[radio_time_division,'street_selection'], as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
 
     # Create abs line chart
     line_abs_traffic = px.line(traffic_df_str_id_time_agg,
@@ -423,19 +431,18 @@ def update_graph(radio_time_division, radio_time_unit, street_name_dd, start_dat
         category_orders={'street_selection': [street_name_dd, 'Other'], 'weekday': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']},
         labels={'year': 'Year', 'year_month': 'Month', 'year_week': 'Week', 'date': 'Date'},
         color_discrete_map={'ped_total': ADFC_lightblue, 'bike_total': ADFC_green, 'car_total': ADFC_orange, 'heavy_total': ADFC_crimson},
-        #template='plotly_dark',
         facet_col_spacing=0.04,
-        #height=chart_height, width=chart_width,
         title=f'Absolute traffic count by {radio_time_division}')
 
+    #line_abs_traffic.update_traces(connectgaps=False)
     line_abs_traffic.update_yaxes(matches=None)
     line_abs_traffic.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
     line_abs_traffic.update_layout(legend_title_text='Traffic Type')
     line_abs_traffic.update_layout({'plot_bgcolor': ADFC_palegrey,'paper_bgcolor': ADFC_palegrey})
     line_abs_traffic.update_layout(yaxis_title= f'Absolute traffic count')
-    #line_abs_traffic.update_xaxes(dtick='M1', tickformat= tick_format)
     line_abs_traffic.for_each_yaxis(lambda yaxis: yaxis.update(showticklabels=True))
     for annotation in line_abs_traffic.layout.annotations: annotation['font'] = {'size': 14}
+    line_abs_traffic.for_each_annotation(lambda a: a.update(text=a.text.replace(street_name_dd, street_name_dd + ' (segment no:' + segment_id + ')')))
 
     # Test: line_abs_traffic.update_layout(legend=dict(orientation="h",))
 
@@ -456,7 +463,7 @@ def update_graph(radio_time_division, radio_time_unit, street_name_dd, start_dat
     #pie_traffic.update_traces(texttemplate='%{percent:.0%}')
 
 
-    # Create avg bar chart
+    # Average traffic bar chart
     traffic_df_str_id_time_grpby = traffic_df_str_id_time.groupby(by=[radio_time_unit, 'street_selection'], as_index=False).agg({'ped_total': 'mean', 'bike_total': 'mean', 'car_total': 'mean', 'heavy_total': 'mean'})
 
     bar_avg_traffic = px.bar(traffic_df_str_id_time_grpby,
@@ -479,7 +486,7 @@ def update_graph(radio_time_division, radio_time_unit, street_name_dd, start_dat
     bar_avg_traffic.for_each_yaxis(lambda yaxis: yaxis.update(showticklabels=True))
     for annotation in bar_avg_traffic.layout.annotations: annotation['font'] = {'size': 14}
 
-    # Create perc speed bar chart
+    # Percentage speed bar chart
     cols = ['car_speed0', 'car_speed10', 'car_speed20', 'car_speed30', 'car_speed40', 'car_speed50', 'car_speed60',
             'car_speed70']
 
@@ -490,7 +497,7 @@ def update_graph(radio_time_division, radio_time_unit, street_name_dd, start_dat
     traffic_df_str_id = traffic_df_str_id.drop(nan_rows.index)
 
     # Filter time period
-    traffic_df_str_id_time = traffic_df_str_id.loc[traffic_df_str_id['date_local'].between(start_date, end_date)]
+    # Check if needed! traffic_df_str_id_time = traffic_df_str_id.loc[traffic_df_str_id['date_local'].between(start_date, end_date)]
 
     traffic_df_str_id_time_spd = traffic_df_str_id_time.groupby(by=[radio_time_unit, 'street_selection'], as_index=False).agg({'car_speed0': 'mean', 'car_speed10': 'mean', 'car_speed20': 'mean', 'car_speed30': 'mean', 'car_speed40': 'mean', 'car_speed50': 'mean', 'car_speed60': 'mean', 'car_speed70': 'mean'})
     bar_perc_speed = px.bar(traffic_df_str_id_time_spd,
@@ -504,7 +511,6 @@ def update_graph(radio_time_division, radio_time_unit, street_name_dd, start_dat
          labels={'year': 'Yearly', 'year_month': 'Monthly', 'weekday': 'Weekly', 'day': 'Daily', 'hour': 'Hourly'},
          color_discrete_map={'car_speed0': ADFC_lightblue, 'car_speed10': ADFC_lightblue,'car_speed20': ADFC_lightblue, 'car_speed30': ADFC_green, 'car_speed40': ADFC_green, 'car_speed50': ADFC_orange, 'car_speed60': ADFC_crimson, 'car_speed70': ADFC_pink},
          facet_col_spacing=0.04,
-         # height=chart_height, width=chart_width,
          title=f'Percentage speed by {radio_time_unit}')
 
     bar_perc_speed.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
@@ -514,11 +520,40 @@ def update_graph(radio_time_division, radio_time_unit, street_name_dd, start_dat
     bar_perc_speed.for_each_yaxis(lambda yaxis: yaxis.update(showticklabels=True))
     for annotation in bar_perc_speed.layout.annotations: annotation['font'] = {'size': 14}
 
-    return pie_traffic, line_abs_traffic, bar_avg_traffic, bar_perc_speed
+    # Percentage speed average bar chart
+    traffic_df_str_id_time_avg_spd = traffic_df_str_id_time.groupby(by='street_selection', as_index=False).agg({'car_speed0': 'mean', 'car_speed10': 'mean', 'car_speed20': 'mean', 'car_speed30': 'mean', 'car_speed40': 'mean', 'car_speed50': 'mean', 'car_speed60': 'mean', 'car_speed70': 'mean'})
+    #traffic_df_str_id_time_avg_spd_T = traffic_df_str_id_time_avg_spd.transpose().reset_index()
+    #save_df(traffic_df_str_id_time_avg_spd_T,'traffic_df_str_id_time_avg_spd_T')
+
+    bar_avg_speed = px.bar(traffic_df_str_id_time_avg_spd,
+        x='street_selection', y=cols,
+        #barmode='group',
+        category_orders={'street_selection': [street_name_dd, 'Other'],
+                         'weekday': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                         'month': ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
+                                   'Oct', 'Nov', 'Dec']},
+        labels={'year': 'Yearly', 'year_month': 'Monthly', 'weekday': 'Weekly', 'day': 'Daily',
+                'hour': 'Hourly', 'street_selection': 'Street selection'},
+        color_discrete_map={'car_speed0': ADFC_lightblue, 'car_speed10': ADFC_lightblue,
+                            'car_speed20': ADFC_lightblue, 'car_speed30': ADFC_green,
+                            'car_speed40': ADFC_green, 'car_speed50': ADFC_orange,
+                            'car_speed60': ADFC_crimson, 'car_speed70': ADFC_pink},
+        title=f'Percentage speed')
+
+    bar_avg_speed.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
+    bar_avg_speed.update_layout(legend_title_text='Car speed')
+    bar_avg_speed.update_layout({'plot_bgcolor': ADFC_palegrey, 'paper_bgcolor': ADFC_palegrey})
+    bar_avg_speed.update_layout(yaxis_title=f'Average percentage car speed')
+    bar_avg_speed.for_each_yaxis(lambda yaxis: yaxis.update(showticklabels=True))
+    bar_avg_speed.update_layout(barmode='group', bargap=0.5, bargroupgap=0.2)
+    for annotation in bar_avg_speed.layout.annotations: annotation['font'] = {'size': 14}
+
+
+    return pie_traffic, line_abs_traffic, bar_avg_traffic, bar_perc_speed, bar_avg_speed
 
 ### General traffic callback ###
 @callback(
-    Output(component_id='sc_experiment', component_property='figure'),
+    Output(component_id='sc_explore', component_property='figure'),
     Input(component_id='radio_x_axis', component_property='value'),
     Input(component_id='radio_y_axis', component_property='value'),
     Input(component_id='street_name_dd', component_property='value'),
@@ -537,11 +572,8 @@ def update_graph(radio_x_axis, radio_y_axis, street_name_dd, start_date, end_dat
     # Filter time period
     ex_df_time = ex_df.loc[ex_df['date_local'].between(start_date, end_date)]
 
-    # Aggregate
-    #ex_df_time_agg = ex_df_time.groupby(by=['street_selection'], as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
-
     # Create abs line chart
-    sc_experiment = px.scatter(ex_df_time,
+    sc_explore = px.scatter(ex_df_time,
         x=radio_x_axis, y=radio_y_axis,
         facet_col='street_selection',
         category_orders={'street_selection': [street_name_dd, 'Other']},
@@ -551,15 +583,15 @@ def update_graph(radio_x_axis, radio_y_axis, street_name_dd, start_date, end_dat
         labels={'ped_total': 'Pedestrians', 'bike_total': 'Bikes', 'car_total': 'Cars', 'heavy_total': 'Heavy', 'osm.length': 'Street Length', 'osm.maxspeed': 'Max Speed'},
         title=f'Absolute traffic by {radio_x_axis}')
 
-    sc_experiment.update_yaxes(matches=None)
-    sc_experiment.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
-    sc_experiment.update_layout(legend_title_text='Traffic Type')
-    sc_experiment.update_layout({'plot_bgcolor': ADFC_palegrey,'paper_bgcolor': ADFC_palegrey})
-    sc_experiment.update_layout(yaxis_title= f'{radio_y_axis}')
-    sc_experiment.for_each_yaxis(lambda yaxis: yaxis.update(showticklabels=True))
-    for annotation in sc_experiment.layout.annotations: annotation['font'] = {'size': 14}
+    sc_explore.update_yaxes(matches=None)
+    sc_explore.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
+    sc_explore.update_layout(legend_title_text='Traffic Type')
+    sc_explore.update_layout({'plot_bgcolor': ADFC_palegrey,'paper_bgcolor': ADFC_palegrey})
+    sc_explore.update_layout(yaxis_title= f'{radio_y_axis}')
+    sc_explore.for_each_yaxis(lambda yaxis: yaxis.update(showticklabels=True))
+    for annotation in sc_explore.layout.annotations: annotation['font'] = {'size': 14}
 
-    return sc_experiment
+    return sc_explore
 
 if __name__ == "__main__":
     app.run_server(debug=False)

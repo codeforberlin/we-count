@@ -10,8 +10,12 @@ import pandas as pd
 import requests
 import pandas_geojson as pdg
 from bs4 import BeautifulSoup
+from datetime import timedelta
+from datetime import date
+
 
 DEBUG = False
+
 
 ### Get geojson file
 filename_geojson = 'bzm_telraam_segments_2025.geojson'
@@ -74,6 +78,33 @@ selected_columns = ['date_local','segment_id','uptime','ped_lft','ped_rgt','ped_
 traffic_df = pd.DataFrame(df_comb, columns=selected_columns)
 traffic_df['date_local'] = pd.to_datetime(traffic_df['date_local'])
 
+# Add missing dates to streets
+# def rangeofdates(startdate, enddate):
+#     for n in range(int ((enddate - startdate).days)+1):
+#         yield startdate + timedelta(n)
+#
+# min_date = traffic_df['date_local'].min().date()
+# max_date = traffic_df['date_local'].max().date()
+#
+# street_names = traffic_df['osm.name'].explode().unique()
+#
+# for street_name in street_names:
+#     print(street_name)
+#     for dt in rangeofdates(min_date, max_date):
+#         if not dt in traffic_df['date_local']:
+#             print(dt.strftime("%Y-%m-%d"))
+
+
+#for dt in rangeofdates(min_date, max_date):
+#    print(dt.strftime("%Y-%m-%d"))
+
+
+#for street_name in range(len(street_names)):
+#    print(street_names[street_name])
+#    for date in range(min_date, max_date):
+#        print(date)
+
+
 print('Drop empty rows...')
 nan_rows = traffic_df[traffic_df['date_local'].isnull()]
 traffic_df = traffic_df.drop(nan_rows.index)
@@ -81,15 +112,17 @@ nan_rows = traffic_df[traffic_df['osm.name'].isnull()]
 traffic_df = traffic_df.drop(nan_rows.index)
 
 print('Break down date_local to new columns...')
-traffic_df.insert(0, 'weekday', traffic_df['date_local'].dt.dayofweek)
-traffic_df.insert(0, 'hour', traffic_df['date_local'].dt.hour)
-traffic_df.insert(0, 'day', traffic_df['date_local'].dt.day)
-traffic_df.insert(0, 'month', traffic_df['date_local'].dt.month)
 traffic_df.insert(0, 'year', traffic_df['date_local'].dt.year)
 traffic_df.insert(0, 'year_month', traffic_df['date_local'].dt.strftime('%Y/%m'))
+traffic_df.insert(0, 'month', traffic_df['date_local'].dt.month)
+traffic_df.insert(0, 'year_week', traffic_df['date_local'].dt.strftime('%Y/%U'))
+traffic_df.insert(0, 'weekday', traffic_df['date_local'].dt.dayofweek)
+traffic_df.insert(0, 'day', traffic_df['date_local'].dt.day)
+traffic_df.insert(0, 'hour', traffic_df['date_local'].dt.hour)
 traffic_df.insert(0, 'date', traffic_df['date_local'].dt.strftime('%Y/%m/%d'))
 
 print('Exchange time data for labels...')
+traffic_df = traffic_df.astype({'weekday': int, 'month': int, 'year': int}, errors='ignore')
 traffic_df['weekday'] = traffic_df['weekday'].map({0: 'Mon', 1: 'Tue', 2: 'Wed', 3: 'Thu', 4: 'Fri', 5: 'Sat', 6: 'Sun'})
 traffic_df['month'] = traffic_df['month'].map({1: 'Jan', 2: 'Feb', 3: 'Mar', 4: 'Apr', 5: 'May', 6: 'Jun', 7: 'Jul', 8: 'Aug', 9: 'Sep', 10: 'Oct', 11: 'Nov', 12: 'Dec'})
 

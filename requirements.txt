@@ -1,5 +1,5 @@
 dash
-dash-bootstrap-components
+dash_bootstrap_components
 dash-extensions
 dash-leaflet
 geopandas>=1.0.0
@@ -12,3 +12,7 @@ pyproj
 requests
 sqlalchemy
 timezonefinder
+pandas_geojson
+beautifulsoup4
+geopandas
+leafmap

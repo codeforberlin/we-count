@@ -110,3 +110,31 @@ The individual levels can be shown and hidden on the map.
 In addition, the card has data from the cycling network of the ADFC associations. Since 2018, they has created a cycle network map with the focus on Treptow-Köpenick.
 A distinction is made between the priority network, secondary network, special routes and bicycle traffic facilities in the entire Berlin main road network.
 The map is constantly being developed. The determination of the positions and the categorization are based on the Berlin Mobility Act.
+
+## Local Development
+
+### Setup
+
+1. Install MySQL client libraries on the machine depending on the Operating System.
+
+2. Install the project's dependencies, preferably in a virtual environment:
+
+```sh
+pip install -r requirements.txt
+```
+
+### Ingest data
+
+Run the following script to ingest the mobility data as a compressed file:
+
+```sh
+python src/bzm_get_data.py
+```
+
+### Dashboard
+
+Run the following script to serve a data app built with Dash by Plotly. 
+
+```sh
+python src/bzm_v01.py
+```

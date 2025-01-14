@@ -9,3 +9,9 @@ sensor-geojson.js
 csv/*.csv
 csv/*.csv.gz
 csv/*.xlsx
+
+# Data files
+*.csv.gz
+
+# Editor configs
+.vscode/

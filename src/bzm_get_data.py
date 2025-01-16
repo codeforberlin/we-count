@@ -13,8 +13,37 @@ from bs4 import BeautifulSoup
 from datetime import timedelta
 from datetime import date
 
-
 DEBUG = False
+
+
+# Save df files for development/debugging purposes
+def save_df(df, file_name):
+    # Save data frame for debugging purposes
+    path = 'D:/OneDrive/PycharmProjects/we-count/src/assets/'
+    print('Saving '+ path + file_name)
+    df.to_excel(path + file_name + '.xlsx', index=False)
+
+def rangeofdates(startdate, enddate):
+    for n in range(int ((enddate - startdate).days)+1):
+        yield startdate + timedelta(n)
+
+# Function to fill missing dates for each segment
+def fill_missing_dates(df):
+    result_df = pd.DataFrame()
+
+    for segment in df['segment_id'].unique():
+        # Remove duplicate date local within segment
+        segment_df = df[df['segment_id'] == segment].drop_duplicates(subset=['date_local'], keep='last').set_index('date_local')
+
+        #segment_df.set_index('date_local', inplace=True)
+        full_date_range = pd.date_range(start=segment_df.index.min(), end=segment_df.index.max(), freq='h')
+        segment_df = segment_df.reindex(full_date_range)
+
+        # Ensure new date entries are populated
+        segment_df['segment_id'] = segment
+        result_df = pd.concat([result_df, segment_df])
+
+    return result_df.reset_index().rename(columns={'index': 'date_local'})
 
 
 ### Get geojson file
@@ -22,10 +51,12 @@ filename_geojson = 'bzm_telraam_segments_2025.geojson'
 path_geojson = os.path.join(os.path.dirname(__file__), 'assets/', filename_geojson)
 geojson = pdg.read_geojson(path_geojson)
 df_geojson = geojson.to_dataframe()
+
+# Remove 'properties' from column names for ease of use
 df_geojson.columns = df_geojson.columns.str.replace('properties.segment_id', 'segment_id')
 df_geojson.columns = df_geojson.columns.str.replace('properties.', '', regex=True)
 
-# Drop uptime and v85 to avoid duplicates (these will come from traffic data)
+# Drop uptime and v85 to avoid duplicates as these will come from traffic data
 df_geojson = df_geojson.drop(['uptime', 'v85'], axis=1)
 
 # Replace "list" entries (Telraam!) with none
@@ -36,6 +67,13 @@ for i in range(len(df_geojson)):
         df_geojson['osm.lanes'].values[i]=''
     if isinstance(df_geojson['osm.maxspeed'].values[i],list):
         df_geojson['osm.maxspeed'].values[i]=''
+    if isinstance(df_geojson['osm.name'].values[i],list):
+        df_geojson['osm.name'].values[i]=pd.NA
+
+# Remove segments w/o street name
+nan_rows = df_geojson[df_geojson['osm.name'].isnull()]
+df_geojson_cleaned = df_geojson.drop(nan_rows.index)
+
 
 ### Get traffic file
 
@@ -56,60 +94,40 @@ for link in links:
     filename = link.split('/')[-1]
 
     # Loop through gz files, filter by "start with" string, add to Dataframe
-    #if filename[12:16] in ['2025']:
+    #if filename[12:16] in ['2023','2024','2025']:
     #    print('Processing: ' + filename)
     #    df = pd.read_csv(os.path.join(url, filename), compression='gzip', header=0, sep=',', quotechar='"')
     #    df_csv_append = df_csv_append._append(df, ignore_index=True)
 
     # Alternative: Loop through gz files, filter by "contains substrings", add to Dataframe
-    # substrings= ['_07','_08','_09']
+    #substrings= ['_07','_08','_09']
     substrings = ['2024_10', '2024_11', '2024_12', '2025_01']
     if any(sub in filename for sub in substrings):
         print('Processing: ' + filename)
         df = pd.read_csv(os.path.join(url,filename), compression='gzip', header=0, sep=',', quotechar='"')
-        df_csv_append = df_csv_append._append(df, ignore_index=True)
 
-# Merge traffic data with geojson information, select columns, define data formats and add date_time columns
+        # Change date_local to datetime
+        df['date_local'] = pd.to_datetime(df['date_local'])
+
+        # Fill missing dates
+        filled_df = fill_missing_dates(df)
+
+        df_csv_append = df_csv_append._append(filled_df, ignore_index=True)
+
+### Merge traffic data with geojson information, select columns, define data formats and add date_time columns
 print('Combining traffic and geojson data...')
-df_comb = pd.merge(df_csv_append, df_geojson, on = 'segment_id', how = 'outer')
+df_comb = pd.merge(df_csv_append, df_geojson_cleaned, on = 'segment_id', how = 'outer')
+
+# Remove rows w/o names after merging with csv files containing segment_id w/o osm.name
+print('Removing rows w/o osm.name or date_local entries')
+nan_rows = df_comb[df_comb['osm.name'].isnull()]
+df_comb = df_comb.drop(nan_rows.index)
+nan_rows = df_comb[df_comb['date_local'].isnull()]
+df_comb = df_comb.drop(nan_rows.index)
 
 print('Creating df with selected columns')
-selected_columns = ['date_local','segment_id','uptime','ped_lft','ped_rgt','ped_total','bike_lft','bike_rgt','bike_total','car_lft','car_rgt','car_total','heavy_lft','heavy_rgt','heavy_total','v85','car_speed0','car_speed10','car_speed20','car_speed30','car_speed40','car_speed50','car_speed60','car_speed70','osm.name','osm.highway','osm.length','osm.width','osm.lanes','osm.maxspeed']
+selected_columns = ['date_local','segment_id','uptime','ped_total','bike_total','car_total','heavy_total','v85','car_speed0','car_speed10','car_speed20','car_speed30','car_speed40','car_speed50','car_speed60','car_speed70','osm.name','osm.highway','osm.length','osm.width','osm.lanes','osm.maxspeed']
 traffic_df = pd.DataFrame(df_comb, columns=selected_columns)
-traffic_df['date_local'] = pd.to_datetime(traffic_df['date_local'])
-
-# Add missing dates to streets
-# def rangeofdates(startdate, enddate):
-#     for n in range(int ((enddate - startdate).days)+1):
-#         yield startdate + timedelta(n)
-#
-# min_date = traffic_df['date_local'].min().date()
-# max_date = traffic_df['date_local'].max().date()
-#
-# street_names = traffic_df['osm.name'].explode().unique()
-#
-# for street_name in street_names:
-#     print(street_name)
-#     for dt in rangeofdates(min_date, max_date):
-#         if not dt in traffic_df['date_local']:
-#             print(dt.strftime("%Y-%m-%d"))
-
-
-#for dt in rangeofdates(min_date, max_date):
-#    print(dt.strftime("%Y-%m-%d"))
-
-
-#for street_name in range(len(street_names)):
-#    print(street_names[street_name])
-#    for date in range(min_date, max_date):
-#        print(date)
-
-
-print('Drop empty rows...')
-nan_rows = traffic_df[traffic_df['date_local'].isnull()]
-traffic_df = traffic_df.drop(nan_rows.index)
-nan_rows = traffic_df[traffic_df['osm.name'].isnull()]
-traffic_df = traffic_df.drop(nan_rows.index)
 
 print('Break down date_local to new columns...')
 traffic_df.insert(0, 'year', traffic_df['date_local'].dt.year)

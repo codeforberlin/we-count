@@ -1,3 +1,5 @@
+babel
+beautifulsoup4
 dash
 dash_bootstrap_components
 dash-extensions
@@ -12,7 +14,3 @@ pyproj
 requests
 sqlalchemy
 timezonefinder
-pandas_geojson
-beautifulsoup4
-geopandas
-leafmap

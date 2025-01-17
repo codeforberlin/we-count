@@ -7,10 +7,10 @@
 # It can also be used as a script to just save the data to a file.
 
 import os
+
+from bs4 import BeautifulSoup
 import pandas as pd
 import requests
-import pandas_geojson as pdg
-from bs4 import BeautifulSoup
 
 ASSET_DIR = os.path.join(os.path.dirname(__file__), 'assets')
 VERBOSE = False
@@ -47,8 +47,10 @@ def fill_missing_dates(df):
 
 
 def get_locations(filepath=os.path.join(os.path.dirname(__file__), 'assets', 'bzm_telraam_segments_2025.geojson')):
-    geojson = pdg.read_geojson(filepath)
-    df_geojson = geojson.to_dataframe()
+    df_geojson = pd.read_json(filepath)
+
+    # Flatten the json structure
+    df_geojson = pd.json_normalize(df_geojson['features'])
 
     # Remove 'properties' from column names for ease of use
     df_geojson.columns = df_geojson.columns.str.replace('properties.', '', regex=True)

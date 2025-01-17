@@ -8,6 +8,7 @@
 
 import os
 
+from babel.dates import get_day_names, get_month_names
 from bs4 import BeautifulSoup
 import pandas as pd
 import requests
@@ -148,9 +149,8 @@ def merge_data():
 
     if VERBOSE:
         print('Exchange time data for labels...')
-    traffic_df = traffic_df.astype({'weekday': int, 'month': int, 'year': int}, errors='ignore')
-    traffic_df['weekday'] = traffic_df['weekday'].map({0: 'Mon', 1: 'Tue', 2: 'Wed', 3: 'Thu', 4: 'Fri', 5: 'Sat', 6: 'Sun'})
-    traffic_df['month'] = traffic_df['month'].map({1: 'Jan', 2: 'Feb', 3: 'Mar', 4: 'Apr', 5: 'May', 6: 'Jun', 7: 'Jul', 8: 'Aug', 9: 'Sep', 10: 'Oct', 11: 'Nov', 12: 'Dec'})
+    traffic_df['weekday'] = traffic_df['weekday'].map(get_day_names('abbreviated', locale="en"))
+    traffic_df['month'] = traffic_df['month'].map(get_month_names('abbreviated', locale="en"))
     return traffic_df
 
 

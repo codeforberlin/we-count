@@ -134,7 +134,7 @@ def merge_data(locations, cached=True):
         print('Exchange time data for labels...')
     traffic_df['weekday'] = traffic_df['weekday'].map(get_day_names('abbreviated', locale="en"))
     traffic_df['month'] = traffic_df['month'].map(get_month_names('abbreviated', locale="en"))
-    return traffic_df
+    return traffic_df.reset_index()
 
 
 if __name__ == "__main__":

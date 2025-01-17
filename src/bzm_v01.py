@@ -119,7 +119,8 @@ for street, street_line_color in zip(traffic_df_agg_by_id_sorted['segment_id'], 
                 ids = np.append(ids, None)
                 names = np.append(names, None)
                 map_colors = np.append(map_colors, None)
-        else: continue
+        else:
+            continue
 
 fig = px.line_map(lat=lats, lon=lons, color=map_colors, hover_name=names, line_group=ids, color_discrete_map= {
     'More bikes than cars': ADFC_green,
@@ -343,7 +344,6 @@ app.layout = dbc.Container(
     Input(component_id='map', component_property='clickData'),
     prevent_initial_call=True
 )
-
 def get_street_name(clickData):
     global street
     if clickData:
@@ -364,7 +364,6 @@ def get_street_name(clickData):
     Input(component_id="date_filter", component_property="start_date"),
     Input(component_id="date_filter", component_property="end_date")
 )
-
 def update_graph(radio_time_division, radio_time_unit, street_name_dd, start_date, end_date):
 
     # Get segment_id
@@ -407,9 +406,10 @@ def update_graph(radio_time_division, radio_time_unit, street_name_dd, start_dat
     line_abs_traffic.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
     line_abs_traffic.update_layout(legend_title_text='Traffic Type')
     line_abs_traffic.update_layout({'plot_bgcolor': ADFC_palegrey,'paper_bgcolor': ADFC_palegrey})
-    line_abs_traffic.update_layout(yaxis_title= f'Absolute traffic count')
+    line_abs_traffic.update_layout(yaxis_title= 'Absolute traffic count')
     line_abs_traffic.for_each_yaxis(lambda yaxis: yaxis.update(showticklabels=True))
-    for annotation in line_abs_traffic.layout.annotations: annotation['font'] = {'size': 14}
+    for annotation in line_abs_traffic.layout.annotations:
+        annotation['font'] = {'size': 14}
     line_abs_traffic.for_each_annotation(lambda a: a.update(text=a.text.replace(street_name_dd, street_name_dd + ' (segment no:' + segment_id + ')')))
 
     # Test: line_abs_traffic.update_layout(legend=dict(orientation="h",))
@@ -450,10 +450,11 @@ def update_graph(radio_time_division, radio_time_unit, street_name_dd, start_dat
     bar_avg_traffic.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
     bar_avg_traffic.update_layout(legend_title_text='Traffic Type')
     bar_avg_traffic.update_layout({'plot_bgcolor': ADFC_palegrey,'paper_bgcolor': ADFC_palegrey})
-    bar_avg_traffic.update_layout(yaxis_title= f'Average traffic count')
+    bar_avg_traffic.update_layout(yaxis_title='Average traffic count')
     bar_avg_traffic.for_each_yaxis(lambda yaxis: yaxis.update(showticklabels=True))
     bar_avg_traffic.for_each_annotation(lambda a: a.update(text=a.text.replace(street_name_dd, street_name_dd + ' (segment no:' + segment_id + ')')))
-    for annotation in bar_avg_traffic.layout.annotations: annotation['font'] = {'size': 14}
+    for annotation in bar_avg_traffic.layout.annotations:
+        annotation['font'] = {'size': 14}
 
     # Percentage speed bar chart
     cols = ['car_speed0', 'car_speed10', 'car_speed20', 'car_speed30', 'car_speed40', 'car_speed50', 'car_speed60',
@@ -486,9 +487,10 @@ def update_graph(radio_time_division, radio_time_unit, street_name_dd, start_dat
     bar_perc_speed.for_each_annotation(lambda a: a.update(text=a.text.replace(street_name_dd, street_name_dd + ' (segment no:' + segment_id + ')')))
     bar_perc_speed.update_layout(legend_title_text='Traffic Type')
     bar_perc_speed.update_layout({'plot_bgcolor': ADFC_palegrey, 'paper_bgcolor': ADFC_palegrey})
-    bar_perc_speed.update_layout(yaxis_title=f'Percentage car speed')
+    bar_perc_speed.update_layout(yaxis_title='Percentage car speed')
     bar_perc_speed.for_each_yaxis(lambda yaxis: yaxis.update(showticklabels=True))
-    for annotation in bar_perc_speed.layout.annotations: annotation['font'] = {'size': 14}
+    for annotation in bar_perc_speed.layout.annotations:
+        annotation['font'] = {'size': 14}
 
     # Percentage speed average bar chart
     traffic_df_all_time_avg_spd = traffic_df_all_time.groupby(by='street_selection', as_index=False).agg({'car_speed0': 'mean', 'car_speed10': 'mean', 'car_speed20': 'mean', 'car_speed30': 'mean', 'car_speed40': 'mean', 'car_speed50': 'mean', 'car_speed60': 'mean', 'car_speed70': 'mean'})
@@ -506,16 +508,17 @@ def update_graph(radio_time_division, radio_time_unit, street_name_dd, start_dat
                             'car_speed20': ADFC_lightblue, 'car_speed30': ADFC_green,
                             'car_speed40': ADFC_green, 'car_speed50': ADFC_orange,
                             'car_speed60': ADFC_crimson, 'car_speed70': ADFC_pink},
-        title=f'Percentage speed')
+        title='Percentage speed')
 
     bar_avg_speed.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
     bar_avg_speed.update_layout(xaxis_title = street_name_dd + ' (segment no:' + segment_id + ')')
     bar_avg_speed.update_layout(legend_title_text='Car speed')
     bar_avg_speed.update_layout({'plot_bgcolor': ADFC_palegrey, 'paper_bgcolor': ADFC_palegrey})
-    bar_avg_speed.update_layout(yaxis_title=f'Average percentage car speed')
+    bar_avg_speed.update_layout(yaxis_title='Average percentage car speed')
     bar_avg_speed.for_each_yaxis(lambda yaxis: yaxis.update(showticklabels=True))
     bar_avg_speed.update_layout(barmode='group', bargap=0.5, bargroupgap=0.2)
-    for annotation in bar_avg_speed.layout.annotations: annotation['font'] = {'size': 14}
+    for annotation in bar_avg_speed.layout.annotations:
+        annotation['font'] = {'size': 14}
 
 
     return pie_traffic, line_abs_traffic, bar_avg_traffic, bar_perc_speed, bar_avg_speed
@@ -529,8 +532,7 @@ def update_graph(radio_time_division, radio_time_unit, street_name_dd, start_dat
     Input(component_id="date_filter", component_property="start_date"),
     Input(component_id="date_filter", component_property="end_date"),
 )
-
-def update_graph(radio_x_axis, radio_y_axis, street_name_dd, start_date, end_date):
+def update_explore_graph(radio_x_axis, radio_y_axis, street_name_dd, start_date, end_date):
 
     # Get segment_id
     for i in range(len(traffic_df)):
@@ -571,7 +573,8 @@ def update_graph(radio_x_axis, radio_y_axis, street_name_dd, start_date, end_dat
     sc_explore.update_layout({'plot_bgcolor': ADFC_palegrey,'paper_bgcolor': ADFC_palegrey})
     sc_explore.update_layout(yaxis_title= f'{radio_y_axis}')
     sc_explore.for_each_yaxis(lambda yaxis: yaxis.update(showticklabels=True))
-    for annotation in sc_explore.layout.annotations: annotation['font'] = {'size': 14}
+    for annotation in sc_explore.layout.annotations:
+        annotation['font'] = {'size': 14}
 
     return sc_explore
 

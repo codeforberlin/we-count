@@ -21,7 +21,7 @@ def add_camera(conns, res):
     for segment in res["features"]:
         segment_id = segment["properties"]["segment_id"]
         cameras = conns.request("/v1/cameras/segment/%s" % segment_id)
-        segment["properties"]["cameras"] = cameras["camera"]
+        segment["properties"]["cameras"] = cameras.get("camera", [])
 
 
 def add_osm(res, old_data):

@@ -17,14 +17,14 @@ VERBOSE = False
 
 
 # Save df files for development/debugging purposes
-def save_df(df, file_name: str):
+def save_df(df:pd.DataFrame, file_name: str) -> None:
     path = os.path.join(ASSET_DIR, file_name)
     if VERBOSE:
         print('Saving '+ path)
     if file_name.endswith(".xlsx"):
         df.to_excel(path, index=False)
     else:
-        df.to_csv(path, index=False, compression='gzip')
+        df.to_csv(path, index=False)
 
 
 # Function to fill missing dates for each segment
@@ -98,11 +98,13 @@ def get_traffic_data(date_range=None):
     return fill_missing_dates(df)
 
 
-def merge_data():
+def merge_data(locations, cached=True):
+    if cached:
+        return pd.read_csv(os.path.join(ASSET_DIR, 'traffic_df_2024_Q4_2025_YTD.csv.gz'))
     ### Merge traffic data with geojson information, select columns, define data formats and add date_time columns
     if VERBOSE:
         print('Combining traffic and geojson data...')
-    df_comb = pd.merge(get_traffic_data(), get_locations(), on = 'segment_id', how = 'outer')
+    df_comb = pd.merge(get_traffic_data(), locations, on='segment_id', how='outer')
 
     # Remove rows w/o names after merging with csv files containing segment_id w/o osm.name
     if VERBOSE:
@@ -137,7 +139,7 @@ def merge_data():
 
 if __name__ == "__main__":
     VERBOSE = True
-    traffic_df = merge_data()
+    traffic_df = merge_data(get_locations(), False)
     # save_df(traffic_df, "traffic_df_2024_Q4_2025_YTD.xlsx")
     save_df(traffic_df, "traffic_df_2024_Q4_2025_YTD.csv.gz")
     if VERBOSE:

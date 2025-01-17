@@ -10,29 +10,20 @@
 # geo_df        - geo dataframe, street coordinates for px.map
 # json_df       - json dataframe (using the same geojson as the geo_df), to access features such as street names
 
-import os
-import pandas as pd
 import geopandas as gpd
-from pandas import json_normalize
 import shapely.geometry
 import numpy as np
 import plotly.express as px
-from dash import Dash, html, dash_table, dcc, callback, Output, Input
+from dash import Dash, html, dcc, callback, Output, Input
 import dash_bootstrap_components as dbc
 
-#from src.bzm_get_data import traffic_df
+import bzm_get_data
+import common
 
 DEPLOYED = __name__ != '__main__'
 
 
-# Save df files for development/debugging purposes
-def save_df(df, file_name):
-    # Save data frame for debugging purposes
-    path = 'D:/OneDrive/PycharmProjects/we-count/src/assets/'
-    print('Saving '+ path + file_name)
-    df.to_excel(path + file_name + '.xlsx', index=False)
-
-#### Retreive Data ####
+#### Retrieve Data ####
 
 # Read geojson data file to access geometry coordinates - using URL
 geojson_url = 'https://berlin-zaehlt.de/csv/bzm_telraam_segments.geojson'
@@ -40,46 +31,20 @@ if not DEPLOYED:
     print('Reading geojson data...')
 geo_df = gpd.read_file(geojson_url)
 
-# Read geojson data file to access geometry coordinates - using local file
-# geo_json_path = e.g. 'D:/.../.../bzm/App/assets/'
-# geo_json_filename = e-g- 'bzm_segments_2025.geojson'
-# print('Reading geojson data...')
-# geo_df = gpd.read_file(geo_json_path + geo_json_filename)
-# Save file
-# geo_df.to_file('D:/.../.../bzm/App/assets/.. .geojson')
-
-# Read geojson data file to access geometry coordinates - using local file selected through file dialog
-# geo_json_path = e.g. 'D:/.../.../bzm/App/assets/'
-# geo_json_filename = filedialog.askopenfilename(title='Select geojson data file', filetypes=[('geojson files', '*.geojson')])
-# geo_df = gpd.read_file(geo_json_path + geo_json_filename)
-
-# Flatten json data file to access properties such as street names for map representation
-# Using url
 if not DEPLOYED:
     print('Reading json data...')
-json_df = pd.read_json(geojson_url)
-# Using local filename
-# json_df = pd.read_json(geo_json_path + geo_json_filename)
-json_df_features = json_normalize(json_df['features'])
-
-# Set data type for clean representation
-json_df_features['properties.segment_id']=json_df_features['properties.segment_id'].astype(str)
+json_df_features = bzm_get_data.get_locations(geojson_url)
 
 # Read traffic data from file
-# DEPLOYED Path assumes assets to be a sub folder of src, let's define where to put the data file
-if DEPLOYED:
-    traffic_data_file = os.path.join(os.path.dirname(__file__), 'assets', 'traffic_df_2024_Q4_2025_YTD.csv.gz')
-else:
-    #traffic_data_file = os.path.join(os.path.dirname(__file__), '..', 'assets', 'traffic_df_2024_Q4_2025_YTD.csv.gz')
-    traffic_data_file = os.path.join(os.path.dirname(__file__), 'assets/', 'traffic_df_2024_Q4_2025_YTD.csv.gz')
-
 if not DEPLOYED:
     print('Reading traffic data...')
-traffic_df = pd.read_csv(traffic_data_file, compression='gzip')
+
+with common.Benchmarker(not DEPLOYED, "Load traffic data"):
+    traffic_df = bzm_get_data.merge_data(json_df_features)
 
 # Set data types for clean representation
+json_df_features['segment_id']=json_df_features['segment_id'].astype(str)
 traffic_df['segment_id']=traffic_df['segment_id'].astype(str)
-#traffic_df['year']=traffic_df['year'].astype(int)
 traffic_df['year']=traffic_df['year'].astype(str)
 
 
@@ -134,7 +99,7 @@ ADFC_pink = '#EB9AAC'
 
 for street, street_line_color in zip(traffic_df_agg_by_id_sorted['segment_id'], traffic_df_agg_by_id_sorted['map_line_color']):
 
-    for feature, id, name in zip(geo_df.geometry, json_df_features['properties.segment_id'], json_df_features['properties.osm.name']):
+    for feature, id, name in zip(geo_df.geometry, json_df_features['segment_id'], json_df_features['osm.name']):
         if id == street:
             if isinstance(feature, shapely.geometry.linestring.LineString):
                 linestrings = [feature]

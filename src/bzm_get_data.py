@@ -9,11 +9,10 @@
 import os
 
 from babel.dates import get_day_names, get_month_names
-from bs4 import BeautifulSoup
 import pandas as pd
-import requests
 
 ASSET_DIR = os.path.join(os.path.dirname(__file__), 'assets')
+CSV_DIR = os.path.join(os.path.dirname(__file__), '..', 'csv')
 VERBOSE = False
 
 
@@ -75,46 +74,28 @@ def get_locations(filepath=os.path.join(os.path.dirname(__file__), 'assets', 'bz
     return df_geojson.drop(nan_rows.index)
 
 
-def get_traffic_data():
+def get_traffic_data(date_range=None):
+    if date_range is None:
+        date_range = ['2024_10', '2024_11', '2024_12', '2025_01']
+    all_files = []
+    for month in date_range:
+        file = f"bzm_telraam_{month}.csv.gz"
+        path = os.path.join(CSV_DIR, file)
+        if not os.path.exists(path):
+            if VERBOSE:
+                print(f'No local copy, retrieving {file} from the web.')
+            path = 'https://berlin-zaehlt.de/csv/' + file
+        all_files.append(path)
     # Retrieve file links
     if VERBOSE:
         print('Getting traffic data files...')
-    url = 'https://berlin-zaehlt.de/csv/'
-    page = requests.get(url).text
-    soup = BeautifulSoup(page, 'html.parser')
-    filename_startswith = 'bzm_telraam_'
-    links = [url + '/' + node.get('href') for node in soup.find_all('a') if node.get('href').startswith(filename_startswith)]
+    df = pd.concat((pd.read_csv(f) for f in all_files), ignore_index=True)
 
-    # Add file contents to Dataframe
-    df_csv_append = pd.DataFrame()
+    # Change date_local to datetime
+    df['date_local'] = pd.to_datetime(df['date_local'])
 
-    for link in links:
-
-        # Get filename from link
-        filename = link.split('/')[-1]
-
-        # Loop through gz files, filter by "start with" string, add to Dataframe
-        #if filename[12:16] in ['2023','2024','2025']:
-        #    print('Processing: ' + filename)
-        #    df = pd.read_csv(os.path.join(url, filename), compression='gzip', header=0, sep=',', quotechar='"')
-        #    df_csv_append = df_csv_append._append(df, ignore_index=True)
-
-        # Alternative: Loop through gz files, filter by "contains substrings", add to Dataframe
-        #substrings= ['_07','_08','_09']
-        substrings = ['2024_10', '2024_11', '2024_12', '2025_01']
-        if any(sub in filename for sub in substrings):
-            if VERBOSE:
-                print('Processing: ' + filename)
-            df = pd.read_csv(os.path.join(url,filename), compression='gzip', header=0, sep=',', quotechar='"')
-
-            # Change date_local to datetime
-            df['date_local'] = pd.to_datetime(df['date_local'])
-
-            # Fill missing dates
-            filled_df = fill_missing_dates(df)
-
-            df_csv_append = df_csv_append._append(filled_df, ignore_index=True)
-    return df_csv_append
+    # Fill missing dates
+    return fill_missing_dates(df)
 
 
 def merge_data():

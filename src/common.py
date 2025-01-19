@@ -101,6 +101,18 @@ def get_options(args=None, json_default="sensor.json"):
         options.url = "https://" + options.url
     return options
 
+
+def add_month(offset: int, year: int, month: int):
+    month += offset
+    while month > 12:
+        year += 1
+        month -= 12
+    while month < 1:
+        year -= 1
+        month += 12
+    return year, month
+
+
 def benchmark(func):
     """
     decorator for timing a function

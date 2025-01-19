@@ -1,3 +1,7 @@
+#!/usr/bin/env python3
+# Copyright (c) 2024-2025 Berlin zaehlt Mobilitaet
+# SPDX-License-Identifier: MIT
+
 # @file    bzm_get_data.py
 # @author  Egbert Klaassen
 # @author  Michael Behrisch
@@ -9,7 +13,10 @@
 import os
 
 from babel.dates import get_day_names, get_month_names
+from datetime import datetime
 import pandas as pd
+
+from common import add_month
 
 ASSET_DIR = os.path.join(os.path.dirname(__file__), 'assets')
 CSV_DIR = os.path.join(os.path.dirname(__file__), '..', 'csv')
@@ -74,12 +81,11 @@ def get_locations(filepath=os.path.join(os.path.dirname(__file__), 'assets', 'bz
     return df_geojson.drop(nan_rows.index)
 
 
-def get_traffic_data(date_range=None):
-    if date_range is None:
-        date_range = ['2024_10', '2024_11', '2024_12', '2025_01']
+def get_traffic_data(months=4):
+    month, year = datetime.now().month, datetime.now().year
     all_files = []
-    for month in date_range:
-        file = f"bzm_telraam_{month}.csv.gz"
+    for offset in range(months):
+        file = "bzm_telraam_%s_%02i.csv.gz" % add_month(-offset, year, month)
         path = os.path.join(CSV_DIR, file)
         if not os.path.exists(path):
             if VERBOSE:

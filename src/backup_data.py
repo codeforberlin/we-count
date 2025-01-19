@@ -19,7 +19,7 @@ import openpyxl
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
-from common import ConnectionProvider, get_options
+from common import ConnectionProvider, get_options, add_month
 from datamodel import Base, TrafficCount, TrafficCountAdvanced, Segment, Camera
 
 
@@ -173,17 +173,6 @@ def _write_csv(filename, segments, advanced, month=None, delimiter=","):
                     csv_out.writerow(get_column_values(tc, local_date, advanced))
     if need_header:  # no data
         os.remove(csv_file.name)
-
-
-def add_month(offset, year, month):
-    month += offset
-    while month > 12:
-        year += 1
-        month -= 12
-    while month < 1:
-        year -= 1
-        month += 12
-    return year, month
 
 
 def main(args=None):

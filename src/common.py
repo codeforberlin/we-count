@@ -44,7 +44,7 @@ class ConnectionProvider:
                 print("Error on %s %s." % (path, payload), response["errorMessage"],
                       response.get("errorType"), response.get("stackTrace"), file=sys.stderr)
             elif r.status_code == 403:  # forbidden, probably no access to the segment in advanced mode
-                print("Warning:", response["message"], file=sys.stderr)
+                print("Warning:", response["message"], path, conn.headers, file=sys.stderr)
             elif required and required not in response:
                 print("Format error on %s %s." % (path, payload), file=sys.stderr)
                 pprint.pp(response, sys.stderr)

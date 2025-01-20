@@ -6,10 +6,9 @@ dash-leaflet
 geopandas>=1.0.0
 mysqlclient
 openpyxl
-osmnx<2.0.0
+osmnx>=1.9.2,<2.0.0
 plotly>=5.24
 pandas
-pyproj
 requests
 sqlalchemy
 timezonefinder

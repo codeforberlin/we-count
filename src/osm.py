@@ -27,7 +27,7 @@ def ensure_graph(coords, graph=None):
 def find_edge(segment, graph=None):
     coords = segment["geometry"]["coordinates"][0]
     graph = ensure_graph(coords, graph)
-    geoms = osmnx.utils_graph.graph_to_gdfs(graph, nodes=False)["geometry"]
+    geoms = osmnx.graph_to_gdfs(graph, nodes=False)["geometry"]
 
     # build an r-tree spatial index by position for subsequent iloc
     rtree = shapely.STRtree(geoms)

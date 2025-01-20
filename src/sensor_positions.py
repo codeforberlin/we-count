@@ -10,7 +10,6 @@ import os
 import json
 import datetime
 
-import pyproj
 import timezonefinder
 
 import osm
@@ -20,7 +19,7 @@ from common import ConnectionProvider, get_options
 def add_camera(conns, res):
     for segment in res["features"]:
         segment_id = segment["properties"]["segment_id"]
-        cameras = conns.request("/v1/cameras/segment/%s" % segment_id)
+        cameras = conns.request("/v1/instances/segment/%s" % segment_id)
         segment["properties"]["cameras"] = cameras.get("camera", [])
 
 
@@ -52,22 +51,8 @@ def main(args=None):
         with open(options.json_file, encoding="utf8") as of:
             old_data = json.load(of)
 
-    bbox = [float(f) for f in options.bbox.split(",")]
-    transformer = pyproj.Transformer.from_crs("EPSG:31370", "EPSG:4326")
-    all_segments = conns.request("/v1/segments/all")
-    bbox_segments = set()
-    for segment in all_segments["features"]:
-        segment_id = segment["properties"]["oidn"]
-        inside = False
-        if len(segment["geometry"]["coordinates"]) > 1:
-            print("Warning! Real multiline for segment", segment_id)
-        wgs_coords = [transformer.transform(*p) for p in segment["geometry"]["coordinates"][0]]
-        for lat, lon in wgs_coords:
-            inside = (bbox[0] < lon < bbox[2] and bbox[1] < lat < bbox[3])
-            if not inside:
-                break
-        if inside:
-            bbox_segments.add(segment_id)
+    res = conns.request("/v1/segments/area", "POST", str({"area": options.bbox}), required="features")
+    bbox_segments = set(f["properties"]["segment_id"] for f in res.get("features", []))
     if options.verbose:
         print(f"{len(bbox_segments)} total sensor positions in the bounding box.")
 

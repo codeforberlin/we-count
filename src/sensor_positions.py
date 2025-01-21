@@ -25,13 +25,22 @@ def add_camera(conns, res):
 
 def add_osm(res, old_data):
     lookup = {s["properties"]["segment_id"] : s for s in old_data["features"]}
+    now = datetime.datetime.now(datetime.UTC)
+    update_count = 0  # do not update too many at once, it is costly
     for segment in res["features"]:
         segment_id = segment["properties"]["segment_id"]
         if segment_id in lookup and "osm" in lookup[segment_id]["properties"]:
             osm_edge = lookup[segment_id]["properties"]["osm"]
-        else:
-            osm_edge = osm.find_edge(segment)
-            del osm_edge["geometry"]
+            if "name" in osm_edge:
+                # use cached data if it is not outdated
+                last_osm_update = datetime.datetime.fromisoformat(osm_edge.get("last_osm_fetch", '1970-01-01 00:00:00+00:00'))
+                if update_count > 10 or last_osm_update > now - datetime.timedelta(days=30):
+                    segment["properties"]["osm"] = osm_edge
+                    continue
+        update_count += 1
+        osm_edge = osm.find_edge(segment)
+        osm_edge["last_osm_fetch"] = now.isoformat(" ")
+        del osm_edge["geometry"]
         segment["properties"]["osm"] = osm_edge
 
 

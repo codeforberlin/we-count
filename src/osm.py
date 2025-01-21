@@ -42,7 +42,7 @@ def find_edge(segment, graph=None):
             n1, n2 = graph.nodes[ne[0]], graph.nodes[ne[1]]
             osm_edge["geometry"] = shapely.LineString([(n1["x"], n1["y"]), (n2["x"], n2["y"])])
         max_point_dist = 0
-        if osm_edge.get("highway") in (None, "footway", "service"):
+        if osm_edge.get("highway") in (None, "cycleway", "footway", "path", "service"):
             max_point_dist = 1  # minor street penalty
         for p in coords:
             max_point_dist = max(max_point_dist, shapely.distance(shapely.Point(p), osm_edge["geometry"]))

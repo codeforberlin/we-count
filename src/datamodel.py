@@ -83,19 +83,23 @@ class TrafficCount(Base):
     def _unscaled_car_count(self):
         return round((self.car_lft + self.car_rgt) * self.uptime_rel)
 
-    def get_histogram(self):
+    @staticmethod
+    def parse_histogram(speed_histogram, ucc):
         result = []
-        if self.car_speed_histogram_type == HISTOGRAM_0_120PLUS_5KMH:
-            counts = [float(f) for f in self.car_speed_histogram.split(",")]
-            ucc = self._unscaled_car_count()
-            for low in range(0, 80, 10):
-                high = low + 10 if low < 70 else 1000
-                c = 0.
-                for i, f in enumerate(counts):
-                    if low <= 5 * i and 5 * (i + 1) <= high:
-                        c += f
-                result.append(100 * c / ucc if ucc != 0. else 0.)
+        counts = [float(f) for f in speed_histogram.split(",")]
+        for low in range(0, 80, 10):
+            high = low + 10 if low < 70 else 1000
+            c = 0.
+            for i, f in enumerate(counts):
+                if low <= 5 * i and 5 * (i + 1) <= high:
+                    c += f
+            result.append(100 * c / ucc if ucc != 0. else 0.)
         return result
+
+    def get_histogram(self):
+        if self.car_speed_histogram_type == HISTOGRAM_0_120PLUS_5KMH:
+            return self.parse_histogram(self.car_speed_histogram, self._unscaled_car_count())
+        return []
 
     @classmethod
     def modes(cls):

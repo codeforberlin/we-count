@@ -10,23 +10,25 @@
 # This module contains a collection of functions to retrieve the data and return a pandas data frame.
 # It can also be used as a script to just save the data to a file.
 
+import argparse
 import os
 
 from babel.dates import get_day_names, get_month_names
 from datetime import datetime
 import pandas as pd
+from sqlalchemy import create_engine
 
-from common import add_month
+from common import add_month, parse_options
+from datamodel import TrafficCount
 
 ASSET_DIR = os.path.join(os.path.dirname(__file__), 'assets')
 CSV_DIR = os.path.join(os.path.dirname(__file__), '..', 'csv')
-VERBOSE = False
 
 
 # Save df files for development/debugging purposes
-def save_df(df:pd.DataFrame, file_name: str) -> None:
+def save_df(df:pd.DataFrame, file_name: str, verbose=False) -> None:
     path = os.path.join(ASSET_DIR, file_name)
-    if VERBOSE:
+    if verbose:
         print('Saving '+ path)
     if file_name.endswith(".xlsx"):
         df.to_excel(path, index=False)
@@ -81,19 +83,19 @@ def get_locations(filepath=os.path.join(os.path.dirname(__file__), 'assets', 'bz
     return df_geojson.drop(nan_rows.index)
 
 
-def get_traffic_data(months=4):
+def _read_csv(months=4, verbose=False):
     month, year = datetime.now().month, datetime.now().year
     all_files = []
     for offset in range(months):
         file = "bzm_telraam_%s_%02i.csv.gz" % add_month(-offset, year, month)
         path = os.path.join(CSV_DIR, file)
         if not os.path.exists(path):
-            if VERBOSE:
+            if verbose:
                 print(f'No local copy, retrieving {file} from the web.')
             path = 'https://berlin-zaehlt.de/csv/' + file
         all_files.append(path)
     # Retrieve file links
-    if VERBOSE:
+    if verbose:
         print('Getting traffic data files...')
     df = pd.concat((pd.read_csv(f) for f in all_files), ignore_index=True)
 
@@ -104,28 +106,42 @@ def get_traffic_data(months=4):
     return fill_missing_dates(df)
 
 
-def merge_data(locations, cached=True):
-    if cached:
-        return pd.read_csv(os.path.join(ASSET_DIR, 'traffic_df_2024_Q4_2025_YTD.csv.gz'))
+def _read_sql(options):
+    engine = create_engine(options.database, echo=options.verbose > 1, future=True)
+    columns = "segment_id, date_utc AS date_local, uptime_rel AS uptime, car_speed_histogram"
+    for mode in TrafficCount.modes():
+        columns += f", {mode}_lft + {mode}_rgt AS {mode}_total"
+    table_df = pd.read_sql_query(f"SELECT {columns} FROM traffic_count LIMIT 100", con=engine, parse_dates=["date_local"])
+    hist_parse = lambda x: TrafficCount.parse_histogram(x.iloc[0], x.iloc[1] * x.iloc[2])
+    histogram_df = table_df[["car_speed_histogram", "car_total", "uptime"]].apply(hist_parse, axis=1, result_type='expand')
+    histogram_df.columns = ["car_speed%s" % s for s in range(0, 80, 10)]
+    return pd.concat((table_df, histogram_df), axis=1)
+
+
+def merge_data(locations, cache_file=os.path.join(ASSET_DIR, 'traffic_df_2024_Q4_2025_YTD.csv.gz'), traffic_data=None, verbose=False):
+    if cache_file:
+        return pd.read_csv(cache_file)
+    if traffic_data is None:
+        traffic_data = _read_csv(verbose=verbose)
     ### Merge traffic data with geojson information, select columns, define data formats and add date_time columns
-    if VERBOSE:
+    if verbose:
         print('Combining traffic and geojson data...')
-    df_comb = pd.merge(get_traffic_data(), locations, on='segment_id', how='outer')
+    df_comb = pd.merge(traffic_data, locations, on='segment_id', how='outer')
 
     # Remove rows w/o names after merging with csv files containing segment_id w/o osm.name
-    if VERBOSE:
+    if verbose:
         print('Removing rows w/o osm.name or date_local entries')
     nan_rows = df_comb[df_comb['osm.name'].isnull()]
     df_comb = df_comb.drop(nan_rows.index)
     nan_rows = df_comb[df_comb['date_local'].isnull()]
     df_comb = df_comb.drop(nan_rows.index)
 
-    if VERBOSE:
+    if verbose:
         print('Creating df with selected columns')
     selected_columns = ['date_local','segment_id','uptime','ped_total','bike_total','car_total','heavy_total','v85','car_speed0','car_speed10','car_speed20','car_speed30','car_speed40','car_speed50','car_speed60','car_speed70','osm.name','osm.highway','osm.length','osm.width','osm.lanes','osm.maxspeed']
     traffic_df = pd.DataFrame(df_comb, columns=selected_columns)
 
-    if VERBOSE:
+    if verbose:
         print('Break down date_local to new columns...')
     traffic_df.insert(0, 'year', traffic_df['date_local'].dt.year)
     traffic_df.insert(0, 'year_month', traffic_df['date_local'].dt.strftime('%Y/%m'))
@@ -136,17 +152,41 @@ def merge_data(locations, cached=True):
     traffic_df.insert(0, 'hour', traffic_df['date_local'].dt.hour)
     traffic_df.insert(0, 'date', traffic_df['date_local'].dt.strftime('%Y/%m/%d'))
 
-    if VERBOSE:
+    if verbose:
         print('Exchange time data for labels...')
     traffic_df['weekday'] = traffic_df['weekday'].map(get_day_names('abbreviated', locale="en"))
     traffic_df['month'] = traffic_df['month'].map(get_month_names('abbreviated', locale="en"))
-    return traffic_df.reset_index()
+    return traffic_df.reset_index(drop=True)
+
+
+def get_options(args=None, json_default="sensor.json"):
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-s", "--secrets-file", default="secrets.json",
+                        metavar="FILE", help="Read database credentials from FILE")
+    parser.add_argument("-j", "--json-file", default=json_default,
+                        metavar="FILE", help="Write / read Geo-JSON for segments to / from FILE")
+    parser.add_argument("--excel",
+                        help="Excel output file")
+    parser.add_argument("--csv", action="store_true", default=False,
+                        help="use CSV input")
+    parser.add_argument("-d", "--database",
+                        help="Database input file or URL")
+    parser.add_argument("-m", "--months", type=int, default=4,
+                        help="number of months to look back")
+    parser.add_argument("-v", "--verbose", action="count", default=0,
+                        help="increase verbosity, twice enables verbose sqlalchemy output")
+    raw_options = parser.parse_args(args=args)
+    if not raw_options.database:
+        raw_options.csv = True
+    return parse_options(raw_options)
 
 
 if __name__ == "__main__":
-    VERBOSE = True
-    traffic_df = merge_data(get_locations(), False)
-    # save_df(traffic_df, "traffic_df_2024_Q4_2025_YTD.xlsx")
-    save_df(traffic_df, "traffic_df_2024_Q4_2025_YTD.csv.gz")
-    if VERBOSE:
+    options = get_options()
+    traffic_df = _read_csv(options.months, options.verbose) if options.csv else _read_sql(options)
+    merged_df = merge_data(get_locations(), None, traffic_df)
+    if options.excel:
+        save_df(merged_df, options.excel)
+    save_df(merged_df, "traffic_df_2024_Q4_2025_YTD.csv.gz")
+    if options.verbose:
         print('Finished.')

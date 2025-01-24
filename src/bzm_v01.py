@@ -47,7 +47,40 @@ json_df_features['segment_id']=json_df_features['segment_id'].astype(str)
 traffic_df['segment_id']=traffic_df['segment_id'].astype(str)
 traffic_df['year']=traffic_df['year'].astype(str)
 
+# Initialize constants and variables
+ADFC_orange = '#D78432'
+ADFC_green = '#1C9873'
+ADFC_blue = '#2C4B78'
+ADFC_darkgrey = '#737373'
+ADFC_lightblue = '#95CBD8'
+ADFC_skyblue = '#D7EDF2'
+ADFC_crimson = '#B44958'
+ADFC_lightgrey = '#DEDEDE'
+ADFC_palegrey = '#F2F2F2'
+ADFC_pink = '#EB9AAC'
 
+start_date = traffic_df["date_local"].min()
+end_date = traffic_df["date_local"].max()
+
+hours = traffic_df['hour'].unique()
+hours.sort()
+
+init_street = 'Kastanienallee' #'Köpenicker Straße'
+
+def update_selected_street(df_sel, segment_id, street_name_dd):
+
+    # Add street column for facet graphs
+    df_sel['street_selection'] = df_sel.loc[:, 'osm.name']
+    df_sel.loc[df_sel['street_selection'] != 'does not exist', 'street_selection'] = 'All'
+
+    # Generate "selected street only" df and populate street_selection
+    traffic_df_sel_street = df_sel[traffic_df['segment_id'] == segment_id]
+    traffic_df_sel_street.loc[traffic_df_sel_street['street_selection'] == 'All', 'street_selection'] = street_name_dd
+
+    # Add selected street to all streets
+    traffic_df_all = df_sel._append(traffic_df_sel_street, ignore_index=True)
+
+    return traffic_df_all.reset_index()
 
 ### Create street map ###
 if not DEPLOYED:
@@ -77,7 +110,6 @@ for i in range(len(traffic_df_agg_by_id_sorted)):
     else:
         traffic_df_agg_by_id_sorted['map_line_color'].values[i] = 'More bikes than cars'
 
-
 # Create Map figure
 lats = []
 lons = []
@@ -85,18 +117,7 @@ ids = []
 names = []
 map_colors = []
 
-# Custom colors
-ADFC_orange = '#D78432'
-ADFC_green = '#1C9873'
-ADFC_blue = '#2C4B78'
-ADFC_darkgrey = '#737373'
-ADFC_lightblue = '#95CBD8'
-ADFC_skyblue = '#D7EDF2'
-ADFC_crimson = '#B44958'
-ADFC_lightgrey = '#DEDEDE'
-ADFC_palegrey = '#F2F2F2'
-ADFC_pink = '#EB9AAC'
-
+# Prepare street geo-data and names
 for street, street_line_color in zip(traffic_df_agg_by_id_sorted['segment_id'], traffic_df_agg_by_id_sorted['map_line_color']):
 
     for feature, id, name in zip(geo_df.geometry, json_df_features['segment_id'], json_df_features['osm.name']):
@@ -122,32 +143,11 @@ for street, street_line_color in zip(traffic_df_agg_by_id_sorted['segment_id'], 
         else:
             continue
 
-fig = px.line_map(lat=lats, lon=lons, color=map_colors, hover_name=names, line_group=ids, color_discrete_map= {
-    'More bikes than cars': ADFC_green,
-    'Up to 2x more cars': ADFC_blue,
-    'Up to 5x more cars': ADFC_orange,
-    'Up to 10x more cars': ADFC_crimson,
-    'Over 100x more cars': ADFC_pink},
-    labels={'color': 'Bike/Car ratio'},
-    map_style="open-street-map", center= dict(lat=52.5, lon=13.45), height=600, zoom=10)
-
-fig.update_traces(line_width=5)
-fig.update_layout(margin=dict(l=40, r=20, t=40, b=30))
-fig.update_layout(legend=dict(
-    yanchor="top",
-    y=0.99,
-    xanchor="right",
-    x=0.99
-))
-
 
 ### Run Dash app ###
 
 if not DEPLOYED:
     print('Start dash...')
-
-# Initiate values
-init_street = 'Kastanienallee' #'Köpenicker Straße'
 
 dbc_css = "https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates/dbc.min.css"
 app = Dash(__name__, requests_pathname_prefix="/cgi-bin/bzm.cgi/" if DEPLOYED else None,
@@ -165,7 +165,7 @@ app.layout = dbc.Container(
         dbc.Row([
             # Street map
             dbc.Col([
-                dcc.Graph(id='map', figure=fig, className='bg-#F2F2F2'),
+                dcc.Graph(id='street_map', figure={}, className='bg-#F2F2F2'),
             ], width=8),
 
             # General controls
@@ -177,28 +177,43 @@ app.layout = dbc.Container(
                 options=sorted([{'label': i, 'value': i}
                         for i in traffic_df['osm.name'].unique()], key=lambda x: x['label']), value=init_street),
                 html.Hr(),
-                #html.H4('Selected street:'), #, style={'margin-top': 10, 'margin-bottom': 10}),
-                #html.Div(id='where'),
+                html.H4('Traffic type (selected street)', style={'margin-top': 20, 'margin-bottom': 30}),
+                # html.Div(id='where'),
+                # Pie chart
+                dcc.Graph(id='pie_traffic', figure={}),
+                html.Hr(),
 
+            ], width=3),
+        ]),
+
+        # Date/Time selection
+        dbc.Row([
+            dbc.Col([
+                html.H6('Set hour range:', style={'margin-left': 40, 'margin-right': 40, 'margin-top': 00, 'margin-bottom': 30}),
+                # Hour slice
+                dcc.RangeSlider(
+                    id='range_slider',
+                    min=hours[0],
+                    max=hours[-1],
+                    step=1,
+                    value=[7, 16],
+                    tooltip={'always_visible': True, 'template': "{value} hour"}),
+            ], width=6),
+            dbc.Col([
+                html.H6('Pick date range:', style={'margin-left': 00, 'margin-right': 40, 'margin-top': 00, 'margin-bottom': 30}),
                 # Date picker
-                html.H4('Pick date range:', style={'margin-top': 20, 'margin-bottom': 10}),
                 dcc.DatePickerRange(
                     id="date_filter",
-                    start_date=traffic_df["date_local"].min(),
-                    end_date=traffic_df["date_local"].max(),
+                    start_date=start_date,
+                    end_date=end_date,
                     min_date_allowed=traffic_df["date_local"].min(),
                     max_date_allowed=traffic_df["date_local"].max(),
                     display_format='DD-MMM-YYYY',
                     end_date_placeholder_text='DD-MMMM-YYYY',
                     minimum_nights=1
                 ),
-                html.Hr(),
-                # Pie chart
-                dcc.Graph(id='pie_traffic', figure={}),
-
-            ], width=3),
+            ], width=6),
         ]),
-
         # Absolute traffic
         dbc.Row([
             dbc.Col([
@@ -339,56 +354,89 @@ app.layout = dbc.Container(
 
 ### Map callback ###
 @callback(
-    #Output(component_id='where', component_property='children'),
+#     #Output(component_id='where', component_property='children'),
     Output(component_id='street_name_dd',component_property='value'),
-    Input(component_id='map', component_property='clickData'),
+#     Output(component_id='street_map', component_property='figure'),
+    Input(component_id='street_map', component_property='clickData'),
     prevent_initial_call=True
 )
-def get_street_name(clickData):
-    global street
-    if clickData:
-        street = clickData['points'][0]['hovertext']
-    return street
 
+def get_street_name(clickData):
+
+    if clickData:
+        street_name_dd = clickData['points'][0]['hovertext']
+
+    return street_name_dd
+
+@callback(
+    Output(component_id='street_map', component_property='figure'),
+    Input(component_id='street_name_dd', component_property='value'),
+    #Input(component_id="date_filter", component_property="start_date"),
+    #Input(component_id="date_filter", component_property="end_date"),
+    #Input(component_id='range_slider', component_property='value'),
+)
+
+def update_graph(street_name_dd): #, start_date, end_date, hour_range):
+
+    street_map = px.line_map(lat=lats, lon=lons, color=map_colors, hover_name=names, line_group=ids, color_discrete_map= {
+        'More bikes than cars': ADFC_green,
+        'Up to 2x more cars': ADFC_blue,
+        'Up to 5x more cars': ADFC_orange,
+        'Up to 10x more cars': ADFC_crimson,
+        'Over 100x more cars': ADFC_pink},
+        labels={'color': 'Bike/Car ratio'},
+        map_style="light", center= dict(lat=52.5, lon=13.45), height=600, zoom=11)
+
+    street_map.update_traces(line_width=5)
+    street_map.update_layout(margin=dict(l=40, r=20, t=40, b=30))
+    street_map.update_layout(legend=dict(yanchor="top", y=0.99, xanchor="right", x=0.99))
+
+    return street_map
 
 ### General traffic callback ###
 @callback(
+    #Output(component_id='street_map', component_property='figure'),
     Output(component_id='pie_traffic', component_property='figure'),
     Output(component_id='line_abs_traffic', component_property='figure'),
     Output(component_id='bar_avg_traffic', component_property='figure'),
     Output(component_id='bar_perc_speed', component_property='figure'),
     Output(component_id='bar_avg_speed', component_property='figure'),
+    Output(component_id="date_filter", component_property="start_date"),
+    Output(component_id="date_filter", component_property="end_date"),
     Input(component_id='radio_time_division', component_property='value'),
     Input(component_id='radio_time_unit', component_property='value'),
     Input(component_id='street_name_dd', component_property='value'),
     Input(component_id="date_filter", component_property="start_date"),
-    Input(component_id="date_filter", component_property="end_date")
+    Input(component_id="date_filter", component_property="end_date"),
+    Input(component_id='range_slider', component_property='value'),
 )
-def update_graph(radio_time_division, radio_time_unit, street_name_dd, start_date, end_date):
 
+def update_graph(radio_time_division, radio_time_unit, street_name_dd, start_date, end_date, hour_range):
     # Get segment_id
-    for i in range(len(traffic_df)):
-        if traffic_df['osm.name'][i] == street_name_dd:
-            segment_id = traffic_df['segment_id'][i]
-            continue
+    segment_id_index = traffic_df.loc[traffic_df['osm.name'] == street_name_dd]
+    segment_id = segment_id_index['segment_id'].values[0]
 
-    # Add street column for facet graphs
-    traffic_df['street_selection'] = traffic_df.loc[:, 'osm.name']
-    traffic_df.loc[traffic_df['street_selection'] != 'does not exist', 'street_selection'] = 'All'
-
-    # Generate "selected street only" df and populate street_selection
-    traffic_df_sel_street = traffic_df[traffic_df['segment_id'] == segment_id]
-    traffic_df_sel_street.loc[traffic_df_sel_street['street_selection'] == 'All', 'street_selection'] = street_name_dd
-
-    # Add seletcted street to all streets
-    traffic_df_all = traffic_df._append(traffic_df_sel_street, ignore_index=True)
+    traffic_df_all = update_selected_street(traffic_df, segment_id, street_name_dd)
 
     # Filter time period
     traffic_df_all_time = traffic_df_all.loc[traffic_df_all['date_local'].between(start_date, end_date)]
-    traffic_df_all_time_sorted = traffic_df_all_time.sort_values(by=['date_local'])
+    traffic_df_all_time_hour = traffic_df_all_time.loc[traffic_df_all_time['hour'].between(hour_range[0], hour_range[1])]
+    traffic_df_all_time_sorted = traffic_df_all_time_hour.sort_values(by=['street_selection', 'date_local'])
+
+    # Limit date_time to selected street to avoid "jumps" in the 'All'-streets facet_col (Plotly bug?)
+    df_temp = traffic_df_all_time_sorted[traffic_df_all_time_sorted['street_selection'] != 'All']
+    # save_df(df_temp,'df_temp'+street_name_dd+'.xlsx')
+    min_time = df_temp['date_local'].min()
+    max_time = df_temp['date_local'].max()
+    # print(street_name_dd)
+    start_date = min_time
+    # print(min_time)
+    end_date = max_time
+    # print(max_time)
+    traffic_df_all_time_lim = traffic_df_all_time_sorted.loc[traffic_df_all_time_sorted['date_local'].between(min_time, max_time)]
 
     # Aggregate
-    traffic_df_all_time_agg = traffic_df_all_time_sorted.groupby(by=[radio_time_division,'street_selection'], as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
+    traffic_df_all_time_agg = traffic_df_all_time_lim.groupby(by=['street_selection', radio_time_division],as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
 
     # Create abs line chart
     line_abs_traffic = px.line(traffic_df_all_time_agg,
@@ -401,7 +449,6 @@ def update_graph(radio_time_division, radio_time_unit, street_name_dd, start_dat
         facet_col_spacing=0.04,
         title=f'Absolute traffic count by {radio_time_division}')
 
-    #line_abs_traffic.update_traces(connectgaps=False)
     line_abs_traffic.update_yaxes(matches=None)
     line_abs_traffic.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
     line_abs_traffic.update_layout(legend_title_text='Traffic Type')
@@ -415,7 +462,8 @@ def update_graph(radio_time_division, radio_time_unit, street_name_dd, start_dat
     # Test: line_abs_traffic.update_layout(legend=dict(orientation="h",))
 
     # Prepare pie chart data
-    pie_df = traffic_df_all_time[traffic_df_all_time['street_selection']==street_name_dd]
+    #pie_df = traffic_df_all_time[traffic_df_all_time['street_selection']==street_name_dd]
+    pie_df = traffic_df_all_time_lim[traffic_df_all_time_lim['street_selection'] == street_name_dd]
     pie_df_traffic = pie_df[['ped_total', 'bike_total', 'car_total', 'heavy_total']]
     pie_df_traffic_ren = pie_df_traffic.rename(columns={'ped_total': 'Pedestrians', 'bike_total': 'Bikes', 'car_total': 'Cars', 'heavy_total': 'Heavy'})
     pie_df_traffic_sum = pie_df_traffic_ren.aggregate(['sum'])
@@ -432,7 +480,8 @@ def update_graph(radio_time_division, radio_time_unit, street_name_dd, start_dat
 
 
     # Average traffic bar chart
-    traffic_df_str_id_time_grpby = traffic_df_all_time.groupby(by=[radio_time_unit, 'street_selection'], as_index=False).agg({'ped_total': 'mean', 'bike_total': 'mean', 'car_total': 'mean', 'heavy_total': 'mean'})
+    #traffic_df_str_id_time_grpby = traffic_df_all_time_sorted.groupby(by=[radio_time_unit, 'street_selection'], as_index=False).agg({'ped_total': 'mean', 'bike_total': 'mean', 'car_total': 'mean', 'heavy_total': 'mean'})
+    traffic_df_str_id_time_grpby = traffic_df_all_time_lim.groupby(by=[radio_time_unit, 'street_selection'], as_index=False).agg({'ped_total': 'mean', 'bike_total': 'mean', 'car_total': 'mean', 'heavy_total': 'mean'})
 
     bar_avg_traffic = px.bar(traffic_df_str_id_time_grpby,
         x=radio_time_unit, y=['ped_total', 'bike_total', 'car_total', 'heavy_total'],
@@ -520,8 +569,7 @@ def update_graph(radio_time_division, radio_time_unit, street_name_dd, start_dat
     for annotation in bar_avg_speed.layout.annotations:
         annotation['font'] = {'size': 14}
 
-
-    return pie_traffic, line_abs_traffic, bar_avg_traffic, bar_perc_speed, bar_avg_speed
+    return pie_traffic, line_abs_traffic, bar_avg_traffic, bar_perc_speed, bar_avg_speed, start_date, end_date
 
 # ### Explore traffic callback ###
 @callback(
@@ -531,29 +579,29 @@ def update_graph(radio_time_division, radio_time_unit, street_name_dd, start_dat
     Input(component_id='street_name_dd', component_property='value'),
     Input(component_id="date_filter", component_property="start_date"),
     Input(component_id="date_filter", component_property="end_date"),
+    Input(component_id='range_slider', component_property='value'),
 )
-def update_explore_graph(radio_x_axis, radio_y_axis, street_name_dd, start_date, end_date):
+
+def update_explore_graph(radio_x_axis, radio_y_axis, street_name_dd, start_date, end_date, hour_range):
 
     # Get segment_id
-    for i in range(len(traffic_df)):
-        if traffic_df['osm.name'][i] == street_name_dd:
-            segment_id = traffic_df['segment_id'][i]
-            continue
+    segment_id_index = traffic_df.loc[traffic_df['osm.name'] == street_name_dd]
+    segment_id = segment_id_index['segment_id'].values[0]
 
-    # Add street column for facet graphs
-    traffic_df['street_selection'] = traffic_df.loc[:, 'osm.name']
-    traffic_df.loc[traffic_df['street_selection'] != 'does not exist', 'street_selection'] = 'All'
-
-    # Generate "selected street only" df and populate street_selection
-    traffic_df_sel_street = traffic_df[traffic_df['segment_id'] == segment_id]
-    traffic_df_sel_street.loc[traffic_df_sel_street['street_selection'] == 'All', 'street_selection'] = street_name_dd
-
-    # Add seletcted street to all streets
-    traffic_df_all = traffic_df._append(traffic_df_sel_street, ignore_index=True)
+    traffic_df_all = update_selected_street(traffic_df, segment_id, street_name_dd)
 
     # Filter time period
     traffic_df_all_time = traffic_df_all.loc[traffic_df_all['date_local'].between(start_date, end_date)]
-    #traffic_df_all_time_sorted = traffic_df_all_time.sort_values(by=['date_local'])
+    traffic_df_all_time_hour = traffic_df_all_time.loc[traffic_df_all_time['hour'].between(hour_range[0], hour_range[1])]
+    traffic_df_all_time_sorted = traffic_df_all_time_hour.sort_values(by=['street_selection', 'date_local'])
+
+    # Limit date_time to selected street to avoid "jumps" in the 'All'-streets facet_col (Plotly bug?)
+    df_temp = traffic_df_all_time_sorted[traffic_df_all_time_sorted['street_selection']!='All']
+    min_time = df_temp['date_local'].min()
+    max_time = df_temp['date_local'].max()
+    start_date = min_time
+    end_date = max_time
+    traffic_df_all_time_lim = traffic_df_all_time_sorted.loc[traffic_df_all_time_sorted['date_local'].between(min_time, max_time)]
 
     # Create abs line chart
     sc_explore = px.scatter(traffic_df_all_time,
@@ -579,4 +627,4 @@ def update_explore_graph(radio_x_axis, radio_y_axis, street_name_dd, start_date,
     return sc_explore
 
 if __name__ == "__main__":
-    app.run_server(debug=False)
+    app.run_server(debug=True)

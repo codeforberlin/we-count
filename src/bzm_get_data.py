@@ -112,7 +112,7 @@ def _read_sql(options):
     columns = "segment_id, date_utc AS date_local, uptime_rel AS uptime, car_speed_histogram"
     for mode in TrafficCount.modes():
         columns += f", {mode}_lft + {mode}_rgt AS {mode}_total"
-    table_df = pd.read_sql_query(f"SELECT {columns} FROM traffic_count WHERE date_local > '{start}'", con=engine, parse_dates=["date_local"])
+    table_df = pd.read_sql_query(f"SELECT {columns} FROM traffic_count WHERE date_utc > '{start}'", con=engine, parse_dates=["date_local"])
     if len(table_df) > 0:
         def hist_parse(x):
             return TrafficCount.parse_histogram(x.iloc[0], x.iloc[1] * x.iloc[2])

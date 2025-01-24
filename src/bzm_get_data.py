@@ -14,7 +14,7 @@ import argparse
 import os
 
 from babel.dates import get_day_names, get_month_names
-from datetime import datetime
+from datetime import datetime, timedelta
 import pandas as pd
 from sqlalchemy import create_engine
 
@@ -107,14 +107,19 @@ def _read_csv(months=4, verbose=False):
 
 
 def _read_sql(options):
+    start = datetime.now() - timedelta(days=30*options.months)
     engine = create_engine(options.database, echo=options.verbose > 1, future=True)
     columns = "segment_id, date_utc AS date_local, uptime_rel AS uptime, car_speed_histogram"
     for mode in TrafficCount.modes():
         columns += f", {mode}_lft + {mode}_rgt AS {mode}_total"
-    table_df = pd.read_sql_query(f"SELECT {columns} FROM traffic_count LIMIT 100", con=engine, parse_dates=["date_local"])
-    hist_parse = lambda x: TrafficCount.parse_histogram(x.iloc[0], x.iloc[1] * x.iloc[2])
-    histogram_df = table_df[["car_speed_histogram", "car_total", "uptime"]].apply(hist_parse, axis=1, result_type='expand')
-    histogram_df.columns = ["car_speed%s" % s for s in range(0, 80, 10)]
+    table_df = pd.read_sql_query(f"SELECT {columns} FROM traffic_count WHERE date_local > '{start}'", con=engine, parse_dates=["date_local"])
+    if len(table_df) > 0:
+        def hist_parse(x):
+            return TrafficCount.parse_histogram(x.iloc[0], x.iloc[1] * x.iloc[2])
+        histogram_df = table_df[["car_speed_histogram", "car_total", "uptime"]].apply(hist_parse, axis=1, result_type='expand')
+        histogram_df.columns = ["car_speed%s" % s for s in range(0, 80, 10)]
+    else:
+        histogram_df = pd.DataFrame(columns=["car_speed%s" % s for s in range(0, 80, 10)])
     return pd.concat((table_df, histogram_df), axis=1)
 
 

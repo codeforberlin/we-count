@@ -17,6 +17,7 @@ import numpy as np
 import plotly.express as px
 from dash import Dash, html, dcc, callback, Output, Input
 import dash_bootstrap_components as dbc
+import gettext
 
 import bzm_get_data
 import common
@@ -50,6 +51,7 @@ with common.Benchmarker(not DEPLOYED, "Load traffic data"):
 json_df_features['segment_id']=json_df_features['segment_id'].astype(str)
 traffic_df['segment_id']=traffic_df['segment_id'].astype(str)
 traffic_df['year']=traffic_df['year'].astype(str)
+traffic_df['hour']=traffic_df['hour'].astype(int)
 
 # Drop uptime when empty
 # nan_rows = traffic_df[traffic_df['uptime'].isnull()]
@@ -99,7 +101,29 @@ def update_selected_street(df, segment_id, street_name, start_date, end_date, ho
 
     return out_traffic_df_sel_str, start_date, end_date, hour_range
 
+def update_language(language):
+    print(language)
+    # Initiate translation
+    appname = 'bzm'
+    localedir = 'D:/OneDrive/PycharmProjects/we-count/src/locales'
+    # Set up Gettext
+    translations = gettext.translation(appname, localedir, fallback=False, languages=[language])
+    # Create the "magic" function
+    translations.install()
+    # Translate message
+    print(_("Hello World"))
+
 # Initialize constants and variables
+language = 'de'
+update_language(language)
+
+# locale = input("Please enter the preferred locale (en, de):")
+# appname = 'bzm'
+# localedir = 'D:/OneDrive/PycharmProjects/we-count/src/locales'
+# translations = gettext.translation(appname, localedir, fallback=False, languages= locale)
+# translations.install()
+
+
 ADFC_orange = '#D78432'
 ADFC_green = '#1C9873'
 ADFC_blue = '#2C4B78'
@@ -118,7 +142,6 @@ end_date = max_date
 
 data_min_hour = traffic_df["hour"].min()
 data_max_hour = traffic_df["hour"].max()
-
 hour_range = [data_min_hour, data_max_hour]
 
 street_name = 'Kastanienallee' #'Köpenicker Straße'
@@ -182,8 +205,7 @@ for street, street_line_color in zip(traffic_df_id_bc['segment_id'], traffic_df_
 ### Run Dash app ###
 
 if not DEPLOYED:
-    print('Start dash...')
-
+    print(_('Start dash...'))
 dbc_css = "https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates/dbc.min.css"
 app = Dash(__name__, requests_pathname_prefix="/cgi-bin/bzm.cgi/" if DEPLOYED else None,
            external_stylesheets=[dbc.themes.BOOTSTRAP, dbc_css],
@@ -194,8 +216,18 @@ app.layout = dbc.Container(
     [
         dbc.Row([
             dbc.Col([
-                html.H1('Berlin zählt Mobilität', style={'margin-left': 40, 'margin-top': 20, 'margin-bottom': 00, 'margin-right': 40}, className='bg-#F2F2F2'),
-            ], width=12)
+                html.H1(_('Berlin Counts Mobility'), style={'margin-left': 40, 'margin-top': 20, 'margin-bottom': 00, 'margin-right': 40}, className='bg-#F2F2F2'),
+            ], width=8),
+            dbc.Col([
+                dcc.Dropdown(
+                id='language-selector',
+                options=[
+                    {'label': 'English', 'value': 'en'},
+                    {'label': 'Deutsch', 'value': 'de'},
+                ],
+                value=language
+                ),
+            ], width=4)
         ]),
         dbc.Row([
             # Street map
@@ -207,12 +239,12 @@ app.layout = dbc.Container(
             dbc.Col([
 
                 # Street drop down
-                html.H4('Select street:', style={'margin-top': 50, 'margin-bottom': 10}),
+                html.H4(_('Select street:'), style={'margin-top': 50, 'margin-bottom': 10}),
                 dcc.Dropdown(id='street_name_dd',
                 options=sorted([{'label': i, 'value': i}
                         for i in traffic_df['osm.name'].unique()], key=lambda x: x['label']), value=street_name),
                 html.Hr(),
-                html.H4('Traffic type (selected street)', style={'margin-top': 20, 'margin-bottom': 30}),
+                html.H4(_('Traffic type (selected street)'), style={'margin-top': 20, 'margin-bottom': 30}),
                 # html.Div(id='where'),
                 # Pie chart
                 dcc.Graph(id='pie_traffic', figure={}),
@@ -224,7 +256,7 @@ app.layout = dbc.Container(
         # Date/Time selection
         dbc.Row([
             dbc.Col([
-                html.H6('Set hour range:', style={'margin-left': 40, 'margin-right': 40, 'margin-top': 00, 'margin-bottom': 30}),
+                html.H6(_('Set hour range:'), style={'margin-left': 40, 'margin-right': 40, 'margin-top': 00, 'margin-bottom': 30}),
                 # Hour slice
                 dcc.RangeSlider(
                     id='range_slider',
@@ -235,7 +267,7 @@ app.layout = dbc.Container(
                     tooltip={'always_visible': True, 'template': "{value} hour"}),
             ], width=6),
             dbc.Col([
-                html.H6('Pick date range:', style={'margin-left': 00, 'margin-right': 40, 'margin-top': 00, 'margin-bottom': 30}),
+                html.H6(_('Pick date range:'), style={'margin-left': 00, 'margin-right': 40, 'margin-top': 00, 'margin-bottom': 30}),
                 # Date picker
                 dcc.DatePickerRange(
                     id="date_filter",
@@ -253,13 +285,13 @@ app.layout = dbc.Container(
         dbc.Row([
             dbc.Col([
                 # Radio time division
-                html.H4('Absolute traffic', style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 30}),
+                html.H4(_('Absolute traffic'), style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 30}),
 
                 # Select a time division
                 dcc.RadioItems(
                     id='radio_time_division',
                     options=[
-                        {'label': 'Year', 'value': 'year'},
+                        {'label': _('Year'), 'value': 'year'},
                         {'label': 'Month', 'value': 'year_month'},
                         {'label': 'Week', 'value': 'year_week'},
                         {'label': 'Date', 'value': 'date'}
@@ -386,6 +418,17 @@ app.layout = dbc.Container(
     className = 'dbc'
 )
 
+@callback(
+    #[Input('language-dropdown', 'value')],
+    Input('language-selector', 'value'),
+)
+
+def get_language(language):
+    print(language)
+    update_language(language)
+    return
+
+
 ### Map callback ###
 @callback(
     Output(component_id='street_name_dd',component_property='value'),
@@ -494,7 +537,7 @@ def update_graph(radio_time_division, radio_time_unit, street_name, start_date, 
     # Average traffic bar chart
     #traffic_df_str_id_time_grpby = traffic_df_all_time_sorted.groupby(by=[radio_time_unit, 'street_selection'], as_index=False).agg({'ped_total': 'mean', 'bike_total': 'mean', 'car_total': 'mean', 'heavy_total': 'mean'})
     traffic_df_sel_str_groupby = traffic_df_sel_str.groupby(by=[radio_time_unit, 'street_selection'], as_index=False).agg({'ped_total': 'mean', 'bike_total': 'mean', 'car_total': 'mean', 'heavy_total': 'mean'})
-
+    #print(traffic_df_sel_str_groupby.info())
     bar_avg_traffic = px.bar(traffic_df_sel_str_groupby,
         x=radio_time_unit, y=['ped_total', 'bike_total', 'car_total', 'heavy_total'],
         barmode='stack',

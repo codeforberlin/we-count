@@ -13,6 +13,7 @@ from collections import Counter
 import numpy as np
 import osmnx
 import plotly.express as px
+import requests
 import shapely
 
 
@@ -49,6 +50,12 @@ def find_edge(segment, graph=None):
         if max_point_dist < min_dist:
             min_edge = osm_edge
             min_dist = max_point_dist
+    # Send a request to the Nominatim reverse geocoding API
+    response = requests.get("https://nominatim.openstreetmap.org/reverse",
+                            params={'lat': coords[0][1], 'lon': coords[0][0], 'format': 'json'},
+                            headers={'User-Agent': 'bzm v0.1'})
+    if response.status_code == 200:
+        min_edge["address"] = response.json().get('address', {})
     return min_edge
 
 

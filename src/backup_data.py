@@ -121,6 +121,8 @@ def round_separator(v, digits, sep):
 def get_column_names(advanced):
     res = ["segment_id", "date_local", "uptime"]
     for mode in TrafficCountAdvanced.modes() if advanced else TrafficCount.modes():
+        if mode == "pedestrian":
+            mode = "ped"
         res += [mode + "_lft", mode + "_rgt", mode + "_total"]
     return res + ["v85"] + ["car_speed%s" % s for s in range(0, 80, 10)]
 

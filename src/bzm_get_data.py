@@ -55,7 +55,7 @@ def fill_missing_dates(df):
     return result_df.reset_index().rename(columns={'index': 'date_local'})
 
 
-def get_locations(filepath=os.path.join(os.path.dirname(__file__), 'assets', 'bzm_telraam_segments_2025.geojson')):
+def get_locations(filepath="https://berlin-zaehlt.de/csv/bzm_telraam_segments.geojson"):
     df_geojson = pd.read_json(filepath)
 
     # Flatten the json structure

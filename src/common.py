@@ -7,6 +7,7 @@
 
 import argparse
 import json
+import os
 import pprint
 import random
 import sys
@@ -56,10 +57,11 @@ class ConnectionProvider:
 
 
 def parse_options(options):
-    with open(options.secrets_file, encoding="utf8") as sf:
-        options.secrets = json.load(sf)
-    if not options.database:
-        options.database = options.secrets.get("database", "backup.db")
+    if os.path.exists(options.secrets_file):
+        with open(options.secrets_file, encoding="utf8") as sf:
+            options.secrets = json.load(sf)
+        if not options.database:
+            options.database = options.secrets.get("database", "backup.db")
     if "+" not in options.database and "://" not in options.database:
         options.database = "sqlite+pysqlite:///" + options.database
     if getattr(options, "url", None) and "://" not in options.url:

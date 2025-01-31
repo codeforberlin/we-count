@@ -1,0 +1,378 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-01-29 22:42+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:81
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:87
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:493
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:534
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:568
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:592
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:640
+msgid "All"
+msgstr "Alle"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:158
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:447
+msgid "Over 10x more cars"
+msgstr "Über 10x mehr Autos"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:158
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:446
+msgid "Over 5x more cars"
+msgstr "Über 5x mehr Autos"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:158
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:445
+msgid "Over 2x more cars"
+msgstr "Über 2x mehr Autos"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:158
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:444
+msgid "More cars than bikes"
+msgstr "Mehr Autos als Zweiräder"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:158
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:443
+msgid "More bikes than cars"
+msgstr "Mehr Zweiräder als Autos"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:200
+msgid "Start dash..."
+msgstr "Starte Dash..."
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:211
+msgid "Berlin Counts Mobility"
+msgstr "Berlin zählt Mobilität"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:217
+msgid "English"
+msgstr "English"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:218
+msgid "Deutsch"
+msgstr "German"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:233
+msgid "Select street:"
+msgstr "Wähle Straße:"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:238
+msgid "Traffic type - selected street"
+msgstr "Verkehrstyp - gewählte Straße"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:248
+msgid "Set hour range:"
+msgstr "Stelle Zeitfenster ein:"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:256
+msgid "always_visible"
+msgstr "immer sichtbar"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:259
+msgid "Pick date range:"
+msgstr "Wähle Start- und Enddatum:"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:277
+msgid "Absolute traffic"
+msgstr "Absolute Verkehrszahl"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:283
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:494
+msgid "Year"
+msgstr "Jahr"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:284
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:494
+msgid "Month"
+msgstr "Monat"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:285
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:494
+msgid "Week"
+msgstr "Woche"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:286
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:494
+msgid "Date"
+msgstr "Datum"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:307
+msgid "Average traffic"
+msgstr "Durchschnittlicher Verkehr"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:312
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:537
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:571
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:595
+msgid "Yearly"
+msgstr "Jährlich"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:313
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:537
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:571
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:595
+msgid "Monthly"
+msgstr "Monatlich"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:314
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:537
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:571
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:595
+msgid "Weekly"
+msgstr "Wöchentlich"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:315
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:537
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:571
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:595
+msgid "Daily"
+msgstr "Täglich"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:316
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:537
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:571
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:596
+msgid "Hourly"
+msgstr "Stündlich"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:334
+msgid "Percentage car speed - by time unit"
+msgstr "Prozentuale Auto Geschwindigkeit - pro Zeiteinheit"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:341
+msgid "Percentage car speed - average"
+msgstr "Prozentuale Auto Geschwindigkeit - Durchschnitt"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:350
+msgid "Explore"
+msgstr "Entdecken"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:357
+msgid "X-Axis:"
+msgstr "X-Achse"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:362
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:382
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:513
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:519
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:644
+msgid "Pedestrians"
+msgstr "Fußgänger"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:363
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:383
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:513
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:519
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:644
+msgid "Bikes"
+msgstr "Zweiräder"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:364
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:384
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:513
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:519
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:644
+msgid "Cars"
+msgstr "Autos"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:365
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:385
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:513
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:519
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:644
+msgid "Heavy"
+msgstr "LKWs"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:366
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:386
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:644
+msgid "Street Length"
+msgstr "Straßenlänge"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:367
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:387
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:644
+msgid "Max Speed"
+msgstr "Maximale Geschwindigkeit"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:378
+msgid "Y-Axis:"
+msgstr "Y-Achse"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:493
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:535
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:569
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:593
+msgid "Mon"
+msgstr "Mo."
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:493
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:535
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:569
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:593
+msgid "Tue"
+msgstr "Di."
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:493
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:535
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:569
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:593
+msgid "Wed"
+msgstr "Mi."
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:493
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:535
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:569
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:593
+msgid "Thu"
+msgstr "Do."
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:493
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:535
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:569
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:593
+msgid "Fri"
+msgstr "Fr."
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:493
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:535
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:569
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:593
+msgid "Sat"
+msgstr "Sa."
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:493
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:535
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:569
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:593
+msgid "Sun"
+msgstr "So."
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:497
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:503
+msgid "Absolute traffic count"
+msgstr "Absolute Verkehrszahl"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:501
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:545
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:579
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:650
+msgid "Traffic Type"
+msgstr "Verkehrstype"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:536
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:570
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:594
+msgid "Jan"
+msgstr "Jan"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:536
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:570
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:594
+msgid "Feb"
+msgstr "Feb"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:536
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:570
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:594
+msgid "Mar"
+msgstr "Mär"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:536
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:570
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:594
+msgid "Apr"
+msgstr "Apr"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:536
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:570
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:594
+msgid "May"
+msgstr "Mai"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:536
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:570
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:594
+msgid "Jun"
+msgstr "Jun"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:536
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:570
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:594
+msgid "Jul"
+msgstr "Jul"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:536
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:570
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:594
+msgid "Aug"
+msgstr "Aug"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:536
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:570
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:594
+msgid "Sep"
+msgstr "Sep"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:536
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:570
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:594
+msgid "Oct"
+msgstr "Okt"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:536
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:570
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:594
+msgid "Nov"
+msgstr "Nov"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:536
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:570
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:594
+msgid "Dec"
+msgstr "Dez"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:541
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:547
+msgid "Average traffic count"
+msgstr "Durchschnittliche Verkehrszahl"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:549
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:578
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:605
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:649
+msgid " (segment no:"
+msgstr " (Segment No:"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:574
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:601
+msgid "Percentage speed"
+msgstr "Prozentuale Geschwindigkeit"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:581
+msgid "Percentage car speed"
+msgstr "Prozentuale Auto-Geschwindigkeit"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:606
+msgid "Car speed"
+msgstr "Auto Geschwindigkeit"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:608
+msgid "Average percentage car speed"
+msgstr "Durchschnittliche prozentuale Auto Geschwindigkeit"

@@ -17,14 +17,30 @@ import numpy as np
 import plotly.express as px
 from dash import Dash, html, dcc, callback, Output, Input
 import dash_bootstrap_components as dbc
+import dash_daq as daq
 import gettext
 
 import bzm_get_data
 import common
-from src.bzm_get_data import save_df
 
 DEPLOYED = __name__ != '__main__'
 
+#### Set Language ####
+
+def update_language(language):
+
+    # Initiate translation
+    appname = 'bzm'
+    localedir = 'D:/OneDrive/PycharmProjects/we-count/src/locales'
+    # Set up Gettext
+    translations = gettext.translation(appname, localedir, fallback=True, languages=[language])
+    # Install translation function
+    translations.install()
+    # Translate message (for testing)
+    #print(_("Hello World"))
+
+language = 'de'
+update_language(language)
 
 #### Retrieve Data ####
 
@@ -46,7 +62,6 @@ with common.Benchmarker(not DEPLOYED, "Load traffic data"):
     traffic_df = bzm_get_data.merge_data(json_df_features)
 
 """" Can move to bzm_get_data? - Start """
-
 # Set data types for clean representation
 json_df_features['segment_id']=json_df_features['segment_id'].astype(str)
 traffic_df['segment_id']=traffic_df['segment_id'].astype(str)
@@ -63,14 +78,21 @@ traffic_df['hour']=traffic_df['hour'].astype(int)
 
 # Add street column for facet graphs
 traffic_df['street_selection'] = traffic_df.loc[:, 'osm.name']
-traffic_df.loc[traffic_df['street_selection'] != 'does not exist', 'street_selection'] = 'All'
-
+traffic_df.loc[traffic_df['street_selection'] != 'does not exist', 'street_selection'] = _('All')
 """" Can move to bzm_get_data? - End """
 
-def update_selected_street(df, segment_id, street_name, start_date, end_date, hour_range):
+def update_selected_street(df, filter_uptime, segment_id, street_name, start_date, end_date, hour_range):
+    if filter_uptime == True:
+        nan_rows = df[df['uptime'].isnull()]
+        df_uptime_nan = df.drop(nan_rows.index)
+        nan_rows = df_uptime_nan[df_uptime_nan['uptime'] < 0.7]
+        df_uptime = df_uptime_nan.drop(nan_rows.index)
+    else:
+        df_uptime = df
+
     # Generate "selected street only" df and populate street_selection
-    traffic_df_str = df[df['segment_id'] == segment_id]
-    traffic_df_str.loc[traffic_df_str['street_selection'] == 'All', 'street_selection'] = street_name
+    traffic_df_str = df_uptime[df_uptime['segment_id'] == segment_id]
+    traffic_df_str.loc[traffic_df_str['street_selection'] == _('All'), 'street_selection'] = street_name
 
     # Filter min max street dates based on "selected street only"
     min_str_date = traffic_df_str['date_local'].min()
@@ -101,29 +123,7 @@ def update_selected_street(df, segment_id, street_name, start_date, end_date, ho
 
     return out_traffic_df_sel_str, start_date, end_date, hour_range
 
-def update_language(language):
-    print(language)
-    # Initiate translation
-    appname = 'bzm'
-    localedir = 'D:/OneDrive/PycharmProjects/we-count/src/locales'
-    # Set up Gettext
-    translations = gettext.translation(appname, localedir, fallback=False, languages=[language])
-    # Create the "magic" function
-    translations.install()
-    # Translate message
-    print(_("Hello World"))
-
 # Initialize constants and variables
-language = 'de'
-update_language(language)
-
-# locale = input("Please enter the preferred locale (en, de):")
-# appname = 'bzm'
-# localedir = 'D:/OneDrive/PycharmProjects/we-count/src/locales'
-# translations = gettext.translation(appname, localedir, fallback=False, languages= locale)
-# translations.install()
-
-
 ADFC_orange = '#D78432'
 ADFC_green = '#1C9873'
 ADFC_blue = '#2C4B78'
@@ -135,20 +135,24 @@ ADFC_lightgrey = '#DEDEDE'
 ADFC_palegrey = '#F2F2F2'
 ADFC_pink = '#EB9AAC'
 
+filter_uptime = True
+
 min_date = traffic_df["date_local"].min()
 max_date = traffic_df["date_local"].max()
 start_date = min_date
 end_date = max_date
 
 data_min_hour = traffic_df["hour"].min()
-data_max_hour = traffic_df["hour"].max()
+data_max_hour = traffic_df["hour"].max()+1
 hour_range = [data_min_hour, data_max_hour]
+min_str_hour = data_min_hour
+max_str_hour = data_max_hour
 
 street_name = 'Kastanienallee' #'Köpenicker Straße'
 init_segment_id = '9000004995'
 
 # Initiate basic traffic_df with first street selected
-traffic_df_sel_str, start_date, end_date, hour_range = update_selected_street(traffic_df, init_segment_id, street_name, start_date, end_date, hour_range)
+traffic_df_sel_str, start_date, end_date, hour_range = update_selected_street(traffic_df, filter_uptime, init_segment_id, street_name, start_date, end_date, hour_range)
 
 ### Create street map ###
 if not DEPLOYED:
@@ -163,10 +167,10 @@ traffic_df_id_bc = traffic_df.groupby(by=['segment_id'], as_index=False).agg(bik
 traffic_df_id_bc['bike_car_ratio'] = traffic_df_id_bc['bike_total']/traffic_df_id_bc['car_total']
 
 bins = [0, 0.1, 0.2, 0.5, 1, 500]
-labels = ['Over 10x more cars', 'Over 5x more cars', 'Over 2x more cars','More cars than bikes','More bikes than cars']
+labels = [_('Over 10x more cars'), _('Over 5x more cars'), _('Over 2x more cars'),_('More cars than bikes'),_('More bikes than cars')]
 traffic_df_id_bc['map_line_color'] = pd.cut(traffic_df_id_bc['bike_car_ratio'], bins=bins, labels=labels)
 
-traffic_df_id_bc_out = traffic_df_id_bc
+# traffic_df_id_bc_out = traffic_df_id_bc
 
 # Create Map figure
 lats = []
@@ -222,12 +226,13 @@ app.layout = dbc.Container(
                 dcc.Dropdown(
                 id='language-selector',
                 options=[
-                    {'label': 'English', 'value': 'en'},
-                    {'label': 'Deutsch', 'value': 'de'},
+                    {'label': _('English'), 'value': 'en'},
+                    {'label': _('Deutsch'), 'value': 'de'},
                 ],
                 value=language
                 ),
-            ], width=4)
+            ], width=4),
+            #html.H4(id='textarea-example', style={'color': 'blue'})
         ]),
         dbc.Row([
             # Street map
@@ -237,34 +242,32 @@ app.layout = dbc.Container(
 
             # General controls
             dbc.Col([
-
                 # Street drop down
                 html.H4(_('Select street:'), style={'margin-top': 50, 'margin-bottom': 10}),
                 dcc.Dropdown(id='street_name_dd',
                 options=sorted([{'label': i, 'value': i}
                         for i in traffic_df['osm.name'].unique()], key=lambda x: x['label']), value=street_name),
                 html.Hr(),
-                html.H4(_('Traffic type (selected street)'), style={'margin-top': 20, 'margin-bottom': 30}),
-                # html.Div(id='where'),
+                html.H4(_('Traffic type - selected street'), style={'margin-top': 20, 'margin-bottom': 30}),
                 # Pie chart
                 dcc.Graph(id='pie_traffic', figure={}),
                 html.Hr(),
-
             ], width=3),
         ]),
 
         # Date/Time selection
         dbc.Row([
             dbc.Col([
-                html.H6(_('Set hour range:'), style={'margin-left': 40, 'margin-right': 40, 'margin-top': 00, 'margin-bottom': 30}),
+                html.H6(_('Set hour range:'), style={'margin-left': 40, 'margin-right': 40, 'margin-top': 10, 'margin-bottom': 30}),
                 # Hour slice
                 dcc.RangeSlider(
                     id='range_slider',
-                    min=data_min_hour,
-                    max=data_max_hour,
+                    min=min_str_hour, #data_min_hour,
+                    max=max_str_hour, #data_max_hour,
                     step=1,
+                    #marks={i: str(i) for i in range(24)},
                     value=hour_range,
-                    tooltip={'always_visible': True, 'template': "{value} hour"}),
+                    tooltip={_('always_visible'): True, 'template': "{value} hour"}),
             ], width=6),
             dbc.Col([
                 html.H6(_('Pick date range:'), style={'margin-left': 00, 'margin-right': 40, 'margin-top': 00, 'margin-bottom': 30}),
@@ -273,13 +276,18 @@ app.layout = dbc.Container(
                     id="date_filter",
                     start_date=start_date,
                     end_date=end_date,
-                    min_date_allowed=min_date, # traffic_df["date_local"].min(),
-                    max_date_allowed=max_date, #traffic_df["date_local"].max(),
+                    min_date_allowed=min_date,
+                    max_date_allowed=max_date,
                     display_format='DD-MMM-YYYY',
                     end_date_placeholder_text='DD-MMMM-YYYY',
                     minimum_nights=1
                 ),
-            ], width=6),
+            ], width=3),
+            dbc.Col([
+                html.H6(("Filter Uptime"), style={'margin-left': 00, 'margin-right': 00, 'margin-top': 00, 'margin-bottom': 30}),
+                daq.BooleanSwitch(id='uptime_switch', on=filter_uptime, color='blue'),
+                #html.Div(id='uptime_switch_result'),
+            ], width=2),
         ]),
         # Absolute traffic
         dbc.Row([
@@ -292,9 +300,9 @@ app.layout = dbc.Container(
                     id='radio_time_division',
                     options=[
                         {'label': _('Year'), 'value': 'year'},
-                        {'label': 'Month', 'value': 'year_month'},
-                        {'label': 'Week', 'value': 'year_week'},
-                        {'label': 'Date', 'value': 'date'}
+                        {'label': _('Month'), 'value': 'year_month'},
+                        {'label': _('Week'), 'value': 'year_week'},
+                        {'label': _('Day'), 'value': 'date'}
                     ],
                     value='year_month',
                     inline=True,
@@ -315,16 +323,16 @@ app.layout = dbc.Container(
         dbc.Row([
             dbc.Col([
                 # Radio time division
-                html.H4('Average traffic', style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 30}),
+                html.H4(_('Average traffic'), style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 30}),
 
                 dcc.RadioItems(
                     id='radio_time_unit',
                     options=[
-                        {'label': 'Yearly', 'value': 'year'},
-                        {'label': 'Monthly', 'value': 'year_month'},
-                        {'label': 'Weekly', 'value': 'weekday'},
-                        {'label': 'Daily', 'value': 'day'},
-                        {'label': 'Hourly', 'value': 'hour'}
+                        {'label': _('Yearly'), 'value': 'year'},
+                        {'label': _('Monthly'), 'value': 'year_month'},
+                        {'label': _('Weekly'), 'value': 'weekday'},
+                        {'label': _('Daily'), 'value': 'day'},
+                        {'label': _('Hourly'), 'value': 'hour'}
                     ],
                     value='weekday',
                     inline=True,
@@ -342,14 +350,14 @@ app.layout = dbc.Container(
         ]),
         dbc.Row([
             dbc.Col([
-                html.H4('Percentage car speed - by time unit',style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 00}),
+                html.H4(_('Percentage car speed - by time unit'),style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 00}),
                 dcc.Graph(id='bar_perc_speed', figure={}, style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 30})
             ], width=12
             ),
         ]),
         dbc.Row([
             dbc.Col([
-                html.H4('Percentage car speed - average',style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 00}),
+                html.H4(_('Percentage car speed - average'),style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 00}),
                 dcc.Graph(id='bar_avg_speed', figure={},
                           style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 30})
             ], width=12
@@ -358,24 +366,24 @@ app.layout = dbc.Container(
         # Explore with x- and y-axis scatter
         dbc.Row([
             dbc.Col([
-                html.H4('Explore', style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 00}),
+                html.H4(_('Explore'), style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 00}),
             ], width=12
             ),
         ]),
         dbc.Row([
             dbc.Col([
                  # Select x-axis
-                html.H6('X-Axis:', style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 10}),
+                html.H6(_('X-Axis:'), style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 10}),
                 dcc.RadioItems(
                     id='radio_x_axis',
                     #options=['ped_total', 'bike_total', 'car_total', 'heavy_total', 'osm.length', 'osm.maxspeed'],
                     options=[
-                        {'label': 'Pedestrians', 'value': 'ped_total'},
-                        {'label': 'Bikes', 'value': 'bike_total'},
-                        {'label': 'Cars', 'value': 'car_total'},
-                        {'label': 'Heavy', 'value': 'heavy_total'},
-                        {'label': 'Street Length', 'value': 'osm.length'},
-                        {'label': 'Max Speed', 'value': 'osm.maxspeed'}
+                        {'label': _('Pedestrians'), 'value': 'ped_total'},
+                        {'label': _('Bikes'), 'value': 'bike_total'},
+                        {'label': _('Cars'), 'value': 'car_total'},
+                        {'label': _('Heavy'), 'value': 'heavy_total'},
+                        {'label': _('Street Length'), 'value': 'osm.length'},
+                        {'label': _('Max Speed'), 'value': 'osm.maxspeed'}
                     ],
                     value='car_total',
                     inline=True,
@@ -386,16 +394,16 @@ app.layout = dbc.Container(
             ),
             dbc.Col([
                 # Select y-axis
-                html.H6('Y-Axis:', style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 10}),
+                html.H6(_('Y-Axis:'), style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 10}),
                 dcc.RadioItems(
                     id='radio_y_axis',
                     options=[
-                        {'label': 'Pedestrians', 'value': 'ped_total'},
-                        {'label': 'Bikes', 'value': 'bike_total'},
-                        {'label': 'Cars', 'value': 'car_total'},
-                        {'label': 'Heavy', 'value': 'heavy_total'},
-                        {'label': 'Street Length', 'value': 'osm.length'},
-                        {'label': 'Max Speed', 'value': 'osm.maxspeed'}
+                        {'label': _('Pedestrians'), 'value': 'ped_total'},
+                        {'label': _('Bikes'), 'value': 'bike_total'},
+                        {'label': _('Cars'), 'value': 'car_total'},
+                        {'label': _('Heavy'), 'value': 'heavy_total'},
+                        {'label': _('Street Length'), 'value': 'osm.length'},
+                        {'label': _('Max Speed'), 'value': 'osm.maxspeed'}
                     ],
                     value='ped_total',
                     inline=True,
@@ -411,7 +419,6 @@ app.layout = dbc.Container(
             ], width=12
             ),
         ]),
-
     html.Br(),
     ],
     fluid = True,
@@ -419,15 +426,22 @@ app.layout = dbc.Container(
 )
 
 @callback(
-    #[Input('language-dropdown', 'value')],
+    Output('textarea-example', 'children'),
     Input('language-selector', 'value'),
 )
 
-def get_language(language):
-    print(language)
-    update_language(language)
-    return
+def get_language(lang_code):
+    update_language(lang_code)
+    return app.layout
 
+
+@app.callback(
+    Output('uptime_switch_result', 'children'),
+    Input("uptime_switch", 'on'),
+)
+def update_output(on):
+    filter_uptime = "{}".format(on)
+    return filter_uptime, app.layout
 
 ### Map callback ###
 @callback(
@@ -452,14 +466,14 @@ def get_street_name(clickData):
 def update_graph(street_name): #, start_date, end_date, hour_range):
 
     street_map = px.line_map(lat=lats, lon=lons, color=map_colors, hover_name=names, line_group=ids, color_discrete_map= {
-        'More bikes than cars': ADFC_green,
-        'More cars than bikes': ADFC_blue,
-        'Over 2x more cars': ADFC_orange,
-        'Over 5x more cars': ADFC_crimson,
-        'Over 10x more cars': ADFC_pink},
+        _('More bikes than cars'): ADFC_green,
+        _('More cars than bikes'): ADFC_blue,
+        _('Over 2x more cars'): ADFC_orange,
+        _('Over 5x more cars'): ADFC_crimson,
+        _('Over 10x more cars'): ADFC_pink},
+        #category_orders={'color': map_colors},
         labels={'color': 'Bike/Car ratio'},
         map_style="streets", center= dict(lat=52.5, lon=13.45), height=600, zoom=11)
-
     street_map.update_traces(line_width=5)
     street_map.update_layout(margin=dict(l=40, r=20, t=40, b=30))
     street_map.update_layout(legend=dict(yanchor="top", y=0.99, xanchor="right", x=0.99))
@@ -490,28 +504,28 @@ def update_graph(radio_time_division, radio_time_unit, street_name, start_date, 
     segment_id = segment_id_index['segment_id'].values[0]
 
     # Update street selection
-    traffic_df_sel_str, start_date, end_date, hour_range = update_selected_street(traffic_df, segment_id, street_name, start_date, end_date, hour_range)
+    traffic_df_sel_str, start_date, end_date, hour_range = update_selected_street(traffic_df, filter_uptime, segment_id, street_name, start_date, end_date, hour_range)
 
     # Aggregate
     traffic_df_sel_str_agg = traffic_df_sel_str.groupby(by=['street_selection', radio_time_division],as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
-    save_df(traffic_df_sel_str_agg, 'traffic_df_sel_str_agg.xlsx')
+    #traffic_df_sel_str_agg_ren = traffic_df_sel_str_agg.rename(columns={'ped_total': _('Pedestrians'), 'bike_total': _('Bikes'), 'car_total': _('Cars'), 'heavy_total': _('Heavy')})
 
     # Create abs line chart
     line_abs_traffic = px.line(traffic_df_sel_str_agg,
         x=radio_time_division, y=['ped_total', 'bike_total', 'car_total', 'heavy_total'],
         markers=True,
         facet_col='street_selection',
-        category_orders={'street_selection': [street_name, 'All'], 'weekday': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']},
-        labels={'year': 'Year', 'year_month': 'Month', 'year_week': 'Week', 'date': 'Date'},
+        category_orders={'street_selection': [street_name, _('All')], 'weekday': [_('Mon'), _('Tue'), _('Wed'), _('Thu'), _('Fri'), _('Sat'), _('Sun')]},
+        labels={'year': _('Year'), 'year_month': _('Month'), 'year_week': _('Week'), 'date': _('Day')},
         color_discrete_map={'ped_total': ADFC_lightblue, 'bike_total': ADFC_green, 'car_total': ADFC_orange, 'heavy_total': ADFC_crimson},
         facet_col_spacing=0.04,
-        title=f'Absolute traffic count by {radio_time_division}')
-
+        title=_('Absolute traffic count')
+    )
     line_abs_traffic.update_yaxes(matches=None)
     line_abs_traffic.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
-    line_abs_traffic.update_layout(legend_title_text='Traffic Type')
+    line_abs_traffic.update_layout(legend_title_text=_('Traffic Type'))
     line_abs_traffic.update_layout({'plot_bgcolor': ADFC_palegrey,'paper_bgcolor': ADFC_palegrey})
-    line_abs_traffic.update_layout(yaxis_title= 'Absolute traffic count')
+    line_abs_traffic.update_layout(yaxis_title= _('Absolute traffic count'))
     line_abs_traffic.for_each_yaxis(lambda yaxis: yaxis.update(showticklabels=True))
     for annotation in line_abs_traffic.layout.annotations:
         annotation['font'] = {'size': 14}
@@ -521,13 +535,13 @@ def update_graph(radio_time_division, radio_time_unit, street_name, start_date, 
     # Prepare pie chart data
     pie_df = traffic_df_sel_str[traffic_df_sel_str['street_selection'] == street_name]
     pie_df_traffic = pie_df[['ped_total', 'bike_total', 'car_total', 'heavy_total']]
-    pie_df_traffic_ren = pie_df_traffic.rename(columns={'ped_total': 'Pedestrians', 'bike_total': 'Bikes', 'car_total': 'Cars', 'heavy_total': 'Heavy'})
+    pie_df_traffic_ren = pie_df_traffic.rename(columns={'ped_total': _('Pedestrians'), 'bike_total': _('Bikes'), 'car_total': _('Cars'), 'heavy_total': _('Heavy')})
     pie_df_traffic_sum = pie_df_traffic_ren.aggregate(['sum'])
     pie_df_traffic_sum_T = pie_df_traffic_sum.transpose().reset_index()
 
     # Create pie chart
     pie_traffic = px.pie(pie_df_traffic_sum_T, names='index', values='sum', color='index', height=300,
-                         color_discrete_map={'Pedestrians': ADFC_lightblue, 'Bikes': ADFC_green, 'Cars': ADFC_orange, 'Heavy': ADFC_crimson})
+                         color_discrete_map={_('Pedestrians'): ADFC_lightblue, _('Bikes'): ADFC_green, _('Cars'): ADFC_orange, _('Heavy'): ADFC_crimson})
 
     pie_traffic.update_layout(margin=dict(l=00, r=00, t=00, b=00))
     pie_traffic.update_layout(showlegend=False)
@@ -537,26 +551,27 @@ def update_graph(radio_time_division, radio_time_unit, street_name, start_date, 
     # Average traffic bar chart
     #traffic_df_str_id_time_grpby = traffic_df_all_time_sorted.groupby(by=[radio_time_unit, 'street_selection'], as_index=False).agg({'ped_total': 'mean', 'bike_total': 'mean', 'car_total': 'mean', 'heavy_total': 'mean'})
     traffic_df_sel_str_groupby = traffic_df_sel_str.groupby(by=[radio_time_unit, 'street_selection'], as_index=False).agg({'ped_total': 'mean', 'bike_total': 'mean', 'car_total': 'mean', 'heavy_total': 'mean'})
-    #print(traffic_df_sel_str_groupby.info())
+
     bar_avg_traffic = px.bar(traffic_df_sel_str_groupby,
         x=radio_time_unit, y=['ped_total', 'bike_total', 'car_total', 'heavy_total'],
         barmode='stack',
         facet_col='street_selection',
-        category_orders={'street_selection': [street_name, 'All'],
-                         'weekday': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                         'month': ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']},
-        labels={'year': 'Yearly', 'year_month': 'Monthly', 'weekday': 'Weekly', 'day': 'Daily', 'hour': 'Hourly'},
+        category_orders={'street_selection': [street_name, _('All')],
+                         'weekday': [_('Mon'), _('Tue'), _('Wed'), _('Thu'), _('Fri'), _('Sat'), _('Sun')],
+                         'month': [_('Jan'), _('Feb'), _('Mar'), _('Apr'), _('May'), _('Jun'), _('Jul'), _('Aug'), _('Sep'), _('Oct'), _('Nov'), _('Dec')]},
+        labels={'year': _('Yearly'), 'year_month': _('Monthly'), 'weekday': _('Weekly'), 'day': _('Daily'), 'hour': _('Hourly')},
         color_discrete_map={'ped_total': ADFC_lightblue, 'bike_total': ADFC_green, 'car_total': ADFC_orange, 'heavy_total': ADFC_crimson},
         facet_col_spacing=0.04,
         #height=chart_height, width=chart_width,
-        title=f'Average traffic count by {radio_time_unit}')
+        title=_('Average traffic count')
+    )
 
     bar_avg_traffic.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
-    bar_avg_traffic.update_layout(legend_title_text='Traffic Type')
+    bar_avg_traffic.update_layout(legend_title_text=_('Traffic Type'))
     bar_avg_traffic.update_layout({'plot_bgcolor': ADFC_palegrey,'paper_bgcolor': ADFC_palegrey})
-    bar_avg_traffic.update_layout(yaxis_title='Average traffic count')
+    bar_avg_traffic.update_layout(yaxis_title=_('Average traffic count'))
     bar_avg_traffic.for_each_yaxis(lambda yaxis: yaxis.update(showticklabels=True))
-    bar_avg_traffic.for_each_annotation(lambda a: a.update(text=a.text.replace(street_name, street_name + ' (segment no:' + segment_id + ')')))
+    bar_avg_traffic.for_each_annotation(lambda a: a.update(text=a.text.replace(street_name, street_name + _(' (segment no:') + segment_id + ')')))
     for annotation in bar_avg_traffic.layout.annotations:
         annotation['font'] = {'size': 14}
 
@@ -575,20 +590,20 @@ def update_graph(radio_time_division, radio_time_unit, street_name, start_date, 
          x=radio_time_unit, y=cols,
          barmode='stack',
          facet_col='street_selection',
-         category_orders={'street_selection': [street_name, 'All'],
-                          'weekday': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                          'month': ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
-                                    'Oct', 'Nov', 'Dec']},
-         labels={'year': 'Yearly', 'year_month': 'Monthly', 'weekday': 'Weekly', 'day': 'Daily', 'hour': 'Hourly'},
+         category_orders={'street_selection': [street_name, _('All')],
+                          'weekday': [_('Mon'), _('Tue'), _('Wed'), _('Thu'), _('Fri'), _('Sat'), _('Sun')],
+                          'month': [_('Jan'), _('Feb'), _('Mar'), _('Apr'), _('May'), _('Jun'), _('Jul'), _('Aug'), _('Sep'), _('Oct'), _('Nov'), _('Dec')]},
+         labels={'year': _('Yearly'), 'year_month': _('Monthly'), 'weekday': _('Weekly'), 'day': _('Daily'), 'hour': _('Hourly')},
          color_discrete_map={'car_speed0': ADFC_lightblue, 'car_speed10': ADFC_lightblue,'car_speed20': ADFC_lightblue, 'car_speed30': ADFC_green, 'car_speed40': ADFC_green, 'car_speed50': ADFC_orange, 'car_speed60': ADFC_crimson, 'car_speed70': ADFC_pink},
          facet_col_spacing=0.04,
-         title=f'Percentage speed by {radio_time_unit}')
+         title=_('Percentage speed')
+    )
 
     bar_perc_speed.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
-    bar_perc_speed.for_each_annotation(lambda a: a.update(text=a.text.replace(street_name, street_name + ' (segment no:' + segment_id + ')')))
-    bar_perc_speed.update_layout(legend_title_text='Traffic Type')
+    bar_perc_speed.for_each_annotation(lambda a: a.update(text=a.text.replace(street_name, street_name + _(' (segment no:') + segment_id + ')')))
+    bar_perc_speed.update_layout(legend_title_text=_('Traffic Type'))
     bar_perc_speed.update_layout({'plot_bgcolor': ADFC_palegrey, 'paper_bgcolor': ADFC_palegrey})
-    bar_perc_speed.update_layout(yaxis_title='Percentage car speed')
+    bar_perc_speed.update_layout(yaxis_title=_('Percentage car speed'))
     bar_perc_speed.for_each_yaxis(lambda yaxis: yaxis.update(showticklabels=True))
     for annotation in bar_perc_speed.layout.annotations:
         annotation['font'] = {'size': 14}
@@ -599,23 +614,23 @@ def update_graph(radio_time_division, radio_time_unit, street_name, start_date, 
     bar_avg_speed = px.bar(traffic_df_sel_str_avg_speed,
         x='street_selection', y=cols,
         #barmode='group',
-        category_orders={'street_selection': [street_name, 'All'],
-                         'weekday': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                         'month': ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
-                                   'Oct', 'Nov', 'Dec']},
-        labels={'year': 'Yearly', 'year_month': 'Monthly', 'weekday': 'Weekly', 'day': 'Daily',
-                'hour': 'Hourly', 'street_selection': 'Street selection'},
+        category_orders={'street_selection': [street_name, _('All')],
+                         'weekday': [_('Mon'), _('Tue'), _('Wed'), _('Thu'), _('Fri'), _('Sat'), _('Sun')],
+                         'month': [_('Jan'), _('Feb'), _('Mar'), _('Apr'), _('May'), _('Jun'), _('Jul'), _('Aug'), _('Sep'), _('Oct'), _('Nov'), _('Dec')]},
+        labels={'year': _('Yearly'), 'year_month': _('Monthly'), 'weekday': _('Weekly'), 'day': _('Daily'),
+                'hour': _('Hourly')}, #, 'street_selection': _('Street selection')},
         color_discrete_map={'car_speed0': ADFC_lightblue, 'car_speed10': ADFC_lightblue,
                             'car_speed20': ADFC_lightblue, 'car_speed30': ADFC_green,
                             'car_speed40': ADFC_green, 'car_speed50': ADFC_orange,
                             'car_speed60': ADFC_crimson, 'car_speed70': ADFC_pink},
-        title='Percentage speed')
+        title=_('Percentage speed')
+    )
 
     bar_avg_speed.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
-    bar_avg_speed.update_layout(xaxis_title = street_name + ' (segment no:' + segment_id + ')')
-    bar_avg_speed.update_layout(legend_title_text='Car speed')
+    bar_avg_speed.update_layout(xaxis_title = street_name + _(' (segment no:') + segment_id + ')')
+    bar_avg_speed.update_layout(legend_title_text=_('Car speed'))
     bar_avg_speed.update_layout({'plot_bgcolor': ADFC_palegrey, 'paper_bgcolor': ADFC_palegrey})
-    bar_avg_speed.update_layout(yaxis_title='Average percentage car speed')
+    bar_avg_speed.update_layout(yaxis_title=_('Average percentage car speed'))
     bar_avg_speed.for_each_yaxis(lambda yaxis: yaxis.update(showticklabels=True))
     bar_avg_speed.update_layout(barmode='group', bargap=0.5, bargroupgap=0.2)
     for annotation in bar_avg_speed.layout.annotations:
@@ -641,23 +656,23 @@ def update_explore_graph(radio_x_axis, radio_y_axis, street_name, start_date, en
     segment_id = segment_id_index['segment_id'].values[0]
 
     #traffic_df_all = update_selected_street(traffic_df, segment_id, street_name)
-    traffic_df_sel_str, start_date, end_date, hour_range = update_selected_street(traffic_df, segment_id, street_name, start_date, end_date, hour_range)
+    traffic_df_sel_str, start_date, end_date, hour_range = update_selected_street(traffic_df, filter_uptime, segment_id, street_name, start_date, end_date, hour_range)
 
     # Create scatter  chart
     sc_explore = px.scatter(traffic_df_sel_str,
         x=radio_x_axis, y=radio_y_axis,
         facet_col='street_selection',
-        category_orders={'street_selection': [street_name, 'All']},
+        category_orders={'street_selection': [street_name, _('All')]},
         facet_col_spacing=0.04,
         color=radio_y_axis,
         color_continuous_scale='temps',
-        labels={'ped_total': 'Pedestrians', 'bike_total': 'Bikes', 'car_total': 'Cars', 'heavy_total': 'Heavy', 'osm.length': 'Street Length', 'osm.maxspeed': 'Max Speed'},
+        labels={'ped_total': _('Pedestrians'), 'bike_total': _('Bikes'), 'car_total': _('Cars'), 'heavy_total': _('Heavy'), 'osm.length': _('Street Length'), 'osm.maxspeed': _('Max Speed')},
         title=f'Absolute traffic by {radio_x_axis}')
 
     sc_explore.update_yaxes(matches=None)
     sc_explore.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
-    sc_explore.for_each_annotation(lambda a: a.update(text=a.text.replace(street_name, street_name + ' (segment no:' + segment_id + ')')))
-    sc_explore.update_layout(legend_title_text='Traffic Type')
+    sc_explore.for_each_annotation(lambda a: a.update(text=a.text.replace(street_name, street_name + _(' (segment no:') + segment_id + ')')))
+    sc_explore.update_layout(legend_title_text=_('Traffic Type'))
     sc_explore.update_layout({'plot_bgcolor': ADFC_palegrey,'paper_bgcolor': ADFC_palegrey})
     sc_explore.update_layout(yaxis_title= f'{radio_y_axis}')
     sc_explore.for_each_yaxis(lambda yaxis: yaxis.update(showticklabels=True))

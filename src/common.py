@@ -62,8 +62,8 @@ def parse_options(options):
             options.secrets = json.load(sf)
         if not options.database:
             options.database = options.secrets.get("database", "backup.db")
-    if "+" not in options.database and "://" not in options.database:
-        options.database = "sqlite+pysqlite:///" + options.database
+        if "+" not in options.database and "://" not in options.database:
+            options.database = "sqlite+pysqlite:///" + options.database
     if getattr(options, "url", None) and "://" not in options.url:
         options.url = "https://" + options.url
     return options

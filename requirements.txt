@@ -1,6 +1,7 @@
 babel
 dash
 dash_bootstrap_components
+dash_daq
 dash-extensions
 dash-leaflet
 geopandas>=1.0.0

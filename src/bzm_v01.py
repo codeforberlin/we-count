@@ -10,6 +10,7 @@
 # geo_df            - geo dataframe, street coordinates for px.map
 # json_df           - json dataframe (using the same geojson as the geo_df), to access features such as street names
 
+import os
 import pandas as pd
 import geopandas as gpd
 import shapely.geometry
@@ -27,7 +28,7 @@ DEPLOYED = __name__ != '__main__'
 
 #### Set Language ####
 
-def update_language(language):
+def update_language(language, dir):
 
     # Initiate translation
     appname = 'bzm'
@@ -37,10 +38,11 @@ def update_language(language):
     # Install translation function
     translations.install()
     # Translate message (for testing)
-    #print(_("Hello World"))
+
+LOCALES_DIR = os.path.join(os.path.dirname(__file__), 'locales')
 
 language = 'de'
-update_language(language)
+update_language(language, LOCALES_DIR)
 
 #### Retrieve Data ####
 
@@ -108,10 +110,12 @@ def update_selected_street(df, filter_uptime, segment_id, street_name, start_dat
     max_str_hour = traffic_df_str["hour"].max()
 
     # Filter min max street hours based on "selected street only"
-    if hour_range[0] < min_str_hour:
-        hour_range[0] = min_str_hour
-    if hour_range[1] > max_str_hour:
-        hour_range[1] = max_str_hour
+    hour_range[0] = min_str_hour
+    hour_range[1] = max_str_hour
+    #if hour_range[0] < min_str_hour:
+    #    hour_range[0] = min_str_hour
+    #if hour_range[1] > max_str_hour:
+    #    hour_range[1] = max_str_hour
 
     # Add selected street to all streets
     traffic_df_all_str = df._append(traffic_df_str, ignore_index=True)
@@ -147,6 +151,8 @@ data_max_hour = traffic_df["hour"].max()+1
 hour_range = [data_min_hour, data_max_hour]
 min_str_hour = data_min_hour
 max_str_hour = data_max_hour
+
+street_changed = False
 
 street_name = 'Kastanienallee' #'Köpenicker Straße'
 init_segment_id = '9000004995'
@@ -262,11 +268,11 @@ app.layout = dbc.Container(
                 # Hour slice
                 dcc.RangeSlider(
                     id='range_slider',
-                    min=min_str_hour, #data_min_hour,
-                    max=max_str_hour, #data_max_hour,
+                    min= data_min_hour,
+                    max= data_max_hour,
                     step=1,
                     #marks={i: str(i) for i in range(24)},
-                    value=hour_range,
+                    value = hour_range,
                     tooltip={_('always_visible'): True, 'template': "{value} hour"}),
             ], width=6),
             dbc.Col([
@@ -431,8 +437,8 @@ app.layout = dbc.Container(
 )
 
 def get_language(lang_code):
-    update_language(lang_code)
-    return app.layout
+    update_language(lang_code, LOCALES_DIR)
+    return
 
 
 @app.callback(
@@ -441,7 +447,7 @@ def get_language(lang_code):
 )
 def update_output(on):
     filter_uptime = "{}".format(on)
-    return filter_uptime, app.layout
+    return filter_uptime
 
 ### Map callback ###
 @callback(
@@ -455,8 +461,8 @@ def get_street_name(clickData):
 
     if clickData:
         street_name = clickData['points'][0]['hovertext']
-
-    return street_name
+        street_changed = True
+    return street_name, street_changed
 
 @callback(
     Output(component_id='street_map', component_property='figure'),
@@ -655,7 +661,6 @@ def update_explore_graph(radio_x_axis, radio_y_axis, street_name, start_date, en
     segment_id_index = traffic_df.loc[traffic_df['osm.name'] == street_name]
     segment_id = segment_id_index['segment_id'].values[0]
 
-    #traffic_df_all = update_selected_street(traffic_df, segment_id, street_name)
     traffic_df_sel_str, start_date, end_date, hour_range = update_selected_street(traffic_df, filter_uptime, segment_id, street_name, start_date, end_date, hour_range)
 
     # Create scatter  chart

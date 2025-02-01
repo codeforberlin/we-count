@@ -32,7 +32,7 @@ def update_language(language, dir):
 
     # Initiate translation
     appname = 'bzm'
-    localedir = 'D:/OneDrive/PycharmProjects/we-count/src/locales'
+    localedir = dir
     # Set up Gettext
     translations = gettext.translation(appname, localedir, fallback=True, languages=[language])
     # Install translation function

@@ -106,6 +106,42 @@ def get_options(args=None, json_default="sensor.json"):
                         help="increase verbosity, twice enables verbose sqlalchemy output")
     return parse_options(parser.parse_args(args=args))
 
+def benchmark(func):
+    """
+    decorator for timing a function
+    """
+    def benchmark_wrapper(*args, **kwargs):
+        started = time.time()
+        now = time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.localtime())
+        print('function %s called at %s' % (func.__name__, now))
+        sys.stdout.flush()
+        result = func(*args, **kwargs)
+        print('function %s finished after %f seconds' %
+              (func.__name__, time.time() - started))
+        sys.stdout.flush()
+        return result
+    return benchmark_wrapper
+
+
+class Benchmarker:
+    """
+    class for benchmarking a function using a "with"-statement.
+    Preferable over the "benchmark" function for the following use cases
+    - benchmarking a code block that isn't wrapped in a function
+    - benchmarking a function only in some calls
+    """
+    def __init__(self, active, description):
+        self.active = active
+        self.description = description
+
+    def __enter__(self):
+        self.started = time.time()
+
+    def __exit__(self, *args):
+        if self.active:
+            duration = time.time() - self.started
+            print("%s finished after %s" % (self.description, duration))
+
 
 def add_month(offset: int, year: int, month: int):
     month += offset

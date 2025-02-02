@@ -365,6 +365,14 @@ app.layout = dbc.Container(
             ], width=12
             ),
         ]),
+        dbc.Row([
+            dbc.Col([
+                html.H4(_('v85 car speed'),style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 00}),
+                dcc.Graph(id='bar_v85', figure={},
+                          style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 30})
+            ], width=12
+            ),
+        ]),
         # Explore with x- and y-axis scatter
         dbc.Row([
             dbc.Col([
@@ -415,6 +423,7 @@ app.layout = dbc.Container(
             ], width=6
             ),
         ]),
+        html.Br(),
         dbc.Row([
             dbc.Col([
                 dcc.Graph(id='sc_explore', figure={}, style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 30})
@@ -428,7 +437,7 @@ app.layout = dbc.Container(
 )
 
 @callback(
-    Output('textarea-example', 'children'),
+    #Output('textarea-example', 'children'),
     Input('language-selector', 'value'),
 )
 
@@ -479,6 +488,7 @@ def update_map(street_name): #, start_date, end_date, hour_range):
     Output(component_id='bar_avg_traffic', component_property='figure'),
     Output(component_id='bar_perc_speed', component_property='figure'),
     Output(component_id='bar_avg_speed', component_property='figure'),
+    Output(component_id='bar_v85', component_property='figure'),
     Input(component_id='radio_time_division', component_property='value'),
     Input(component_id='radio_time_unit', component_property='value'),
     Input(component_id='street_name_dd', component_property='value'),
@@ -536,14 +546,13 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, start_date,
 
     # Create pie chart
     pie_traffic = px.pie(pie_df_traffic_sum_T, names='index', values='sum', color='index', height=300,
-                         color_discrete_map={_('Pedestrians'): ADFC_lightblue, _('Bikes'): ADFC_green, _('Cars'): ADFC_orange, _('Heavy'): ADFC_crimson})
+    color_discrete_map={_('Pedestrians'): ADFC_lightblue, _('Bikes'): ADFC_green, _('Cars'): ADFC_orange, _('Heavy'): ADFC_crimson})
 
     pie_traffic.update_layout(margin=dict(l=00, r=00, t=00, b=00))
     pie_traffic.update_layout(showlegend=False)
     pie_traffic.update_traces(textposition='inside', textinfo='percent+label')
 
     # Average traffic bar chart
-    #traffic_df_str_id_time_grpby = traffic_df_all_time_sorted.groupby(by=[radio_time_unit, 'street_selection'], as_index=False).agg({'ped_total': 'mean', 'bike_total': 'mean', 'car_total': 'mean', 'heavy_total': 'mean'})
     traffic_df_sel_str_groupby = traffic_df_upt_dt_str.groupby(by=[radio_time_unit, 'street_selection'], as_index=False).agg({'ped_total': 'mean', 'bike_total': 'mean', 'car_total': 'mean', 'heavy_total': 'mean'})
 
     bar_avg_traffic = px.bar(traffic_df_sel_str_groupby,
@@ -629,7 +638,36 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, start_date,
     for annotation in bar_avg_speed.layout.annotations:
         annotation['font'] = {'size': 14}
 
-    return pie_traffic, line_abs_traffic, bar_avg_traffic, bar_perc_speed, bar_avg_speed #, start_date, end_date, hour_range
+    # Create v85 graph
+    traffic_df_sel_str_groupby = traffic_df_upt_dt_str.groupby(by=['hour', 'street_selection'], as_index=False).agg({'v85': 'mean'})
+    #bzm_get_data.save_df(traffic_df_sel_str_groupby, 'traffic_df_sel_str_groupby v85.xlsx')
+
+    # Create v85 bar chart
+    bar_v85 = px.bar(traffic_df_sel_str_groupby,
+        x='hour', y='v85',
+        color='v85',
+        color_continuous_scale='temps',
+        facet_col='street_selection',
+        category_orders={'street_selection': [street_name, _('All')]},
+        facet_col_spacing=0.04,
+        #labels={'ped_total': _('Pedestrians'), 'bike_total': _('Bikes'), 'car_total': _('Cars'), 'heavy_total': _('Heavy'), 'osm.length': _('Street Length'), 'osm.maxspeed': _('Max Speed')},
+        title=_('Speed cars v85')
+    )
+
+    #bar_v85.update_yaxes(matches=None)
+    bar_v85.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
+    bar_v85.for_each_annotation(lambda a: a.update(text=a.text.replace(street_name, street_name + _(' (segment no:') + segment_id + ')')))
+    bar_v85.update_layout(legend_title_text=_('Traffic Type'))
+    bar_v85.update_layout({'plot_bgcolor': ADFC_palegrey,'paper_bgcolor': ADFC_palegrey})
+    bar_v85.update_layout(yaxis_title= _('v85 in km/h'))
+    bar_v85.update_xaxes(dtick=1, tickformat=".0f")
+    bar_v85.update_yaxes(dtick=5, tickformat=".0f")
+    bar_v85.for_each_yaxis(lambda yaxis: yaxis.update(showticklabels=True))
+    for annotation in bar_v85.layout.annotations:
+        annotation['font'] = {'size': 14}
+
+    return pie_traffic, line_abs_traffic, bar_avg_traffic, bar_perc_speed, bar_avg_speed, bar_v85
+
 
 ### Explore traffic callback ###
 @callback(
@@ -637,12 +675,9 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, start_date,
     Input(component_id='radio_x_axis', component_property='value'),
     Input(component_id='radio_y_axis', component_property='value'),
     Input(component_id='street_name_dd', component_property='value'),
-    Input(component_id="date_filter", component_property="start_date"),
-    Input(component_id="date_filter", component_property="end_date"),
-    Input(component_id='range_slider', component_property='value'),
 )
 
-def update_explore_graph(radio_x_axis, radio_y_axis, street_name, start_date, end_date, hour_range):
+def update_explore_graph(radio_x_axis, radio_y_axis, street_name):
 
     # Get segment_id
     segment_id_index = traffic_df.loc[traffic_df['osm.name'] == street_name]
@@ -673,4 +708,4 @@ def update_explore_graph(radio_x_axis, radio_y_axis, street_name, start_date, en
     return sc_explore
 
 if __name__ == "__main__":
-    app.run_server(debug=False)
+    app.run_server(debug=True)

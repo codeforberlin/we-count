@@ -206,6 +206,7 @@ for street, street_line_color in zip(traffic_df_id_bc['segment_id'], traffic_df_
         else:
             continue
 
+print(map_colors)
 
 ### Run Dash app ###
 
@@ -386,7 +387,6 @@ app.layout = dbc.Container(
                 html.H6(_('X-Axis:'), style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 10}),
                 dcc.RadioItems(
                     id='radio_x_axis',
-                    #options=['ped_total', 'bike_total', 'car_total', 'heavy_total', 'osm.length', 'osm.maxspeed'],
                     options=[
                         {'label': _('Pedestrians'), 'value': 'ped_total'},
                         {'label': _('Bikes'), 'value': 'bike_total'},
@@ -464,7 +464,7 @@ def get_street_name(clickData):
     Input(component_id='street_name_dd', component_property='value'),
 )
 
-def update_map(street_name): #, start_date, end_date, hour_range):
+def update_map(street_name):
 
     street_map = px.line_map(lat=lats, lon=lons, color=map_colors, hover_name=names, line_group=ids, color_discrete_map= {
         _('More bikes than cars'): ADFC_green,
@@ -472,7 +472,7 @@ def update_map(street_name): #, start_date, end_date, hour_range):
         _('Over 2x more cars'): ADFC_orange,
         _('Over 5x more cars'): ADFC_crimson,
         _('Over 10x more cars'): ADFC_pink},
-        #category_orders={'color': map_colors},
+        category_orders={'color': map_colors},
         labels={'color': 'Bike/Car ratio'},
         map_style="streets", center= dict(lat=52.5, lon=13.45), height=600, zoom=11)
     street_map.update_traces(line_width=5)
@@ -489,6 +489,7 @@ def update_map(street_name): #, start_date, end_date, hour_range):
     Output(component_id='bar_perc_speed', component_property='figure'),
     Output(component_id='bar_avg_speed', component_property='figure'),
     Output(component_id='bar_v85', component_property='figure'),
+    Output(component_id='sc_explore', component_property='figure'),
     Input(component_id='radio_time_division', component_property='value'),
     Input(component_id='radio_time_unit', component_property='value'),
     Input(component_id='street_name_dd', component_property='value'),
@@ -496,27 +497,34 @@ def update_map(street_name): #, start_date, end_date, hour_range):
     Input(component_id="date_filter", component_property="end_date"),
     Input(component_id='range_slider', component_property='value'),
     Input(component_id='toggle_uptime_filter', component_property='value'),
+    Input(component_id='radio_x_axis', component_property='value'),
+    Input(component_id='radio_y_axis', component_property='value'),
 )
 
-def update_graphs(radio_time_division, radio_time_unit, street_name, start_date, end_date, hour_range, toggle_uptime_filter):
+def update_graphs(radio_time_division, radio_time_unit, street_name, start_date, end_date, hour_range, toggle_uptime_filter, radio_x_axis, radio_y_axis):
+
+    # If uptime filter changed, reload traffic_df_upt
     if 'filter_uptime_selected' in toggle_uptime_filter:
         traffic_df_upt = filter_uptime(traffic_df)
     else:
         traffic_df_upt = traffic_df
 
+    # Filter on selected dates and hours
+    traffic_df_upt_dt, min_date, max_date, min_hour, max_hour = filter_dt(traffic_df_upt, start_date, end_date, hour_range)
+
     # Get segment_id
     segment_id_index = traffic_df_upt.loc[traffic_df_upt['osm.name'] == street_name]
     segment_id = segment_id_index['segment_id'].values[0]
 
-    traffic_df_upt_dt, min_date, max_date, min_hour, max_hour = filter_dt(traffic_df_upt, start_date, end_date, hour_range)
+    # Update selected street
     traffic_df_upt_dt_str = update_selected_street(traffic_df_upt_dt, segment_id, street_name)
 
-    # Aggregate
-    traffic_df_upt_dt_str_agg = traffic_df_upt_dt_str.groupby(by=['street_selection', radio_time_division],as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
-    #traffic_df_sel_str_agg_ren = traffic_df_sel_str_agg.rename(columns={'ped_total': _('Pedestrians'), 'bike_total': _('Bikes'), 'car_total': _('Cars'), 'heavy_total': _('Heavy')})
 
     # Create abs line chart
-    line_abs_traffic = px.line(traffic_df_upt_dt_str_agg,
+    df_line_abs_traffic = traffic_df_upt_dt_str.groupby(
+        by=['street_selection', radio_time_division], as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
+
+    line_abs_traffic = px.line(df_line_abs_traffic,
         x=radio_time_division, y=['ped_total', 'bike_total', 'car_total', 'heavy_total'],
         markers=True,
         facet_col='street_selection',
@@ -536,26 +544,24 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, start_date,
         annotation['font'] = {'size': 14}
     line_abs_traffic.for_each_annotation(lambda a: a.update(text=a.text.replace(street_name, street_name + ' (segment no:' + segment_id + ')')))
 
-
-    # Prepare pie chart data
-    pie_df = traffic_df_upt_dt_str[traffic_df_upt_dt_str['street_selection'] == street_name]
-    pie_df_traffic = pie_df[['ped_total', 'bike_total', 'car_total', 'heavy_total']]
-    pie_df_traffic_ren = pie_df_traffic.rename(columns={'ped_total': _('Pedestrians'), 'bike_total': _('Bikes'), 'car_total': _('Cars'), 'heavy_total': _('Heavy')})
-    pie_df_traffic_sum = pie_df_traffic_ren.aggregate(['sum'])
-    pie_df_traffic_sum_T = pie_df_traffic_sum.transpose().reset_index()
-
     # Create pie chart
-    pie_traffic = px.pie(pie_df_traffic_sum_T, names='index', values='sum', color='index', height=300,
+    df_pie = traffic_df_upt_dt_str[traffic_df_upt_dt_str['street_selection'] == street_name]
+    df_pie_traffic = df_pie[['ped_total', 'bike_total', 'car_total', 'heavy_total']]
+    df_pie_traffic_ren = df_pie_traffic.rename(columns={'ped_total': _('Pedestrians'), 'bike_total': _('Bikes'), 'car_total': _('Cars'), 'heavy_total': _('Heavy')})
+    df_pie_traffic_sum = df_pie_traffic_ren.aggregate(['sum'])
+    df_pie_traffic_sum_T = df_pie_traffic_sum.transpose().reset_index()
+
+    pie_traffic = px.pie(df_pie_traffic_sum_T, names='index', values='sum', color='index', height=300,
     color_discrete_map={_('Pedestrians'): ADFC_lightblue, _('Bikes'): ADFC_green, _('Cars'): ADFC_orange, _('Heavy'): ADFC_crimson})
 
     pie_traffic.update_layout(margin=dict(l=00, r=00, t=00, b=00))
     pie_traffic.update_layout(showlegend=False)
     pie_traffic.update_traces(textposition='inside', textinfo='percent+label')
 
-    # Average traffic bar chart
-    traffic_df_sel_str_groupby = traffic_df_upt_dt_str.groupby(by=[radio_time_unit, 'street_selection'], as_index=False).agg({'ped_total': 'mean', 'bike_total': 'mean', 'car_total': 'mean', 'heavy_total': 'mean'})
+    # Create average traffic bar chart
+    df_bar_avg_traffic = traffic_df_upt_dt_str.groupby(by=[radio_time_unit, 'street_selection'], as_index=False).agg({'ped_total': 'mean', 'bike_total': 'mean', 'car_total': 'mean', 'heavy_total': 'mean'})
 
-    bar_avg_traffic = px.bar(traffic_df_sel_str_groupby,
+    bar_avg_traffic = px.bar(df_bar_avg_traffic,
         x=radio_time_unit, y=['ped_total', 'bike_total', 'car_total', 'heavy_total'],
         barmode='stack',
         facet_col='street_selection',
@@ -579,16 +585,19 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, start_date,
     for annotation in bar_avg_traffic.layout.annotations:
         annotation['font'] = {'size': 14}
 
-    # Percentage speed bar chart
-    # Add column with all car speed %
-    cols = ['car_speed0', 'car_speed10', 'car_speed20', 'car_speed30', 'car_speed40', 'car_speed50', 'car_speed60', 'car_speed70']
-    traffic_df_upt_dt_str['sum_speed_perc'] = traffic_df_upt_dt_str[cols].sum(axis=1)
-    # Drop empty rows
-    nan_rows = traffic_df_upt_dt_str[traffic_df_upt_dt_str['sum_speed_perc']==0]
-    traffic_df_sel_str_speed = traffic_df_upt_dt_str.drop(nan_rows.index)
+    # Create percentage speed bar chart
 
-    traffic_df_upt_dt_str_speed_groupby = traffic_df_sel_str_speed.groupby(by=[radio_time_unit, 'street_selection'], as_index=False).agg({'car_speed0': 'mean', 'car_speed10': 'mean', 'car_speed20': 'mean', 'car_speed30': 'mean', 'car_speed40': 'mean', 'car_speed50': 'mean', 'car_speed60': 'mean', 'car_speed70': 'mean'})
-    bar_perc_speed = px.bar(traffic_df_upt_dt_str_speed_groupby,
+    # Add column with all car speed %
+    df_bar_speed = traffic_df_upt_dt_str
+    cols = ['car_speed0', 'car_speed10', 'car_speed20', 'car_speed30', 'car_speed40', 'car_speed50', 'car_speed60', 'car_speed70']
+    df_bar_speed['sum_speed_perc'] = df_bar_speed[cols].sum(axis=1)
+
+    # Drop empty rows
+    nan_rows = df_bar_speed[df_bar_speed['sum_speed_perc']==0]
+    df_bar_speed = df_bar_speed.drop(nan_rows.index)
+
+    df_bar_speed_traffic = df_bar_speed.groupby(by=[radio_time_unit, 'street_selection'], as_index=False).agg({'car_speed0': 'mean', 'car_speed10': 'mean', 'car_speed20': 'mean', 'car_speed30': 'mean', 'car_speed40': 'mean', 'car_speed50': 'mean', 'car_speed60': 'mean', 'car_speed70': 'mean'})
+    bar_perc_speed = px.bar(df_bar_speed_traffic,
          x=radio_time_unit, y=cols,
          barmode='stack',
          facet_col='street_selection',
@@ -611,9 +620,9 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, start_date,
         annotation['font'] = {'size': 14}
 
     # Create percentage speed average bar chart
-    traffic_df_upt_dt_str_speed_agg = traffic_df_sel_str_speed.groupby(by='street_selection', as_index=False).agg({'car_speed0': 'mean', 'car_speed10': 'mean', 'car_speed20': 'mean', 'car_speed30': 'mean', 'car_speed40': 'mean', 'car_speed50': 'mean', 'car_speed60': 'mean', 'car_speed70': 'mean'})
+    df_bar_avg_speed_traffic = df_bar_speed.groupby(by='street_selection', as_index=False).agg({'car_speed0': 'mean', 'car_speed10': 'mean', 'car_speed20': 'mean', 'car_speed30': 'mean', 'car_speed40': 'mean', 'car_speed50': 'mean', 'car_speed60': 'mean', 'car_speed70': 'mean'})
 
-    bar_avg_speed = px.bar(traffic_df_upt_dt_str_speed_agg,
+    bar_avg_speed = px.bar(df_bar_avg_speed_traffic,
         x='street_selection', y=cols,
         #barmode='group',
         category_orders={'street_selection': [street_name, _('All')],
@@ -639,22 +648,19 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, start_date,
         annotation['font'] = {'size': 14}
 
     # Create v85 graph
-    traffic_df_sel_str_groupby = traffic_df_upt_dt_str.groupby(by=['hour', 'street_selection'], as_index=False).agg({'v85': 'mean'})
-    #bzm_get_data.save_df(traffic_df_sel_str_groupby, 'traffic_df_sel_str_groupby v85.xlsx')
+    df_bar_v85 = traffic_df_upt_dt_str.groupby(by=['hour', 'street_selection'], as_index=False).agg({'v85': 'mean'})
 
     # Create v85 bar chart
-    bar_v85 = px.bar(traffic_df_sel_str_groupby,
+    bar_v85 = px.bar(df_bar_v85,
         x='hour', y='v85',
         color='v85',
         color_continuous_scale='temps',
         facet_col='street_selection',
         category_orders={'street_selection': [street_name, _('All')]},
         facet_col_spacing=0.04,
-        #labels={'ped_total': _('Pedestrians'), 'bike_total': _('Bikes'), 'car_total': _('Cars'), 'heavy_total': _('Heavy'), 'osm.length': _('Street Length'), 'osm.maxspeed': _('Max Speed')},
         title=_('Speed cars v85')
     )
 
-    #bar_v85.update_yaxes(matches=None)
     bar_v85.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
     bar_v85.for_each_annotation(lambda a: a.update(text=a.text.replace(street_name, street_name + _(' (segment no:') + segment_id + ')')))
     bar_v85.update_layout(legend_title_text=_('Traffic Type'))
@@ -666,25 +672,10 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, start_date,
     for annotation in bar_v85.layout.annotations:
         annotation['font'] = {'size': 14}
 
-    return pie_traffic, line_abs_traffic, bar_avg_traffic, bar_perc_speed, bar_avg_speed, bar_v85
+    # Create explorer chart
+    df_sc_explore = traffic_df_upt_dt_str
 
-
-### Explore traffic callback ###
-@callback(
-    Output(component_id='sc_explore', component_property='figure'),
-    Input(component_id='radio_x_axis', component_property='value'),
-    Input(component_id='radio_y_axis', component_property='value'),
-    Input(component_id='street_name_dd', component_property='value'),
-)
-
-def update_explore_graph(radio_x_axis, radio_y_axis, street_name):
-
-    # Get segment_id
-    segment_id_index = traffic_df.loc[traffic_df['osm.name'] == street_name]
-    segment_id = segment_id_index['segment_id'].values[0]
-
-    # Create scatter  chart
-    sc_explore = px.scatter(traffic_df_upt_dt_str,
+    sc_explore = px.scatter(df_sc_explore,
         x=radio_x_axis, y=radio_y_axis,
         facet_col='street_selection',
         category_orders={'street_selection': [street_name, _('All')]},
@@ -705,7 +696,7 @@ def update_explore_graph(radio_x_axis, radio_y_axis, street_name):
     for annotation in sc_explore.layout.annotations:
         annotation['font'] = {'size': 14}
 
-    return sc_explore
+    return pie_traffic, line_abs_traffic, bar_avg_traffic, bar_perc_speed, bar_avg_speed, bar_v85, sc_explore
 
 if __name__ == "__main__":
     app.run_server(debug=True)

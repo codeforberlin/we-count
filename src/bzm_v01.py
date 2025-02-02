@@ -4,7 +4,7 @@
 
 # @file    bzm_v01.py
 # @author  Egbert Klaassen
-# @date    2025-01-27
+# @date    2025-02-02
 
 # traffic_df        - dataframe, traffic data file
 # geo_df            - geo dataframe, street coordinates for px.map
@@ -18,7 +18,6 @@ import numpy as np
 import plotly.express as px
 from dash import Dash, html, dcc, callback, Output, Input
 import dash_bootstrap_components as dbc
-import dash_daq as daq
 import gettext
 
 import bzm_get_data
@@ -26,108 +25,106 @@ import common
 
 DEPLOYED = __name__ != '__main__'
 
+
+#### Retrieve Data ####
+def retrieve_data():
+
+    # Read geojson data file to access geometry coordinates - using URL
+    geojson_url = 'https://berlin-zaehlt.de/csv/bzm_telraam_segments.geojson'
+    if not DEPLOYED:
+        print('Reading geojson data...')
+    geo_df = gpd.read_file(geojson_url)
+
+    if not DEPLOYED:
+        print('Reading json data...')
+    json_df_features = bzm_get_data.get_locations(geojson_url)
+
+    # Read traffic data from file
+    if not DEPLOYED:
+        print('Reading traffic data...')
+
+    with common.Benchmarker(not DEPLOYED, "Load traffic data"):
+        traffic_df = bzm_get_data.merge_data(json_df_features)
+
+    """" Can move to bzm_get_data? - Start """
+    # Set data types for clean representation
+    json_df_features['segment_id']=json_df_features['segment_id'].astype(str)
+    traffic_df['segment_id']=traffic_df['segment_id'].astype(str)
+    traffic_df['year']=traffic_df['year'].astype(str)
+    traffic_df['hour']=traffic_df['hour'].astype(int)
+
+    # Replace nan values
+    # traffic_df['car_total'] = traffic_df['car_total'].fillna(0)
+    # traffic_df = traffic_df.fillna(0)
+
+    # Add street column for facet graphs
+    traffic_df['street_selection'] = traffic_df.loc[:, 'osm.name']
+    traffic_df.loc[traffic_df['street_selection'] != 'does not exist', 'street_selection'] = _('All')
+    """" Can move to bzm_get_data? - End """
+
+    return geo_df, json_df_features, traffic_df
+
 #### Set Language ####
 
-def update_language(language, dir):
+def update_language(language):
 
     # Initiate translation
     appname = 'bzm'
-    localedir = 'D:/OneDrive/PycharmProjects/we-count/src/locales'
+    localedir = os.path.join(os.path.dirname(__file__), 'locales')
     # Set up Gettext
     translations = gettext.translation(appname, localedir, fallback=True, languages=[language])
     # Install translation function
     translations.install()
     # Translate message (for testing)
 
-LOCALES_DIR = os.path.join(os.path.dirname(__file__), 'locales')
+def filter_uptime(df):
+    # Drop uptime rows that are empty
+    #nan_rows = df[df['uptime'].isnull()]
+    #df_uptime_nan = df.drop(nan_rows.index)
+    # drop uptime rows < 0.7
+    nan_rows = df[df['uptime'] < 0.7]
+    traffic_df_upt = df.drop(nan_rows.index)
 
-language = 'de'
-update_language(language, LOCALES_DIR)
+    return traffic_df_upt
 
-#### Retrieve Data ####
+def filter_dt(df, start_date, end_date, hour_range):
 
-# Read geojson data file to access geometry coordinates - using URL
-geojson_url = 'https://berlin-zaehlt.de/csv/bzm_telraam_segments.geojson'
-if not DEPLOYED:
-    print('Reading geojson data...')
-geo_df = gpd.read_file(geojson_url)
+    # Get min/max dates
+    min_date = df['date_local'].min()
+    max_date = df['date_local'].max()
+    # Set selected dates
+    df_dates = df.loc[df['date_local'].between(start_date, end_date)]
 
-if not DEPLOYED:
-    print('Reading json data...')
-json_df_features = bzm_get_data.get_locations(geojson_url)
+    # Get min/max street hours, add 1 to max for slider representation
+    min_hour = df["hour"].min()
+    max_hour = df["hour"].max()
+    if max_hour < 24:
+        max_hour = max_hour + 1
 
-# Read traffic data from file
-if not DEPLOYED:
-    print('Reading traffic data...')
+    # Set selected hours, leave minimum gap of 1, manage extremes
+    if hour_range[0] == 24:
+        hour_range[0] = hour_range[0] - 1
+    if hour_range[1] == hour_range[0]:
+        hour_range[1] = hour_range[1]+1
 
-with common.Benchmarker(not DEPLOYED, "Load traffic data"):
-    traffic_df = bzm_get_data.merge_data(json_df_features)
+    df_dates_hours = df_dates.loc[df_dates['hour'].between(hour_range[0], hour_range[1]-1)]
 
-"""" Can move to bzm_get_data? - Start """
-# Set data types for clean representation
-json_df_features['segment_id']=json_df_features['segment_id'].astype(str)
-traffic_df['segment_id']=traffic_df['segment_id'].astype(str)
-traffic_df['year']=traffic_df['year'].astype(str)
-traffic_df['hour']=traffic_df['hour'].astype(int)
+    traffic_df_upt_dt = df_dates_hours.sort_values(by=['street_selection', 'date_local'])
 
-# Drop uptime when empty
-# nan_rows = traffic_df[traffic_df['uptime'].isnull()]
-# traffic_df = traffic_df.drop(nan_rows.index)
+    return traffic_df_upt_dt, min_date, max_date, min_hour, max_hour
 
-# Replace nan values
-# traffic_df['car_total'] = traffic_df['car_total'].fillna(0)
-# traffic_df = traffic_df.fillna(0)
+def update_selected_street(df, segment_id, street_name):
 
-# Add street column for facet graphs
-traffic_df['street_selection'] = traffic_df.loc[:, 'osm.name']
-traffic_df.loc[traffic_df['street_selection'] != 'does not exist', 'street_selection'] = _('All')
-"""" Can move to bzm_get_data? - End """
-
-def update_selected_street(df, filter_uptime, segment_id, street_name, start_date, end_date, hour_range):
-    if filter_uptime == True:
-        nan_rows = df[df['uptime'].isnull()]
-        df_uptime_nan = df.drop(nan_rows.index)
-        nan_rows = df_uptime_nan[df_uptime_nan['uptime'] < 0.7]
-        df_uptime = df_uptime_nan.drop(nan_rows.index)
-    else:
-        df_uptime = df
-
-    # Generate "selected street only" df and populate street_selection
-    traffic_df_str = df_uptime[df_uptime['segment_id'] == segment_id]
-    traffic_df_str.loc[traffic_df_str['street_selection'] == _('All'), 'street_selection'] = street_name
-
-    # Filter min max street dates based on "selected street only"
-    min_str_date = traffic_df_str['date_local'].min()
-    max_str_date = traffic_df_str['date_local'].max()
-
-    # Filter min max street hours based on "selected street only"
-    if start_date < min_str_date:
-        start_date = min_str_date
-    if end_date > max_str_date:
-        end_date = max_str_date
-
-    min_str_hour = traffic_df_str["hour"].min()
-    max_str_hour = traffic_df_str["hour"].max()
-
-    # Filter min max street hours based on "selected street only"
-    hour_range[0] = min_str_hour
-    hour_range[1] = max_str_hour
-    #if hour_range[0] < min_str_hour:
-    #    hour_range[0] = min_str_hour
-    #if hour_range[1] > max_str_hour:
-    #    hour_range[1] = max_str_hour
+    # Generate "selected street only" df and populate "street_selection"
+    df_str = df[df['segment_id'] == segment_id]
+    df_str.loc[df_str['street_selection'] == _('All'), 'street_selection'] = street_name
 
     # Add selected street to all streets
-    traffic_df_all_str = df._append(traffic_df_str, ignore_index=True)
+    traffic_df_upt_dt_str = df._append(df_str, ignore_index=True)
 
-    # Filter min max period
-    traffic_df_sel_str_dates = traffic_df_all_str.loc[traffic_df_all_str['date_local'].between(start_date, end_date)]
-    traffic_df_sel_str_hours = traffic_df_sel_str_dates.loc[traffic_df_sel_str_dates['hour'].between(hour_range[0], hour_range[1])]
-    out_traffic_df_sel_str = traffic_df_sel_str_hours.sort_values(by=['street_selection', 'date_local'])
+    return traffic_df_upt_dt_str
 
-    return out_traffic_df_sel_str, start_date, end_date, hour_range
-
-# Initialize constants and variables
+# Initialize constants, variables and get data
 ADFC_orange = '#D78432'
 ADFC_green = '#1C9873'
 ADFC_blue = '#2C4B78'
@@ -139,26 +136,26 @@ ADFC_lightgrey = '#DEDEDE'
 ADFC_palegrey = '#F2F2F2'
 ADFC_pink = '#EB9AAC'
 
-filter_uptime = True
-
-min_date = traffic_df["date_local"].min()
-max_date = traffic_df["date_local"].max()
-start_date = min_date
-end_date = max_date
-
-data_min_hour = traffic_df["hour"].min()
-data_max_hour = traffic_df["hour"].max()+1
-hour_range = [data_min_hour, data_max_hour]
-min_str_hour = data_min_hour
-max_str_hour = data_max_hour
-
-street_changed = False
-
 street_name = 'Kastanienallee' #'Köpenicker Straße'
-init_segment_id = '9000004995'
+segment_id = '9000004995'
 
-# Initiate basic traffic_df with first street selected
-traffic_df_sel_str, start_date, end_date, hour_range = update_selected_street(traffic_df, filter_uptime, init_segment_id, street_name, start_date, end_date, hour_range)
+language = 'de'
+update_language(language)
+
+geo_df, json_df_features, traffic_df = retrieve_data()
+
+# Start with traffic df with uptime filtered
+traffic_df_upt = filter_uptime(traffic_df)
+
+# traffic_df_upt_dt
+start_date = traffic_df_upt['date_local'].min()
+end_date = traffic_df_upt['date_local'].max()
+hour_range = [traffic_df_upt["hour"].min(), traffic_df_upt["hour"].max()]
+traffic_df_upt_dt, min_date, max_date, min_hour, max_hour = filter_dt(traffic_df_upt, start_date, end_date, hour_range)
+
+# traffic_df_upt_dt_str
+traffic_df_upt_dt_str = update_selected_street(traffic_df_upt_dt, segment_id, street_name)
+
 
 ### Create street map ###
 if not DEPLOYED:
@@ -175,8 +172,6 @@ traffic_df_id_bc['bike_car_ratio'] = traffic_df_id_bc['bike_total']/traffic_df_i
 bins = [0, 0.1, 0.2, 0.5, 1, 500]
 labels = [_('Over 10x more cars'), _('Over 5x more cars'), _('Over 2x more cars'),_('More cars than bikes'),_('More bikes than cars')]
 traffic_df_id_bc['map_line_color'] = pd.cut(traffic_df_id_bc['bike_car_ratio'], bins=bins, labels=labels)
-
-# traffic_df_id_bc_out = traffic_df_id_bc
 
 # Create Map figure
 lats = []
@@ -238,7 +233,6 @@ app.layout = dbc.Container(
                 value=language
                 ),
             ], width=4),
-            #html.H4(id='textarea-example', style={'color': 'blue'})
         ]),
         dbc.Row([
             # Street map
@@ -268,12 +262,11 @@ app.layout = dbc.Container(
                 # Hour slice
                 dcc.RangeSlider(
                     id='range_slider',
-                    min= data_min_hour,
-                    max= data_max_hour,
+                    min= min_hour,
+                    max= max_hour,
                     step=1,
-                    #marks={i: str(i) for i in range(24)},
                     value = hour_range,
-                    tooltip={_('always_visible'): True, 'template': "{value} hour"}),
+                    tooltip={'always_visible': True, 'template': "{value} hour"}),
             ], width=6),
             dbc.Col([
                 html.H6(_('Pick date range:'), style={'margin-left': 00, 'margin-right': 40, 'margin-top': 00, 'margin-bottom': 30}),
@@ -290,9 +283,12 @@ app.layout = dbc.Container(
                 ),
             ], width=3),
             dbc.Col([
-                html.H6(("Filter Uptime"), style={'margin-left': 00, 'margin-right': 00, 'margin-top': 00, 'margin-bottom': 30}),
-                daq.BooleanSwitch(id='uptime_switch', on=filter_uptime, color='blue'),
-                #html.Div(id='uptime_switch_result'),
+                dbc.Checklist(
+                    id='toggle_uptime_filter',
+                    options=[{'label': _(' Filter uptime > 0.7'), 'value': 'filter_uptime_selected'}],
+                    value= ['filter_uptime_selected'],
+                    style = {'color' : 'lightgrey', 'font_size' : 14, 'margin-left': 30, 'margin-top': 55, 'margin-bottom': 30}
+                ),
             ], width=2),
         ]),
         # Absolute traffic
@@ -437,17 +433,9 @@ app.layout = dbc.Container(
 )
 
 def get_language(lang_code):
-    update_language(lang_code, LOCALES_DIR)
+    update_language(lang_code)
     return
 
-
-@app.callback(
-    Output('uptime_switch_result', 'children'),
-    Input("uptime_switch", 'on'),
-)
-def update_output(on):
-    filter_uptime = "{}".format(on)
-    return filter_uptime
 
 ### Map callback ###
 @callback(
@@ -458,18 +446,16 @@ def update_output(on):
 )
 
 def get_street_name(clickData):
-
     if clickData:
         street_name = clickData['points'][0]['hovertext']
-        street_changed = True
-    return street_name, street_changed
+    return street_name
 
 @callback(
     Output(component_id='street_map', component_property='figure'),
     Input(component_id='street_name_dd', component_property='value'),
 )
 
-def update_graph(street_name): #, start_date, end_date, hour_range):
+def update_map(street_name): #, start_date, end_date, hour_range):
 
     street_map = px.line_map(lat=lats, lon=lons, color=map_colors, hover_name=names, line_group=ids, color_discrete_map= {
         _('More bikes than cars'): ADFC_green,
@@ -493,31 +479,34 @@ def update_graph(street_name): #, start_date, end_date, hour_range):
     Output(component_id='bar_avg_traffic', component_property='figure'),
     Output(component_id='bar_perc_speed', component_property='figure'),
     Output(component_id='bar_avg_speed', component_property='figure'),
-    Output(component_id="date_filter", component_property="start_date"),
-    Output(component_id="date_filter", component_property="end_date"),
-    Output(component_id="range_slider", component_property="value"),
     Input(component_id='radio_time_division', component_property='value'),
     Input(component_id='radio_time_unit', component_property='value'),
     Input(component_id='street_name_dd', component_property='value'),
     Input(component_id="date_filter", component_property="start_date"),
     Input(component_id="date_filter", component_property="end_date"),
     Input(component_id='range_slider', component_property='value'),
+    Input(component_id='toggle_uptime_filter', component_property='value'),
 )
 
-def update_graph(radio_time_division, radio_time_unit, street_name, start_date, end_date, hour_range):
+def update_graphs(radio_time_division, radio_time_unit, street_name, start_date, end_date, hour_range, toggle_uptime_filter):
+    if 'filter_uptime_selected' in toggle_uptime_filter:
+        traffic_df_upt = filter_uptime(traffic_df)
+    else:
+        traffic_df_upt = traffic_df
+
     # Get segment_id
-    segment_id_index = traffic_df.loc[traffic_df['osm.name'] == street_name]
+    segment_id_index = traffic_df_upt.loc[traffic_df_upt['osm.name'] == street_name]
     segment_id = segment_id_index['segment_id'].values[0]
 
-    # Update street selection
-    traffic_df_sel_str, start_date, end_date, hour_range = update_selected_street(traffic_df, filter_uptime, segment_id, street_name, start_date, end_date, hour_range)
+    traffic_df_upt_dt, min_date, max_date, min_hour, max_hour = filter_dt(traffic_df_upt, start_date, end_date, hour_range)
+    traffic_df_upt_dt_str = update_selected_street(traffic_df_upt_dt, segment_id, street_name)
 
     # Aggregate
-    traffic_df_sel_str_agg = traffic_df_sel_str.groupby(by=['street_selection', radio_time_division],as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
+    traffic_df_upt_dt_str_agg = traffic_df_upt_dt_str.groupby(by=['street_selection', radio_time_division],as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
     #traffic_df_sel_str_agg_ren = traffic_df_sel_str_agg.rename(columns={'ped_total': _('Pedestrians'), 'bike_total': _('Bikes'), 'car_total': _('Cars'), 'heavy_total': _('Heavy')})
 
     # Create abs line chart
-    line_abs_traffic = px.line(traffic_df_sel_str_agg,
+    line_abs_traffic = px.line(traffic_df_upt_dt_str_agg,
         x=radio_time_division, y=['ped_total', 'bike_total', 'car_total', 'heavy_total'],
         markers=True,
         facet_col='street_selection',
@@ -539,7 +528,7 @@ def update_graph(radio_time_division, radio_time_unit, street_name, start_date, 
 
 
     # Prepare pie chart data
-    pie_df = traffic_df_sel_str[traffic_df_sel_str['street_selection'] == street_name]
+    pie_df = traffic_df_upt_dt_str[traffic_df_upt_dt_str['street_selection'] == street_name]
     pie_df_traffic = pie_df[['ped_total', 'bike_total', 'car_total', 'heavy_total']]
     pie_df_traffic_ren = pie_df_traffic.rename(columns={'ped_total': _('Pedestrians'), 'bike_total': _('Bikes'), 'car_total': _('Cars'), 'heavy_total': _('Heavy')})
     pie_df_traffic_sum = pie_df_traffic_ren.aggregate(['sum'])
@@ -553,10 +542,9 @@ def update_graph(radio_time_division, radio_time_unit, street_name, start_date, 
     pie_traffic.update_layout(showlegend=False)
     pie_traffic.update_traces(textposition='inside', textinfo='percent+label')
 
-
     # Average traffic bar chart
     #traffic_df_str_id_time_grpby = traffic_df_all_time_sorted.groupby(by=[radio_time_unit, 'street_selection'], as_index=False).agg({'ped_total': 'mean', 'bike_total': 'mean', 'car_total': 'mean', 'heavy_total': 'mean'})
-    traffic_df_sel_str_groupby = traffic_df_sel_str.groupby(by=[radio_time_unit, 'street_selection'], as_index=False).agg({'ped_total': 'mean', 'bike_total': 'mean', 'car_total': 'mean', 'heavy_total': 'mean'})
+    traffic_df_sel_str_groupby = traffic_df_upt_dt_str.groupby(by=[radio_time_unit, 'street_selection'], as_index=False).agg({'ped_total': 'mean', 'bike_total': 'mean', 'car_total': 'mean', 'heavy_total': 'mean'})
 
     bar_avg_traffic = px.bar(traffic_df_sel_str_groupby,
         x=radio_time_unit, y=['ped_total', 'bike_total', 'car_total', 'heavy_total'],
@@ -576,23 +564,22 @@ def update_graph(radio_time_division, radio_time_unit, street_name, start_date, 
     bar_avg_traffic.update_layout(legend_title_text=_('Traffic Type'))
     bar_avg_traffic.update_layout({'plot_bgcolor': ADFC_palegrey,'paper_bgcolor': ADFC_palegrey})
     bar_avg_traffic.update_layout(yaxis_title=_('Average traffic count'))
+    bar_avg_traffic.update_xaxes(dtick = 1, tickformat=".0f")
     bar_avg_traffic.for_each_yaxis(lambda yaxis: yaxis.update(showticklabels=True))
     bar_avg_traffic.for_each_annotation(lambda a: a.update(text=a.text.replace(street_name, street_name + _(' (segment no:') + segment_id + ')')))
     for annotation in bar_avg_traffic.layout.annotations:
         annotation['font'] = {'size': 14}
 
     # Percentage speed bar chart
-    cols = ['car_speed0', 'car_speed10', 'car_speed20', 'car_speed30', 'car_speed40', 'car_speed50', 'car_speed60',
-            'car_speed70']
-
     # Add column with all car speed %
-    traffic_df_sel_str['sum_speed_perc'] = traffic_df_sel_str[cols].sum(axis=1)
+    cols = ['car_speed0', 'car_speed10', 'car_speed20', 'car_speed30', 'car_speed40', 'car_speed50', 'car_speed60', 'car_speed70']
+    traffic_df_upt_dt_str['sum_speed_perc'] = traffic_df_upt_dt_str[cols].sum(axis=1)
     # Drop empty rows
-    nan_rows = traffic_df_sel_str[traffic_df_sel_str['sum_speed_perc']==0]
-    traffic_df_sel_str_dropped = traffic_df_sel_str.drop(nan_rows.index)
+    nan_rows = traffic_df_upt_dt_str[traffic_df_upt_dt_str['sum_speed_perc']==0]
+    traffic_df_sel_str_speed = traffic_df_upt_dt_str.drop(nan_rows.index)
 
-    traffic_df_sel_str_speed = traffic_df_sel_str_dropped.groupby(by=[radio_time_unit, 'street_selection'], as_index=False).agg({'car_speed0': 'mean', 'car_speed10': 'mean', 'car_speed20': 'mean', 'car_speed30': 'mean', 'car_speed40': 'mean', 'car_speed50': 'mean', 'car_speed60': 'mean', 'car_speed70': 'mean'})
-    bar_perc_speed = px.bar(traffic_df_sel_str_speed,
+    traffic_df_upt_dt_str_speed_groupby = traffic_df_sel_str_speed.groupby(by=[radio_time_unit, 'street_selection'], as_index=False).agg({'car_speed0': 'mean', 'car_speed10': 'mean', 'car_speed20': 'mean', 'car_speed30': 'mean', 'car_speed40': 'mean', 'car_speed50': 'mean', 'car_speed60': 'mean', 'car_speed70': 'mean'})
+    bar_perc_speed = px.bar(traffic_df_upt_dt_str_speed_groupby,
          x=radio_time_unit, y=cols,
          barmode='stack',
          facet_col='street_selection',
@@ -615,9 +602,9 @@ def update_graph(radio_time_division, radio_time_unit, street_name, start_date, 
         annotation['font'] = {'size': 14}
 
     # Create percentage speed average bar chart
-    traffic_df_sel_str_avg_speed = traffic_df_sel_str_dropped.groupby(by='street_selection', as_index=False).agg({'car_speed0': 'mean', 'car_speed10': 'mean', 'car_speed20': 'mean', 'car_speed30': 'mean', 'car_speed40': 'mean', 'car_speed50': 'mean', 'car_speed60': 'mean', 'car_speed70': 'mean'})
+    traffic_df_upt_dt_str_speed_agg = traffic_df_sel_str_speed.groupby(by='street_selection', as_index=False).agg({'car_speed0': 'mean', 'car_speed10': 'mean', 'car_speed20': 'mean', 'car_speed30': 'mean', 'car_speed40': 'mean', 'car_speed50': 'mean', 'car_speed60': 'mean', 'car_speed70': 'mean'})
 
-    bar_avg_speed = px.bar(traffic_df_sel_str_avg_speed,
+    bar_avg_speed = px.bar(traffic_df_upt_dt_str_speed_agg,
         x='street_selection', y=cols,
         #barmode='group',
         category_orders={'street_selection': [street_name, _('All')],
@@ -642,7 +629,7 @@ def update_graph(radio_time_division, radio_time_unit, street_name, start_date, 
     for annotation in bar_avg_speed.layout.annotations:
         annotation['font'] = {'size': 14}
 
-    return pie_traffic, line_abs_traffic, bar_avg_traffic, bar_perc_speed, bar_avg_speed, start_date, end_date, hour_range
+    return pie_traffic, line_abs_traffic, bar_avg_traffic, bar_perc_speed, bar_avg_speed #, start_date, end_date, hour_range
 
 ### Explore traffic callback ###
 @callback(
@@ -661,10 +648,8 @@ def update_explore_graph(radio_x_axis, radio_y_axis, street_name, start_date, en
     segment_id_index = traffic_df.loc[traffic_df['osm.name'] == street_name]
     segment_id = segment_id_index['segment_id'].values[0]
 
-    traffic_df_sel_str, start_date, end_date, hour_range = update_selected_street(traffic_df, filter_uptime, segment_id, street_name, start_date, end_date, hour_range)
-
     # Create scatter  chart
-    sc_explore = px.scatter(traffic_df_sel_str,
+    sc_explore = px.scatter(traffic_df_upt_dt_str,
         x=radio_x_axis, y=radio_y_axis,
         facet_col='street_selection',
         category_orders={'street_selection': [street_name, _('All')]},
@@ -672,7 +657,8 @@ def update_explore_graph(radio_x_axis, radio_y_axis, street_name, start_date, en
         color=radio_y_axis,
         color_continuous_scale='temps',
         labels={'ped_total': _('Pedestrians'), 'bike_total': _('Bikes'), 'car_total': _('Cars'), 'heavy_total': _('Heavy'), 'osm.length': _('Street Length'), 'osm.maxspeed': _('Max Speed')},
-        title=f'Absolute traffic by {radio_x_axis}')
+        title=_('Absolute traffic')
+    )
 
     sc_explore.update_yaxes(matches=None)
     sc_explore.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))

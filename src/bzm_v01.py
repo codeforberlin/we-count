@@ -57,7 +57,7 @@ def retrieve_data():
     # traffic_df['car_total'] = traffic_df['car_total'].fillna(0)
     # traffic_df = traffic_df.fillna(0)
 
-    # Add street column for facet graphs
+    # Add street column for facet graphs - check efficiency!
     traffic_df['street_selection'] = traffic_df.loc[:, 'osm.name']
     traffic_df.loc[traffic_df['street_selection'] != 'does not exist', 'street_selection'] = _('All')
     """" Can move to bzm_get_data? - End """
@@ -78,9 +78,6 @@ def update_language(language):
     # Translate message (for testing)
 
 def filter_uptime(df):
-    # Drop uptime rows that are empty
-    #nan_rows = df[df['uptime'].isnull()]
-    #df_uptime_nan = df.drop(nan_rows.index)
     # drop uptime rows < 0.7
     nan_rows = df[df['uptime'] < 0.7]
     traffic_df_upt = df.drop(nan_rows.index)
@@ -172,6 +169,7 @@ traffic_df_id_bc['bike_car_ratio'] = traffic_df_id_bc['bike_total']/traffic_df_i
 bins = [0, 0.1, 0.2, 0.5, 1, 500]
 labels = [_('Over 10x more cars'), _('Over 5x more cars'), _('Over 2x more cars'),_('More cars than bikes'),_('More bikes than cars')]
 traffic_df_id_bc['map_line_color'] = pd.cut(traffic_df_id_bc['bike_car_ratio'], bins=bins, labels=labels)
+df_map = traffic_df_id_bc.sort_values(by=['map_line_color'])
 
 # Create Map figure
 lats = []
@@ -181,7 +179,7 @@ names = []
 map_colors = []
 
 # Prepare street geo-data and names
-for street, street_line_color in zip(traffic_df_id_bc['segment_id'], traffic_df_id_bc['map_line_color']):
+for street, street_line_color in zip(df_map['segment_id'], df_map['map_line_color']):
 
     for feature, id, name in zip(geo_df.geometry, json_df_features['segment_id'], json_df_features['osm.name']):
         if id == street:
@@ -205,8 +203,6 @@ for street, street_line_color in zip(traffic_df_id_bc['segment_id'], traffic_df_
                 map_colors = np.append(map_colors, None)
         else:
             continue
-
-print(map_colors)
 
 ### Run Dash app ###
 
@@ -699,4 +695,4 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, start_date,
     return pie_traffic, line_abs_traffic, bar_avg_traffic, bar_perc_speed, bar_avg_speed, bar_v85, sc_explore
 
 if __name__ == "__main__":
-    app.run_server(debug=True)
+    app.run_server(debug=False)

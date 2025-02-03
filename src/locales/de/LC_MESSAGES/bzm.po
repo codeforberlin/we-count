@@ -163,6 +163,10 @@ msgstr "Prozentuale Auto Geschwindigkeit - pro Zeiteinheit"
 msgid "Percentage car speed - average"
 msgstr "Prozentuale Auto Geschwindigkeit - Durchschnitt"
 
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:367
+msgid "v85 car speed"
+msgstr "v85 Geschwindigkeit"
+
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:350
 msgid "Explore"
 msgstr "Entdecken"
@@ -380,3 +384,11 @@ msgstr "Auto Geschwindigkeit"
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:608
 msgid "Average percentage car speed"
 msgstr "Durchschnittliche prozentuale Auto Geschwindigkeit"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:657
+msgid "Speed cars v85"
+msgstr "v85 Geschwindigkeit Autos"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:664
+msgid "v85 in km/h"
+msgstr "v85 in km/h"

@@ -25,7 +25,6 @@ import common
 
 DEPLOYED = __name__ != '__main__'
 
-
 #### Retrieve Data ####
 def retrieve_data():
 

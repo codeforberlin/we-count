@@ -89,7 +89,7 @@ msgstr "immer sichtbar"
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:288
 msgid " Filter uptime > 0.7"
-msgstr " Filtriere Uptime > 0.7"
+msgstr " Filter Uptime > 0.7"
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:259
 msgid "Pick date range:"

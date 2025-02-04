@@ -4,21 +4,21 @@
 
 # @file    bzm_v01.py
 # @author  Egbert Klaassen
-# @date    2025-02-02
+# @date    2025-02-04
 
-# traffic_df        - dataframe, traffic data file
-# geo_df            - geo dataframe, street coordinates for px.map
-# json_df           - json dataframe (using the same geojson as the geo_df), to access features such as street names
+# traffic_df        - dataframe with measured traffic data file
+# geo_df            - geopandas dataframe, street coordinates for px.line_map
+# json_df           - json dataframe based on the same geojson as geo_df, providing features such as street names
 
 import os
 import pandas as pd
 import geopandas as gpd
-import shapely.geometry
-import numpy as np
 import plotly.express as px
-from dash import Dash, html, dcc, callback, Output, Input
+from dash import Dash, html, dcc, Output, Input, callback, no_update
 import dash_bootstrap_components as dbc
 import gettext
+
+from dash.exceptions import PreventUpdate
 
 import bzm_get_data
 import common
@@ -169,40 +169,39 @@ traffic_df_id_bc['bike_car_ratio'] = traffic_df_id_bc['bike_total']/traffic_df_i
 bins = [0, 0.1, 0.2, 0.5, 1, 500]
 labels = [_('Over 10x more cars'), _('Over 5x more cars'), _('Over 2x more cars'),_('More cars than bikes'),_('More bikes than cars')]
 traffic_df_id_bc['map_line_color'] = pd.cut(traffic_df_id_bc['bike_car_ratio'], bins=bins, labels=labels)
-df_map = traffic_df_id_bc.sort_values(by=['map_line_color'])
 
-# Create Map figure
-lats = []
-lons = []
-ids = []
-names = []
-map_colors = []
+# Extract x y coordinates from geo_df (geopandas file)
+geo_df_coords = geo_df.get_coordinates()
+# Get ids to join with x y coordinates
+geo_df_ids = geo_df[['segment_id']]
+# Join x y and segment_id into e new dataframe
+geo_df_map_info = geo_df_coords.join(geo_df_ids)
 
-# Prepare street geo-data and names
-for street, street_line_color in zip(df_map['segment_id'], df_map['map_line_color']):
+# Prepare geo_df_map_info anf json_df_features for join operation
+geo_df_map_info['segment_id'] = geo_df_map_info['segment_id'].astype(int)
+geo_df_map_info.set_index('segment_id', drop= False, inplace=True)
+json_df_features['segment_id'] = json_df_features['segment_id'].astype(int)
+json_df_features.set_index('segment_id', inplace=True)
+# join geo_df_map_info anf json_df_features to get map info with name date (extract from geo_df json?)
+df_map_base = geo_df_map_info.join(json_df_features)
 
-    for feature, id, name in zip(geo_df.geometry, json_df_features['segment_id'], json_df_features['osm.name']):
-        if id == street:
-            if isinstance(feature, shapely.geometry.linestring.LineString):
-                linestrings = [feature]
-            elif isinstance(feature, shapely.geometry.multilinestring.MultiLineString):
-                linestrings = feature.geoms
-            else:
-                continue
-            for linestring in linestrings:
-                x, y = linestring.xy
-                lats = np.append(lats, y)
-                lons = np.append(lons, x)
-                ids = np.append(ids, [id]*len(y))
-                names = np.append(names, [name] * len(y))
-                map_colors = np.append(map_colors, [street_line_color]*len(y))
-                lats = np.append(lats, None)
-                lons = np.append(lons, None)
-                ids = np.append(ids, None)
-                names = np.append(names, None)
-                map_colors = np.append(map_colors, None)
-        else:
-            continue
+# Prepare traffic_df_id_bc for joining
+traffic_df_id_bc['segment_id'] = traffic_df_id_bc['segment_id'].astype(int)
+traffic_df_id_bc.set_index('segment_id', inplace=True)
+# Create map info by joining geo_df_map_info with map_line_color from traffic_df_id_bc (based on bike/car ratios)
+df_map = df_map_base.join(traffic_df_id_bc)
+
+# Remove rows without osm.name
+nan_rows = df_map[df_map['osm.name'].isnull()]
+df_map = df_map.drop(nan_rows.index)
+
+# Add map_line_color category and add column information to cover inactive traffic counters
+df_map['map_line_color'] = df_map['map_line_color'].cat.add_categories([_('Inactive - no data')])
+df_map.fillna({"map_line_color": _("Inactive - no data")}, inplace = True)
+
+# Sort data to get desired legend order
+df_map = df_map.sort_values(by=['map_line_color'])
+
 
 ### Run Dash app ###
 
@@ -234,7 +233,7 @@ app.layout = dbc.Container(
         dbc.Row([
             # Street map
             dbc.Col([
-                dcc.Graph(id='street_map', figure={}, className='bg-#F2F2F2'),
+                dcc.Graph(id='street_map', figure={},className='bg-#F2F2F2'),
             ], width=8),
 
             # General controls
@@ -242,8 +241,9 @@ app.layout = dbc.Container(
                 # Street drop down
                 html.H4(_('Select street:'), style={'margin-top': 50, 'margin-bottom': 10}),
                 dcc.Dropdown(id='street_name_dd',
-                options=sorted([{'label': i, 'value': i}
-                        for i in traffic_df['osm.name'].unique()], key=lambda x: x['label']), value=street_name),
+                    options=sorted([{'label': i, 'value': i} for i in traffic_df['osm.name'].unique()], key=lambda x: x['label']),
+                    value=street_name
+                ),
                 html.Hr(),
                 html.H4(_('Traffic type - selected street'), style={'margin-top': 20, 'margin-bottom': 30}),
                 # Pie chart
@@ -453,7 +453,14 @@ def get_language(lang_code):
 def get_street_name(clickData):
     if clickData:
         street_name = clickData['points'][0]['hovertext']
-    return street_name
+
+        # Check if street inactive
+        idx = df_map.loc[df_map['osm.name'] == street_name]
+        map_color_status = idx['map_line_color'].values[0]
+        if map_color_status == _('Inactive - no data'):
+            raise PreventUpdate
+        else:
+            return street_name
 
 @callback(
     Output(component_id='street_map', component_property='figure'),
@@ -462,14 +469,15 @@ def get_street_name(clickData):
 
 def update_map(street_name):
 
-    street_map = px.line_map(lat=lats, lon=lons, color=map_colors, hover_name=names, line_group=ids, color_discrete_map= {
+    street_map = px.line_map(df_map, lat='y', lon='x', line_group='segment_id', hover_name = 'osm.name', color= 'map_line_color', color_discrete_map= {
         _('More bikes than cars'): ADFC_green,
         _('More cars than bikes'): ADFC_blue,
         _('Over 2x more cars'): ADFC_orange,
         _('Over 5x more cars'): ADFC_crimson,
-        _('Over 10x more cars'): ADFC_pink},
-        category_orders={'color': map_colors},
-        labels={'color': 'Bike/Car ratio'},
+        _('Over 10x more cars'): ADFC_pink,
+        _('Inactive - no data'): ADFC_lightgrey},
+        #category_orders={'color': map_colors},
+        #labels={'color': 'Bike/Car ratio'},
         map_style="streets", center= dict(lat=52.5, lon=13.45), height=600, zoom=11)
     street_map.update_traces(line_width=5)
     street_map.update_layout(margin=dict(l=40, r=20, t=40, b=30))

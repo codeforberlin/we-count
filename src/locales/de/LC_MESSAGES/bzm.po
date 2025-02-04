@@ -52,6 +52,9 @@ msgstr "Mehr Autos als Zweiräder"
 msgid "More bikes than cars"
 msgstr "Mehr Zweiräder als Autos"
 
+msgid "Inactive - no data"
+msgstr "Inaktiv - keine Daten"
+
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:200
 msgid "Start dash..."
 msgstr "Starte Dash..."

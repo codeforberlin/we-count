@@ -10,15 +10,15 @@
 # geo_df            - geopandas dataframe, street coordinates for px.line_map
 # json_df           - json dataframe based on the same geojson as geo_df, providing features such as street names
 
-import os
-import pandas as pd
-import geopandas as gpd
-import plotly.express as px
-from dash import Dash, html, dcc, Output, Input, callback, no_update
-import dash_bootstrap_components as dbc
 import gettext
-
+import os
+import dash_bootstrap_components as dbc
+import geopandas as gpd
+import pandas as pd
+import plotly.express as px
+from dash import Dash, html, dcc, Output, Input, callback
 from dash.exceptions import PreventUpdate
+import datetime
 
 import bzm_get_data
 import common
@@ -132,8 +132,8 @@ ADFC_lightgrey = '#DEDEDE'
 ADFC_palegrey = '#F2F2F2'
 ADFC_pink = '#EB9AAC'
 
-street_name = 'Kastanienallee' #'Köpenicker Straße'
-segment_id = '9000004995'
+street_name = 'Köpenicker Straße'
+segment_id = '9000006435'
 
 language = 'de'
 update_language(language)
@@ -143,9 +143,23 @@ geo_df, json_df_features, traffic_df = retrieve_data()
 # Start with traffic df with uptime filtered
 traffic_df_upt = filter_uptime(traffic_df)
 
+def convert(date_time, format):
+    #format = '%Y-%m-%d %H:%M:%S'
+    datetime_obj = datetime.datetime.strptime(date_time, format)
+    return datetime_obj
+
 # traffic_df_upt_dt
+format_string = '%Y-%m-%d %H:%M:%S'
 start_date = traffic_df_upt['date_local'].min()
 end_date = traffic_df_upt['date_local'].max()
+
+start_date_dt = convert(start_date, format_string)
+end_date_dt = convert(end_date, format_string)
+try_start_date = end_date_dt + datetime.timedelta(days=-13)
+if try_start_date > start_date_dt:
+    start_date_dt = try_start_date
+    start_date = start_date_dt.strftime(format_string)
+
 hour_range = [traffic_df_upt["hour"].min(), traffic_df_upt["hour"].max()]
 traffic_df_upt_dt, min_date, max_date, min_hour, max_hour = filter_dt(traffic_df_upt, start_date, end_date, hour_range)
 
@@ -153,7 +167,7 @@ traffic_df_upt_dt, min_date, max_date, min_hour, max_hour = filter_dt(traffic_df
 traffic_df_upt_dt_str = update_selected_street(traffic_df_upt_dt, segment_id, street_name)
 
 
-### Create street map ###
+### Prepare map data ###
 if not DEPLOYED:
     print('Prepare map...')
 
@@ -302,7 +316,7 @@ app.layout = dbc.Container(
                         {'label': _('Week'), 'value': 'year_week'},
                         {'label': _('Day'), 'value': 'date'}
                     ],
-                    value='year_month',
+                    value='date',
                     inline=True,
                     inputStyle={"margin-right": "5px", "margin-left": "20px"},
                     style={'margin-left': 40, 'margin-bottom': 00},
@@ -468,6 +482,10 @@ def get_street_name(clickData):
 
 def update_map(street_name):
 
+    idx = df_map.loc[df_map['osm.name'] == street_name]
+    lon_str = idx['x'].values[0]
+    lat_str = idx['y'].values[0]
+
     street_map = px.line_map(df_map, lat='y', lon='x', line_group='segment_id', hover_name = 'osm.name', color= 'map_line_color', color_discrete_map= {
         _('More bikes than cars'): ADFC_green,
         _('More cars than bikes'): ADFC_blue,
@@ -475,13 +493,11 @@ def update_map(street_name):
         _('Over 5x more cars'): ADFC_crimson,
         _('Over 10x more cars'): ADFC_pink,
         _('Inactive - no data'): ADFC_lightgrey},
-        #category_orders={'color': map_colors},
-        #labels={'color': 'Bike/Car ratio'},
-        map_style="streets", center= dict(lat=52.5, lon=13.45), height=600, zoom=11)
+        map_style="streets", center= dict(lat=lat_str, lon=lon_str), height=600, zoom=11)
+
     street_map.update_traces(line_width=5)
     street_map.update_layout(margin=dict(l=40, r=20, t=40, b=30))
     street_map.update_layout(legend=dict(yanchor="top", y=0.99, xanchor="right", x=0.99))
-
     return street_map
 
 ### General traffic callback ###
@@ -522,10 +538,13 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, start_date,
     # Update selected street
     traffic_df_upt_dt_str = update_selected_street(traffic_df_upt_dt, segment_id, street_name)
 
-
     # Create abs line chart
     df_line_abs_traffic = traffic_df_upt_dt_str.groupby(
         by=['street_selection', radio_time_division], as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
+
+    # Set readable date format for day-view
+    if radio_time_division == _('date'):
+        df_line_abs_traffic['date'] = pd.to_datetime(df_line_abs_traffic.date).dt.strftime('%a %d %b %y')
 
     line_abs_traffic = px.line(df_line_abs_traffic,
         x=radio_time_division, y=['ped_total', 'bike_total', 'car_total', 'heavy_total'],
@@ -537,14 +556,17 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, start_date,
         facet_col_spacing=0.04,
         title=_('Absolute traffic count')
     )
-    line_abs_traffic.update_yaxes(matches=None)
-    line_abs_traffic.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
-    line_abs_traffic.update_layout(legend_title_text=_('Traffic Type'))
     line_abs_traffic.update_layout({'plot_bgcolor': ADFC_palegrey,'paper_bgcolor': ADFC_palegrey})
+    line_abs_traffic.update_layout(legend_title_text=_('Traffic Type'))
     line_abs_traffic.update_layout(yaxis_title= _('Absolute traffic count'))
+    line_abs_traffic.update_yaxes(matches=None)
     line_abs_traffic.for_each_yaxis(lambda yaxis: yaxis.update(showticklabels=True))
-    for annotation in line_abs_traffic.layout.annotations:
-        annotation['font'] = {'size': 14}
+    line_abs_traffic.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
+    for annotation in line_abs_traffic.layout.annotations: annotation['font'] = {'size': 14}
+    line_abs_traffic.update_traces({'name': _('Pedestrians')}, selector={'name': 'ped_total'})
+    line_abs_traffic.update_traces({'name': _('Bikes')}, selector={'name': 'bike_total'})
+    line_abs_traffic.update_traces({'name': _('Cars')}, selector={'name': 'car_total'})
+    line_abs_traffic.update_traces({'name': _('Heavy')}, selector={'name': 'heavy_total'})
     line_abs_traffic.for_each_annotation(lambda a: a.update(text=a.text.replace(street_name, street_name + ' (segment no:' + segment_id + ')')))
 
     # Create pie chart
@@ -584,6 +606,10 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, start_date,
     bar_avg_traffic.update_layout(yaxis_title=_('Average traffic count'))
     bar_avg_traffic.update_xaxes(dtick = 1, tickformat=".0f")
     bar_avg_traffic.for_each_yaxis(lambda yaxis: yaxis.update(showticklabels=True))
+    bar_avg_traffic.update_traces({'name': _('Pedestrians')}, selector={'name': 'ped_total'})
+    bar_avg_traffic.update_traces({'name': _('Bikes')}, selector={'name': 'bike_total'})
+    bar_avg_traffic.update_traces({'name': _('Cars')}, selector={'name': 'car_total'})
+    bar_avg_traffic.update_traces({'name': _('Heavy')}, selector={'name': 'heavy_total'})
     bar_avg_traffic.for_each_annotation(lambda a: a.update(text=a.text.replace(street_name, street_name + _(' (segment no:') + segment_id + ')')))
     for annotation in bar_avg_traffic.layout.annotations:
         annotation['font'] = {'size': 14}
@@ -615,7 +641,7 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, start_date,
 
     bar_perc_speed.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
     bar_perc_speed.for_each_annotation(lambda a: a.update(text=a.text.replace(street_name, street_name + _(' (segment no:') + segment_id + ')')))
-    bar_perc_speed.update_layout(legend_title_text=_('Traffic Type'))
+    bar_perc_speed.update_layout(legend_title_text=_('Car speed'))
     bar_perc_speed.update_layout({'plot_bgcolor': ADFC_palegrey, 'paper_bgcolor': ADFC_palegrey})
     bar_perc_speed.update_layout(yaxis_title=_('Percentage car speed'))
     bar_perc_speed.for_each_yaxis(lambda yaxis: yaxis.update(showticklabels=True))

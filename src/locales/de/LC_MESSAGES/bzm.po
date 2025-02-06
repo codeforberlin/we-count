@@ -79,6 +79,14 @@ msgstr "Wähle Straße:"
 msgid "Traffic type - selected street"
 msgstr "Verkehrstyp - gewählte Straße"
 
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:273
+msgid ""
+"Traffic type split of the currently selected street, based on currently "
+"selected date and hour range."
+msgstr ""
+"Verkehrsartenaufteilung der aktuell ausgewählten Straße, basierend auf dem aktuell "
+"ausgewählten Datums- und Stundenbereich."
+
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:248
 msgid "Set hour range:"
 msgstr "Stelle Zeitfenster ein:"
@@ -113,6 +121,11 @@ msgstr "Monat"
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:494
 msgid "Week"
 msgstr "Woche"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:321
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:558
+msgid "Day"
+msgstr "Tag"
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:286
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:494
@@ -177,6 +190,10 @@ msgstr "Entdecken"
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:357
 msgid "X-Axis:"
 msgstr "X-Achse"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:411
+msgid "Street ranking by traffic type"
+msgstr "Straßenranking nach Verkehrsart"
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:362
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:382
@@ -279,6 +296,17 @@ msgstr "So."
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:503
 msgid "Absolute traffic count"
 msgstr "Absolute Verkehrszahl"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:321
+msgid ""
+"A high 0.7-0.8 uptime will always mean very good data. The first and last "
+"daylight hour of the day will always have lower uptimes. If uptimes during "
+"the day are below 0.5, that is usually a clear sign that something is "
+"probably wrong with the instance."
+msgstr ""
+"Eine hohe Verfügbarkeit von 0,7-0,8 bedeutet immer sehr gute Daten. Die erste und die letzte "
+"Tagesstunde weisen immer geringere Verfügbarkeiten auf. Wenn die Verfügbarkeiten während "
+" des Tages unter 0,5 liegen, ist das normalerweise ein klares Zeichen dafür, dass mit der Instanz wahrscheinlich etwas nicht stimmt."
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:501
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:545
@@ -395,3 +423,7 @@ msgstr "v85 Geschwindigkeit Autos"
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:664
 msgid "v85 in km/h"
 msgstr "v85 in km/h"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:739
+msgid "Street"
+msgstr "Straße"

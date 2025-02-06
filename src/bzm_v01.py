@@ -4,7 +4,7 @@
 
 # @file    bzm_v01.py
 # @author  Egbert Klaassen
-# @date    2025-02-04
+# @date    2025-02-06
 
 # traffic_df        - dataframe with measured traffic data file
 # geo_df            - geopandas dataframe, street coordinates for px.line_map
@@ -222,7 +222,7 @@ if not DEPLOYED:
     print(_('Start dash...'))
 dbc_css = "https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates/dbc.min.css"
 app = Dash(__name__, requests_pathname_prefix="/cgi-bin/bzm.cgi/" if DEPLOYED else None,
-           external_stylesheets=[dbc.themes.BOOTSTRAP, dbc_css],
+           external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP, dbc_css],
            meta_tags=[{'name': 'viewport', 'content': 'width=device-width, initial-scale=1'}]
            )
 
@@ -253,18 +253,32 @@ app.layout = dbc.Container(
             dbc.Col([
                 # Street drop down
                 html.H4(_('Select street:'), style={'margin-top': 50, 'margin-bottom': 10}),
+
+                # html.A(
+                #     "Dash documentation.",
+                #     href="https://dash.plotly.com/",
+                #     target="_blank",
+                #     style={"display": "inline"}
+                # ),
+
                 dcc.Dropdown(id='street_name_dd',
                     options=sorted([{'label': i, 'value': i} for i in traffic_df['osm.name'].unique()], key=lambda x: x['label']),
                     value=street_name
                 ),
                 html.Hr(),
-                html.H4(_('Traffic type - selected street'), style={'margin-top': 20, 'margin-bottom': 30}),
+                html.Span([html.H4(_('Traffic type - selected street'),
+                                   style={'margin-top': 20, 'margin-bottom': 30, 'display': 'inline-block'}),
+                           html.I(className='bi bi-info-circle-fill h6', id='popover_traffic_type', style={'margin-left': 5, 'margin-top': 20, 'margin-bottom': 30, 'display': 'inline-block', 'color': ADFC_lightblue})]),
+                dbc.Popover(
+                    dbc.PopoverBody(_('Traffic type split of the currently selected street, based on currently selected date and hour range.')),
+                    target="popover_traffic_type",
+                    trigger="hover"
+                ),
                 # Pie chart
                 dcc.Graph(id='pie_traffic', figure={}),
                 html.Hr(),
-            ], width=3),
+            ], width=4),
         ]),
-
         # Date/Time selection
         dbc.Row([
             dbc.Col([
@@ -297,9 +311,16 @@ app.layout = dbc.Container(
                     id='toggle_uptime_filter',
                     options=[{'label': _(' Filter uptime > 0.7'), 'value': 'filter_uptime_selected'}],
                     value= ['filter_uptime_selected'],
-                    style = {'color' : 'lightgrey', 'font_size' : 14, 'margin-left': 30, 'margin-top': 55, 'margin-bottom': 30}
+                    style = {'color' : 'lightgrey', 'font_size' : 14, 'margin-left': 55, 'margin-top': 55, 'margin-bottom': 30}
                 ),
             ], width=2),
+            dbc.Col([
+                html.Span([html.I(className='bi bi-info-circle-fill h6', id='popover_filter', style={'margin-top': 55, 'display': 'inline-block', 'color': ADFC_lightblue})]),
+                dbc.Popover(
+                    dbc.PopoverBody(_('A high 0.7-0.8 uptime will always mean very good data. The first and last daylight hour of the day will always have lower uptimes. If uptimes during the day are below 0.5, that is usually a clear sign that something is probably wrong with the instance.')),
+                    target="popover_filter", trigger="hover"
+                ),
+            ], width=1),
         ]),
         # Absolute traffic
         dbc.Row([
@@ -386,34 +407,12 @@ app.layout = dbc.Container(
         # Explore with x- and y-axis scatter
         dbc.Row([
             dbc.Col([
-                html.H4(_('Explore'), style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 00}),
+                html.H4(_('Street ranking by traffic type'), style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 30}),
             ], width=12
             ),
         ]),
         dbc.Row([
             dbc.Col([
-                 # Select x-axis
-                html.H6(_('X-Axis:'), style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 10}),
-                dcc.RadioItems(
-                    id='radio_x_axis',
-                    options=[
-                        {'label': _('Pedestrians'), 'value': 'ped_total'},
-                        {'label': _('Bikes'), 'value': 'bike_total'},
-                        {'label': _('Cars'), 'value': 'car_total'},
-                        {'label': _('Heavy'), 'value': 'heavy_total'},
-                        {'label': _('Street Length'), 'value': 'osm.length'},
-                        {'label': _('Max Speed'), 'value': 'osm.maxspeed'}
-                    ],
-                    value='car_total',
-                    inline=True,
-                    inputStyle={"margin-right": "5px", "margin-left": "20px"},
-                    style={'margin-left': 40, 'margin-bottom': 00},
-                ),
-            ], width=6
-            ),
-            dbc.Col([
-                # Select y-axis
-                html.H6(_('Y-Axis:'), style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 10}),
                 dcc.RadioItems(
                     id='radio_y_axis',
                     options=[
@@ -421,15 +420,13 @@ app.layout = dbc.Container(
                         {'label': _('Bikes'), 'value': 'bike_total'},
                         {'label': _('Cars'), 'value': 'car_total'},
                         {'label': _('Heavy'), 'value': 'heavy_total'},
-                        {'label': _('Street Length'), 'value': 'osm.length'},
-                        {'label': _('Max Speed'), 'value': 'osm.maxspeed'}
                     ],
-                    value='ped_total',
+                    value='car_total',
                     inline=True,
                     inputStyle={"margin-right": "5px", "margin-left": "20px"},
-                    style={'margin-left': 00, 'margin-bottom': 00, 'margin-right': 40},
+                    style={'margin-left': 40, 'margin-bottom': 00, 'margin-right': 40},
                 ),
-            ], width=6
+            ], width=12
             ),
         ]),
         html.Br(),
@@ -486,6 +483,8 @@ def update_map(street_name):
     lon_str = idx['x'].values[0]
     lat_str = idx['y'].values[0]
 
+    sep = '&nbsp;|&nbsp;'
+
     street_map = px.line_map(df_map, lat='y', lon='x', line_group='segment_id', hover_name = 'osm.name', color= 'map_line_color', color_discrete_map= {
         _('More bikes than cars'): ADFC_green,
         _('More cars than bikes'): ADFC_blue,
@@ -497,7 +496,31 @@ def update_map(street_name):
 
     street_map.update_traces(line_width=5)
     street_map.update_layout(margin=dict(l=40, r=20, t=40, b=30))
+    street_map.update_layout(legend_title=_('Street color'))
     street_map.update_layout(legend=dict(yanchor="top", y=0.99, xanchor="right", x=0.99))
+    street_map.update_layout(annotations=[
+        dict(
+            text=(
+                sep.join([
+                    '<a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+                    '<a href="https://telraam.net">Telraam</a>',
+                    '<a href="https://www.berlin.de/sen/uvk/mobilitaet-und-verkehr/verkehrsplanung/radverkehr/weitere-radinfrastruktur/zaehlstellen-und-fahrradbarometer/">SenUMVK Berlin</a>',
+                    '<a href="https://berlin-zaehlt.de">Berlin zählt Mobilität<br></a>'
+                ]) + '' +
+                sep.join([
+                    '<a href="https://github.com/DLR-TS/we-count">GitHub</a>',
+                    '<a href="/csv">CSV data</a> under <a href="https://creativecommons.org/licenses/by/4.0/">CC-BY 4.0</a> and <a href="https://www.govdata.de/dl-de/by-2-0">dl-de/by-2-0</a>'
+                ])
+            ),
+            showarrow=False,
+            align='left',
+            xref='paper',
+            yref='paper',
+            x=0,
+            y=0
+        )
+    ])
+
     return street_map
 
 ### General traffic callback ###
@@ -516,11 +539,10 @@ def update_map(street_name):
     Input(component_id="date_filter", component_property="end_date"),
     Input(component_id='range_slider', component_property='value'),
     Input(component_id='toggle_uptime_filter', component_property='value'),
-    Input(component_id='radio_x_axis', component_property='value'),
     Input(component_id='radio_y_axis', component_property='value'),
 )
 
-def update_graphs(radio_time_division, radio_time_unit, street_name, start_date, end_date, hour_range, toggle_uptime_filter, radio_x_axis, radio_y_axis):
+def update_graphs(radio_time_division, radio_time_unit, street_name, start_date, end_date, hour_range, toggle_uptime_filter, radio_y_axis):
 
     # If uptime filter changed, reload traffic_df_upt
     if 'filter_uptime_selected' in toggle_uptime_filter:
@@ -702,26 +724,28 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, start_date,
         annotation['font'] = {'size': 14}
 
     # Create explorer chart
-    df_sc_explore = traffic_df_upt_dt_str
+    df_sc_explore = traffic_df_upt_dt
+    df_sc_explore = df_sc_explore.groupby(by=['osm.name', 'street_selection'], as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
+    df_sc_explore = df_sc_explore.sort_values(by=[radio_y_axis], ascending=False)
+    #annotation_index = df_sc_explore.loc[df_sc_explore['osm.name'] == street_name]
+    #annotation_x = annotation_index['osm.name'].values[0]
+    #annotation_y = annotation_index[radio_y_axis].values[0]
 
-    sc_explore = px.scatter(df_sc_explore,
-        x=radio_x_axis, y=radio_y_axis,
-        facet_col='street_selection',
-        category_orders={'street_selection': [street_name, _('All')]},
-        facet_col_spacing=0.04,
+    sc_explore = px.bar(df_sc_explore,
+        x='osm.name', y=radio_y_axis,
         color=radio_y_axis,
         color_continuous_scale='temps',
-        labels={'ped_total': _('Pedestrians'), 'bike_total': _('Bikes'), 'car_total': _('Cars'), 'heavy_total': _('Heavy'), 'osm.length': _('Street Length'), 'osm.maxspeed': _('Max Speed')},
-        title=_('Absolute traffic')
+        labels={'ped_total': _('Pedestrians'), 'bike_total': _('Bikes'), 'car_total': _('Cars'), 'heavy_total': _('Heavy'), 'osm.length': _('Street Length'), 'osm.maxspeed': _('Max Speed'), 'osm.name': _('Street')},
+        title=_('Absolute traffic') + ' - ' + street_name + _(' (segment no:') + segment_id + ')',
+        height=600
     )
 
-    sc_explore.update_yaxes(matches=None)
     sc_explore.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
-    sc_explore.for_each_annotation(lambda a: a.update(text=a.text.replace(street_name, street_name + _(' (segment no:') + segment_id + ')')))
+    #sc_explore.add_annotation(x=10, y=annotation_y, text= street_name + _(' (segment no:') + segment_id + ')', showarrow=False)
     sc_explore.update_layout(legend_title_text=_('Traffic Type'))
     sc_explore.update_layout({'plot_bgcolor': ADFC_palegrey,'paper_bgcolor': ADFC_palegrey})
     sc_explore.update_layout(yaxis_title= f'{radio_y_axis}')
-    sc_explore.for_each_yaxis(lambda yaxis: yaxis.update(showticklabels=True))
+    #sc_explore.for_each_yaxis(lambda yaxis: yaxis.update(showticklabels=True))
     for annotation in sc_explore.layout.annotations:
         annotation['font'] = {'size': 14}
 

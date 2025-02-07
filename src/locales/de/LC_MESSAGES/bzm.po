@@ -91,6 +91,10 @@ msgstr ""
 msgid "Set hour range:"
 msgstr "Stelle Zeitfenster ein:"
 
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:248
+msgid " Hour"
+msgstr " Uhr"
+
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:256
 msgid "always_visible"
 msgstr "immer sichtbar"
@@ -307,6 +311,16 @@ msgstr ""
 "Eine hohe Verfügbarkeit von 0,7-0,8 bedeutet immer sehr gute Daten. Die erste und die letzte "
 "Tagesstunde weisen immer geringere Verfügbarkeiten auf. Wenn die Verfügbarkeiten während "
 " des Tages unter 0,5 liegen, ist das normalerweise ein klares Zeichen dafür, dass mit der Instanz wahrscheinlich etwas nicht stimmt."
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:321
+msgid ""
+"The V85 is a widely used indicator in the world of mobility and road safety, "
+"as it is deemed to be representative of the speed one can reasonably "
+"maintain on a road."
+msgstr ""
+"Der V85-Wert ist in der Welt der Mobilität und Verkehrssicherheit ein "
+"weit verbreiteter Indikator, da er als repräsentativ für die Geschwindigkeit "
+"gilt, die auf einer Straße vernünftigerweise eingehalten werden kann."
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:501
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:545

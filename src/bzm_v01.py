@@ -4,7 +4,7 @@
 
 # @file    bzm_v01.py
 # @author  Egbert Klaassen
-# @date    2025-02-06
+# @date    2025-02-07
 
 # traffic_df        - dataframe with measured traffic data file
 # geo_df            - geopandas dataframe, street coordinates for px.line_map
@@ -117,7 +117,6 @@ def update_selected_street(df, segment_id, street_name):
 
     # Add selected street to all streets
     traffic_df_upt_dt_str = df._append(df_str, ignore_index=True)
-
     return traffic_df_upt_dt_str
 
 # Initialize constants, variables and get data
@@ -134,6 +133,8 @@ ADFC_pink = '#EB9AAC'
 
 street_name = 'Köpenicker Straße'
 segment_id = '9000006435'
+
+zoom_factor = 11
 
 language = 'de'
 update_language(language)
@@ -268,7 +269,7 @@ app.layout = dbc.Container(
                 html.Hr(),
                 html.Span([html.H4(_('Traffic type - selected street'),
                                    style={'margin-top': 20, 'margin-bottom': 30, 'display': 'inline-block'}),
-                           html.I(className='bi bi-info-circle-fill h6', id='popover_traffic_type', style={'margin-left': 5, 'margin-top': 20, 'margin-bottom': 30, 'display': 'inline-block', 'color': ADFC_lightblue})]),
+                           html.I(className='bi bi-info-circle-fill h6', id='popover_traffic_type', style={'margin-left': 5, 'margin-top': 20, 'margin-bottom': 30, 'display': 'inline-block', 'color': ADFC_lightgrey})]),
                 dbc.Popover(
                     dbc.PopoverBody(_('Traffic type split of the currently selected street, based on currently selected date and hour range.')),
                     target="popover_traffic_type",
@@ -290,10 +291,10 @@ app.layout = dbc.Container(
                     max= max_hour,
                     step=1,
                     value = hour_range,
-                    tooltip={'always_visible': True, 'template': "{value} hour"}),
+                    tooltip={'always_visible': True, 'placement' : 'bottom', 'template': "{value}" + _(" Hour")}),
             ], width=6),
             dbc.Col([
-                html.H6(_('Pick date range:'), style={'margin-left': 00, 'margin-right': 40, 'margin-top': 00, 'margin-bottom': 30}),
+                html.H6(_('Pick date range:'), style={'margin-left': 00, 'margin-right': 40, 'margin-top': 10, 'margin-bottom': 30}),
                 # Date picker
                 dcc.DatePickerRange(
                     id="date_filter",
@@ -315,13 +316,13 @@ app.layout = dbc.Container(
                 ),
             ], width=2),
             dbc.Col([
-                html.Span([html.I(className='bi bi-info-circle-fill h6', id='popover_filter', style={'margin-top': 55, 'display': 'inline-block', 'color': ADFC_lightblue})]),
+                html.Span([html.I(className='bi bi-info-circle-fill h6', id='popover_filter', style={'margin-top': 55, 'display': 'inline-block', 'color': ADFC_lightgrey})]),
                 dbc.Popover(
                     dbc.PopoverBody(_('A high 0.7-0.8 uptime will always mean very good data. The first and last daylight hour of the day will always have lower uptimes. If uptimes during the day are below 0.5, that is usually a clear sign that something is probably wrong with the instance.')),
                     target="popover_filter", trigger="hover"
                 ),
             ], width=1),
-        ]),
+        ], style={'margin-left': 40, 'margin-right': 40, 'background-color': ADFC_skyblue, 'opacity': 1.0}, className='rounded bg-light'),
         # Absolute traffic
         dbc.Row([
             dbc.Col([
@@ -398,7 +399,20 @@ app.layout = dbc.Container(
         ]),
         dbc.Row([
             dbc.Col([
-                html.H4(_('v85 car speed'),style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 00}),
+                #html.H4(_('v85 car speed'),style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 00}),
+
+                html.Span([html.H4(_('v85 car speed'),
+                                   style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 00, 'display': 'inline-block'}),
+                           html.I(className='bi bi-info-circle-fill h6', id='popover_v85_speed',
+                                  style={'margin-left': 5, 'margin-top': 30, 'margin-bottom': 00,
+                                         'display': 'inline-block', 'color': ADFC_lightgrey})]),
+                dbc.Popover(
+                    dbc.PopoverBody(
+                        _('The V85 is a widely used indicator in the world of mobility and road safety, as it is deemed to be representative of the speed one can reasonably maintain on a road.')),
+                    target="popover_v85_speed",
+                    trigger="hover"
+                ),
+
                 dcc.Graph(id='bar_v85', figure={},
                           style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 30})
             ], width=12
@@ -492,9 +506,9 @@ def update_map(street_name):
         _('Over 5x more cars'): ADFC_crimson,
         _('Over 10x more cars'): ADFC_pink,
         _('Inactive - no data'): ADFC_lightgrey},
-        map_style="streets", center= dict(lat=lat_str, lon=lon_str), height=600, zoom=11)
+        map_style="streets", center= dict(lat=lat_str, lon=lon_str), height=600, zoom= zoom_factor)
 
-    street_map.update_traces(line_width=5)
+    street_map.update_traces(line_width=5, opacity=0.7)
     street_map.update_layout(margin=dict(l=40, r=20, t=40, b=30))
     street_map.update_layout(legend_title=_('Street color'))
     street_map.update_layout(legend=dict(yanchor="top", y=0.99, xanchor="right", x=0.99))
@@ -504,12 +518,12 @@ def update_map(street_name):
                 sep.join([
                     '<a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
                     '<a href="https://telraam.net">Telraam</a>',
-                    '<a href="https://www.berlin.de/sen/uvk/mobilitaet-und-verkehr/verkehrsplanung/radverkehr/weitere-radinfrastruktur/zaehlstellen-und-fahrradbarometer/">SenUMVK Berlin</a>',
-                    '<a href="https://berlin-zaehlt.de">Berlin zählt Mobilität<br></a>'
+                    '<a href="https://www.berlin.de/sen/uvk/mobilitaet-und-verkehr/verkehrsplanung/radverkehr/weitere-radinfrastruktur/zaehlstellen-und-fahrradbarometer/">SenUMVK Berlin<br></a>'
+                    #'<a href="https://berlin-zaehlt.de">Berlin zählt Mobilität<br></a>'
                 ]) + '' +
                 sep.join([
                     '<a href="https://github.com/DLR-TS/we-count">GitHub</a>',
-                    '<a href="/csv">CSV data</a> under <a href="https://creativecommons.org/licenses/by/4.0/">CC-BY 4.0</a> and <a href="https://www.govdata.de/dl-de/by-2-0">dl-de/by-2-0</a>'
+                    '<a href="https://berlin-zaehlt.de/csv/">CSV data</a> under <a href="https://creativecommons.org/licenses/by/4.0/">CC-BY 4.0</a> and <a href="https://www.govdata.de/dl-de/by-2-0">dl-de/by-2-0</a>'
                 ])
             ),
             showarrow=False,
@@ -727,25 +741,28 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, start_date,
     df_sc_explore = traffic_df_upt_dt
     df_sc_explore = df_sc_explore.groupby(by=['osm.name', 'street_selection'], as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
     df_sc_explore = df_sc_explore.sort_values(by=[radio_y_axis], ascending=False)
-    #annotation_index = df_sc_explore.loc[df_sc_explore['osm.name'] == street_name]
-    #annotation_x = annotation_index['osm.name'].values[0]
-    #annotation_y = annotation_index[radio_y_axis].values[0]
+    df_sc_explore.reset_index(inplace=True)
+
+    # Assess x and y for annotation
+    annotation_index= df_sc_explore[df_sc_explore['osm.name'] == street_name].index.item()
+    annotation_x = annotation_index
+    annotation_y = df_sc_explore[radio_y_axis].values[annotation_index]
 
     sc_explore = px.bar(df_sc_explore,
         x='osm.name', y=radio_y_axis,
         color=radio_y_axis,
         color_continuous_scale='temps',
         labels={'ped_total': _('Pedestrians'), 'bike_total': _('Bikes'), 'car_total': _('Cars'), 'heavy_total': _('Heavy'), 'osm.length': _('Street Length'), 'osm.maxspeed': _('Max Speed'), 'osm.name': _('Street')},
-        title=_('Absolute traffic') + ' - ' + street_name + _(' (segment no:') + segment_id + ')',
-        height=600
+        title=_('Absolute traffic'),
+        height=600,
     )
 
     sc_explore.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
-    #sc_explore.add_annotation(x=10, y=annotation_y, text= street_name + _(' (segment no:') + segment_id + ')', showarrow=False)
+    sc_explore.add_annotation(x=annotation_x, y=annotation_y, text= street_name + _('<br>(segment no:') + segment_id + ')', showarrow=True)
+    sc_explore.update_annotations(ax=0, ay=-40, arrowhead=2, arrowsize=2, arrowwidth = 1, arrowcolor= ADFC_darkgrey, xanchor='left')
     sc_explore.update_layout(legend_title_text=_('Traffic Type'))
     sc_explore.update_layout({'plot_bgcolor': ADFC_palegrey,'paper_bgcolor': ADFC_palegrey})
     sc_explore.update_layout(yaxis_title= f'{radio_y_axis}')
-    #sc_explore.for_each_yaxis(lambda yaxis: yaxis.update(showticklabels=True))
     for annotation in sc_explore.layout.annotations:
         annotation['font'] = {'size': 14}
 

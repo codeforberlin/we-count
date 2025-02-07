@@ -253,22 +253,15 @@ app.layout = dbc.Container(
             # General controls
             dbc.Col([
                 # Street drop down
-                html.H4(_('Select street:'), style={'margin-top': 50, 'margin-bottom': 10}),
-
-                # html.A(
-                #     "Dash documentation.",
-                #     href="https://dash.plotly.com/",
-                #     target="_blank",
-                #     style={"display": "inline"}
-                # ),
-
+                html.H4(_('Select street:'), style={'margin-top': 50, 'margin-bottom': 20}),
                 dcc.Dropdown(id='street_name_dd',
                     options=sorted([{'label': i, 'value': i} for i in traffic_df['osm.name'].unique()], key=lambda x: x['label']),
-                    value=street_name
+                    value=street_name,
+                    style={'margin-top': 10, 'margin-bottom': 30}
                 ),
                 html.Hr(),
                 html.Span([html.H4(_('Traffic type - selected street'),
-                                   style={'margin-top': 20, 'margin-bottom': 30, 'display': 'inline-block'}),
+                                   style={'margin-top': 00, 'margin-bottom': 20, 'display': 'inline-block'}),
                            html.I(className='bi bi-info-circle-fill h6', id='popover_traffic_type', style={'margin-left': 5, 'margin-top': 20, 'margin-bottom': 30, 'display': 'inline-block', 'color': ADFC_lightgrey})]),
                 dbc.Popover(
                     dbc.PopoverBody(_('Traffic type split of the currently selected street, based on currently selected date and hour range.')),
@@ -277,13 +270,14 @@ app.layout = dbc.Container(
                 ),
                 # Pie chart
                 dcc.Graph(id='pie_traffic', figure={}),
-                html.Hr(),
+                #html.Hr(),
             ], width=4),
         ]),
-        # Date/Time selection
+        # Date/Time selection and Uptime filter
         dbc.Row([
+            html.Hr(),
             dbc.Col([
-                html.H6(_('Set hour range:'), style={'margin-left': 40, 'margin-right': 40, 'margin-top': 10, 'margin-bottom': 30}),
+                html.H6(_('Set hour range:'), style={'margin-left': 40, 'margin-right': 40, 'margin-top': 10, 'margin-bottom': 10}),
                 # Hour slice
                 dcc.RangeSlider(
                     id='range_slider',
@@ -294,7 +288,7 @@ app.layout = dbc.Container(
                     tooltip={'always_visible': True, 'placement' : 'bottom', 'template': "{value}" + _(" Hour")}),
             ], width=6),
             dbc.Col([
-                html.H6(_('Pick date range:'), style={'margin-left': 00, 'margin-right': 40, 'margin-top': 10, 'margin-bottom': 30}),
+                html.H6(_('Pick date range:'), style={'margin-left': 00, 'margin-right': 40, 'margin-top': 10, 'margin-bottom': 10}),
                 # Date picker
                 dcc.DatePickerRange(
                     id="date_filter",
@@ -312,17 +306,18 @@ app.layout = dbc.Container(
                     id='toggle_uptime_filter',
                     options=[{'label': _(' Filter uptime > 0.7'), 'value': 'filter_uptime_selected'}],
                     value= ['filter_uptime_selected'],
-                    style = {'color' : 'lightgrey', 'font_size' : 14, 'margin-left': 55, 'margin-top': 55, 'margin-bottom': 30}
+                    style = {'color' : ADFC_darkgrey, 'font_size' : 14, 'margin-left': 40, 'margin-top': 40, 'margin-bottom': 30}
                 ),
             ], width=2),
             dbc.Col([
-                html.Span([html.I(className='bi bi-info-circle-fill h6', id='popover_filter', style={'margin-top': 55, 'display': 'inline-block', 'color': ADFC_lightgrey})]),
+                html.Span([html.I(className='bi bi-info-circle-fill h6', id='popover_filter', style={'margin-top': 40, 'display': 'inline-block', 'color': ADFC_lightgrey})]),
                 dbc.Popover(
                     dbc.PopoverBody(_('A high 0.7-0.8 uptime will always mean very good data. The first and last daylight hour of the day will always have lower uptimes. If uptimes during the day are below 0.5, that is usually a clear sign that something is probably wrong with the instance.')),
                     target="popover_filter", trigger="hover"
                 ),
             ], width=1),
-        ], style={'margin-left': 40, 'margin-right': 40, 'background-color': ADFC_skyblue, 'opacity': 1.0}, className='rounded bg-light'),
+        ], style={'margin-left': 40, 'margin-right': 40}, className='rounded'),
+        #], style={'margin-left': 40, 'margin-right': 40, 'background-color': ADFC_palegrey, 'opacity': 0.7}, className='rounded bg-light'),
         # Absolute traffic
         dbc.Row([
             dbc.Col([
@@ -450,6 +445,39 @@ app.layout = dbc.Container(
             ], width=12
             ),
         ]),
+
+
+        #'<a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+
+        # Date/Time selection and Uptime filter
+        dbc.Row([
+            html.H4(_('Feedback and contact'),
+                    style={'margin-left': 40, 'margin-right': 40, 'margin-top': 10, 'margin-bottom': 30}),
+            dbc.Col([
+                html.H6([_('More information about the '),
+                        html.A(_('Berlin Zählt Mobilität'), href="https://berlin.adfc.de/artikel/berlin-zaehlt-mobilitaet-adfc-berlin-dlr-rufen-zu-citizen-science-projekt-auf", target="_blank"),_(' initiative.'),],
+                        style={'margin-left': 40, 'margin-right': 40, 'margin-top': 10, 'margin-bottom': 30}
+                       ),
+                html.H6([_('Request a counter at the '),
+                        html.A(_('Citizen Science-Projekt'), href="https://telraam.net/en/candidates/berlin-zaehlt-mobilitaet/berlin-zaehlt-mobilitaet", target="_blank"),".",],
+                        style={'margin-left': 40, 'margin-right': 40, 'margin-top': 10, 'margin-bottom': 30}
+                       ),
+                html.H6([_('Data protection around the '),
+                        html.A(_('Telraam camera'), href="https://telraam.net/home/blog/telraam-privacy", target="_blank"),_(' measurements.'),],
+                        style={'margin-left': 40, 'margin-right': 40, 'margin-top': 10, 'margin-bottom': 30}
+                       ),
+            ], width=6),
+            dbc.Col([
+                html.H6([_('Contribute to the dashboard development ('),
+                        html.A(_('GitHub'), href="https://github.com/codeforberlin/we-count", target="_blank"),").",],
+                        style={'margin-left': 40, 'margin-right': 40, 'margin-top': 10, 'margin-bottom': 30}
+                       ),
+                html.H6([_('For dashboard improvement- or new functionality suggestions,'), html.Br(), _('EMAIL: '),
+                        html.A("contact@example.com", href="mailto:contact@example.com"),"."],
+                        style={'margin-left': 40, 'margin-right': 40, 'margin-top': 10, 'margin-bottom': 30},
+                        ),
+            ], width=6),
+        ], style={'margin-left': 40, 'margin-right': 40, 'background-color': ADFC_skyblue, 'opacity': 0.7}, className='rounded'),
     html.Br(),
     ],
     fluid = True,
@@ -512,6 +540,11 @@ def update_map(street_name):
     street_map.update_layout(margin=dict(l=40, r=20, t=40, b=30))
     street_map.update_layout(legend_title=_('Street color'))
     street_map.update_layout(legend=dict(yanchor="top", y=0.99, xanchor="right", x=0.99))
+    # street_map.add_shape(type="circle",
+    #               xref="x", yref="y",
+    #               x0=1, y0=1, x1=3, y1=3,
+    #               line_color="LightSeaGreen",
+    #               )
     street_map.update_layout(annotations=[
         dict(
             text=(

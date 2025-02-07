@@ -231,6 +231,63 @@ msgstr "Autos"
 msgid "Heavy"
 msgstr "LKWs"
 
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:454
+msgid "Feedback and contact"
+msgstr "Feedback und Kontakt"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:457
+msgid "More information about the "
+msgstr "Weitere Informationen zur "
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:458
+msgid "Berlin Zählt Mobilität"
+msgstr "Berlin Zählt Mobilität"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:458
+msgid " initiative."
+msgstr " Initiative."
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:461
+msgid "Request a counter at the "
+msgstr "Fragen Sie nach einen Zähler beim "
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:462
+msgid "Citizen Science-Projekt"
+msgstr "Citizen Science-Projekt"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:465
+msgid "Data protection around the "
+msgstr "Datenschutz rund um die "
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:466
+msgid "Telraam camera"
+msgstr "Telraam Kamera"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:466
+msgid " measurements."
+msgstr " Messungen."
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:471
+msgid "Contribute to the dashboard development ("
+msgstr "Tragen Sie zur Dashboard-Entwicklung bei ("
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:472
+msgid "GitHub"
+msgstr "GitHub"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:475
+msgid "For dashboard improvement- or new functionality suggestions,"
+msgstr "Für Vorschläge zur Verbesserung des Dashboards oder zu neuen Funktionen,"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:475
+msgid "EMAIL: "
+msgstr "EMAIL:"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:541
+msgid "Street color"
+msgstr "Straßenfarbe"
+
+
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:366
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:386
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:644

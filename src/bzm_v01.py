@@ -16,7 +16,7 @@ import dash_bootstrap_components as dbc
 import geopandas as gpd
 import pandas as pd
 import plotly.express as px
-from dash import Dash, html, dcc, Output, Input, callback
+from dash import Dash, html, dcc, Output, Input, callback, ctx
 from dash.exceptions import PreventUpdate
 import datetime
 
@@ -92,8 +92,8 @@ def filter_dt(df, start_date, end_date, hour_range):
     df_dates = df.loc[df['date_local'].between(start_date, end_date)]
 
     # Get min/max street hours, add 1 to max for slider representation
-    min_hour = df["hour"].min()
-    max_hour = df["hour"].max()
+    min_hour = df_dates["hour"].min()
+    max_hour = df_dates["hour"].max()
     if max_hour < 24:
         max_hour = max_hour + 1
 
@@ -119,6 +119,11 @@ def update_selected_street(df, segment_id, street_name):
     traffic_df_upt_dt_str = df._append(df_str, ignore_index=True)
     return traffic_df_upt_dt_str
 
+def convert(date_time, format):
+    datetime_obj = datetime.datetime.strptime(date_time, format)
+    return datetime_obj
+
+
 # Initialize constants, variables and get data
 ADFC_orange = '#D78432'
 ADFC_green = '#1C9873'
@@ -143,11 +148,6 @@ geo_df, json_df_features, traffic_df = retrieve_data()
 
 # Start with traffic df with uptime filtered
 traffic_df_upt = filter_uptime(traffic_df)
-
-def convert(date_time, format):
-    #format = '%Y-%m-%d %H:%M:%S'
-    datetime_obj = datetime.datetime.strptime(date_time, format)
-    return datetime_obj
 
 # traffic_df_upt_dt
 format_string = '%Y-%m-%d %H:%M:%S'
@@ -204,7 +204,6 @@ traffic_df_id_bc['segment_id'] = traffic_df_id_bc['segment_id'].astype(int)
 traffic_df_id_bc.set_index('segment_id', inplace=True)
 # Create map info by joining geo_df_map_info with map_line_color from traffic_df_id_bc (based on bike/car ratios)
 df_map = df_map_base.join(traffic_df_id_bc)
-
 # Remove rows without osm.name
 nan_rows = df_map[df_map['osm.name'].isnull()]
 df_map = df_map.drop(nan_rows.index)
@@ -521,6 +520,12 @@ def get_street_name(clickData):
 
 def update_map(street_name):
 
+    callback_trigger = ctx.triggered_id
+    if callback_trigger == 'street_name_dd':
+        zoom_factor = 13
+    else:
+        zoom_factor = 11
+
     idx = df_map.loc[df_map['osm.name'] == street_name]
     lon_str = idx['x'].values[0]
     lat_str = idx['y'].values[0]
@@ -536,7 +541,7 @@ def update_map(street_name):
         _('Inactive - no data'): ADFC_lightgrey},
         map_style="streets", center= dict(lat=lat_str, lon=lon_str), height=600, zoom= zoom_factor)
 
-    street_map.update_traces(line_width=5, opacity=0.7)
+    street_map.update_traces(line_width=5, opacity=1.0)
     street_map.update_layout(margin=dict(l=40, r=20, t=40, b=30))
     street_map.update_layout(legend_title=_('Street color'))
     street_map.update_layout(legend=dict(yanchor="top", y=0.99, xanchor="right", x=0.99))
@@ -775,7 +780,6 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, start_date,
     df_sc_explore = df_sc_explore.groupby(by=['osm.name', 'street_selection'], as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
     df_sc_explore = df_sc_explore.sort_values(by=[radio_y_axis], ascending=False)
     df_sc_explore.reset_index(inplace=True)
-
     # Assess x and y for annotation
     annotation_index= df_sc_explore[df_sc_explore['osm.name'] == street_name].index.item()
     annotation_x = annotation_index

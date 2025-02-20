@@ -4,7 +4,7 @@
 
 # @file    bzm_v01.py
 # @author  Egbert Klaassen
-# @date    2025-02-07
+# @date    2025-02-20
 
 # traffic_df        - dataframe with measured traffic data file
 # geo_df            - geopandas dataframe, street coordinates for px.line_map
@@ -123,6 +123,36 @@ def convert(date_time, format):
     datetime_obj = datetime.datetime.strptime(date_time, format)
     return datetime_obj
 
+def get_bike_car_ratios(df):
+    traffic_df_id_bc = df.groupby(by=['segment_id'], as_index=False).agg(bike_total=('bike_total', 'sum'), car_total=('car_total', 'sum'))
+    traffic_df_id_bc['bike_car_ratio'] = traffic_df_id_bc['bike_total'] / traffic_df_id_bc['car_total']
+
+    bins = [0, 0.1, 0.2, 0.5, 1, 500]
+    labels = [_('Over 10x more cars'), _('Over 5x more cars'), _('Over 2x more cars'), _('More cars than bikes'),
+              _('More bikes than cars')]
+    traffic_df_id_bc['map_line_color'] = pd.cut(traffic_df_id_bc['bike_car_ratio'], bins=bins, labels=labels)
+
+    # Prepare traffic_df_id_bc for join operation
+    traffic_df_id_bc['segment_id'] = traffic_df_id_bc['segment_id'].astype(int)
+    traffic_df_id_bc.set_index('segment_id', inplace=True)
+
+    return traffic_df_id_bc
+
+def update_map_data(df_map_base, df):
+    # Create map info by joining geo_df_map_info with map_line_color from traffic_df_id_bc (based on bike/car ratios)
+    df_map = df_map_base.join(df)
+
+    nan_rows = df_map[df_map['osm.name'].isnull()]
+    df_map = df_map.drop(nan_rows.index)
+
+    # Add map_line_color category and add column information to cover inactive traffic counters
+    df_map['map_line_color'] = df_map['map_line_color'].cat.add_categories([_('Inactive - no data')])
+    df_map.fillna({"map_line_color": _("Inactive - no data")}, inplace=True)
+
+    # Sort data to get desired legend order
+    df_map = df_map.sort_values(by=['map_line_color'])
+
+    return df_map
 
 # Initialize constants, variables and get data
 ADFC_orange = '#D78432'
@@ -145,6 +175,12 @@ language = 'de'
 update_language(language)
 
 geo_df, json_df_features, traffic_df = retrieve_data()
+
+# Set weekday labels depending on language
+weekday_map = {0: _('Mon'), 1: _('Tue'), 2: _('Wed'), 3: _('Thu'), 4: _('Fri'), 5: _('Sat'), 6: _('Sun')}
+traffic_df['weekday'] = traffic_df['weekday'].map(weekday_map)
+month_map = {1: _('Jan'), 2: _('Feb'), 3: _('Mar'), 4: _('Apr'), 5: _('May'), 6: _('Jun'), 7: _('Jul'), 8: _('Aug'), 9: _('Sep'), 10: _('Oct'), 11: _('Nov'), 12: _('Dec')}
+traffic_df['month'] = traffic_df['month'].map(month_map)
 
 # Start with traffic df with uptime filtered
 traffic_df_upt = filter_uptime(traffic_df)
@@ -177,12 +213,14 @@ if not DEPLOYED:
     print('Add bike/car ratio column...')
 
 # Prepare consolidated bike/car ratios by segment_id
-traffic_df_id_bc = traffic_df.groupby(by=['segment_id'], as_index=False).agg(bike_total=('bike_total', 'sum'), car_total=('car_total', 'sum'))
-traffic_df_id_bc['bike_car_ratio'] = traffic_df_id_bc['bike_total']/traffic_df_id_bc['car_total']
+#traffic_df_id_bc = traffic_df.groupby(by=['segment_id'], as_index=False).agg(bike_total=('bike_total', 'sum'), car_total=('car_total', 'sum'))
+#traffic_df_id_bc['bike_car_ratio'] = traffic_df_id_bc['bike_total']/traffic_df_id_bc['car_total']
 
-bins = [0, 0.1, 0.2, 0.5, 1, 500]
-labels = [_('Over 10x more cars'), _('Over 5x more cars'), _('Over 2x more cars'),_('More cars than bikes'),_('More bikes than cars')]
-traffic_df_id_bc['map_line_color'] = pd.cut(traffic_df_id_bc['bike_car_ratio'], bins=bins, labels=labels)
+#bins = [0, 0.1, 0.2, 0.5, 1, 500]
+#labels = [_('Over 10x more cars'), _('Over 5x more cars'), _('Over 2x more cars'),_('More cars than bikes'),_('More bikes than cars')]
+#traffic_df_id_bc['map_line_color'] = pd.cut(traffic_df_id_bc['bike_car_ratio'], bins=bins, labels=labels)
+traffic_df_id_bc = get_bike_car_ratios(traffic_df_upt)
+#save_df(traffic_df_id_bc, 'traffic_df_id_bc - 1.xlsx')
 
 # Extract x y coordinates from geo_df (geopandas file)
 geo_df_coords = geo_df.get_coordinates()
@@ -191,30 +229,31 @@ geo_df_ids = geo_df[['segment_id']]
 # Join x y and segment_id into e new dataframe
 geo_df_map_info = geo_df_coords.join(geo_df_ids)
 
-# Prepare geo_df_map_info anf json_df_features for join operation
+# Prepare geo_df_map_info anf json_df_features and join
 geo_df_map_info['segment_id'] = geo_df_map_info['segment_id'].astype(int)
 geo_df_map_info.set_index('segment_id', drop= False, inplace=True)
 json_df_features['segment_id'] = json_df_features['segment_id'].astype(int)
 json_df_features.set_index('segment_id', inplace=True)
-# join geo_df_map_info anf json_df_features to get map info with name date (extract from geo_df json?)
+# join geo_df_map_info and json_df_features to get map info with name date (extract from geo_df json?)
 df_map_base = geo_df_map_info.join(json_df_features)
 
-# Prepare traffic_df_id_bc for joining
-traffic_df_id_bc['segment_id'] = traffic_df_id_bc['segment_id'].astype(int)
-traffic_df_id_bc.set_index('segment_id', inplace=True)
+# Prepare traffic_df_id_bc for join operation
+#traffic_df_id_bc['segment_id'] = traffic_df_id_bc['segment_id'].astype(int)
+#traffic_df_id_bc.set_index('segment_id', inplace=True)
 # Create map info by joining geo_df_map_info with map_line_color from traffic_df_id_bc (based on bike/car ratios)
-df_map = df_map_base.join(traffic_df_id_bc)
+#df_map = df_map_base.join(traffic_df_id_bc)
 # Remove rows without osm.name
-nan_rows = df_map[df_map['osm.name'].isnull()]
-df_map = df_map.drop(nan_rows.index)
+#nan_rows = df_map[df_map['osm.name'].isnull()]
+#df_map = df_map.drop(nan_rows.index)
 
 # Add map_line_color category and add column information to cover inactive traffic counters
-df_map['map_line_color'] = df_map['map_line_color'].cat.add_categories([_('Inactive - no data')])
-df_map.fillna({"map_line_color": _("Inactive - no data")}, inplace = True)
+#df_map['map_line_color'] = df_map['map_line_color'].cat.add_categories([_('Inactive - no data')])
+#df_map.fillna({"map_line_color": _("Inactive - no data")}, inplace = True)
 
 # Sort data to get desired legend order
-df_map = df_map.sort_values(by=['map_line_color'])
+#df_map = df_map.sort_values(by=['map_line_color'])
 
+df_map = update_map_data(df_map_base, traffic_df_id_bc)
 
 ### Run Dash app ###
 
@@ -357,7 +396,7 @@ app.layout = dbc.Container(
                     id='radio_time_unit',
                     options=[
                         {'label': _('Yearly'), 'value': 'year'},
-                        {'label': _('Monthly'), 'value': 'year_month'},
+                        {'label': _('Monthly'), 'value': 'month'},
                         {'label': _('Weekly'), 'value': 'weekday'},
                         {'label': _('Daily'), 'value': 'day'},
                         {'label': _('Hourly'), 'value': 'hour'}
@@ -396,7 +435,7 @@ app.layout = dbc.Container(
                 #html.H4(_('v85 car speed'),style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 00}),
 
                 html.Span([html.H4(_('v85 car speed'),
-                                   style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 00, 'display': 'inline-block'}),
+                                   style={'margin-left': 40, 'margin-right': 00, 'margin-top': 30, 'margin-bottom': 00, 'display': 'inline-block'}),
                            html.I(className='bi bi-info-circle-fill h6', id='popover_v85_speed',
                                   style={'margin-left': 5, 'margin-top': 30, 'margin-bottom': 00,
                                          'display': 'inline-block', 'color': ADFC_lightgrey})]),
@@ -516,16 +555,27 @@ def get_street_name(clickData):
 @callback(
     Output(component_id='street_map', component_property='figure'),
     Input(component_id='street_name_dd', component_property='value'),
+    Input(component_id="date_filter", component_property="end_date"),
+    Input(component_id='range_slider', component_property='value'),
 )
 
-def update_map(street_name):
+def update_map(street_name, date_filter, range_slider):
+
+    #df_map = pd.DataFrame()
+    #traffic_df_id_bc = get_bike_car_ratios(traffic_df_upt)
 
     callback_trigger = ctx.triggered_id
-    if callback_trigger == 'street_name_dd':
+    if (callback_trigger == 'street_name_dd'):
         zoom_factor = 13
+    elif (callback_trigger == 'range_slider') or (callback_trigger == 'date_filter'):
+        #traffic_df_upt_dt, min_date, max_date, min_hour, max_hour = filter_dt(traffic_df_upt, start_date, end_date, hour_range)
+        #traffic_df_id_bc = get_bike_car_ratios(traffic_df_upt_dt)
+        #save_df(traffic_df_id_bc, 'traffic_df_id_bc - update.xlsx')
+        zoom_factor = 11
     else:
         zoom_factor = 11
 
+    df_map = update_map_data(df_map_base, traffic_df_id_bc)
     idx = df_map.loc[df_map['osm.name'] == street_name]
     lon_str = idx['x'].values[0]
     lat_str = idx['y'].values[0]
@@ -560,7 +610,6 @@ def update_map(street_name):
                     #'<a href="https://berlin-zaehlt.de">Berlin zählt Mobilität<br></a>'
                 ]) + '' +
                 sep.join([
-                    '<a href="https://github.com/DLR-TS/we-count">GitHub</a>',
                     '<a href="https://berlin-zaehlt.de/csv/">CSV data</a> under <a href="https://creativecommons.org/licenses/by/4.0/">CC-BY 4.0</a> and <a href="https://www.govdata.de/dl-de/by-2-0">dl-de/by-2-0</a>'
                 ])
             ),
@@ -615,6 +664,7 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, start_date,
     # Create abs line chart
     df_line_abs_traffic = traffic_df_upt_dt_str.groupby(
         by=['street_selection', radio_time_division], as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
+    df_line_abs_traffic = df_line_abs_traffic.sort_values(by=[radio_time_division], ascending=True)
 
     # Set readable date format for day-view
     if radio_time_division == _('date'):
@@ -624,7 +674,9 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, start_date,
         x=radio_time_division, y=['ped_total', 'bike_total', 'car_total', 'heavy_total'],
         markers=True,
         facet_col='street_selection',
-        category_orders={'street_selection': [street_name, _('All')], 'weekday': [_('Mon'), _('Tue'), _('Wed'), _('Thu'), _('Fri'), _('Sat'), _('Sun')]},
+        category_orders={'street_selection': [street_name, _('All')],
+                        'weekday': [_('Mon'), _('Tue'), _('Wed'), _('Thu'), _('Fri'), _('Sat'), _('Sun')],
+                        'weekday': ['Mo.', 'Di.', 'Mi.', 'Do.', 'Fr.', 'Sa.', 'So.']},
         labels={'year': _('Year'), 'year_month': _('Month'), 'year_week': _('Week'), 'date': _('Day')},
         color_discrete_map={'ped_total': ADFC_lightblue, 'bike_total': ADFC_green, 'car_total': ADFC_orange, 'heavy_total': ADFC_crimson},
         facet_col_spacing=0.04,
@@ -659,18 +711,18 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, start_date,
 
     # Create average traffic bar chart
     df_bar_avg_traffic = traffic_df_upt_dt_str.groupby(by=[radio_time_unit, 'street_selection'], as_index=False).agg({'ped_total': 'mean', 'bike_total': 'mean', 'car_total': 'mean', 'heavy_total': 'mean'})
+    #df_bar_avg_traffic = df_bar_avg_traffic.sort_values(by=[radio_time_unit], ascending=True)
 
     bar_avg_traffic = px.bar(df_bar_avg_traffic,
         x=radio_time_unit, y=['ped_total', 'bike_total', 'car_total', 'heavy_total'],
         barmode='stack',
         facet_col='street_selection',
         category_orders={'street_selection': [street_name, _('All')],
-                         'weekday': [_('Mon'), _('Tue'), _('Wed'), _('Thu'), _('Fri'), _('Sat'), _('Sun')],
-                         'month': [_('Jan'), _('Feb'), _('Mar'), _('Apr'), _('May'), _('Jun'), _('Jul'), _('Aug'), _('Sep'), _('Oct'), _('Nov'), _('Dec')]},
-        labels={'year': _('Yearly'), 'year_month': _('Monthly'), 'weekday': _('Weekly'), 'day': _('Daily'), 'hour': _('Hourly')},
+                        'weekday': [_('Mon'), _('Tue'), _('Wed'), _('Thu'), _('Fri'), _('Sat'), _('Sun')],
+                        'month': [_('Jan'), _('Feb'), _('Mar'), _('Apr'), _('May'), _('Jun'), _('Jul'), _('Aug'), _('Sep'), _('Oct'), _('Nov'), _('Dec')]},
+    labels={'year': _('Yearly'), 'year_month': _('Monthly'), 'weekday': _('Weekly'), 'day': _('Daily'), 'hour': _('Hourly'), '1': 'Mon'},
         color_discrete_map={'ped_total': ADFC_lightblue, 'bike_total': ADFC_green, 'car_total': ADFC_orange, 'heavy_total': ADFC_crimson},
         facet_col_spacing=0.04,
-        #height=chart_height, width=chart_width,
         title=_('Average traffic count')
     )
 
@@ -751,11 +803,11 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, start_date,
         annotation['font'] = {'size': 14}
 
     # Create v85 graph
-    df_bar_v85 = traffic_df_upt_dt_str.groupby(by=['hour', 'street_selection'], as_index=False).agg({'v85': 'mean'})
+    df_bar_v85 = traffic_df_upt_dt_str.groupby(by=[_('hour'), 'street_selection'], as_index=False).agg({'v85': 'mean'})
 
     # Create v85 bar chart
     bar_v85 = px.bar(df_bar_v85,
-        x='hour', y='v85',
+        x=_('hour'), y='v85',
         color='v85',
         color_continuous_scale='temps',
         facet_col='street_selection',
@@ -780,6 +832,7 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, start_date,
     df_sc_explore = df_sc_explore.groupby(by=['osm.name', 'street_selection'], as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
     df_sc_explore = df_sc_explore.sort_values(by=[radio_y_axis], ascending=False)
     df_sc_explore.reset_index(inplace=True)
+
     # Assess x and y for annotation
     annotation_index= df_sc_explore[df_sc_explore['osm.name'] == street_name].index.item()
     annotation_x = annotation_index

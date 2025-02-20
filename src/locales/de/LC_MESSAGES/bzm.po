@@ -407,7 +407,7 @@ msgstr "Mär"
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:536
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:570
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:594
-msgid "Apr"
+msgid "Apr."
 msgstr "Apr"
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:536

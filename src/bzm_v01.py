@@ -4,7 +4,7 @@
 
 # @file    bzm_v01.py
 # @author  Egbert Klaassen
-# @date    2025-02-20
+# @date    2025-02-21
 
 # traffic_df        - dataframe with measured traffic data file
 # geo_df            - geopandas dataframe, street coordinates for px.line_map
@@ -19,6 +19,7 @@ import plotly.express as px
 from dash import Dash, html, dcc, Output, Input, callback, ctx
 from dash.exceptions import PreventUpdate
 import datetime
+from datetime import timedelta
 
 import bzm_get_data
 import common
@@ -83,6 +84,10 @@ def filter_uptime(df):
 
     return traffic_df_upt
 
+def convert(date_time, format_string):
+    datetime_obj = datetime.datetime.strptime(date_time, format_string)
+    return datetime_obj
+
 def filter_dt(df, start_date, end_date, hour_range):
 
     # Get min/max dates
@@ -90,6 +95,18 @@ def filter_dt(df, start_date, end_date, hour_range):
     max_date = df['date_local'].max()
     # Set selected dates
     df_dates = df.loc[df['date_local'].between(start_date, end_date)]
+
+    # Add delta timeframe
+    # delta = -14
+    # format_string = '%Y-%m-%d %H:%M:%S'
+    # start_date_dt = convert(start_date, format_string)
+    # alt_start_date_dt = start_date_dt + timedelta(days=delta)
+    # end_date_dt = convert(end_date, format_string)
+    # alt_end_date_dt = end_date_dt + timedelta(days=delta)
+    # alt_start_date = alt_start_date_dt.strftime(format_string)
+    # alt_end_date = alt_end_date_dt.strftime(format_string)
+
+    # df_dates_delta = df.loc[df['date_local'].between(alt_start_date, alt_end_date)]
 
     # Get min/max street hours, add 1 to max for slider representation
     min_hour = df_dates["hour"].min()
@@ -118,10 +135,6 @@ def update_selected_street(df, segment_id, street_name):
     # Add selected street to all streets
     traffic_df_upt_dt_str = df._append(df_str, ignore_index=True)
     return traffic_df_upt_dt_str
-
-def convert(date_time, format):
-    datetime_obj = datetime.datetime.strptime(date_time, format)
-    return datetime_obj
 
 def get_bike_car_ratios(df):
     traffic_df_id_bc = df.groupby(by=['segment_id'], as_index=False).agg(bike_total=('bike_total', 'sum'), car_total=('car_total', 'sum'))
@@ -186,10 +199,10 @@ traffic_df['month'] = traffic_df['month'].map(month_map)
 traffic_df_upt = filter_uptime(traffic_df)
 
 # traffic_df_upt_dt
-format_string = '%Y-%m-%d %H:%M:%S'
 start_date = traffic_df_upt['date_local'].min()
 end_date = traffic_df_upt['date_local'].max()
 
+format_string = '%Y-%m-%d %H:%M:%S'
 start_date_dt = convert(start_date, format_string)
 end_date_dt = convert(end_date, format_string)
 try_start_date = end_date_dt + datetime.timedelta(days=-13)
@@ -198,6 +211,7 @@ if try_start_date > start_date_dt:
     start_date = start_date_dt.strftime(format_string)
 
 hour_range = [traffic_df_upt["hour"].min(), traffic_df_upt["hour"].max()]
+
 traffic_df_upt_dt, min_date, max_date, min_hour, max_hour = filter_dt(traffic_df_upt, start_date, end_date, hour_range)
 
 # traffic_df_upt_dt_str
@@ -246,7 +260,11 @@ app.layout = dbc.Container(
     [
         dbc.Row([
             dbc.Col([
-                html.H1(_('Berlin Counts Mobility'), style={'margin-left': 40, 'margin-top': 20, 'margin-bottom': 00, 'margin-right': 40}, className='bg-#F2F2F2'),
+                #html.H1(_('Berlin Counts Mobility'), style={'margin-left': 40, 'margin-top': 20, 'margin-bottom': 00, 'margin-right': 40}, className='bg-#F2F2F2'),
+                html.Span([html.H1(_('Berlin Counts Mobility'), style={'margin-left': 40, 'margin-top': 20, 'margin-bottom': 00, 'display': 'inline-block'}),
+                           html.H6('Map info', id='popover_map_info', style={'margin-left': 550, 'margin-top': 20, 'margin-bottom': 00, 'display': 'inline-block', 'color': ADFC_lightgrey})]),
+                           # html.I(className='bi bi-info-circle-fill h6', id='popover_map_info', style={'margin-left': 5, 'margin-top': 20, 'margin-bottom': 30, 'display': 'inline-block', 'color': ADFC_lightgrey})]),
+                           dbc.Popover(dbc.PopoverBody(_('Note: street colors represent bike/car ratios based on all data available and do not change with date- or hour selection.')), target="popover_map_info", trigger="hover"),
             ], width=8),
             dbc.Col([
                 dcc.Dropdown(
@@ -275,9 +293,8 @@ app.layout = dbc.Container(
                     style={'margin-top': 10, 'margin-bottom': 30}
                 ),
                 html.Hr(),
-                html.Span([html.H4(_('Traffic type - selected street'),
-                                   style={'margin-top': 00, 'margin-bottom': 20, 'display': 'inline-block'}),
-                           html.I(className='bi bi-info-circle-fill h6', id='popover_traffic_type', style={'margin-left': 5, 'margin-top': 20, 'margin-bottom': 30, 'display': 'inline-block', 'color': ADFC_lightgrey})]),
+                html.Span([html.H4(_('Traffic type - selected street'), style={'margin-top': 10, 'margin-bottom': 20, 'display': 'inline-block'}),
+                html.I(className='bi bi-info-circle-fill h6', id='popover_traffic_type', style={'margin-left': 5, 'margin-top': 10, 'margin-bottom': 20, 'display': 'inline-block', 'align': 'top', 'color': ADFC_lightgrey})]),
                 dbc.Popover(
                     dbc.PopoverBody(_('Traffic type split of the currently selected street, based on currently selected date and hour range.')),
                     target="popover_traffic_type",
@@ -321,11 +338,11 @@ app.layout = dbc.Container(
                     id='toggle_uptime_filter',
                     options=[{'label': _(' Filter uptime > 0.7'), 'value': 'filter_uptime_selected'}],
                     value= ['filter_uptime_selected'],
-                    style = {'color' : ADFC_darkgrey, 'font_size' : 14, 'margin-left': 40, 'margin-top': 40, 'margin-bottom': 30}
+                    style = {'color' : ADFC_darkgrey, 'font_size' : 14, 'margin-left': 80, 'margin-top': 40, 'margin-bottom': 30}
                 ),
             ], width=2),
             dbc.Col([
-                html.Span([html.I(className='bi bi-info-circle-fill h6', id='popover_filter', style={'margin-top': 40, 'display': 'inline-block', 'color': ADFC_lightgrey})]),
+                html.Span([html.I(className='bi bi-info-circle-fill h6', id='popover_filter', style={'margin-top': 30, 'display': 'inline-block', 'color': ADFC_lightgrey})]),
                 dbc.Popover(
                     dbc.PopoverBody(_('A high 0.7-0.8 uptime will always mean very good data. The first and last daylight hour of the day will always have lower uptimes. If uptimes during the day are below 0.5, that is usually a clear sign that something is probably wrong with the instance.')),
                     target="popover_filter", trigger="hover"
@@ -461,9 +478,6 @@ app.layout = dbc.Container(
             ),
         ]),
 
-
-        #'<a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-
         # Date/Time selection and Uptime filter
         dbc.Row([
             html.H4(_('Feedback and contact'),
@@ -538,9 +552,6 @@ def get_street_name(clickData):
 
 def update_map(street_name, date_filter, range_slider):
 
-    #df_map = pd.DataFrame()
-    #traffic_df_id_bc = get_bike_car_ratios(traffic_df_upt)
-
     callback_trigger = ctx.triggered_id
     if (callback_trigger == 'street_name_dd'):
         zoom_factor = 13
@@ -569,11 +580,6 @@ def update_map(street_name, date_filter, range_slider):
     street_map.update_layout(margin=dict(l=40, r=20, t=40, b=30))
     street_map.update_layout(legend_title=_('Street color'))
     street_map.update_layout(legend=dict(yanchor="top", y=0.99, xanchor="right", x=0.99))
-    # street_map.add_shape(type="circle",
-    #               xref="x", yref="y",
-    #               x0=1, y0=1, x1=3, y1=3,
-    #               line_color="LightSeaGreen",
-    #               )
     street_map.update_layout(annotations=[
         dict(
             text=(
@@ -825,4 +831,4 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, start_date,
     return pie_traffic, line_abs_traffic, bar_avg_traffic, bar_perc_speed, bar_avg_speed, bar_v85, sc_explore
 
 if __name__ == "__main__":
-    app.run_server(debug=False)
+    app.run_server(debug=True)

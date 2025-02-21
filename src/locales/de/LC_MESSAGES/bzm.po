@@ -17,6 +17,10 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
+msgid "Note: street colors represent bike/car ratios based on all data available and do not change with date- or hour selection."
+msgstr "Hinweis: Die Straßenfarben stellen das Fahrrad-Auto-Verhältnis auf Grundlage aller verfügbaren Daten dar und ändern sich nicht mit der Datums- oder Stundenauswahl."
+
+
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:81
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:87
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:493
@@ -281,7 +285,7 @@ msgstr "Für Vorschläge zur Verbesserung des Dashboards oder zu neuen Funktione
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:475
 msgid "EMAIL: "
-msgstr "EMAIL:"
+msgstr "EMAIL: "
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:541
 msgid "Street color"

@@ -260,12 +260,12 @@ app.layout = dbc.Container(
     [
         dbc.Row([
             dbc.Col([
-                #html.H1(_('Berlin Counts Mobility'), style={'margin-left': 40, 'margin-top': 20, 'margin-bottom': 00, 'margin-right': 40}, className='bg-#F2F2F2'),
-                html.Span([html.H1(_('Berlin Counts Mobility'), style={'margin-left': 40, 'margin-top': 20, 'margin-bottom': 00, 'display': 'inline-block'}),
-                           html.H6('Map info', id='popover_map_info', style={'margin-left': 550, 'margin-top': 20, 'margin-bottom': 00, 'display': 'inline-block', 'color': ADFC_lightgrey})]),
-                           # html.I(className='bi bi-info-circle-fill h6', id='popover_map_info', style={'margin-left': 5, 'margin-top': 20, 'margin-bottom': 30, 'display': 'inline-block', 'color': ADFC_lightgrey})]),
-                           dbc.Popover(dbc.PopoverBody(_('Note: street colors represent bike/car ratios based on all data available and do not change with date- or hour selection.')), target="popover_map_info", trigger="hover"),
-            ], width=8),
+                html.H1(_('Berlin Counts Mobility'), style={'margin-left': 40, 'margin-top': 20, 'margin-bottom': 00, 'margin-right': 00}, className='bg-#F2F2F2'),
+            ], width=5),
+            dbc.Col([
+                html.H6('Map info', id='popover_map_info', className= 'text-end', style={'margin-left': 00, 'margin-top': 45, 'margin-bottom': 00, 'margin-right': 30, 'color': ADFC_darkgrey}),
+                dbc.Popover(dbc.PopoverBody(_('Note: street colors represent bike/car ratios based on all data available and do not change with date- or hour selection.')), target="popover_map_info", trigger="hover"),
+            ], width=3),
             dbc.Col([
                 dcc.Dropdown(
                 id='language-selector',
@@ -831,4 +831,4 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, start_date,
     return pie_traffic, line_abs_traffic, bar_avg_traffic, bar_perc_speed, bar_avg_speed, bar_v85, sc_explore
 
 if __name__ == "__main__":
-    app.run_server(debug=True)
+    app.run_server(debug=False)

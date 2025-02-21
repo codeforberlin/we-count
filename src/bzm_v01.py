@@ -338,7 +338,7 @@ app.layout = dbc.Container(
                     id='toggle_uptime_filter',
                     options=[{'label': _(' Filter uptime > 0.7'), 'value': 'filter_uptime_selected'}],
                     value= ['filter_uptime_selected'],
-                    style = {'color' : ADFC_darkgrey, 'font_size' : 14, 'margin-left': 80, 'margin-top': 40, 'margin-bottom': 30}
+                    style = {'color' : ADFC_darkgrey, 'font_size' : 14, 'margin-left': 30, 'margin-top': 40, 'margin-bottom': 30}
                 ),
             ], width=2),
             dbc.Col([
@@ -349,7 +349,7 @@ app.layout = dbc.Container(
                 ),
             ], width=1),
         ], style={'margin-left': 40, 'margin-right': 40}, className='rounded'),
-        #], style={'margin-left': 40, 'margin-right': 40, 'background-color': ADFC_palegrey, 'opacity': 0.7}, className='rounded bg-light'),
+
         # Absolute traffic
         dbc.Row([
             dbc.Col([
@@ -426,8 +426,6 @@ app.layout = dbc.Container(
         ]),
         dbc.Row([
             dbc.Col([
-                #html.H4(_('v85 car speed'),style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 00}),
-
                 html.Span([html.H4(_('v85 car speed'),
                                    style={'margin-left': 40, 'margin-right': 00, 'margin-top': 30, 'margin-bottom': 00, 'display': 'inline-block'}),
                            html.I(className='bi bi-info-circle-fill h6', id='popover_v85_speed',
@@ -758,7 +756,7 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, start_date,
         category_orders={'street_selection': [street_name, _('All')],
                          'weekday': [_('Mon'), _('Tue'), _('Wed'), _('Thu'), _('Fri'), _('Sat'), _('Sun')],
                          'month': [_('Jan'), _('Feb'), _('Mar'), _('Apr'), _('May'), _('Jun'), _('Jul'), _('Aug'), _('Sep'), _('Oct'), _('Nov'), _('Dec')]},
-        labels={'year': _('Yearly'), 'year_month': _('Monthly'), 'weekday': _('Weekly'), 'day': _('Daily'), 'hour': _('Hourly')}, #, 'street_selection': _('Street selection')},
+        labels={'year': _('Yearly'), 'year_month': _('Monthly'), 'weekday': _('Weekly'), 'day': _('Daily'), 'hour': _('Hourly')},
         color_discrete_map={'car_speed0': ADFC_lightblue, 'car_speed10': ADFC_lightblue,
                             'car_speed20': ADFC_lightblue, 'car_speed30': ADFC_green,
                             'car_speed40': ADFC_green, 'car_speed50': ADFC_orange,
@@ -776,16 +774,19 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, start_date,
     for annotation in bar_avg_speed.layout.annotations: annotation['font'] = {'size': 14}
 
     # Create v85 graph
-    df_bar_v85 = traffic_df_upt_dt_str.groupby(by=[_('hour'), 'street_selection'], as_index=False).agg({'v85': 'mean'})
+    df_bar_v85 = traffic_df_upt_dt_str.groupby(by=[radio_time_unit, 'street_selection'], as_index=False).agg({'v85': 'mean'})
 
     # Create v85 bar chart
     bar_v85 = px.bar(df_bar_v85,
-        x=_('hour'), y='v85',
+        x=radio_time_unit, y='v85',
         color='v85',
         color_continuous_scale='temps',
         facet_col='street_selection',
-        category_orders={'street_selection': [street_name, _('All')]},
+        category_orders={'street_selection': [street_name, _('All')],
+                         'weekday': [_('Mon'), _('Tue'), _('Wed'), _('Thu'), _('Fri'), _('Sat'), _('Sun')],
+                         'month': [_('Jan'), _('Feb'), _('Mar'), _('Apr'), _('May'), _('Jun'), _('Jul'), _('Aug'), _('Sep'), _('Oct'), _('Nov'), _('Dec')]},
         facet_col_spacing=0.04,
+        labels={'year': _('Yearly'), 'year_month': _('Monthly'), 'weekday': _('Weekly'), 'day': _('Daily'), 'hour': _('Hourly')},
         title=(_('Speed cars v85') + ' (' + start_date.split(' ')[0] + ' - ' + end_date.split(' ')[0] + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)')
     )
 

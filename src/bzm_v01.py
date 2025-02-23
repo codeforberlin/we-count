@@ -721,8 +721,6 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, start_date,
     bar_avg_traffic.for_each_yaxis(lambda yaxis: yaxis.update(showticklabels=True))
     for annotation in bar_avg_traffic.layout.annotations: annotation['font'] = {'size': 14}
 
-    #bzm_get_data.save_df(df_avg_traffic,'df_avg_traffic.xlsx')
-
     line_avg_delta_traffic = px.line(df_avg_traffic,
         x=radio_time_unit, y=['ped_total', 'bike_total', 'car_total', 'heavy_total'],
         facet_col='street_selection',

@@ -187,6 +187,9 @@ msgstr "Prozentuale Auto Geschwindigkeit - pro Zeiteinheit"
 msgid "Percentage car speed - average"
 msgstr "Prozentuale Auto Geschwindigkeit - Durchschnitt"
 
+msgid "until"
+msgstr "bis"
+
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:367
 msgid "v85 car speed"
 msgstr "v85 Geschwindigkeit"

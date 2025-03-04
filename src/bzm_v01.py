@@ -204,9 +204,11 @@ geo_df, json_df_features, traffic_df = retrieve_data()
 #print(day_of_week)
 
 # Set weekday labels depending on language
-weekday_map = {0: _('Mon'), 1: _('Tue'), 2: _('Wed'), 3: _('Thu'), 4: _('Fri'), 5: _('Sat'), 6: _('Sun')}
+weekday_map = {'Mon': _('Mon'), 'Tue': _('Tue'), 'Wed': _('Wed'), 'Thu': _('Thu'), 'Fri': _('Fri'), 'Sat': _('Sat'), 'Sun': _('Sun')}
+#weekday_map = {0: _('Mon'), 1: _('Tue'), 2: _('Wed'), 3: _('Thu'), 4: _('Fri'), 5: _('Sat'), 6: _('Sun')}
 traffic_df['weekday'] = traffic_df['weekday'].map(weekday_map)
-month_map = {1: _('Jan'), 2: _('Feb'), 3: _('Mar'), 4: _('Apr'), 5: _('May'), 6: _('Jun'), 7: _('Jul'), 8: _('Aug'), 9: _('Sep'), 10: _('Oct'), 11: _('Nov'), 12: _('Dec')}
+#month_map = {1: _('Jan'), 2: _('Feb'), 3: _('Mar'), 4: _('Apr'), 5: _('May'), 6: _('Jun'), 7: _('Jul'), 8: _('Aug'), 9: _('Sep'), 10: _('Oct'), 11: _('Nov'), 12: _('Dec')}
+month_map = {'Jan': _('Jan'), 'Feb': _('Feb'), 'Mar': _('Mar'), 'Apr': _('Apr'), 'May': _('May'), 'Jun': _('Jun'), 'Jul': _('Jul'), 'Aug': _('Aug'), 'Sep': _('Sep'), 'Oct': _('Oct'), 'Nov': _('Nov'), 'Dec': _('Dec')}
 traffic_df['month'] = traffic_df['month'].map(month_map)
 
 # Start with traffic df with uptime filtered
@@ -260,8 +262,8 @@ df_map_base = geo_df_map_info.join(json_df_features)
 # Prepare map data
 df_map = update_map_data(df_map_base, traffic_df_id_bc)
 
-### Run Dash app ###
 
+### Run Dash app ###
 if not DEPLOYED:
     print(_('Start dash...'))
 dbc_css = "https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates/dbc.min.css"
@@ -659,9 +661,9 @@ app.layout = dbc.Container(
 
 )
 def get_language(lang_code):
+    update_language(lang_code)
     if ctx.triggered_id == "language_selector":
         return "/"
-        update_language(lang_code)
     else:
         raise PreventUpdate
 

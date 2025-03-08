@@ -21,6 +21,7 @@ for p in sys.path:
 
 import sensor_positions
 import backup_data
+import bzm_get_data
 from common import GEO_JSON_NAME
 
 
@@ -36,6 +37,7 @@ if sensor_positions.main(["-j", json_path,
                       "--csv", os.path.join(csv_base, "bzm_telraam"),
                       "--csv-segments", os.path.join(csv_base, "segments", "bzm_telraam"),
                       "-s", secrets, "-v"])
+    bzm_get_data.main(["-v"])
 last_update = datetime.datetime.now(datetime.timezone.utc).isoformat(" ")[:-16]
 for jf in glob.glob(os.path.join(csv_base, "*.geojson")):
     kibana_path = os.path.join(csv_base, "kibana", os.path.basename(jf))

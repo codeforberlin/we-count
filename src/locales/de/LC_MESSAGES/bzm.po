@@ -59,6 +59,9 @@ msgstr "Mehr Zweiräder als Autos"
 msgid "Inactive - no data"
 msgstr "Inaktiv - keine Daten"
 
+msgid "Compare traffic periods"
+msgstr "Vergleiche Verkehrsperioden"
+
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:200
 msgid "Start dash..."
 msgstr "Starte Dash..."

@@ -4,7 +4,7 @@
 
 # @file    bzm_v01.py
 # @author  Egbert Klaassen
-# @date    2025-03-04
+# @date    2025-03-07
 
 # traffic_df        - dataframe with measured traffic data file
 # geo_df            - geopandas dataframe, street coordinates for px.line_map
@@ -204,11 +204,11 @@ geo_df, json_df_features, traffic_df = retrieve_data()
 #print(day_of_week)
 
 # Set weekday labels depending on language
-weekday_map = {'Mon': _('Mon'), 'Tue': _('Tue'), 'Wed': _('Wed'), 'Thu': _('Thu'), 'Fri': _('Fri'), 'Sat': _('Sat'), 'Sun': _('Sun')}
-#weekday_map = {0: _('Mon'), 1: _('Tue'), 2: _('Wed'), 3: _('Thu'), 4: _('Fri'), 5: _('Sat'), 6: _('Sun')}
+#weekday_map = {'Mon': _('Mon'), 'Tue': _('Tue'), 'Wed': _('Wed'), 'Thu': _('Thu'), 'Fri': _('Fri'), 'Sat': _('Sat'), 'Sun': _('Sun')}
+weekday_map = {0: _('Mon'), 1: _('Tue'), 2: _('Wed'), 3: _('Thu'), 4: _('Fri'), 5: _('Sat'), 6: _('Sun')}
 traffic_df['weekday'] = traffic_df['weekday'].map(weekday_map)
-#month_map = {1: _('Jan'), 2: _('Feb'), 3: _('Mar'), 4: _('Apr'), 5: _('May'), 6: _('Jun'), 7: _('Jul'), 8: _('Aug'), 9: _('Sep'), 10: _('Oct'), 11: _('Nov'), 12: _('Dec')}
-month_map = {'Jan': _('Jan'), 'Feb': _('Feb'), 'Mar': _('Mar'), 'Apr': _('Apr'), 'May': _('May'), 'Jun': _('Jun'), 'Jul': _('Jul'), 'Aug': _('Aug'), 'Sep': _('Sep'), 'Oct': _('Oct'), 'Nov': _('Nov'), 'Dec': _('Dec')}
+month_map = {1: _('Jan'), 2: _('Feb'), 3: _('Mar'), 4: _('Apr'), 5: _('May'), 6: _('Jun'), 7: _('Jul'), 8: _('Aug'), 9: _('Sep'), 10: _('Oct'), 11: _('Nov'), 12: _('Dec')}
+#month_map = {'Jan': _('Jan'), 'Feb': _('Feb'), 'Mar': _('Mar'), 'Apr': _('Apr'), 'May': _('May'), 'Jun': _('Jun'), 'Jul': _('Jul'), 'Aug': _('Aug'), 'Sep': _('Sep'), 'Oct': _('Oct'), 'Nov': _('Nov'), 'Dec': _('Dec')}
 traffic_df['month'] = traffic_df['month'].map(month_map)
 
 # Start with traffic df with uptime filtered
@@ -981,9 +981,10 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, dropdown_ye
     df_sc_explore.reset_index(inplace=True)
 
     # Assess x and y for annotation
+
     annotation_index= df_sc_explore[df_sc_explore['osm.name'] == street_name].index.item()
     annotation_x = annotation_index
-    annotation_y = df_sc_explore[radio_y_axis].values[annotation_index]
+    annotation_y = df_sc_explore.loc[df_sc_explore['osm.name'] == street_name, radio_y_axis].iloc[0]
 
     sc_explore = px.bar(df_sc_explore,
         x='osm.name', y=radio_y_axis,

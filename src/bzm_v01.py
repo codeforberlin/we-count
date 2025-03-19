@@ -4,7 +4,7 @@
 
 # @file    bzm_performance.py
 # @author  Egbert Klaassen
-# @date    2025-03-15
+# @date    2025-03-18
 
 """"
 # traffic_df        - dataframe with measured traffic data file
@@ -192,8 +192,8 @@ def get_bike_car_ratios(df):
     traffic_df_id_bc['bike_car_ratio'] = traffic_df_id_bc['bike_total'] / traffic_df_id_bc['car_total']
 
     bins = [0, 0.1, 0.2, 0.5, 1, 500]
-    speed_labels = [_('Over 10x more cars'), _('Over 5x more cars'), _('Over 2x more cars'), _('More cars than bikes'),
-                    _('More bikes than cars')]
+    #speed_labels = [_('Over 10x more cars'), _('Over 5x more cars'), _('Over 2x more cars'), _('More cars than bikes'), _('More bikes than cars')]
+    speed_labels = ['Over 10x more cars', 'Over 5x more cars', 'Over 2x more cars', 'More cars than bikes', 'More bikes than cars']
     traffic_df_id_bc['map_line_color'] = pd.cut(traffic_df_id_bc['bike_car_ratio'], bins=bins, labels=speed_labels)
     # Prepare traffic_df_id_bc for join operation
     traffic_df_id_bc['segment_id'] = traffic_df_id_bc['segment_id'].astype(int)
@@ -216,7 +216,6 @@ def update_map_data(df_map_base, df):
     # Add map_line_color category and add column information to cover inactive traffic counters
     #df_map['map_line_color'] = df_map['map_line_color'].astype('category')
     df_map['map_line_color'] = df_map['map_line_color'].cat.add_categories([_('Inactive - no data')])
-
     df_map.fillna({"map_line_color": _("Inactive - no data")}, inplace=True)
 
     # Sort data to get desired legend order
@@ -224,6 +223,7 @@ def update_map_data(df_map_base, df):
 
     return df_map
 
+DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 ASSET_DIR = os.path.join(os.path.dirname(__file__), 'assets')
 
 # Initialize constants, variables and get data
@@ -237,11 +237,13 @@ ADFC_crimson = '#B44958'
 ADFC_lightgrey = '#DEDEDE'
 ADFC_palegrey = '#F2F2F2'
 ADFC_pink = '#EB9AAC'
+ADFC_yellow = '#EEDE72'
 
-street_name = 'Köpenicker Straße'
-segment_id = '9000006435'
 
-zoom_factor = 11
+street_name = 'Alte Jakobstraße'
+segment_id = '9000002582'
+
+zoom_factor = 11.5
 
 init_language = 'en'
 update_language(init_language)
@@ -415,7 +417,7 @@ def serve_layout():
                     target="popover_filter", trigger="hover"
                 ),
             ], width=1),
-        ], style={'margin-left': 40, 'margin-right': 40, 'background-color': ADFC_skyblue, 'opacity': 1.0}, className='sticky-top rounded'),
+        ], style={'margin-left': 40, 'margin-right': 40, 'background-color': ADFC_skyblue, 'opacity': 1.0}, className='sticky-top rounded "g-0"'),
 
         # Absolute traffic
         dbc.Row([
@@ -538,122 +540,120 @@ def serve_layout():
         html.Br(),
         dbc.Row([
             dbc.Col([
-                dcc.Graph(id='bar_ranking', figure={}, style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 30})
+                dcc.Graph(id='bar_ranking', figure={}, style={'margin-left': 40, 'margin-right': 40, 'margin-top': 10, 'margin-bottom': 30})
             ], width=12
             ),
         ]),
 
-        # Compare traffic - settings
+        ### Compare traffic graph
         dbc.Row([
             dbc.Col([
-                html.H6(_('Period') + ' A', style={'margin-left': 00, 'margin-right': 40, 'margin-top': 10, 'margin-bottom': 10}),
-            ], width=6
+                html.H6(_('Select periods to compare')+':', style={'margin-left': 40, 'margin-right': 00, 'margin-top': 10, 'margin-bottom': 10}),
+            ], width=3),
+            dbc.Col([
+                html.H6(_('Year')+':', style={'margin-left': 00, 'margin-right': 00, 'margin-top': 10, 'margin-bottom': 10}),
+            ], width=2),
+            dbc.Col([
+                html.H6(_('Month')+':', style={'margin-left': 00, 'margin-right': 00, 'margin-top': 10, 'margin-bottom': 10}),
+            ], width=2),
+            dbc.Col([
+                html.H6(_('Week') + ':', style={'margin-left': 00, 'margin-right': 00, 'margin-top': 10, 'margin-bottom': 10}),
+            ], width=2),
+            dbc.Col([
+                html.H6(_('Day') + ':', style={'margin-left': 00, 'margin-right': 00, 'margin-top': 10, 'margin-bottom': 10}),
+            ], width=2),
+
+            dbc.Col([
+                html.H6(_('Period') + ' A',
+                        style={'margin-left': 40, 'margin-right': 00, 'margin-top': 10, 'margin-bottom': 10, 'textAlign': 'right'}),
+            ], width=3
             ),
             dbc.Col([
-                html.H6(_('Period') + ' B', style={'margin-left': 00, 'margin-right': 40, 'margin-top': 10, 'margin-bottom': 10}),
-            ], width=6
-            ),
-            dbc.Col([
-                html.H6(_('Year')+':', style={'margin-left': 00, 'margin-right': 00, 'margin-top': 00, 'margin-bottom': 10}),
                 dcc.Dropdown(
                     id='dropdown_year_A',
                     options=sorted([{'label': i, 'value': i} for i in traffic_df['year'].unique()],
                                    key=lambda x: x['label']),
                     value=traffic_df['year'][len(traffic_df['year']) - 1],
-                    style={'margin-left': 00, 'margin-bottom': 00},
+                    style={'margin-left': 00, 'margin-bottom': 5},
                     clearable=False
                 ),
-            ], width=1
-            ),
+            ], width=2),
             dbc.Col([
-                html.H6(_('Month')+':', style={'margin-left': 00, 'margin-right': 00, 'margin-top': 00, 'margin-bottom': 10}),
                 dcc.Dropdown(
                     id='dropdown_year_month_A',
                     options=sorted([{'label': i, 'value': i} for i in traffic_df['year_month'].unique()],
                                    key=lambda x: x['label']),
                     value=traffic_df['year_month'][len(traffic_df['year_month']) - 1],
-                    style={'margin-left': 00, 'margin-bottom': 00},
+                    style={'margin-left': 00, 'margin-bottom': 5},
                     clearable=False
                 ),
-            ], width=1
-            ),
+            ], width=2),
             dbc.Col([
-                html.H6(_('Week')+':', style={'margin-left': 00, 'margin-right': 00, 'margin-top': 00, 'margin-bottom': 10}),
                 dcc.Dropdown(
                     id='dropdown_year_week_A',
                     options=sorted([{'label': i, 'value': i} for i in traffic_df['year_week'].unique()],
                                    key=lambda x: x['label']),
                     value=traffic_df['year_week'][len(traffic_df['year_week']) - 1],
-                    style={'margin-left': 00, 'margin-bottom': 00},
+                    style={'margin-left': 00, 'margin-bottom': 5},
                     clearable=False
                 ),
-            ], width=1
-            ),
+            ], width=2),
             dbc.Col([
-                html.H6(_('Day')+':', style={'margin-left': 00, 'margin-right': 00, 'margin-top': 00, 'margin-bottom': 10}),
                 dcc.Dropdown(
                     id='dropdown_date_A',
                     options=sorted([{'label': i, 'value': i} for i in traffic_df['date'].unique()],
                                    key=lambda x: x['label']),
                     value=traffic_df['date'][len(traffic_df['year_week']) - 1],
-                    style={'margin-left': 00, 'margin-bottom': 00},
+                    style={'margin-left': 00, 'margin-bottom': 5},
                     clearable=False
                 ),
-            ], width=2
-            ),
+            ], width=2),
+
             dbc.Col([
-            ], width=1
-            ),
+                html.H6(_('Period') + ' B', style={'margin-left': 40, 'margin-right': 00, 'margin-top': 10, 'margin-bottom': 10, 'textAlign': 'right'}),
+            ], width=3),
             dbc.Col([
-                html.H6(_('Year:'), style={'margin-left': 00, 'margin-right': 00, 'margin-top': 00, 'margin-bottom': 10}),
                 dcc.Dropdown(
                     id='dropdown_year_B',
                     options=sorted([{'label': i, 'value': i} for i in traffic_df['year'].unique()],
                                    key=lambda x: x['label']),
-                    value=traffic_df['year'][len(traffic_df['year']) - 1],
+                    value=traffic_df['year'][1],
                     style={'margin-left': 00, 'margin-bottom': 00},
                     clearable=False
                 ),
-            ], width=1
-            ),
+            ], width=2),
             dbc.Col([
-                html.H6(_('Month:'), style={'margin-left': 00, 'margin-right': 00, 'margin-top': 00, 'margin-bottom': 10}),
                 dcc.Dropdown(
                     id='dropdown_year_month_B',
                     options=sorted([{'label': i, 'value': i} for i in traffic_df['year_month'].unique()],
                                    key=lambda x: x['label']),
-                    value=traffic_df['year_month'][len(traffic_df['year_month']) - 1],
+                    value=traffic_df['year_month'][1],
                     style={'margin-left': 00, 'margin-bottom': 00},
                     clearable=False
                 ),
-            ], width=1
-            ),
+            ], width=2),
             dbc.Col([
-                html.H6(_('Week:'), style={'margin-left': 00, 'margin-right': 00, 'margin-top': 00, 'margin-bottom': 10}),
                 dcc.Dropdown(
                     id='dropdown_year_week_B',
                     options=sorted([{'label': i, 'value': i} for i in traffic_df['year_week'].unique()],
                                    key=lambda x: x['label']),
-                    value=traffic_df['year_week'][len(traffic_df['year_week']) - 1],
+                    value=traffic_df['year_week'][1],
                     style={'margin-left': 00, 'margin-bottom': 00},
                     clearable=False
                 ),
-            ], width=1
-            ),
+            ], width=2),
             dbc.Col([
-                html.H6(_('Day:'), style={'margin-left': 00, 'margin-right': 00, 'margin-top': 00, 'margin-bottom': 10}),
                 dcc.Dropdown(
                     id='dropdown_date_B',
                     options=sorted([{'label': i, 'value': i} for i in traffic_df['date'].unique()],
                                    key=lambda x: x['label']),
-                    value=traffic_df['date'][len(traffic_df['year_week']) - 1],
+                    value=traffic_df['date'][1],
                     style={'margin-left': 00, 'margin-bottom': 20},
                     clearable=False
                 ),
-            ], width=2
-            ),
+            ], width=2),
         html.Br(),
-        ], style={'margin-left': 40, 'margin-right': 40, 'background-color': ADFC_skyblue}, className='sticky-top rounded "g-0"'),
+        ], style={'margin-left': 40, 'margin-right': 40, 'background-color': ADFC_skyblue, 'opacity': 1.0}, className='sticky-top rounded "g-0"'),
         dbc.Row([
             dbc.Col([
                 html.H4(_('Compare traffic periods'), style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 00}),
@@ -695,7 +695,7 @@ def serve_layout():
                         ),
             ], width=6),
             html.Br(),
-        ], style={'margin-left': 40, 'margin-right': 40, 'margin-bottom': 40, 'background-color': ADFC_pink, 'opacity': 0.7}, className='rounded text-black'),
+        ], style={'margin-left': 40, 'margin-right': 40, 'margin-bottom': 40, 'background-color': ADFC_yellow, 'opacity': 0.7}, className='rounded text-black'),
     html.Br(),
     ],
     fluid = True,
@@ -713,7 +713,6 @@ app.layout = serve_layout
 def get_language(lang_code_dd):
     update_language(lang_code_dd)
     translate_traffic_df_data()
-    translate_bc_labels()
     return '/'
 
 ### Map callback ###
@@ -746,12 +745,11 @@ def update_map(street_name):
     if (callback_trigger == 'street_name_dd'):
          zoom_factor = 13
     else:
-         zoom_factor = 11
+         zoom_factor = 11.5
 
     # TODO: improve efficiency by managing translation w/o recalculating bc ratios
-    traffic_df_id_bc = get_bike_car_ratios(traffic_df_upt)
-    df_map = update_map_data(df_map_base, traffic_df_id_bc)
-    #print(df_map['map_line_color'])
+    #traffic_df_id_bc = get_bike_car_ratios(traffic_df_upt)
+    #df_map = update_map_data(df_map_base, traffic_df_id_bc)
     idx = df_map.loc[df_map['osm.name'] == street_name]
     lon_str = idx['x'].values[0]
     lat_str = idx['y'].values[0]
@@ -759,17 +757,23 @@ def update_map(street_name):
     sep = '&nbsp;|&nbsp;'
 
     street_map = px.line_map(df_map, lat='y', lon='x', line_group='segment_id', hover_name = 'osm.name', color= 'map_line_color', color_discrete_map= {
-        _('More bikes than cars'): ADFC_green,
-        _('More cars than bikes'): ADFC_blue,
-        _('Over 2x more cars'): ADFC_orange,
-        _('Over 5x more cars'): ADFC_crimson,
-        _('Over 10x more cars'): ADFC_pink,
-        _('Inactive - no data'): ADFC_lightgrey},
+        'More bikes than cars': ADFC_green,
+        'More cars than bikes': ADFC_blue,
+        'Over 2x more cars': ADFC_orange,
+        'Over 5x more cars': ADFC_crimson,
+        'Over 10x more cars': ADFC_pink,
+        'Inactive - no data': ADFC_lightgrey},
         map_style="streets", center= dict(lat=lat_str, lon=lon_str), height=600, zoom= zoom_factor)
 
     street_map.update_traces(line_width=5, opacity=1.0)
     street_map.update_layout(margin=dict(l=40, r=20, t=40, b=30))
     street_map.update_layout(legend_title=_('Street color'))
+    street_map.update_traces({'name': _('More bikes than cars')}, selector={'name': 'More bikes than cars'})
+    street_map.update_traces({'name': _('More cars than bikes')}, selector={'name': 'More cars than bikes'})
+    street_map.update_traces({'name': _('Over 2x more cars')}, selector={'name': 'Over 2x more cars'})
+    street_map.update_traces({'name': _('Over 5x more cars')}, selector={'name': 'Over 5x more cars'})
+    street_map.update_traces({'name': _('Over 10x more cars')}, selector={'name': 'Over 10x more cars'})
+    street_map.update_traces({'name': _('Inactive - no data')}, selector={'name': 'Inactive - no data'})
     street_map.update_layout(legend=dict(yanchor="top", y=0.99, xanchor="right", x=0.99))
     street_map.update_layout(annotations=[
         dict(
@@ -838,7 +842,7 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, dropdown_ye
     # Update selected street
     traffic_df_upt_dt_str = update_selected_street(traffic_df_upt_dt, segment_id, street_name)
 
-    ### Create pie chart
+    # Create pie chart
     df_pie = traffic_df_upt_dt_str[traffic_df_upt_dt_str['street_selection'] == street_name]
     df_pie_traffic = df_pie[['ped_total', 'bike_total', 'car_total', 'heavy_total']]
     df_pie_traffic_ren = df_pie_traffic.rename(columns={'ped_total': _('Pedestrians'), 'bike_total': _('Bikes'), 'car_total': _('Cars'), 'heavy_total': _('Heavy')})
@@ -1023,11 +1027,12 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, dropdown_ye
     ### Create ranking chart
     df_bar_ranking = traffic_df_upt_dt.groupby(by=['osm.name', 'street_selection'], sort= False, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
     df_bar_ranking = df_bar_ranking.sort_values(by=[radio_y_axis], ascending=False)
+    df_bar_ranking.reset_index(inplace=True)
 
     # Assess x and y for annotation
-    annotation_index= df_bar_ranking[df_bar_ranking['osm.name'] == street_name].index.item()
+    annotation_index = df_bar_ranking[df_bar_ranking['osm.name'] == street_name].index[0]
     annotation_x = annotation_index
-    annotation_y = df_bar_ranking.loc[df_bar_ranking['osm.name'] == street_name, radio_y_axis].iloc[0]
+    annotation_y = df_bar_ranking[radio_y_axis].values[annotation_index]
 
     bar_ranking = px.bar(df_bar_ranking,
         x='osm.name', y=radio_y_axis,
@@ -1054,26 +1059,31 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, dropdown_ye
         selected_value_A = dropdown_year_A
         selected_value_B = dropdown_year_B
         group_by = 'month'
+        label = 'Year'
     elif callback_trigger == 'dropdown_year_month_A' or callback_trigger == 'dropdown_year_month_B':
         time_division = 'year_month'
         selected_value_A = dropdown_year_month_A
         selected_value_B = dropdown_year_month_B
         group_by = 'day'
+        label = 'Month'
     elif callback_trigger == 'dropdown_year_week_A' or callback_trigger == 'dropdown_year_week_B':
         time_division = 'year_week'
         selected_value_A = dropdown_year_week_A
         selected_value_B = dropdown_year_week_B
         group_by = 'weekday'
+        label = 'Week'
     elif callback_trigger == 'dropdown_date_A' or callback_trigger == 'dropdown_date_B':
         time_division = 'date'
         selected_value_A = dropdown_date_A
         selected_value_B = dropdown_date_B
         group_by = 'hour'
+        label = 'Date'
     else:
         time_division = radio_time_division
         group_by = 'hour'
         selected_value_A = dropdown_date_A
         selected_value_B = dropdown_date_B
+        label = 'Date'
 
     # Prepare traffic_df_upt by selected street
     traffic_df_upt_str = update_selected_street(traffic_df_upt, segment_id, street_name)
@@ -1098,7 +1108,7 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, dropdown_ye
     line_avg_delta_traffic.for_each_annotation(lambda a: a.update(text=a.text.replace(street_name, street_name + _(' (segment no:') + segment_id + ')')))
     line_avg_delta_traffic.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
     line_avg_delta_traffic.update_layout({'plot_bgcolor': ADFC_palegrey,'paper_bgcolor': ADFC_palegrey})
-    line_avg_delta_traffic.update_layout(title_text=_('Period') + ' A : ' + _(time_division) + ' - ' + selected_value_A + ' , ' + _('Period') + ' B (----): ' + _(time_division) + ' - ' + selected_value_B)
+    line_avg_delta_traffic.update_layout(title_text=_('Period') + ' A : ' + _(label) + ' - ' + selected_value_A + ' , ' + _('Period') + ' B (----): ' + _(label) + ' - ' + selected_value_B)
     line_avg_delta_traffic.update_layout(yaxis_title=_('Absolute traffic count'))
     line_avg_delta_traffic.update_layout(legend_title_text=_('Traffic Type'))
     line_avg_delta_traffic.update_traces({'name': _('Pedestrians') + ' A'}, selector={'name': 'ped_total'})
@@ -1121,5 +1131,5 @@ if __name__ == "__main__":
     #port = int(8080) #int(os.environ.get('PORT', 8050)) # Default to 8050 if PORT is not set
     #app.run_server(debug=True, port=port)
     #app.run_server(host='0.0.0.0', port=port)
-    app.run_server(debug=True)
+    app.run_server(debug=False)
     #app.run_server(debug=False, host='0.0.0.0', port=10000)

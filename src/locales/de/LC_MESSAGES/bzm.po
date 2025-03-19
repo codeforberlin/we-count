@@ -62,6 +62,9 @@ msgstr "Inaktiv - keine Daten"
 msgid "Compare traffic periods"
 msgstr "Vergleiche Verkehrsperioden"
 
+msgid "Select periods to compare"
+msgstr "Wähle Verkehrsperioden zum vergleichen"
+
 msgid "Period"
 msgstr "Periode"
 

@@ -74,8 +74,8 @@ def retrieve_data():
         print('Reading traffic data...')
     with common.Benchmarker(not DEPLOYED, "Load traffic data"):
         traffic_df = bzm_get_data.merge_data(json_df_features)
-    traffic_file = os.path.join(ASSET_DIR, 'traffic_df_2024_Q4_2025_YTD.csv.gz')
-    traffic_df = pd.read_csv(traffic_file)
+    #traffic_file = os.path.join(ASSET_DIR, 'traffic_df_2024_Q4_2025_YTD.csv.gz')
+    #traffic_df = pd.read_csv(traffic_file)
 
     """" Can move to bzm_get_data? - Start """
 

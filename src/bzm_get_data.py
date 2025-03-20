@@ -123,7 +123,7 @@ def _read_sql(options):
 
 
 def merge_data(locations, cache_file=os.path.join(ASSET_DIR, 'traffic_df_2024_Q4_2025_YTD.csv.gz'), traffic_data=None, verbose=False):
-    if cache_file:
+    if cache_file and os.path.exists(cache_file):
         return pd.read_csv(cache_file)
     if traffic_data is None:
         traffic_data = _read_csv(verbose=verbose)
@@ -151,17 +151,10 @@ def merge_data(locations, cache_file=os.path.join(ASSET_DIR, 'traffic_df_2024_Q4
     traffic_df.insert(0, 'year_month', traffic_df['date_local'].dt.strftime('%Y/%m'))
     traffic_df.insert(0, 'month', traffic_df['date_local'].dt.month)
     traffic_df.insert(0, 'year_week', traffic_df['date_local'].dt.strftime('%Y/%U'))
-    traffic_df.insert(0, 'weekday', traffic_df['date_local'].dt.dayofweek) #dayofweek
+    traffic_df.insert(0, 'weekday', traffic_df['date_local'].dt.weekday) #dayofweek
     traffic_df.insert(0, 'day', traffic_df['date_local'].dt.day)
     traffic_df.insert(0, 'hour', traffic_df['date_local'].dt.hour)
     traffic_df.insert(0, 'date', traffic_df['date_local'].dt.strftime('%Y/%m/%d'))
-
-    if verbose:
-        print('Exchange time data for labels...')
-    # Need to perform the below action after language setting (already implemented in nzm_v01.py)
-    #traffic_df['weekday'] = traffic_df['weekday'].map(get_day_names('abbreviated', locale="en"))
-    #traffic_df['month'] = traffic_df['month'].map(get_month_names('abbreviated', locale="en"))
-    # Not sure why w need the below line, to be investigated
     return traffic_df.reset_index(drop=True)
 
 

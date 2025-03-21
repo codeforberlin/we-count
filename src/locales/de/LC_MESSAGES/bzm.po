@@ -215,6 +215,9 @@ msgstr "X-Achse"
 msgid "Street ranking by traffic type"
 msgstr "Straßenranking nach Verkehrsart"
 
+msgid "No data available for selected range!"
+msgstr "Keine Daten für Ausgewählte Zeiten!"
+
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:362
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:382
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:513

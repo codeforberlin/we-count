@@ -18,12 +18,15 @@ import dash_bootstrap_components as dbc
 import geopandas as gpd
 import pandas as pd
 import plotly.express as px
-from dash import Dash, html, dcc, Output, Input, callback, ctx, callback_context
+from dash import Dash, html, dcc, Output, Input, callback, ctx, clientside_callback, callback_context
 from dash.exceptions import PreventUpdate
 import datetime
+import dash_mantine_components as dmc
 
 import common
 import bzm_get_data
+from src.bzm_get_data import save_df
+
 # TODO: from functools import lru_cache
 
 DEPLOYED = __name__ != '__main__'
@@ -74,7 +77,8 @@ def retrieve_data():
         print('Reading traffic data...')
     with common.Benchmarker(not DEPLOYED, "Load traffic data"):
         traffic_df = bzm_get_data.merge_data(json_df_features)
-    #traffic_file = os.path.join(ASSET_DIR, 'traffic_df_2024_Q4_2025_YTD.csv.gz')
+    traffic_file = os.path.join(ASSET_DIR, 'traffic_df_2024_Q4_2025_YTD.csv.gz')
+    #traffic_file = os.path.join(ASSET_DIR, 'traffic_df_2024_2025_YTD.csv.gz')
     #traffic_df = pd.read_csv(traffic_file)
 
     """" Can move to bzm_get_data? - Start """
@@ -91,7 +95,7 @@ def retrieve_data():
 
     # Add street column for facet graphs - check efficiency!
     traffic_df['street_selection'] = traffic_df.loc[:, 'osm.name']
-    traffic_df.loc[traffic_df['street_selection'] != 'does not exist', 'street_selection'] = _('All')
+    traffic_df.loc[traffic_df['street_selection'] != 'does not exist', 'street_selection'] = _('All Streets')
 
     """" Can move to bzm_get_data? - End """
 
@@ -109,7 +113,7 @@ def translate_traffic_df_data():
                  'Aug': _('Aug'), 'Sep': _('Sep'), 'Oct': _('Oct'), 'Nov': _('Nov'), 'Dec': _('Dec'),
                  'Mär': _('Mar'), 'Mai': _('May'), 'Okt': _('Okt'), 'Dez': _('Dec')}
     traffic_df['month'] = traffic_df['month'].map(month_map)
-    all_map = {'All': _('All'), 'Alle': _('All')}
+    all_map = {'All Streets': _('All Streets'), 'Alle Straßen': _('All Streets')}
     traffic_df['street_selection'] = traffic_df['street_selection'].map(all_map)
 
 #### Set Language ####
@@ -180,7 +184,7 @@ def get_comparison_data(df, radio_time_division, group_by, selected_value_A, sel
 def update_selected_street(df, segment_id, street_name):
     # Generate "selected street only" df and populate "street_selection"
     df_str = df[df['segment_id'] == segment_id]
-    df_str.loc[df_str['street_selection'] == _('All'), 'street_selection'] = street_name
+    df_str.loc[df_str['street_selection'] == _('All Streets'), 'street_selection'] = street_name
 
     if len(df_str) == 0:
         no_data = True
@@ -242,6 +246,7 @@ ADFC_lightgrey = '#DEDEDE'
 ADFC_palegrey = '#F2F2F2'
 ADFC_pink = '#EB9AAC'
 ADFC_yellow = '#EEDE72'
+ADFC_cyan = '#61CBF4'
 
 
 street_name = 'Alte Jakobstraße'
@@ -253,7 +258,6 @@ init_language = 'en'
 update_language(init_language)
 
 geo_df, json_df_features, traffic_df = retrieve_data()
-
 translate_traffic_df_data()
 
 # TODO: Check correct weekdays
@@ -273,8 +277,9 @@ start_date = traffic_df_upt['date_local'].min()
 end_date = traffic_df_upt['date_local'].max()
 
 format_string = '%Y-%m-%d %H:%M:%S'
-#start_date_dt = convert(start_date, format_string)
-#end_date_dt = convert(end_date, format_string)
+#start_date_dt = convert(str(start_date), format_string)
+#end_date_dt = convert(str(end_date), format_string)
+#try_start_date = end_date_dt + datetime.timedelta(days=-13)
 try_start_date = end_date + datetime.timedelta(days=-13)
 if try_start_date > start_date:
     start_date = try_start_date
@@ -335,7 +340,7 @@ server = app.server
 def serve_layout():
     return dbc.Container(
     [
-        dcc.Location(id='url', refresh=True),
+            dcc.Location(id='url', refresh=True),
         dbc.Row([
             dbc.Col([
                 #data_table,
@@ -362,6 +367,21 @@ def serve_layout():
                 dcc.Graph(id='street_map', figure={},className='bg-#F2F2F2'),
             ], width=8),
 
+            dbc.Button(_('My Street'),
+                       id='floating_button',
+                       class_name='btn btn-outline-info', #rounded-pill
+                       outline=False,
+                       color='info',
+                       style={
+                           'position': 'absolute', # For absolute position on the (first?) page use: 'absolute',  # For floating use: 'fixed',
+                           'top': '5220px',
+                           'left': '1350px',
+                           'border-radius': '50%',
+                           'width': '80px',
+                           'height': '80px',
+                           'font-size': '16px'
+                       }
+                       ),
             # General controls
             dbc.Col([
                 # Street drop down
@@ -433,13 +453,6 @@ def serve_layout():
                      ]),
                 ], width=2),
 
-            # dbc.Col([
-            #     html.Span([html.I(className='bi bi-info-circle-fill h6 d-inline-block', id='popover_filter', style={'margin-top': 30, 'color': ADFC_lightgrey})]),
-            #     dbc.Popover(
-            #         dbc.PopoverBody(_('A high 0.7-0.8 uptime will always mean very good data. The first and last daylight hour of the day will always have lower uptimes. If uptimes during the day are below 0.5, that is usually a clear sign that something is probably wrong with the instance.')),
-            #         target="popover_filter", trigger="hover"
-            #     ),
-            # ], width=1),
         ], style={'margin-left': 40, 'margin-right': 40, 'background-color': ADFC_skyblue, 'opacity': 1.0}, className='sticky-top rounded "g-0"'),
 
         # Absolute traffic
@@ -708,18 +721,27 @@ def serve_layout():
                        ),
             ], width=6),
             dbc.Col([
-                html.H6([_('Contribute to the dashboard development ('),
-                        html.A(_('GitHub'), href="https://github.com/codeforberlin/we-count", target="_blank"),").",],
-                        style={'margin-left': 40, 'margin-right': 40, 'margin-top': 10, 'margin-bottom': 10}
-                       ),
-                html.H6([_('For dashboard improvement- or new functionality suggestions,'), html.Br(), _('EMAIL: '),
+                #html.H6([_('Contribute to the dashboard development ('),
+                #        html.A(_('GitHub'), href="https://github.com/codeforberlin/we-count", target="_blank"),").",],
+                #        style={'margin-left': 40, 'margin-right': 40, 'margin-top': 10, 'margin-bottom': 10}
+                #       ),
+                html.H6([_('For dashboard improvement- or new functionality proposals,'), html.Br(), _('EMAIL: '),
                         html.A("contact@example.com", href="mailto:contact@example.com"),"."],
                         style={'margin-left': 40, 'margin-right': 40, 'margin-top': 10, 'margin-bottom': 40},
                         ),
             ], width=6),
             html.Br(),
         ], style={'margin-left': 40, 'margin-right': 40, 'margin-bottom': 40, 'background-color': ADFC_yellow, 'opacity': 0.7}, className='rounded text-black'),
-    html.Br(),
+        dbc.Row([
+            dbc.Col([
+                html.P(_('Disclaimer'), style= {'font-size': 12, 'color': ADFC_darkgrey}),
+                html.P(_('The content published in the offer has been researched with the greatest care. Nevertheless, the Berlin Counts Mobility team cannot assume any liability for the topicality, correctness or completeness of the information provided. All information is provided without guarantee. liability claims against the Berlin Zählt Mobilität team or its supporting organizations derived from the use of this information are excluded. Despite careful control of the content, the Berlin Zählt Mobilität team and its supporting organizations assume no liability for the content of external links. The operators of the linked pages are solely responsible for their content. A constant control of the external links is not possible for the provider. If there are indications or knowledge of legal violations, the illegal links will be deleted immediately.'), style= {'font-size': 10, 'color': ADFC_darkgrey}),
+                html.P(_('Copyright'), style= {'font-size': 12, 'color': ADFC_darkgrey}),
+                html.P(_('The layout and design of the offer as a whole as well as its individual elements are protected by copyright. The same applies to the images, graphics and editorial contributions used in detail as well as their selection and compilation. Further use and reproduction are only permitted for private purposes. No changes may be made to it. Public use of the offer may only take place with the consent of the operator.'), style= {'font-size': 10, 'color': ADFC_darkgrey}),
+            ], width=12),
+            html.Br(),
+        ], style={'margin-left': 40, 'margin-right': 40, 'margin-bottom': 40}),
+        html.Br(),
     ],
     fluid = True,
     className = 'dbc'
@@ -817,6 +839,16 @@ def update_map(street_name):
 
     return street_map
 
+@app.callback(
+    Input('floating_button', 'n_clicks')
+)
+def update_output(n_clicks):
+    if n_clicks is None:
+        return #"Button not clicked yet."
+    else:
+        href = "mailto:contact@example.com"
+        return  #f"Button clicked {n_clicks} times."
+
 ### General traffic callback ###
 @callback(
     Output(component_id='selected_street_header', component_property='children'),
@@ -898,7 +930,7 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, dropdown_ye
         x=radio_time_division, y=['ped_total', 'bike_total', 'car_total', 'heavy_total'],
         markers=True,
         facet_col='street_selection',
-        category_orders={'street_selection': [street_name, _('All')]},
+        category_orders={'street_selection': [street_name, _('All Streets')]},
         labels={'year': _('Year'), 'year_month': _('Month'), 'year_week': _('Week'), 'date': _('Day')},
         color_discrete_map={'ped_total': ADFC_lightblue, 'bike_total': ADFC_green, 'car_total': ADFC_orange, 'heavy_total': ADFC_crimson},
         facet_col_spacing=0.04,
@@ -931,7 +963,7 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, dropdown_ye
         barmode='stack',
         facet_col='street_selection',
         facet_col_spacing=0.04,
-        category_orders={'street_selection': [street_name, _('All')]},
+        category_orders={'street_selection': [street_name, _('All Streets')]},
         labels={'year': _('Yearly'), 'month': _('Monthly'), 'weekday': _('Weekly'), 'day': _('Daily'), 'hour': _('Hourly'), '1': 'Mon'},
         color_discrete_map={'ped_total': ADFC_lightblue, 'bike_total': ADFC_green, 'car_total': ADFC_orange, 'heavy_total': ADFC_crimson},
         title=(_('Average traffic count')  + ' (' + start_date.split(' ')[0] + ' - ' + end_date.split(' ')[0] + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)')
@@ -970,7 +1002,7 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, dropdown_ye
          x=radio_time_unit, y=cols,
          barmode='stack',
          facet_col='street_selection',
-         category_orders={'street_selection': [street_name, _('All')]},
+         category_orders={'street_selection': [street_name, _('All Streets')]},
          labels={'year': _('Yearly'), 'month': _('Monthly'), 'weekday': _('Weekly'), 'day': _('Daily'), 'hour': _('Hourly')},
          color_discrete_map={'car_speed0': ADFC_lightgrey, 'car_speed10': ADFC_lightblue,
                              'car_speed20': ADFC_lightblue, 'car_speed30': ADFC_green,
@@ -1004,7 +1036,7 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, dropdown_ye
         x=radio_time_unit, y=cols,
         barmode='group',
         facet_col='street_selection',
-        category_orders={'street_selection': [street_name, _('All')]},
+        category_orders={'street_selection': [street_name, _('All Streets')]},
         labels={'year': _('Yearly'), 'month': _('Monthly'), 'weekday': _('Weekly'), 'day': _('Daily'), 'hour': _('Hourly')},
         color_discrete_map={'car_speed0': ADFC_lightgrey, 'car_speed10': ADFC_lightblue,
                             'car_speed20': ADFC_lightblue, 'car_speed30': ADFC_green,
@@ -1038,7 +1070,7 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, dropdown_ye
         color='v85',
         color_continuous_scale='temps',
         facet_col='street_selection',
-        category_orders={'street_selection': [street_name, _('All')]},
+        category_orders={'street_selection': [street_name, _('All Streets')]},
         facet_col_spacing=0.04,
         labels={'year': _('Yearly'), 'month': _('Monthly'), 'weekday': _('Weekly'), 'day': _('Daily'), 'hour': _('Hourly')},
         title=(_('Speed cars v85') + ' (' + start_date.split(' ')[0] + ' - ' + end_date.split(' ')[0] + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)')
@@ -1137,7 +1169,7 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, dropdown_ye
         x=group_by, y=['ped_total', 'bike_total', 'car_total', 'heavy_total', 'ped_total_d', 'bike_total_d', 'car_total_d', 'heavy_total_d'],
         facet_col='street_selection',
         facet_col_spacing=0.04,
-        category_orders={'street_selection': [street_name, _('All')]},
+        category_orders={'street_selection': [street_name, _('All Streets')]},
         labels={'year': _('Yearly'), 'month': _('Monthly'), 'weekday': _('Weekly'), 'day': _('Daily'), 'hour': _('Hourly'), '1': 'Mon'},
         color_discrete_map={'ped_total': ADFC_lightblue, 'bike_total': ADFC_green, 'car_total': ADFC_orange, 'heavy_total': ADFC_crimson, 'ped_total_d': ADFC_lightblue, 'bike_total_d': ADFC_green, 'car_total_d': ADFC_orange, 'heavy_total_d': ADFC_crimson},
     )

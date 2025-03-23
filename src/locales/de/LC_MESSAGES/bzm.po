@@ -28,8 +28,8 @@ msgstr "Hinweis: Die Straßenfarben stellen das Fahrrad-Auto-Verhältnis auf Gru
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:568
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:592
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:640
-msgid "All"
-msgstr "Alle"
+msgid "All Streets"
+msgstr "Alle Straßen"
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:158
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:447
@@ -403,7 +403,7 @@ msgstr ""
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:579
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:650
 msgid "Traffic Type"
-msgstr "Verkehrstype"
+msgstr "Verkehrstyp"
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:536
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:570
@@ -515,5 +515,17 @@ msgid "v85 in km/h"
 msgstr "v85 in km/h"
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:739
-msgid "Street"
-msgstr "Straße"
+msgid "My Street"
+msgstr "Meine Straße"
+
+msgid "Disclaimer"
+msgstr "Haftungshinweis"
+
+msgid "The content published in the offer has been researched with the greatest care. Nevertheless, the Berlin Counts Mobility team cannot assume any liability for the topicality, correctness or completeness of the information provided. All information is provided without guarantee. liability claims against the Berlin Zählt Mobilität team or its supporting organizations derived from the use of this information are excluded. Despite careful control of the content, the Berlin Zählt Mobilität team and its supporting organizations assume no liability for the content of external links. The operators of the linked pages are solely responsible for their content. A constant control of the external links is not possible for the provider. If there are indications or knowledge of legal violations, the illegal links will be deleted immediately."
+msgstr "Die im Angebot veröffentlichten Inhalte sind mit größter Sorgfalt recherchiert. Dennoch kann das Berlin Zählt Mobilität-Team keine Gewähr für die Aktualität, Korrektheit oder Vollständigkeit der bereitgestellten Informationen übernehmen. Alle Angaben erfolgen ohne Gewähr. Aus der Nutzung dieser Informationen abgeleitete Haftungsansprüche gegen das Berlin Zählt Mobilität-Team oder deren unterstützenden Organisationen, sind ausgeschlossen. Trotz sorgfältiger inhaltlicher Kontrolle übernimmt 'Berlin Zählt Mobilität'-Team und deren unterstützenden Organisationen keine Haftung für die Inhalte externer Links. Für den Inhalt der verlinkten Seiten sind ausschließlich deren Betreiber verantwortlich. Eine ständige Kontrolle der externen Links ist für den Anbieter nicht möglich. Bei Anhaltspunkten oder Kenntnis von Rechtsverstößen werden die gesetzeswidrigen Links unverzüglich gelöscht."
+
+msgid "Copyright"
+msgstr "Urheberrecht"
+
+msgid "The layout and design of the offer as a whole as well as its individual elements are protected by copyright. The same applies to the images, graphics and editorial contributions used in detail as well as their selection and compilation. Further use and reproduction are only permitted for private purposes. No changes may be made to it. Public use of the offer may only take place with the consent of the operator."
+msgstr "Layout und Gestaltung des Angebots insgesamt sowie seiner einzelnen Elemente sind urheberrechtlich geschützt. Gleiches gilt für die verwendeten Bilder, Grafiken und redaktionellen Beiträge im Einzelnen sowie ihre Auswahl und Zusammenstellung. Weiterverwendung und Vervielfältigung sind nur zu privaten Zwecken gestattet. Veränderungen daran dürfen nicht vorgenommen werden. Eine öffentliche Verwendung des Angebots darf nur mit Zustimmung des Betreibers erfolgen."

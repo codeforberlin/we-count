@@ -1,4 +1,8 @@
-/*actually either class is good, use both just to be sure*/
+/*General layout*/
+body {
+  margin: 0;
+}
+/*Actually either class is good, use both just to be sure*/
 .DateInput_input, .DateInput_input_1 {
   font-size: 14px;
   font-family: inherit;
@@ -7,8 +11,17 @@
   }
 /* Change the track's color */
 .rc-slider-rail {
-    background-color: lightblue;
+    background-color: white;
 }
-body {
-  margin: 0;
+#floating_button {
+    z-index: 9999; /* Ensures it appears on top */
+    position: fixed; /* Keeps it in place while scrolling */
+    top: 5170px; /* Distance from the bottom */
+    left: 1550px; /* Distance from the right */
+    background-color: #61CBF4; /* A nice color for the button */
+    color: black;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 50px;
+    cursor: pointer;
 }

@@ -21,6 +21,7 @@ import plotly.express as px
 from dash import Dash, html, dcc, Output, Input, callback, ctx, clientside_callback, callback_context
 from dash.exceptions import PreventUpdate
 import datetime
+import locale
 
 import common
 import bzm_get_data
@@ -99,7 +100,7 @@ def retrieve_data():
 
     return geo_df, json_df_features, traffic_df
 
-# TODO: use babel...?
+# TODO: use babel, locale...?
 def translate_traffic_df_data():
     weekday_map = {0: _('Mon'), 1: _('Tue'), 2: _('Wed'), 3: _('Thu'), 4: _('Fri'), 5: _('Sat'), 6: _('Sun'),
                    'Mo.': _('Mon'), 'Di.': _('Tue'), 'Mi.': _('Wed'), 'Do.': _('Thu'), 'Fr.': _('Fri'), 'Sa.': _('Sat'), 'So.': _('Sun'),
@@ -118,6 +119,11 @@ def translate_traffic_df_data():
 def update_language(lang_code):
     global language
     language=lang_code
+    if language == 'de':
+        locale.setlocale(locale.LC_ALL, 'de_DE.UTF-8')
+    elif language == 'en':
+        locale.setlocale(locale.LC_ALL, 'en_EN.UTF-8')
+
     # Initiate translation
     appname = 'bzm'
     localedir = os.path.join(os.path.dirname(__file__), 'locales')
@@ -372,8 +378,8 @@ def serve_layout():
                        color='info',
                        style={
                            'position': 'absolute', # For absolute position on the (first?) page use: 'absolute',  # For floating use: 'fixed',
-                           'top': '5220px',
-                           'left': '1350px',
+                           'top': '5250px',
+                           'left': '1230px',
                            'border-radius': '50%',
                            'width': '80px',
                            'height': '80px',
@@ -427,9 +433,9 @@ def serve_layout():
                     end_date=end_date,
                     min_date_allowed=min_date,
                     max_date_allowed=max_date,
-                    display_format='DD-MMM-YYYY',
-                    end_date_placeholder_text='DD-MMMM-YYYY',
-                    minimum_nights=1
+                    display_format='DD-MM-YYYY',
+                    end_date_placeholder_text='DD-MM-YYYY',
+                    minimum_nights=1,
                 ),
             ], width=3),
 
@@ -466,7 +472,8 @@ def serve_layout():
                         {'label': _('Year'), 'value': 'year'},
                         {'label': _('Month'), 'value': 'year_month'},
                         {'label': _('Week'), 'value': 'year_week'},
-                        {'label': _('Day'), 'value': 'date'}
+                        {'label': _('Day'), 'value': 'date'},
+                        {'label': _('Hour'), 'value': 'date_local'}
                     ],
                     value='date',
                     inline=True,
@@ -706,7 +713,7 @@ def serve_layout():
                     style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 10}),
             dbc.Col([
                 html.H6([_('More information about the '),
-                        html.A(_('Berlin Zählt Mobilität'), href="https://berlin.adfc.de/artikel/berlin-zaehlt-mobilitaet-adfc-berlin-dlr-rufen-zu-citizen-science-projekt-auf", target="_blank"),_(' initiative.'),],
+                        html.A(_('Berlin Zählt Mobilität'), href="https://berlin.adfc.de/artikel/berlin-zaehlt-mobilitaet-adfc-berlin-dlr-rufen-zu-citizen-science-projekt-auf", target="_blank"),_(' (BzM) initiative.'),],
                         style={'margin-left': 40, 'margin-right': 40, 'margin-top': 10, 'margin-bottom': 10}
                        ),
                 html.H6([_('Request a counter at the '),
@@ -921,15 +928,17 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, dropdown_ye
     df_line_abs_traffic = traffic_df_upt_dt_str.groupby(by=[radio_time_division, 'street_selection'], sort = False, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
 
     # Set readable date format for day-view
-    if radio_time_division == _('date'):
+    if radio_time_division == 'date':
         df_line_abs_traffic['date'] = pd.to_datetime(df_line_abs_traffic.date).dt.strftime('%a %d %b %y')
+    if radio_time_division == 'date_local':
+        df_line_abs_traffic['date_local'] = pd.to_datetime(df_line_abs_traffic.date_local).dt.strftime('%a %d %b %y %H')
 
     line_abs_traffic = px.line(df_line_abs_traffic,
         x=radio_time_division, y=['ped_total', 'bike_total', 'car_total', 'heavy_total'],
         markers=True,
         facet_col='street_selection',
         category_orders={'street_selection': [street_name, _('All Streets')]},
-        labels={'year': _('Year'), 'year_month': _('Month'), 'year_week': _('Week'), 'date': _('Day')},
+        labels={'year': _('Year'), 'year_month': _('Month'), 'year_week': _('Week'), 'date': _('Day'), 'date_local': _('Hour')},
         color_discrete_map={'ped_total': ADFC_lightblue, 'bike_total': ADFC_green, 'car_total': ADFC_orange, 'heavy_total': ADFC_crimson},
         facet_col_spacing=0.04,
         title=_('Absolute traffic count')
@@ -948,7 +957,7 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, dropdown_ye
     line_abs_traffic.update_traces({'name': _('Bikes')}, selector={'name': 'bike_total'})
     line_abs_traffic.update_traces({'name': _('Cars')}, selector={'name': 'car_total'})
     line_abs_traffic.update_traces({'name': _('Heavy')}, selector={'name': 'heavy_total'})
-    line_abs_traffic.for_each_annotation(lambda a: a.update(text=a.text.replace(street_name, street_name + ' (segment no:' + segment_id + ')')))
+    line_abs_traffic.for_each_annotation(lambda a: a.update(text=a.text.replace(street_name, street_name + _(' (segment:') + segment_id + ')')))
 
     ### Create average traffic bar chart
     df_avg_traffic = traffic_df_upt_dt_str.groupby(by=[radio_time_unit, 'street_selection'], sort= False, as_index=False).agg({'ped_total': 'mean', 'bike_total': 'mean', 'car_total': 'mean', 'heavy_total': 'mean'})
@@ -967,7 +976,7 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, dropdown_ye
         title=(_('Average traffic count')  + ' (' + start_date.split(' ')[0] + ' - ' + end_date.split(' ')[0] + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)')
     )
 
-    bar_avg_traffic.for_each_annotation(lambda a: a.update(text=a.text.replace(street_name, street_name + _(' (segment no:') + segment_id + ')')))
+    bar_avg_traffic.for_each_annotation(lambda a: a.update(text=a.text.replace(street_name, street_name + _(' (segment:') + segment_id + ')')))
     bar_avg_traffic.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
     bar_avg_traffic.update_layout({'plot_bgcolor': ADFC_palegrey,'paper_bgcolor': ADFC_palegrey})
     bar_avg_traffic.update_layout(yaxis_title=_('Average traffic count'))
@@ -1011,7 +1020,7 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, dropdown_ye
     )
 
     bar_perc_speed.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
-    bar_perc_speed.for_each_annotation(lambda a: a.update(text=a.text.replace(street_name, street_name + _(' (segment no:') + segment_id + ')')))
+    bar_perc_speed.for_each_annotation(lambda a: a.update(text=a.text.replace(street_name, street_name + _(' (segment:') + segment_id + ')')))
     bar_perc_speed.update_layout(legend_title_text=_('Car speed'))
     bar_perc_speed.update_traces({'name': ' 0 kmh'}, selector={'name': 'car_speed0'})
     bar_perc_speed.update_traces({'name': _('until') + ' 10 kmh'}, selector={'name': 'car_speed10'})
@@ -1045,7 +1054,7 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, dropdown_ye
     )
 
     bar_avg_speed.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
-    bar_avg_speed.for_each_annotation(lambda a: a.update(text=a.text.replace(street_name, street_name + _(' (segment no:') + segment_id + ')')))
+    bar_avg_speed.for_each_annotation(lambda a: a.update(text=a.text.replace(street_name, street_name + _(' (segment:') + segment_id + ')')))
     bar_avg_speed.update_layout(legend_title_text=_('Car speed'))
     bar_avg_speed.update_traces({'name': ' 0 kmh'}, selector={'name': 'car_speed0'})
     bar_avg_speed.update_traces({'name': _('until') + ' 10 kmh'}, selector={'name': 'car_speed10'})
@@ -1075,7 +1084,7 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, dropdown_ye
     )
 
     bar_v85.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
-    bar_v85.for_each_annotation(lambda a: a.update(text=a.text.replace(street_name, street_name + _(' (segment no:') + segment_id + ')')))
+    bar_v85.for_each_annotation(lambda a: a.update(text=a.text.replace(street_name, street_name + _(' (segment:') + segment_id + ')')))
     bar_v85.update_layout(legend_title_text=_('Traffic Type'))
     bar_v85.update_layout({'plot_bgcolor': ADFC_palegrey,'paper_bgcolor': ADFC_palegrey})
     bar_v85.update_layout(yaxis_title= _('v85 in km/h'))
@@ -1106,11 +1115,11 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, dropdown_ye
         )
 
         bar_ranking.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
-        bar_ranking.add_annotation(x=annotation_x, y=annotation_y, text= street_name + _('<br>(segment no:') + segment_id + ')', showarrow=True)
+        bar_ranking.add_annotation(x=annotation_x, y=annotation_y, text= street_name + '<br>' + _(' (segment:') + segment_id + ')', showarrow=True)
         bar_ranking.update_annotations(ax=0, ay=-40, arrowhead=2, arrowsize=2, arrowwidth = 1, arrowcolor= ADFC_darkgrey, xanchor='left')
         bar_ranking.update_layout(legend_title_text=_('Traffic Type'))
         bar_ranking.update_layout({'plot_bgcolor': ADFC_palegrey,'paper_bgcolor': ADFC_palegrey})
-        bar_ranking.update_layout(yaxis_title= 'Total count')
+        bar_ranking.update_layout(yaxis_title= _('Absolute count'))
         for annotation in bar_ranking.layout.annotations: annotation['font'] = {'size': 14}
 
     else:
@@ -1177,7 +1186,7 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, dropdown_ye
     line_avg_delta_traffic.update_traces(selector={'name': 'bike_total_d'}, line={'dash': 'dash'})
     line_avg_delta_traffic.update_traces(selector={'name': 'car_total_d'}, line={'dash': 'dash'})
     line_avg_delta_traffic.update_traces(selector={'name': 'heavy_total_d'}, line={'dash': 'dash'})
-    line_avg_delta_traffic.for_each_annotation(lambda a: a.update(text=a.text.replace(street_name, street_name + _(' (segment no:') + segment_id + ')')))
+    line_avg_delta_traffic.for_each_annotation(lambda a: a.update(text=a.text.replace(street_name, street_name + _(' (segment:') + segment_id + ')')))
     line_avg_delta_traffic.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
     line_avg_delta_traffic.update_layout({'plot_bgcolor': ADFC_palegrey,'paper_bgcolor': ADFC_palegrey})
     line_avg_delta_traffic.update_layout(title_text=_('Period') + ' A : ' + _(label) + ' - ' + selected_value_A + ' , ' + _('Period') + ' B (----): ' + _(label) + ' - ' + selected_value_B)
@@ -1203,5 +1212,5 @@ if __name__ == "__main__":
     #port = int(8080) #int(os.environ.get('PORT', 8050)) # Default to 8050 if PORT is not set
     #app.run_server(debug=True, port=port)
     #app.run_server(host='0.0.0.0', port=port)
-    app.run_server(debug=False)
+    app.run_server(debug=True)
     #app.run_server(debug=False, host='0.0.0.0', port=10000)

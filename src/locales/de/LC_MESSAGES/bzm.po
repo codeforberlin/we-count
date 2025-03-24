@@ -108,6 +108,9 @@ msgstr "Stelle Zeitfenster ein:"
 msgid " Hour"
 msgstr " Uhr"
 
+msgid "Hour"
+msgstr "Stunde"
+
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:256
 msgid "always_visible"
 msgstr "immer sichtbar"
@@ -486,8 +489,8 @@ msgstr "Durchschnittliche Verkehrszahl"
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:578
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:605
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:649
-msgid " (segment no:"
-msgstr " (Segment No:"
+msgid " (segment:"
+msgstr " (Segment:"
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:574
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:601
@@ -496,7 +499,7 @@ msgstr "Prozentuale Geschwindigkeit"
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:581
 msgid "Percentage car speed"
-msgstr "Prozentuale Auto-Geschwindigkeit"
+msgstr "Prozentualer Anteil"
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:606
 msgid "Car speed"
@@ -513,6 +516,10 @@ msgstr "v85 Geschwindigkeit Autos"
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:664
 msgid "v85 in km/h"
 msgstr "v85 in km/h"
+
+msgid "Absolute count"
+msgstr "Absolute Anzahl"
+
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:739
 msgid "My Street"

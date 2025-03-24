@@ -122,7 +122,7 @@ def update_language(lang_code):
     if language == 'de':
         locale.setlocale(locale.LC_ALL, 'de_DE.UTF-8')
     elif language == 'en':
-        locale.setlocale(locale.LC_ALL, 'en_EN.UTF-8')
+        locale.setlocale(locale.LC_ALL, 'en_GB.UTF-8')
 
     # Initiate translation
     appname = 'bzm'
@@ -1212,5 +1212,5 @@ if __name__ == "__main__":
     #port = int(8080) #int(os.environ.get('PORT', 8050)) # Default to 8050 if PORT is not set
     #app.run_server(debug=True, port=port)
     #app.run_server(host='0.0.0.0', port=port)
-    app.run_server(debug=True)
+    app.run_server(debug=False)
     #app.run_server(debug=False, host='0.0.0.0', port=10000)

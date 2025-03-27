@@ -371,18 +371,22 @@ def serve_layout():
                 dcc.Graph(id='street_map', figure={},className='bg-#F2F2F2'),
             ], width=8),
 
-            dbc.Button(_('My Street'),
+            #html.Button("Round Button", id='floating_button', style={"z-index": "10", "position": "absolute", "top": "50px", "left": "50px"}),
+
+            dbc.Button(_(html.A('Contact Us', href='mailto: berlinzaehlzmobilitaet.info@gmail.com')),
+            #dbc.Button(_('My Street'),
                        id='floating_button',
                        class_name='btn btn-outline-info', #rounded-pill
                        outline=False,
                        color='info',
                        style={
-                           'position': 'absolute', # For absolute position on the (first?) page use: 'absolute',  # For floating use: 'fixed',
+                           'position': 'absolute', # For absolute position use: 'absolute',  # For floating use: 'fixed',
                            'top': '5250px',
-                           'left': '1230px',
+                           'background - color': ADFC_cyan,
+                           'left': '1050px',
                            'border-radius': '50%',
-                           'width': '80px',
-                           'height': '80px',
+                           'width': '100px',
+                           'height': '100px',
                            'font-size': '16px'
                        }
                        ),
@@ -455,7 +459,7 @@ def serve_layout():
                          dbc.PopoverBody(_('A high 0.7-0.8 uptime will always mean very good data. The first and last daylight hour of the day will always have lower uptimes. If uptimes during the day are below 0.5, that is usually a clear sign that something is probably wrong with the instance.')),
                          target="popover_filter", trigger="hover")
                      ]),
-                ], width=2),
+                ], width=3),
 
         ], style={'margin-left': 40, 'margin-right': 40, 'background-color': ADFC_skyblue, 'opacity': 1.0}, className='sticky-top rounded "g-0"'),
 
@@ -730,10 +734,13 @@ def serve_layout():
                 #        html.A(_('GitHub'), href="https://github.com/codeforberlin/we-count", target="_blank"),").",],
                 #        style={'margin-left': 40, 'margin-right': 40, 'margin-top': 10, 'margin-bottom': 10}
                 #       ),
-                html.H6([_('For dashboard improvement- or new functionality proposals,'), html.Br(), _('EMAIL: '),
-                        html.A("contact@example.com", href="mailto:contact@example.com"),"."],
-                        style={'margin-left': 40, 'margin-right': 40, 'margin-top': 10, 'margin-bottom': 40},
+                html.H6([_('For dashboard improvement requests'), html.Br(), _('email us:')],
+                        style={'margin-left': 40, 'margin-right': 40, 'margin-top': 10, 'margin-bottom': 40}
                         ),
+                #html.H6([_('For dashboard improvement requests'), html.Br(), _('email: '),
+                #        html.A('Contact Us', href='mailto: berlinzaehlzmobilitaet.info@gmail.com'),'.'],
+                #        style={'margin-left': 40, 'margin-right': 40, 'margin-top': 10, 'margin-bottom': 40},
+                #        ),
             ], width=6),
             html.Br(),
         ], style={'margin-left': 40, 'margin-right': 40, 'margin-bottom': 40, 'background-color': ADFC_yellow, 'opacity': 0.7}, className='rounded text-black'),
@@ -852,6 +859,7 @@ def update_output(n_clicks):
         return #"Button not clicked yet."
     else:
         href = "mailto:contact@example.com"
+        #html.A('Contact Us', href='mailto: berlinzaehlzmobilitaet.info@gmail.com'),
         return  #f"Button clicked {n_clicks} times."
 
 ### General traffic callback ###

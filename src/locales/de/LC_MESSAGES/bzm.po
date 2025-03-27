@@ -297,7 +297,7 @@ msgstr "Tragen Sie zur Dashboard-Entwicklung bei ("
 msgid "GitHub"
 msgstr "GitHub"
 
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:475
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:476
 msgid "For dashboard improvement requests"
 msgstr "Für Vorschläge oder Verbesserungen"
 
@@ -315,6 +315,10 @@ msgstr "Straßenfarbe"
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:644
 msgid "Street Length"
 msgstr "Straßenlänge"
+
+msgid "Fits"
+msgstr "Passt"
+
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:367
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:387

@@ -5,7 +5,7 @@
 # @file    bzm_get_data.py
 # @author  Egbert Klaassen
 # @author  Michael Behrisch
-# @date    2025-01-05
+# @date    2025-03-28
 
 # This module contains a collection of functions to retrieve the data and return a pandas data frame.
 # It can also be used as a script to just save the data to a file.

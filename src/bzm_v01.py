@@ -4,7 +4,7 @@
 
 # @file    bzm_performance.py
 # @author  Egbert Klaassen
-# @date    2025-03-27
+# @date    2025-03-28
 
 """"
 # traffic_df        - dataframe with measured traffic data file
@@ -85,8 +85,8 @@ def retrieve_data():
     # Set data types for clean representation
     json_df_features['segment_id']=json_df_features['segment_id'].astype(str)
     traffic_df['segment_id']=traffic_df['segment_id'].astype(str)
-    traffic_df['year']=traffic_df['year'].astype(str)
-    traffic_df['hour']=traffic_df['hour'].astype(int)
+    #traffic_df['year']=traffic_df['year'].astype(str)
+    #traffic_df['hour']=traffic_df['hour'].astype(int)
 
     # Replace nan values
     # traffic_df['car_total'] = traffic_df['car_total'].fillna(0)
@@ -102,16 +102,15 @@ def retrieve_data():
 
 # TODO: use babel, locale...?
 def translate_traffic_df_data():
-    weekday_map = {0: _('Mon'), 1: _('Tue'), 2: _('Wed'), 3: _('Thu'), 4: _('Fri'), 5: _('Sat'), 6: _('Sun'),
-                   'Mo.': _('Mon'), 'Di.': _('Tue'), 'Mi.': _('Wed'), 'Do.': _('Thu'), 'Fr.': _('Fri'), 'Sa.': _('Sat'), 'So.': _('Sun'),
-                   'Mon': _('Mon'), 'Tue': _('Tue'), 'Wed': _('Wed'), 'Thu': _('Thu'), 'Fri': _('Fri'), 'Sat': _('Sat'), 'Sun': _('Sun')}
-    traffic_df['weekday'] = traffic_df['weekday'].map(weekday_map)
-    month_map = {1: _('Jan'), 2: _('Feb'), 3: _('Mar'), 4: _('Apr'), 5: _('May'), 6: _('Jun'), 7: _('Jul'), 8: _('Aug'),
-                 9: _('Sep'), 10: _('Oct'), 11: _('Nov'), 12: _('Dec'),
-                 'Jan': _('Jan'), 'Feb': _('Feb'), 'Mar': _('Mar'), 'Apr': _('Apr'), 'May': _('May'), 'Jun': _('Jun'), 'Jul': _('Jul'),
-                 'Aug': _('Aug'), 'Sep': _('Sep'), 'Oct': _('Oct'), 'Nov': _('Nov'), 'Dec': _('Dec'),
-                 'Mär': _('Mar'), 'Mai': _('May'), 'Okt': _('Okt'), 'Dez': _('Dec')}
-    traffic_df['month'] = traffic_df['month'].map(month_map)
+
+    traffic_df['year'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%Y')
+    traffic_df['month'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%b')
+    traffic_df['year_month'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%b %Y')
+    traffic_df['year_week'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%U/%Y')
+    traffic_df['weekday'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%a')
+    traffic_df['date'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%d/%m/%Y')
+    traffic_df['day'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%d')
+
     all_map = {'All Streets': _('All Streets'), 'Alle Straßen': _('All Streets')}
     traffic_df['street_selection'] = traffic_df['street_selection'].map(all_map)
 
@@ -119,6 +118,7 @@ def translate_traffic_df_data():
 def update_language(lang_code):
     global language
     language=lang_code
+
     if language == 'de':
         locale.setlocale(locale.LC_ALL, 'de_DE.UTF-8')
     elif language == 'en':
@@ -262,6 +262,7 @@ init_language = 'en'
 update_language(init_language)
 
 geo_df, json_df_features, traffic_df = retrieve_data()
+traffic_df.insert(0, 'hour', traffic_df['date_local'].dt.hour)
 translate_traffic_df_data()
 
 # TODO: Check correct weekdays
@@ -370,26 +371,6 @@ def serve_layout():
             dbc.Col([
                 dcc.Graph(id='street_map', figure={},className='bg-#F2F2F2'),
             ], width=8),
-
-            #html.Button("Round Button", id='floating_button', style={"z-index": "10", "position": "absolute", "top": "50px", "left": "50px"}),
-
-            dbc.Button(_(html.A('Contact Us', href='mailto: berlinzaehlzmobilitaet.info@gmail.com')),
-            #dbc.Button(_('My Street'),
-                       id='floating_button',
-                       class_name='btn btn-outline-info', #rounded-pill
-                       outline=False,
-                       color='info',
-                       style={
-                           'position': 'absolute', # For absolute position use: 'absolute',  # For floating use: 'fixed',
-                           'top': '5250px',
-                           'background - color': ADFC_cyan,
-                           'left': '1050px',
-                           'border-radius': '50%',
-                           'width': '100px',
-                           'height': '100px',
-                           'font-size': '16px'
-                       }
-                       ),
             # General controls
             dbc.Col([
                 # Street drop down
@@ -717,32 +698,50 @@ def serve_layout():
                     style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 10}),
             dbc.Col([
                 html.H6([_('More information about the '),
-                        html.A(_('Berlin Zählt Mobilität'), href="https://berlin.adfc.de/artikel/berlin-zaehlt-mobilitaet-adfc-berlin-dlr-rufen-zu-citizen-science-projekt-auf", target="_blank"),_(' (BzM) initiative.'),],
+                        html.A(_('Berlin Zählt Mobilität'), href="https://berlin.adfc.de/artikel/berlin-zaehlt-mobilitaet-adfc-berlin-dlr-rufen-zu-citizen-science-projekt-auf", target="_blank"),_(' (BzM) initiative'),],
                         style={'margin-left': 40, 'margin-right': 40, 'margin-top': 10, 'margin-bottom': 10}
                        ),
                 html.H6([_('Request a counter at the '),
-                        html.A(_('Citizen Science-Projekt'), href="https://telraam.net/en/candidates/berlin-zaehlt-mobilitaet/berlin-zaehlt-mobilitaet", target="_blank"),".",],
+                        html.A(_('Citizen Science-Projekt'), href="https://telraam.net/en/candidates/berlin-zaehlt-mobilitaet/berlin-zaehlt-mobilitaet", target="_blank"),],
                         style={'margin-left': 40, 'margin-right': 40, 'margin-top': 10, 'margin-bottom': 10}
                        ),
                 html.H6([_('Data protection around the '),
-                        html.A(_('Telraam camera'), href="https://telraam.net/home/blog/telraam-privacy", target="_blank"),_(' measurements.'),],
+                        html.A(_('Telraam camera'), href="https://telraam.net/home/blog/telraam-privacy", target="_blank"),_(' measurements'),],
                         style={'margin-left': 40, 'margin-right': 40, 'margin-top': 10, 'margin-bottom': 40}
                        ),
             ], width=6),
             dbc.Col([
-                #html.H6([_('Contribute to the dashboard development ('),
-                #        html.A(_('GitHub'), href="https://github.com/codeforberlin/we-count", target="_blank"),").",],
-                #        style={'margin-left': 40, 'margin-right': 40, 'margin-top': 10, 'margin-bottom': 10}
-                #       ),
                 html.H6([_('For dashboard improvement requests'), html.Br(), _('email us:')],
                         style={'margin-left': 40, 'margin-right': 40, 'margin-top': 10, 'margin-bottom': 40}
                         ),
-                #html.H6([_('For dashboard improvement requests'), html.Br(), _('email: '),
-                #        html.A('Contact Us', href='mailto: berlinzaehlzmobilitaet.info@gmail.com'),'.'],
-                #        style={'margin-left': 40, 'margin-right': 40, 'margin-top': 10, 'margin-bottom': 40},
-                #        ),
-            ], width=6),
-            html.Br(),
+            ], width=3),
+            dbc.Col([
+                dbc.Row([
+                    dbc.Button(_(html.A('Contact Us!', href='mailto: berlinzaehlzmobilitaet.info@gmail.com')),
+                       id='floating_button',
+                       class_name='btn btn-outline-info',  # rounded-pill
+                       outline=False,
+                       color='info',
+                       style={
+                           #'position': 'absolute', # For absolute position use: 'absolute',  # For floating use: 'fixed',
+                           #'top': '0px',
+                           #'right': '100px',
+                           #'background - color': ADFC_cyan,
+                           'border-radius': '50%',
+                           'width': '100px',
+                           'height': '100px',
+                           'font-size': '16px',
+                           'font-weight': 'bold'
+                       }
+                       ),
+                ]),
+                dbc.Row([
+                    html.Br(),
+                    html.Br(),
+                ]),
+                ], width=3
+            ),
+        html.Br(),
         ], style={'margin-left': 40, 'margin-right': 40, 'margin-bottom': 40, 'background-color': ADFC_yellow, 'opacity': 0.7}, className='rounded text-black'),
         dbc.Row([
             dbc.Col([
@@ -935,12 +934,6 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, dropdown_ye
     ### Create abs line chart
     df_line_abs_traffic = traffic_df_upt_dt_str.groupby(by=[radio_time_division, 'street_selection'], sort = False, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
 
-    # Set readable date format for day-view
-    if radio_time_division == 'date':
-        df_line_abs_traffic['date'] = pd.to_datetime(df_line_abs_traffic.date).dt.strftime('%a %d %b %y')
-    if radio_time_division == 'date_local':
-        df_line_abs_traffic['date_local'] = pd.to_datetime(df_line_abs_traffic.date_local).dt.strftime('%a %d %b %y %H')
-
     line_abs_traffic = px.line(df_line_abs_traffic,
         x=radio_time_division, y=['ped_total', 'bike_total', 'car_total', 'heavy_total'],
         markers=True,
@@ -957,7 +950,8 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, dropdown_ye
     line_abs_traffic.update_layout(legend_title_text=_('Traffic Type'))
     line_abs_traffic.update_layout(yaxis_title= _('Absolute traffic count'))
     line_abs_traffic.update_yaxes(matches=None)
-    line_abs_traffic.update_xaxes(matches= None, showticklabels=True)
+    #line_abs_traffic.update_xaxes(matches= None, showticklabels=True)
+    line_abs_traffic.update_xaxes(matches= None)
     line_abs_traffic.for_each_yaxis(lambda yaxis: yaxis.update(showticklabels=True))
     line_abs_traffic.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
     for annotation in line_abs_traffic.layout.annotations: annotation['font'] = {'size': 14}
@@ -1216,9 +1210,4 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, dropdown_ye
     return selected_street_header, color, pie_traffic, line_abs_traffic, bar_avg_traffic, line_avg_delta_traffic, bar_perc_speed, bar_avg_speed, bar_v85, bar_ranking
 
 if __name__ == "__main__":
-    #app.run(host='0.0.0.0', port=8080)
-    #port = int(8080) #int(os.environ.get('PORT', 8050)) # Default to 8050 if PORT is not set
-    #app.run_server(debug=True, port=port)
-    #app.run_server(host='0.0.0.0', port=port)
     app.run_server(debug=False)
-    #app.run_server(debug=False, host='0.0.0.0', port=10000)

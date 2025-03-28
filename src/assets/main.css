@@ -13,15 +13,15 @@ body {
 .rc-slider-rail {
     background-color: white;
 }
-#floating_button {
-    z-index: 9999; /* Ensures it appears on top */
-    position: fixed; /* Keeps it in place while scrolling */
-    top: 5170px; /* Distance from the bottom */
-    left: 1550px; /* Distance from the right */
-    background-color: #61CBF4; /* A nice color for the button */
-    color: black;
-    border: none;
-    padding: 10px 15px;
-    border-radius: 50px;
-    cursor: pointer;
-}
+/*#floating_button {
+    /* z-index: 9999; /* Ensures it appears on top */
+    /* position: absolute; /* Keeps it in place while scrolling */
+    /* top:  50px; /* Distance from the bottom */
+    /* right: 70px; /* Distance from the right */
+    /* background-color: #61CBF4; /* A nice color for the button */
+    /* color: black;
+    /* border: none;
+    /* padding: 10px 15px;
+    /* border-radius: 50px;
+    /* cursor: pointer;
+/*}

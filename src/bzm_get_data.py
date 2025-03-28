@@ -15,14 +15,13 @@ import os
 
 from datetime import datetime, timedelta
 import pandas as pd
-from sqlalchemy import create_engine
+#from sqlalchemy import create_engine
 
 from common import add_month, parse_options
-from datamodel import TrafficCount
+#from datamodel import TrafficCount
 
 ASSET_DIR = os.path.join(os.path.dirname(__file__), 'assets')
 CSV_DIR = os.path.join(os.path.dirname(__file__), '..', 'csv')
-
 
 # Save df files for development/debugging purposes
 def save_df(df:pd.DataFrame, file_name: str, verbose=False) -> None:
@@ -82,7 +81,7 @@ def get_locations(filepath="https://berlin-zaehlt.de/csv/bzm_telraam_segments.ge
     return df_geojson.drop(nan_rows.index)
 
 
-def _read_csv(months=2, verbose=False):
+def _read_csv(months=24, verbose=False):
     month, year = datetime.now().month, datetime.now().year
     all_files = []
     for offset in range(months):
@@ -146,14 +145,15 @@ def merge_data(locations, cache_file=os.path.join(ASSET_DIR, 'traffic_df_2024_Q4
     traffic_df = pd.DataFrame(df_comb, columns=selected_columns)
     if verbose:
         print('Break down date_local to new columns...')
-    #traffic_df.insert(0, 'year', traffic_df['date_local'].dt.year)
-    #traffic_df.insert(0, 'year_month', traffic_df['date_local'].dt.strftime('%Y/%m'))
-    #traffic_df.insert(0, 'month', traffic_df['date_local'].dt.month)
-    #traffic_df.insert(0, 'year_week', traffic_df['date_local'].dt.strftime('%Y/%U'))
-    #traffic_df.insert(0, 'weekday', traffic_df['date_local'].dt.weekday) #dayofweek
-    #traffic_df.insert(0, 'day', traffic_df['date_local'].dt.day)
-    #traffic_df.insert(0, 'hour', traffic_df['date_local'].dt.hour)
-    #traffic_df.insert(0, 'date', traffic_df['date_local'].dt.strftime('%Y/%m/%d'))
+    # Below moved to bzm_v01.py
+    # traffic_df.insert(0, 'year', traffic_df['date_local'].dt.year)
+    # traffic_df.insert(0, 'year_month', traffic_df['date_local'].dt.strftime('%Y/%m'))
+    # traffic_df.insert(0, 'month', traffic_df['date_local'].dt.month)
+    # traffic_df.insert(0, 'year_week', traffic_df['date_local'].dt.strftime('%Y/%U'))
+    # traffic_df.insert(0, 'weekday', traffic_df['date_local'].dt.weekday) #dayofweek
+    # traffic_df.insert(0, 'day', traffic_df['date_local'].dt.day)
+    # traffic_df.insert(0, 'hour', traffic_df['date_local'].dt.hour)
+    # traffic_df.insert(0, 'date', traffic_df['date_local'].dt.strftime('%Y/%m/%d'))
     return traffic_df.reset_index(drop=True)
 
 

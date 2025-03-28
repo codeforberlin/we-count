@@ -76,11 +76,8 @@ def retrieve_data():
         print('Reading traffic data...')
     with common.Benchmarker(not DEPLOYED, "Load traffic data"):
         traffic_df = bzm_get_data.merge_data(json_df_features)
-    traffic_file = os.path.join(ASSET_DIR, 'traffic_df_2024_Q4_2025_YTD.csv.gz')
-    #traffic_file = os.path.join(ASSET_DIR, 'traffic_df_2024_2025_YTD.csv.gz')
+    #traffic_file = os.path.join(ASSET_DIR, 'traffic_df_2024_Q4_2025_YTD.csv.gz')
     #traffic_df = pd.read_csv(traffic_file)
-
-    """" Can move to bzm_get_data? - Start """
 
     # Set data types for clean representation
     json_df_features['segment_id']=json_df_features['segment_id'].astype(str)
@@ -88,19 +85,12 @@ def retrieve_data():
     #traffic_df['year']=traffic_df['year'].astype(str)
     #traffic_df['hour']=traffic_df['hour'].astype(int)
 
-    # Replace nan values
-    # traffic_df['car_total'] = traffic_df['car_total'].fillna(0)
-    # traffic_df = traffic_df.fillna(0)
-
     # Add street column for facet graphs - check efficiency!
     traffic_df['street_selection'] = traffic_df.loc[:, 'osm.name']
     traffic_df.loc[traffic_df['street_selection'] != 'does not exist', 'street_selection'] = _('All Streets')
 
-    """" Can move to bzm_get_data? - End """
-
     return geo_df, json_df_features, traffic_df
 
-# TODO: use babel, locale...?
 def translate_traffic_df_data():
 
     traffic_df['year'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%Y')
@@ -251,7 +241,6 @@ ADFC_palegrey = '#F2F2F2'
 ADFC_pink = '#EB9AAC'
 ADFC_yellow = '#EEDE72'
 ADFC_cyan = '#61CBF4'
-
 
 street_name = 'Alte Jakobstraße'
 segment_id = '9000002582'

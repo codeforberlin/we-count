@@ -25,6 +25,7 @@ import locale
 
 import common
 import bzm_get_data
+from src.bzm_get_data import save_df
 
 # TODO: from functools import lru_cache
 
@@ -100,6 +101,7 @@ def translate_traffic_df_data():
     traffic_df['weekday'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%a')
     traffic_df['date'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%d/%m/%Y')
     traffic_df['day'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%d')
+    traffic_df['date_hour'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%d/%m/%Y - %H')
 
     all_map = {'All Streets': _('All Streets'), 'Alle Straßen': _('All Streets')}
     traffic_df['street_selection'] = traffic_df['street_selection'].map(all_map)
@@ -251,7 +253,10 @@ init_language = 'en'
 update_language(init_language)
 
 geo_df, json_df_features, traffic_df = retrieve_data()
+
+# Hour column for  hour range calculations
 traffic_df.insert(0, 'hour', traffic_df['date_local'].dt.hour)
+# Provide date labels and translate with locale
 translate_traffic_df_data()
 
 # TODO: Check correct weekdays
@@ -447,7 +452,7 @@ def serve_layout():
                         {'label': _('Month'), 'value': 'year_month'},
                         {'label': _('Week'), 'value': 'year_week'},
                         {'label': _('Day'), 'value': 'date'},
-                        {'label': _('Hour'), 'value': 'date_local'}
+                        {'label': _('Hour'), 'value': 'date_hour'}
                     ],
                     value='date',
                     inline=True,
@@ -477,7 +482,7 @@ def serve_layout():
                         {'label': _('Monthly'), 'value': 'month'},
                         {'label': _('Weekly'), 'value': 'weekday'},
                         {'label': _('Daily'), 'value': 'day'},
-                        {'label': _('Hourly'), 'value': 'hour'}
+                        {'label': _('Hourly'), 'value': 'date_hour'}
                     ],
                     value='weekday',
                     inline=True,
@@ -920,26 +925,28 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, dropdown_ye
     pie_traffic.update_layout(showlegend=False)
     pie_traffic.update_traces(textposition='inside', textinfo='percent+label')
 
-    ### Create abs line chart
+    ### Create absolute line chart
     df_line_abs_traffic = traffic_df_upt_dt_str.groupby(by=[radio_time_division, 'street_selection'], sort = False, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
+    save_df(df_line_abs_traffic, 'df_line_abs_traffic-before.xlsx')
+    if radio_time_division == 'date_hour':
+        df_line_abs_traffic = df_line_abs_traffic.sort_values(by=['street_selection', radio_time_division], ascending=True)
 
-    line_abs_traffic = px.line(df_line_abs_traffic,
+    line_abs_traffic = px.scatter(df_line_abs_traffic,
         x=radio_time_division, y=['ped_total', 'bike_total', 'car_total', 'heavy_total'],
-        markers=True,
+        #markers=True,
         facet_col='street_selection',
         category_orders={'street_selection': [street_name, _('All Streets')]},
-        labels={'year': _('Year'), 'year_month': _('Month'), 'year_week': _('Week'), 'date': _('Day'), 'date_local': _('Hour')},
+        labels={'year': _('Year'), 'year_month': _('Month'), 'year_week': _('Week'), 'date': _('Day'), 'date_hour': _('Hour')},
         color_discrete_map={'ped_total': ADFC_lightblue, 'bike_total': ADFC_green, 'car_total': ADFC_orange, 'heavy_total': ADFC_crimson},
         facet_col_spacing=0.04,
         title=_('Absolute traffic count')
-    )
+    ).update_traces(mode="lines+markers", connectgaps=False)
 
     line_abs_traffic.update_layout({'plot_bgcolor': ADFC_palegrey,'paper_bgcolor': ADFC_palegrey})
     line_abs_traffic.update_layout({'plot_bgcolor': ADFC_palegrey, 'paper_bgcolor': ADFC_palegrey})
     line_abs_traffic.update_layout(legend_title_text=_('Traffic Type'))
     line_abs_traffic.update_layout(yaxis_title= _('Absolute traffic count'))
     line_abs_traffic.update_yaxes(matches=None)
-    #line_abs_traffic.update_xaxes(matches= None, showticklabels=True)
     line_abs_traffic.update_xaxes(matches= None)
     line_abs_traffic.for_each_yaxis(lambda yaxis: yaxis.update(showticklabels=True))
     line_abs_traffic.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))

@@ -25,7 +25,6 @@ import locale
 
 import common
 import bzm_get_data
-from src.bzm_get_data import save_df
 
 # TODO: from functools import lru_cache
 
@@ -927,7 +926,6 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, dropdown_ye
 
     ### Create absolute line chart
     df_line_abs_traffic = traffic_df_upt_dt_str.groupby(by=[radio_time_division, 'street_selection'], sort = False, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
-    save_df(df_line_abs_traffic, 'df_line_abs_traffic-before.xlsx')
     if radio_time_division == 'date_hour':
         df_line_abs_traffic = df_line_abs_traffic.sort_values(by=['street_selection', radio_time_division], ascending=True)
 

@@ -13,19 +13,19 @@
 """
 
 import gettext
+import json
 import os
 import dash_bootstrap_components as dbc
 import geopandas as gpd
 import pandas as pd
 import plotly.express as px
-from dash import Dash, html, dcc, Output, Input, callback, ctx, clientside_callback, callback_context
+from dash import Dash, html, dcc, Output, Input, State, callback, ctx, clientside_callback, callback_context
 from dash.exceptions import PreventUpdate
 import datetime
 import locale
 
 import common
 import bzm_get_data
-from src.bzm_get_data import save_df
 
 # TODO: from functools import lru_cache
 
@@ -177,9 +177,13 @@ def get_comparison_data(df, radio_time_division, group_by, selected_value_A, sel
     return df_avg_traffic_delta_concat
 
 def update_selected_street(df, segment_id, street_name):
-    # Generate "selected street only" df and populate "street_selection"
-    df_str = df[df['segment_id'] == segment_id]
-    df_str.loc[df_str['street_selection'] == _('All Streets'), 'street_selection'] = street_name
+    if segment_id == 'full street':
+        df_str = df[df['osm.name'] == street_name]
+        df_str.loc[df_str['street_selection'] == _('All Streets'), 'street_selection'] = street_name
+    else:
+        # Generate "selected street only" df and populate "street_selection"
+        df_str = df[df['segment_id'] == segment_id]
+        df_str.loc[df_str['street_selection'] == _('All Streets'), 'street_selection'] = street_name
 
     if len(df_str) == 0:
         no_data = True
@@ -372,6 +376,7 @@ def serve_layout():
                     value=street_name,
                     style={'margin-top': 10, 'margin-bottom': 30}
                 ),
+                dcc.Store(id='segment_id_value', storage_type='memory'),
                 html.Hr(),
                 html.Span([
                     html.H4(_('Traffic type - selected street'), id='selected_street_header',  style={'margin-top': 10, 'margin-bottom': 20, 'color': 'black'}, className='d-inline-block'),
@@ -766,26 +771,36 @@ def get_language(lang_code_dd):
 ### Map callback ###
 @callback(
     Output(component_id='street_name_dd',component_property='value'),
-    Output(component_id='street_map',component_property='value'),
+    Output('segment_id_value', 'data', allow_duplicate=True),
     Input(component_id='street_map', component_property='clickData'),
     prevent_initial_call=True
 )
 
 def get_street_name(clickData):
-    print('get_street_name')
+    callback_trigger = ctx.triggered_id
+
     if clickData:
+        # Get street name from map click
         street_name = clickData['points'][0]['hovertext']
-        print(street_name)
+        # Get segment_id from map click and prepare for dcc.Store
         segment_id = str(clickData['points'][0]['customdata'][0])
-        print(segment_id)
+        segment_id_json = json.loads(segment_id)
 
         # Check if street inactive
         idx = df_map.loc[df_map['osm.name'] == street_name]
         map_color_status = idx['map_line_color'].values[0]
         if map_color_status == _('Inactive - no data'):
             raise PreventUpdate
-        else:
-            return street_name, segment_id
+
+
+    #if callback_trigger == 'street_name_dd':
+    #    print('magweg?')
+    #    segment_id = 'full_street'
+    #    print('full street')
+    #    segment_id_json = json.loads(segment_id)
+    #    print(segment_id_json)
+
+    return street_name, segment_id_json
 
 @callback(
     Output(component_id='street_map', component_property='figure'),
@@ -793,12 +808,10 @@ def get_street_name(clickData):
 )
 
 def update_map(street_name):
-    print('update_map')
-    print(street_name)
-
     callback_trigger = ctx.triggered_id
-    if (callback_trigger == 'street_name_dd'):
-         zoom_factor = 13
+
+    if callback_trigger == 'street_name_dd':
+        zoom_factor = 13
     else:
          zoom_factor = 11
 
@@ -837,7 +850,6 @@ def update_map(street_name):
                     '<a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
                     '<a href="https://telraam.net">Telraam</a>',
                     '<a href="https://www.berlin.de/sen/uvk/mobilitaet-und-verkehr/verkehrsplanung/radverkehr/weitere-radinfrastruktur/zaehlstellen-und-fahrradbarometer/">SenUMVK Berlin<br></a>'
-                    #'<a href="https://berlin-zaehlt.de">Berlin zählt Mobilität<br></a>'
                 ]) + '' +
                 sep.join([
                     '<a href="https://berlin-zaehlt.de/csv/">CSV data</a> under <a href="https://creativecommons.org/licenses/by/4.0/">CC-BY 4.0</a> and <a href="https://www.govdata.de/dl-de/by-2-0">dl-de/by-2-0</a>'
@@ -872,10 +884,11 @@ def update_output(n_clicks):
     Output(component_id='bar_avg_speed', component_property='figure'),
     Output(component_id='bar_v85', component_property='figure'),
     Output(component_id='bar_ranking', component_property='figure'),
+    Output(component_id='segment_id_value',component_property= 'data', allow_duplicate=True),
     Input(component_id='radio_time_division', component_property='value'),
     Input(component_id='radio_time_unit', component_property='value'),
     Input(component_id='street_name_dd', component_property='value'),
-    Input(component_id='street_map', component_property='value'),
+    State(component_id='segment_id_value',component_property= 'data'),
     Input(component_id='dropdown_year_A', component_property='value'),
     Input(component_id='dropdown_year_month_A', component_property='value'),
     Input(component_id='dropdown_year_week_A', component_property='value'),
@@ -889,12 +902,11 @@ def update_output(n_clicks):
     Input(component_id='range_slider', component_property='value'),
     Input(component_id='toggle_uptime_filter', component_property='value'),
     Input(component_id='radio_y_axis', component_property='value'),
+    prevent_initial_call='initial_duplicate',
 )
 
-def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id, dropdown_year_A, dropdown_year_month_A, dropdown_year_week_A, dropdown_date_A, dropdown_year_B, dropdown_year_month_B, dropdown_year_week_B, dropdown_date_B, start_date, end_date, hour_range, toggle_uptime_filter, radio_y_axis):
-    print('update graphs')
-    print(street_name)
-    print(segment_id)
+def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_json, dropdown_year_A, dropdown_year_month_A, dropdown_year_week_A, dropdown_date_A, dropdown_year_B, dropdown_year_month_B, dropdown_year_week_B, dropdown_date_B, start_date, end_date, hour_range, toggle_uptime_filter, radio_y_axis):
+    callback_trigger = ctx.triggered_id
 
     # If uptime filter changed, reload traffic_df_upt
     if 'filter_uptime_selected' in toggle_uptime_filter:
@@ -906,11 +918,18 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id,
     # TODO: trigger only in case of relevant callback
     traffic_df_upt_dt, min_date, max_date, min_hour, max_hour = filter_dt(traffic_df_upt, start_date, end_date, hour_range)
 
-    # Get segment_id
-    # TODO: trigger only in case of relevant callback
-    if segment_id == None:
+    # Get segment_id using dcc.Store or dropdown callbacks, elif for initiation
+    segment_id = json.dumps(segment_id_json)
+    if segment_id_json != None:
+        segment_id = json.dumps(segment_id_json)
+    elif callback_trigger == 'street_name_dd':
+        segment_id = 'full street'
+    elif (segment_id == None) or (segment_id == 'null'):
         segment_id_index = traffic_df_upt.loc[traffic_df_upt['osm.name'] == street_name]
         segment_id = segment_id_index['segment_id'].values[0]
+
+    # Reset segment_id to dcc.Store
+    segment_id_json= None
 
     # Update selected street
     no_data, traffic_df_upt_dt_str = update_selected_street(traffic_df_upt_dt, segment_id, street_name)
@@ -1212,7 +1231,7 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id,
     line_avg_delta_traffic.update_xaxes(dtick = 1, tickformat=".0f")
     for annotation in line_avg_delta_traffic.layout.annotations: annotation['font'] = {'size': 14}
 
-    return selected_street_header, color, pie_traffic, line_abs_traffic, bar_avg_traffic, line_avg_delta_traffic, bar_perc_speed, bar_avg_speed, bar_v85, bar_ranking
+    return selected_street_header, color, pie_traffic, line_abs_traffic, bar_avg_traffic, line_avg_delta_traffic, bar_perc_speed, bar_avg_speed, bar_v85, bar_ranking, segment_id_json
 
 if __name__ == "__main__":
     app.run_server(debug=False)

@@ -25,6 +25,7 @@ import locale
 
 import common
 import bzm_get_data
+from src.bzm_get_data import save_df
 
 # TODO: from functools import lru_cache
 
@@ -92,7 +93,6 @@ def retrieve_data():
     return geo_df, json_df_features, traffic_df
 
 def translate_traffic_df_data():
-
     traffic_df['year'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%Y')
     traffic_df['month'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%b')
     traffic_df['year_month'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%b %Y')
@@ -100,7 +100,7 @@ def translate_traffic_df_data():
     traffic_df['weekday'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%a')
     traffic_df['date'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%d/%m/%Y')
     traffic_df['day'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%d')
-    traffic_df['date_hour'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%d/%m/%Y - %H')
+    traffic_df['date_hour'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%d/%m/%y - %H')
 
     all_map = {'All Streets': _('All Streets'), 'Alle Straßen': _('All Streets')}
     traffic_df['street_selection'] = traffic_df['street_selection'].map(all_map)
@@ -317,7 +317,6 @@ df_map_base = geo_df_map_info.join(json_df_features)
 
 # Prepare map data
 df_map = update_map_data(df_map_base, traffic_df_id_bc)
-
 
 ### Run Dash app ###
 if not DEPLOYED:
@@ -767,13 +766,18 @@ def get_language(lang_code_dd):
 ### Map callback ###
 @callback(
     Output(component_id='street_name_dd',component_property='value'),
+    Output(component_id='street_map',component_property='value'),
     Input(component_id='street_map', component_property='clickData'),
     prevent_initial_call=True
 )
 
 def get_street_name(clickData):
+    print('get_street_name')
     if clickData:
         street_name = clickData['points'][0]['hovertext']
+        print(street_name)
+        segment_id = str(clickData['points'][0]['customdata'][0])
+        print(segment_id)
 
         # Check if street inactive
         idx = df_map.loc[df_map['osm.name'] == street_name]
@@ -781,7 +785,7 @@ def get_street_name(clickData):
         if map_color_status == _('Inactive - no data'):
             raise PreventUpdate
         else:
-            return street_name
+            return street_name, segment_id
 
 @callback(
     Output(component_id='street_map', component_property='figure'),
@@ -789,6 +793,8 @@ def get_street_name(clickData):
 )
 
 def update_map(street_name):
+    print('update_map')
+    print(street_name)
 
     callback_trigger = ctx.triggered_id
     if (callback_trigger == 'street_name_dd'):
@@ -805,7 +811,7 @@ def update_map(street_name):
 
     sep = '&nbsp;|&nbsp;'
 
-    street_map = px.line_map(df_map, lat='y', lon='x', line_group='segment_id', hover_name = 'osm.name', color= 'map_line_color', color_discrete_map= {
+    street_map = px.line_map(df_map, lat='y', lon='x', custom_data='segment_id',line_group='segment_id', hover_name = 'osm.name', color= 'map_line_color', color_discrete_map= {
         'More bikes than cars': ADFC_green,
         'More cars than bikes': ADFC_blue,
         'Over 2x more cars': ADFC_orange,
@@ -869,6 +875,7 @@ def update_output(n_clicks):
     Input(component_id='radio_time_division', component_property='value'),
     Input(component_id='radio_time_unit', component_property='value'),
     Input(component_id='street_name_dd', component_property='value'),
+    Input(component_id='street_map', component_property='value'),
     Input(component_id='dropdown_year_A', component_property='value'),
     Input(component_id='dropdown_year_month_A', component_property='value'),
     Input(component_id='dropdown_year_week_A', component_property='value'),
@@ -884,7 +891,10 @@ def update_output(n_clicks):
     Input(component_id='radio_y_axis', component_property='value'),
 )
 
-def update_graphs(radio_time_division, radio_time_unit, street_name, dropdown_year_A, dropdown_year_month_A, dropdown_year_week_A, dropdown_date_A, dropdown_year_B, dropdown_year_month_B, dropdown_year_week_B, dropdown_date_B, start_date, end_date, hour_range, toggle_uptime_filter, radio_y_axis):
+def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id, dropdown_year_A, dropdown_year_month_A, dropdown_year_week_A, dropdown_date_A, dropdown_year_B, dropdown_year_month_B, dropdown_year_week_B, dropdown_date_B, start_date, end_date, hour_range, toggle_uptime_filter, radio_y_axis):
+    print('update graphs')
+    print(street_name)
+    print(segment_id)
 
     # If uptime filter changed, reload traffic_df_upt
     if 'filter_uptime_selected' in toggle_uptime_filter:
@@ -898,8 +908,9 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, dropdown_ye
 
     # Get segment_id
     # TODO: trigger only in case of relevant callback
-    segment_id_index = traffic_df_upt.loc[traffic_df_upt['osm.name'] == street_name]
-    segment_id = segment_id_index['segment_id'].values[0]
+    if segment_id == None:
+        segment_id_index = traffic_df_upt.loc[traffic_df_upt['osm.name'] == street_name]
+        segment_id = segment_id_index['segment_id'].values[0]
 
     # Update selected street
     no_data, traffic_df_upt_dt_str = update_selected_street(traffic_df_upt_dt, segment_id, street_name)

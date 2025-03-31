@@ -300,12 +300,15 @@ msgid "GitHub"
 msgstr "GitHub"
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:476
-msgid "For dashboard improvement requests"
-msgstr "Für Vorschläge oder Verbesserungen"
+msgid "For dashboard improvement requests email us:"
+msgstr "Für Vorschläge oder Verbesserungen E-Mail:"
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:475
 msgid "email us:"
 msgstr "E-MAIL: "
+
+msgid "Dashboard development & creation:"
+msgstr "Dashboard Entwicklung & Kreation:"
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:541
 msgid "Street color"

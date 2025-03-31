@@ -22,7 +22,6 @@ import plotly.express as px
 from dash import Dash, html, dcc, Output, Input, State, callback, ctx, clientside_callback, callback_context
 from dash.exceptions import PreventUpdate
 import datetime
-from datetime import date
 import locale
 
 import common
@@ -716,13 +715,16 @@ def serve_layout():
                        ),
             ], width=6),
             dbc.Col([
-                html.H6([_('For dashboard improvement requests'), html.Br(), _('email us:')],
-                        style={'margin-left': 40, 'margin-right': 40, 'margin-top': 10, 'margin-bottom': 40}
+                html.H6([_('Dashboard development & creation:'),  html.Br(), ('E. Klaassen and M. Behrisch')],
+                        style={'margin-left': 40, 'margin-right': 0, 'margin-top': 10, 'margin-bottom': 10}
                         ),
-            ], width=3),
+                html.H6([_('For dashboard improvement requests email us:')],
+                        style={'margin-left': 40, 'margin-right': 0, 'margin-top': 10, 'margin-bottom': 40}
+                        ),
+            ], width=4),
             dbc.Col([
                 dbc.Row([
-                    dbc.Button(_(html.A('Contact Us!', href='mailto: berlinzaehlzmobilitaet.info@gmail.com')),
+                    dbc.Button(_(html.A('Contact Us!', href='mailto: berlincountsmobility@gmail.com')),
                        id='floating_button',
                        class_name='btn btn-outline-info',  # rounded-pill
                        outline=False,
@@ -737,14 +739,14 @@ def serve_layout():
                            'height': '100px',
                            'font-size': '16px',
                            'font-weight': 'bold'
-                       }
-                       ),
+                       }),
                 ]),
                 dbc.Row([
+                    html.Br(style = 'line-height:200px'),
                     html.Br(),
                     html.Br(),
                 ]),
-                ], width=3
+                ], width=2, align='end'
             ),
         html.Br(),
         ], style={'margin-left': 40, 'margin-right': 40, 'margin-bottom': 40, 'background-color': ADFC_yellow, 'opacity': 0.7}, className='rounded text-black'),
@@ -868,8 +870,6 @@ def update_output(n_clicks):
     if n_clicks is None:
         return #"Button not clicked yet."
     else:
-        href = "mailto:contact@example.com"
-        #html.A('Contact Us', href='mailto: berlinzaehlzmobilitaet.info@gmail.com'),
         return  #f"Button clicked {n_clicks} times."
 
 ### General traffic callback ###

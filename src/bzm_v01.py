@@ -4,7 +4,7 @@
 
 # @file    bzm_performance.py
 # @author  Egbert Klaassen
-# @date    2025-03-29
+# @date    2025-03-31
 
 """"
 # traffic_df        - dataframe with measured traffic data file
@@ -22,6 +22,7 @@ import plotly.express as px
 from dash import Dash, html, dcc, Output, Input, State, callback, ctx, clientside_callback, callback_context
 from dash.exceptions import PreventUpdate
 import datetime
+from datetime import date
 import locale
 
 import common
@@ -134,6 +135,11 @@ def convert(date_time, format_string):
     datetime_obj = datetime.datetime.strptime(date_time, format_string)
     return datetime_obj
 
+def format_str_date(str_date, from_date_format, to_date_format):
+    timestamp_date = datetime.datetime.strptime(str_date, from_date_format)
+    formatted_str_date = timestamp_date.strftime(to_date_format)
+    return formatted_str_date
+
 def filter_dt(df, start_date, end_date, hour_range):
 
     # Get min/max dates
@@ -177,7 +183,7 @@ def get_comparison_data(df, radio_time_division, group_by, selected_value_A, sel
     return df_avg_traffic_delta_concat
 
 def update_selected_street(df, segment_id, street_name):
-    if segment_id == 'full street':
+    if segment_id == _('full street'):
         df_str = df[df['osm.name'] == street_name]
         df_str.loc[df_str['street_selection'] == _('All Streets'), 'street_selection'] = street_name
     else:
@@ -262,15 +268,6 @@ traffic_df.insert(0, 'hour', traffic_df['date_local'].dt.hour)
 # Provide date labels and translate with locale
 translate_traffic_df_data()
 
-# TODO: Check correct weekdays
-#given_date = datetime.datetime.strptime('2025-02-27 12:00:00', '%Y-%m-%d %H:%M:%S')
-#given_date = convert('2025-02-27 12:00:00', '%Y-%m-%d %H:%M:%S')
-#day_of_week = given_date.dt.dayofweek()
-#day_of_week = given_date.weekday() #3
-#day_of_week = given_date.isoweekday() #4
-#day_of_week = calendar.weekday(2025,11,27) #3
-#print(day_of_week)
-
 # Start with traffic df with uptime filtered
 traffic_df_upt = filter_uptime(traffic_df)
 
@@ -285,7 +282,11 @@ format_string = '%Y-%m-%d %H:%M:%S'
 try_start_date = end_date + datetime.timedelta(days=-13)
 if try_start_date > start_date:
     start_date = try_start_date
-    start_date = start_date.strftime(format_string)
+    #start_date = start_date.strftime(format_string)
+
+# Convert to Str format for Datepicker
+start_date = start_date.strftime('%Y-%m-%d')
+end_date = end_date.strftime('%Y-%m-%d')
 
 hour_range = [traffic_df_upt["hour"].min(), traffic_df_upt["hour"].max()]
 
@@ -349,7 +350,7 @@ def serve_layout():
             ], width=5),
             dbc.Col([
                 html.H6('Map info', id='popover_map_info', className= 'text-end', style={'margin-left': 00, 'margin-top': 45, 'margin-bottom': 00, 'margin-right': 30, 'color': ADFC_darkgrey}),
-                dbc.Popover(dbc.PopoverBody(_('Note: street colors represent bike/car ratios based on all data available and do not change with date- or hour selection.')), target="popover_map_info", trigger="hover"),
+                dbc.Popover(dbc.PopoverBody(_('Note: street colors represent bike/car ratios based on all data available and do not change with date- or hour selection. The map allows street segments to be selected individually. To select whole streets, select a street name from the drop down menu.')), target="popover_map_info", trigger="hover"),
             ], width=3),
             dbc.Col([
                 dcc.Dropdown(
@@ -526,10 +527,9 @@ def serve_layout():
                 dbc.Popover(
                     dbc.PopoverBody(
                         _('The V85 is a widely used indicator in the world of mobility and road safety, as it is deemed to be representative of the speed one can reasonably maintain on a road.')),
-                    target="popover_v85_speed",
-                    trigger="hover"
+                    target='popover_v85_speed',
+                    trigger='hover'
                 ),
-
                 dcc.Graph(id='bar_v85', figure={},
                           style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 30})
             ], width=12
@@ -678,9 +678,17 @@ def serve_layout():
         html.Br(),
         ], style={'margin-left': 40, 'margin-right': 40, 'background-color': ADFC_skyblue, 'opacity': 1.0}, className='sticky-top rounded "g-0"'),
         dbc.Row([
-            dbc.Col([
-                html.H4(_('Compare traffic periods'), style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 00}),
-            ], width=12
+            html.Span([html.H4(_('Compare traffic periods'),
+                               style={'margin-left': 40, 'margin-right': 00, 'margin-top': 30, 'margin-bottom': 00,
+                                      'display': 'inline-block'}),
+                       html.I(className='bi bi-info-circle-fill h6', id='compare_traffic_periods',
+                              style={'margin-left': 5, 'margin-top': 30, 'margin-bottom': 00,
+                                     'display': 'inline-block', 'color': ADFC_lightgrey})]),
+            dbc.Popover(
+                dbc.PopoverBody(
+                    _('This chart allows four period-lengths to be compared: day, week, month or year. For each of these, two periods can be compared, period A and period B (e.g. week A vs. week B or day A vs. day B). Solid lines represent period A and dashed lines represent period B. The date and hour filters in the upper menu bar have no effect, however \'filter uptime\' does!')),
+                target='compare_traffic_periods',
+                trigger='hover'
             ),
             dbc.Col([
                 dcc.Graph(id='line_avg_delta_traffic', figure={},
@@ -791,14 +799,6 @@ def get_street_name(clickData):
         map_color_status = idx['map_line_color'].values[0]
         if map_color_status == _('Inactive - no data'):
             raise PreventUpdate
-
-
-    #if callback_trigger == 'street_name_dd':
-    #    print('magweg?')
-    #    segment_id = 'full_street'
-    #    print('full street')
-    #    segment_id_json = json.loads(segment_id)
-    #    print(segment_id_json)
 
     return street_name, segment_id_json
 
@@ -923,7 +923,7 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
     if segment_id_json != None:
         segment_id = json.dumps(segment_id_json)
     elif callback_trigger == 'street_name_dd':
-        segment_id = 'full street'
+        segment_id = _('full street')
     elif (segment_id == None) or (segment_id == 'null'):
         segment_id_index = traffic_df_upt.loc[traffic_df_upt['osm.name'] == street_name]
         segment_id = segment_id_index['segment_id'].values[0]
@@ -961,7 +961,7 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
 
     line_abs_traffic = px.scatter(df_line_abs_traffic,
         x=radio_time_division, y=['ped_total', 'bike_total', 'car_total', 'heavy_total'],
-        #markers=True,
+        #markers=True, # In case of line graph
         facet_col='street_selection',
         category_orders={'street_selection': [street_name, _('All Streets')]},
         labels={'year': _('Year'), 'year_month': _('Month'), 'year_week': _('Week'), 'date': _('Day'), 'date_hour': _('Hour')},
@@ -991,6 +991,10 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
     if radio_time_unit == 'hour' or radio_time_unit == 'day':
         df_avg_traffic = df_avg_traffic.sort_values(by=[radio_time_unit], ascending=True)
 
+    # Create date period for below four graph titles, convert formats from '%Y-%m-%d' format requitred by Datepicker!
+    start_date = format_str_date(start_date, '%Y-%m-%d','%d %b %Y')
+    end_date = format_str_date(end_date, '%Y-%m-%d','%d %b %Y')
+
     bar_avg_traffic = px.bar(df_avg_traffic,
         x=radio_time_unit, y=['ped_total', 'bike_total', 'car_total', 'heavy_total'],
         barmode='stack',
@@ -999,7 +1003,7 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
         category_orders={'street_selection': [street_name, _('All Streets')]},
         labels={'year': _('Yearly'), 'month': _('Monthly'), 'weekday': _('Weekly'), 'day': _('Daily'), 'hour': _('Hourly'), '1': 'Mon'},
         color_discrete_map={'ped_total': ADFC_lightblue, 'bike_total': ADFC_green, 'car_total': ADFC_orange, 'heavy_total': ADFC_crimson},
-        title=(_('Average traffic count')  + ' (' + start_date.split(' ')[0] + ' - ' + end_date.split(' ')[0] + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)')
+        title=(_('Average traffic count')  + ' (' + start_date + ' - ' + end_date + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)')
     )
 
     bar_avg_traffic.for_each_annotation(lambda a: a.update(text=a.text.replace(street_name, street_name + _(' (segment:') + segment_id + ')')))
@@ -1042,7 +1046,7 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
                              'car_speed40': ADFC_green, 'car_speed50': ADFC_orange,
                              'car_speed60': ADFC_crimson, 'car_speed70': ADFC_pink},
          facet_col_spacing=0.04,
-         title=(_('Percentage car speed') + ' (' + start_date.split(' ')[0] + ' - ' + end_date.split(' ')[0] + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)')
+         title=(_('Percentage car speed') + ' (' + start_date + ' - ' + end_date + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)')
     )
 
     bar_perc_speed.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
@@ -1076,7 +1080,7 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
                             'car_speed40': ADFC_green, 'car_speed50': ADFC_orange,
                             'car_speed60': ADFC_crimson, 'car_speed70': ADFC_pink},
         facet_col_spacing=0.04,
-        title=(_('Average percentage car speed') + ' (' + start_date.split(' ')[0] + ' - ' + end_date.split(' ')[0] + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)')
+        title=(_('Average percentage car speed') + ' (' + start_date + ' - ' + end_date + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)')
     )
 
     bar_avg_speed.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
@@ -1106,7 +1110,7 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
         category_orders={'street_selection': [street_name, _('All Streets')]},
         facet_col_spacing=0.04,
         labels={'year': _('Yearly'), 'month': _('Monthly'), 'weekday': _('Weekly'), 'day': _('Daily'), 'hour': _('Hourly')},
-        title=(_('Speed cars v85') + ' (' + start_date.split(' ')[0] + ' - ' + end_date.split(' ')[0] + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)')
+        title=(_('Speed cars v85') + ' (' + start_date + ' - ' + end_date + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)')
     )
 
     bar_v85.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
@@ -1136,7 +1140,7 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
             color=radio_y_axis,
             color_continuous_scale='temps',
             labels={'ped_total': _('Pedestrians'), 'bike_total': _('Bikes'), 'car_total': _('Cars'), 'heavy_total': _('Heavy'), 'osm.length': _('Street Length'), 'osm.maxspeed': _('Max Speed'), 'osm.name': _('Street')},
-            title=(_('Absolute traffic') + ' (' + start_date.split(' ')[0] + ' - ' + end_date.split(' ')[0] + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)'),
+            title=(_('Absolute traffic') + ' (' + start_date + ' - ' + end_date + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)'),
             height=600,
         )
 

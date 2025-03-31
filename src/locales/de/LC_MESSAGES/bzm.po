@@ -17,9 +17,11 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-msgid "Note: street colors represent bike/car ratios based on all data available and do not change with date- or hour selection."
-msgstr "Hinweis: Die Straßenfarben stellen das Fahrrad-Auto-Verhältnis auf Grundlage aller verfügbaren Daten dar und ändern sich nicht mit der Datums- oder Stundenauswahl."
+msgid "Note: street colors represent bike/car ratios based on all data available and do not change with date- or hour selection. The map allows street segments to be selected individually. To select whole streets, select a street name from the drop down menu."
+msgstr "Hinweis: Die Straßenfarben stellen das Fahrrad-Auto-Verhältnis auf Grundlage aller verfügbaren Daten dar und ändern sich nicht mit der Datums- oder Stundenauswahl. Die Karte ermöglicht die Auswahl einzelner Straßenabschnitte. Um ganze Straßen auszuwählen, wähle einen Straßennamen aus dem Dropdown-Menü."
 
+msgid "This chart allows four period-lengths to be compared: day, week, month or year. For each of these, two periods can be compared, period A and period B (e.g. week A vs. week B or day A vs. day B). Solid lines represent period A and dashed lines represent period B. The date and hour filters in the upper menu bar have no effect, however 'filter uptime' does!"
+msgstr "Dieses Diagramm ermöglicht den Vergleich von vier Zeiträumen: Tag, Woche, Monat oder Jahr. Für jeden dieser Zeiträume können zwei Zeiträume verglichen werden: Zeitraum A und Zeitraum B (z. B. Woche A vs. Woche B oder Tag A vs. Tag B). Durchgezogene Linien repräsentieren Zeitraum A, gestrichelte Linien Zeitraum B. Die Datums- und Stundenfilter in der oberen Menüleiste haben keine Wirkung, der Filter 'Filter Uptime' hingegen schon!"
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:81
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:87
@@ -316,9 +318,8 @@ msgstr "Straßenfarbe"
 msgid "Street Length"
 msgstr "Straßenlänge"
 
-msgid "Fits"
-msgstr "Passt"
-
+msgid "all street segments"
+msgstr "alle Straßensegmente"
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:367
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:387

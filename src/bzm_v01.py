@@ -4,7 +4,7 @@
 
 # @file    bzm_performance.py
 # @author  Egbert Klaassen
-# @date    2025-03-31
+# @date    2025-04-01
 
 """"
 # traffic_df        - dataframe with measured traffic data file
@@ -178,6 +178,10 @@ def get_comparison_data(df, radio_time_division, group_by, selected_value_A, sel
     df_avg_traffic_delta_B = df_period_grp_B_ren
 
     df_avg_traffic_delta_concat = pd.concat([df_avg_traffic_delta_A, df_avg_traffic_delta_B])
+
+    #TODO Sort on hour to avoid line graph jumps around hour gaps
+    #if radio_time_division == 'date_hour': #or radio_time_division == 'date':
+    #    df_avg_traffic_delta_concat = df_avg_traffic_delta_concat.sort_values(by=[radio_time_division], ascending=True)
 
     return df_avg_traffic_delta_concat
 
@@ -593,8 +597,7 @@ def serve_layout():
             dbc.Col([
                 dcc.Dropdown(
                     id='dropdown_year_A',
-                    options=sorted([{'label': i, 'value': i} for i in traffic_df['year'].unique()],
-                                   key=lambda x: x['label']),
+                    options=[{'label': i, 'value': i} for i in traffic_df['year'].unique()],
                     value=traffic_df['year'][len(traffic_df['year']) - 1],
                     style={'margin-left': 00, 'margin-bottom': 5},
                     clearable=False
@@ -603,8 +606,7 @@ def serve_layout():
             dbc.Col([
                 dcc.Dropdown(
                     id='dropdown_year_month_A',
-                    options=sorted([{'label': i, 'value': i} for i in traffic_df['year_month'].unique()],
-                                   key=lambda x: x['label']),
+                    options=[{'label': i, 'value': i} for i in traffic_df['year_month'].unique()],
                     value=traffic_df['year_month'][len(traffic_df['year_month']) - 1],
                     style={'margin-left': 00, 'margin-bottom': 5},
                     clearable=False
@@ -613,8 +615,7 @@ def serve_layout():
             dbc.Col([
                 dcc.Dropdown(
                     id='dropdown_year_week_A',
-                    options=sorted([{'label': i, 'value': i} for i in traffic_df['year_week'].unique()],
-                                   key=lambda x: x['label']),
+                    options=[{'label': i, 'value': i} for i in traffic_df['year_week'].unique()],
                     value=traffic_df['year_week'][len(traffic_df['year_week']) - 1],
                     style={'margin-left': 00, 'margin-bottom': 5},
                     clearable=False
@@ -623,8 +624,7 @@ def serve_layout():
             dbc.Col([
                 dcc.Dropdown(
                     id='dropdown_date_A',
-                    options=sorted([{'label': i, 'value': i} for i in traffic_df['date'].unique()],
-                                   key=lambda x: x['label']),
+                    options=[{'label': i, 'value': i} for i in traffic_df['date'].unique()],
                     value=traffic_df['date'][len(traffic_df['year_week']) - 1],
                     style={'margin-left': 00, 'margin-bottom': 5},
                     clearable=False
@@ -637,8 +637,7 @@ def serve_layout():
             dbc.Col([
                 dcc.Dropdown(
                     id='dropdown_year_B',
-                    options=sorted([{'label': i, 'value': i} for i in traffic_df['year'].unique()],
-                                   key=lambda x: x['label']),
+                    options=[{'label': i, 'value': i} for i in traffic_df['year'].unique()],
                     value=traffic_df['year'][1],
                     style={'margin-left': 00, 'margin-bottom': 00},
                     clearable=False
@@ -647,8 +646,7 @@ def serve_layout():
             dbc.Col([
                 dcc.Dropdown(
                     id='dropdown_year_month_B',
-                    options=sorted([{'label': i, 'value': i} for i in traffic_df['year_month'].unique()],
-                                   key=lambda x: x['label']),
+                    options=[{'label': i, 'value': i} for i in traffic_df['year_month'].unique()],
                     value=traffic_df['year_month'][1],
                     style={'margin-left': 00, 'margin-bottom': 00},
                     clearable=False
@@ -657,8 +655,7 @@ def serve_layout():
             dbc.Col([
                 dcc.Dropdown(
                     id='dropdown_year_week_B',
-                    options=sorted([{'label': i, 'value': i} for i in traffic_df['year_week'].unique()],
-                                   key=lambda x: x['label']),
+                    options=[{'label': i, 'value': i} for i in traffic_df['year_week'].unique()],
                     value=traffic_df['year_week'][1],
                     style={'margin-left': 00, 'margin-bottom': 00},
                     clearable=False
@@ -667,8 +664,7 @@ def serve_layout():
             dbc.Col([
                 dcc.Dropdown(
                     id='dropdown_date_B',
-                    options=sorted([{'label': i, 'value': i} for i in traffic_df['date'].unique()],
-                                   key=lambda x: x['label']),
+                    options=[{'label': i, 'value': i} for i in traffic_df['date'].unique()],
                     value=traffic_df['date'][1],
                     style={'margin-left': 00, 'margin-bottom': 20},
                     clearable=False

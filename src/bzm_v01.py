@@ -737,7 +737,7 @@ def serve_layout():
             ], width=4),
             dbc.Col([
                 dbc.Row([
-                    dbc.Button(_(html.A('Contact Us!', href='mailto: berlincountsmobility@gmail.com')),
+                    dbc.Button(_(html.A('Contact Us!', href='mailto: berlinzaehltmobilitaet@gmail.com')),
                        id='floating_button',
                        class_name='btn btn-outline-info',  # rounded-pill
                        outline=False,

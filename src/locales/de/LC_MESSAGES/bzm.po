@@ -144,6 +144,9 @@ msgstr "Monat"
 msgid "Week"
 msgstr "Woche"
 
+msgid "Week day"
+msgstr "Wochentag"
+
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:321
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:558
 msgid "Day"
@@ -262,10 +265,6 @@ msgstr "Feedback und Kontakt"
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:457
 msgid "More information about the "
 msgstr "Weitere Informationen zur "
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:458
-msgid "Berlin Zählt Mobilität"
-msgstr "Berlin Zählt Mobilität"
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:458
 msgid " initiative."

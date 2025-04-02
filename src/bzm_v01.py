@@ -31,6 +31,15 @@ import bzm_get_data
 
 DEPLOYED = __name__ != '__main__'
 
+def save_df(df:pd.DataFrame, file_name: str, verbose=False) -> None:
+    path = os.path.join(ASSET_DIR, file_name)
+    if verbose:
+        print('Saving '+ path)
+    if file_name.endswith(".xlsx"):
+        df.to_excel(path, index=False)
+    else:
+        df.to_csv(path, index=False)
+
 #### Retrieve Data ####
 def get_locations(filepath="https://berlin-zaehlt.de/csv/bzm_telraam_segments.geojson"):
     df_geojson = pd.read_json(filepath)
@@ -170,18 +179,19 @@ def filter_dt(df, start_date, end_date, hour_range):
 def get_comparison_data(df, radio_time_division, group_by, selected_value_A, selected_value_B):
     df_period_A = df[df[radio_time_division]==selected_value_A]
     df_period_grp_A = df_period_A.groupby(by=[group_by, 'street_selection'], sort=False, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
+    if radio_time_division == 'date':
+        df_period_grp_A = df_period_grp_A.sort_values(by=['street_selection', group_by], ascending=True)
     df_avg_traffic_delta_A = df_period_grp_A
 
     df_period_B = df[df[radio_time_division]==selected_value_B]
     df_period_grp_B = df_period_B.groupby(by=[group_by, 'street_selection'], sort=False, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
+    if radio_time_division == 'date':
+        df_period_grp_B = df_period_grp_B.sort_values(by=['street_selection', group_by], ascending=True)
+    # Rename period B columns to new series
     df_period_grp_B_ren = df_period_grp_B.rename(columns={'ped_total': 'ped_total_d', 'bike_total': 'bike_total_d', 'car_total': 'car_total_d', 'heavy_total': 'heavy_total_d'})
     df_avg_traffic_delta_B = df_period_grp_B_ren
 
     df_avg_traffic_delta_concat = pd.concat([df_avg_traffic_delta_A, df_avg_traffic_delta_B])
-
-    #TODO Sort on hour to avoid line graph jumps around hour gaps
-    #if radio_time_division == 'date_hour': #or radio_time_division == 'date':
-    #    df_avg_traffic_delta_concat = df_avg_traffic_delta_concat.sort_values(by=[radio_time_division], ascending=True)
 
     return df_avg_traffic_delta_concat
 
@@ -261,7 +271,7 @@ segment_id = '9000002582'
 
 zoom_factor = 11
 
-init_language = 'en'
+init_language = 'de'
 update_language(init_language)
 
 geo_df, json_df_features, traffic_df = retrieve_data()
@@ -345,11 +355,11 @@ server = app.server
 def serve_layout():
     return dbc.Container(
     [
-            dcc.Location(id='url', refresh=True),
+        dcc.Location(id='url', refresh=True),
         dbc.Row([
             dbc.Col([
-                #data_table,
-                html.H1(_('Berlin Counts Mobility'), style={'margin-left': 40, 'margin-top': 20, 'margin-bottom': 00, 'margin-right': 00}, className='bg-#F2F2F2'),
+                html.H1('Berlin zählt Mobilität', style={'margin-left': 40, 'margin-top': 20, 'margin-bottom': 00, 'margin-right': 00}, className='bg-#F2F2F2'),
+                #html.Img(src=os.path.join(ASSET_DIR, 'DLR_und_adfc_logos.png'))
             ], width=5),
             dbc.Col([
                 html.H6('Map info', id='popover_map_info', className= 'text-end', style={'margin-left': 00, 'margin-top': 45, 'margin-bottom': 00, 'margin-right': 30, 'color': ADFC_darkgrey}),
@@ -479,7 +489,7 @@ def serve_layout():
         # Average traffic
         dbc.Row([
             dbc.Col([
-                # Radio time division
+                # Radio time unit
                 html.H4(_('Average traffic'), style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 30}),
 
                 dcc.RadioItems(
@@ -489,7 +499,7 @@ def serve_layout():
                         {'label': _('Monthly'), 'value': 'month'},
                         {'label': _('Weekly'), 'value': 'weekday'},
                         {'label': _('Daily'), 'value': 'day'},
-                        {'label': _('Hourly'), 'value': 'date_hour'}
+                        {'label': _('Hourly'), 'value': 'hour'}
                     ],
                     value='weekday',
                     inline=True,
@@ -625,7 +635,7 @@ def serve_layout():
                 dcc.Dropdown(
                     id='dropdown_date_A',
                     options=[{'label': i, 'value': i} for i in traffic_df['date'].unique()],
-                    value=traffic_df['date'][len(traffic_df['year_week']) - 1],
+                    value=traffic_df['date'][len(traffic_df['date']) - 1],
                     style={'margin-left': 00, 'margin-bottom': 5},
                     clearable=False
                 ),
@@ -664,7 +674,7 @@ def serve_layout():
             dbc.Col([
                 dcc.Dropdown(
                     id='dropdown_date_B',
-                    options=[{'label': i, 'value': i} for i in traffic_df['date'].unique()],
+                        options=[{'label': i, 'value': i} for i in traffic_df['date'].unique()],
                     value=traffic_df['date'][1],
                     style={'margin-left': 00, 'margin-bottom': 20},
                     clearable=False
@@ -738,7 +748,7 @@ def serve_layout():
                        }),
                 ]),
                 dbc.Row([
-                    html.Br(style = 'line-height:200px'),
+                    html.Br(),
                     html.Br(),
                     html.Br(),
                 ]),
@@ -1160,7 +1170,6 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
 
     ### Create comparison Graph
     callback_trigger = ctx.triggered_id
-
     if callback_trigger == 'dropdown_year_A' or callback_trigger == 'dropdown_year_B':
         time_division = 'year'
         selected_value_A = dropdown_year_A
@@ -1187,23 +1196,21 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
         label = 'Date'
     else:
         time_division = radio_time_division
-        group_by = 'hour'
         selected_value_A = dropdown_date_A
         selected_value_B = dropdown_date_B
+        group_by = 'hour'
         label = 'Date'
 
     # Prepare traffic_df_upt by selected street
     no_data, traffic_df_upt_str = update_selected_street(traffic_df_upt, segment_id, street_name)
     df_avg_traffic_delta_concat = get_comparison_data(traffic_df_upt_str, time_division, group_by, selected_value_A, selected_value_B)
 
-    #df_avg_traffic_delta = traffic_df_upt_dt_str.groupby(by=[radio_time_unit, 'street_selection'], sort=False,as_index=False).agg({'ped_total': 'mean', 'bike_total': 'mean', 'car_total': 'mean', 'heavy_total': 'mean'})
-
     line_avg_delta_traffic = px.line(df_avg_traffic_delta_concat,
         x=group_by, y=['ped_total', 'bike_total', 'car_total', 'heavy_total', 'ped_total_d', 'bike_total_d', 'car_total_d', 'heavy_total_d'],
         facet_col='street_selection',
         facet_col_spacing=0.04,
         category_orders={'street_selection': [street_name, _('All Streets')]},
-        labels={'year': _('Yearly'), 'month': _('Monthly'), 'weekday': _('Weekly'), 'day': _('Daily'), 'hour': _('Hourly'), '1': 'Mon'},
+        labels={'year': _('Year'), 'month': _('Month'), 'weekday': _('Week day'), 'day': _('Day')},
         color_discrete_map={'ped_total': ADFC_lightblue, 'bike_total': ADFC_green, 'car_total': ADFC_orange, 'heavy_total': ADFC_crimson, 'ped_total_d': ADFC_lightblue, 'bike_total_d': ADFC_green, 'car_total_d': ADFC_orange, 'heavy_total_d': ADFC_crimson},
     )
 

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-# Copyright (c) 2024-2025 Berlin zaehlt Mobilitaet
+# Copyright (c) 2024-2025 Berlin zählt Mobilität
 # SPDX-License-Identifier: MIT
 
 # @file    bzm_performance.py
 # @author  Egbert Klaassen
-# @date    2025-04-01
+# @date    2025-04-02
 
 """"
 # traffic_df        - dataframe with measured traffic data file
@@ -15,6 +15,8 @@
 import gettext
 import json
 import os
+from pydoc import classname
+
 import dash_bootstrap_components as dbc
 import geopandas as gpd
 import pandas as pd
@@ -241,8 +243,8 @@ def update_map_data(df_map_base, df):
 
     # Add map_line_color category and add column information to cover inactive traffic counters
     #df_map['map_line_color'] = df_map['map_line_color'].astype('category')
-    df_map['map_line_color'] = df_map['map_line_color'].cat.add_categories([_('Inactive - no data')])
-    df_map.fillna({"map_line_color": _("Inactive - no data")}, inplace=True)
+    df_map['map_line_color'] = df_map['map_line_color'].cat.add_categories([('Inactive - no data')])
+    df_map.fillna({"map_line_color": ('Inactive - no data')}, inplace=True)
 
     # Sort data to get desired legend order
     df_map = df_map.sort_values(by=['map_line_color'])
@@ -253,18 +255,20 @@ DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 ASSET_DIR = os.path.join(os.path.dirname(__file__), 'assets')
 
 # Initialize constants, variables and get data
-ADFC_orange = '#D78432'
 ADFC_green = '#1C9873'
-ADFC_blue = '#2C4B78'
+ADFC_palegrey = '#F2F2F2'
+ADFC_lightgrey = '#DEDEDE'
 ADFC_darkgrey = '#737373'
+ADFC_cyan = '#61CBF4'
 ADFC_lightblue = '#95CBD8'
 ADFC_skyblue = '#D7EDF2'
+ADFC_blue = '#2C4B78'
+ADFC_darkblue = '#331F45'
+ADFC_orange = '#D78432'
 ADFC_crimson = '#B44958'
-ADFC_lightgrey = '#DEDEDE'
-ADFC_palegrey = '#F2F2F2'
 ADFC_pink = '#EB9AAC'
 ADFC_yellow = '#EEDE72'
-ADFC_cyan = '#61CBF4'
+
 
 street_name = 'Alte Jakobstraße'
 segment_id = '9000002582'
@@ -358,24 +362,17 @@ def serve_layout():
         dcc.Location(id='url', refresh=True),
         dbc.Row([
             dbc.Col([
-                html.H1('Berlin zählt Mobilität', style={'margin-left': 40, 'margin-top': 20, 'margin-bottom': 00, 'margin-right': 00}, className='bg-#F2F2F2'),
-                #html.Img(src=os.path.join(ASSET_DIR, 'DLR_und_adfc_logos.png'))
-            ], width=5),
+                html.H1('Berlin zählt Mobilität', style={'margin-left': 50, 'margin-top': 40, 'margin-bottom': 00, 'margin-right': 00, 'font-family': 'Calibri', 'font-weight': 'bold', 'color': ADFC_darkblue, 'font-style': 'italic', 'text-shadow': '3px 2px lightblue'}),
+            ], width=4),
             dbc.Col([
-                html.H6('Map info', id='popover_map_info', className= 'text-end', style={'margin-left': 00, 'margin-top': 45, 'margin-bottom': 00, 'margin-right': 30, 'color': ADFC_darkgrey}),
-                dbc.Popover(dbc.PopoverBody(_('Note: street colors represent bike/car ratios based on all data available and do not change with date- or hour selection. The map allows street segments to be selected individually. To select whole streets, select a street name from the drop down menu.')), target="popover_map_info", trigger="hover"),
-            ], width=3),
+                html.Img(src=app.get_asset_url('DLR_und_adfc_logos.png'), className='img-fluid' 'd-flex align-items-end',
+                         style={'margin-left': 40, 'margin-top': 40, 'margin-bottom': 00, 'margin-right': 00, 'height': '60px'})
+            ], width=6),
             dbc.Col([
-                dcc.Dropdown(
-                id='language_selector',
-                options=[
-                    {'label': '🇬🇧' + ' ' + _('English'), 'value': 'en'},
-                    {'label': '🇩🇪' + ' ' + _('Deutsch'), 'value': 'de'},
-                ],
-                value=language
-                ),
-            ], width={'size': 2, 'offset' : 2}),
-        ]),
+                html.Img(src=app.get_asset_url('Telraam.png'), className='img-fluid.max-width: 50%', height='120px')
+            ], width=2),
+        ], style={'background-color': ADFC_skyblue, 'opacity': 1.0}
+        ),
         dbc.Row([
             # Street map
             dbc.Col([
@@ -383,8 +380,18 @@ def serve_layout():
             ], width=8),
             # General controls
             dbc.Col([
-                # Street drop down
-                html.H4(_('Select street:'), style={'margin-top': 50, 'margin-bottom': 20}),
+                dbc.Col([
+                    # Street drop down
+                    dcc.Dropdown(
+                        id='language_selector',
+                        options=[
+                            {'label': '🇬🇧' + ' ' + _('English'), 'value': 'en'},
+                            {'label': '🇩🇪' + ' ' + _('Deutsch'), 'value': 'de'},
+                        ],
+                        value=language
+                    ),
+                ], width = {'size': 4, 'offset': 8}), #width=4),
+                html.H4(_('Select street:'), style={'margin-top': 20, 'margin-bottom': 10}),
                 dcc.Dropdown(id='street_name_dd',
                     options=sorted([{'label': i, 'value': i} for i in traffic_df['osm.name'].unique()], key=lambda x: x['label']),
                     value=street_name,
@@ -400,10 +407,10 @@ def serve_layout():
                     target="popover_traffic_type",
                     trigger="hover")
                 ]),
-
                 # Pie chart
                 dcc.Graph(id='pie_traffic', figure={}),
-                #html.Hr(),
+                html.H6('Map info', id='popover_map_info', className='text-start', style={'margin-left': 0, 'margin-top': 0, 'margin-bottom': 0, 'margin-right': 0, 'color': ADFC_darkgrey}),
+                dbc.Popover(dbc.PopoverBody(_('Note: street colors represent bike/car ratios based on all data available and do not change with date- or hour selection. The map allows street segments to be selected individually. To select whole streets, select a street name from the drop down menu.')), target="popover_map_info", trigger="hover"),
             ], width=4),
         ]),
         # Date/Time selection and Uptime filter

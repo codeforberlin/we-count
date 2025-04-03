@@ -4,7 +4,7 @@
 
 # @file    bzm_performance.py
 # @author  Egbert Klaassen
-# @date    2025-04-02
+# @date    2025-04-03
 
 """"
 # traffic_df        - dataframe with measured traffic data file
@@ -229,7 +229,7 @@ def get_bike_car_ratios(df):
 
     return traffic_df_id_bc
 
-# TODO: use babel...?
+# TODO: use gettext/babel...?
 def translate_bc_labels():
     speed_labels = {'Over 10x more cars': _('Over 10x more cars'), 'Over 5x more cars': _('Over 5x more cars'), 'Over 2x more cars': _('Over 2x more cars'), 'More cars than bikes': _('More cars than bikes'), 'More bikes than cars': _('More bikes than cars')}
     traffic_df_id_bc['map_line_color'] = traffic_df_id_bc['map_line_color'].map(speed_labels)
@@ -238,7 +238,8 @@ def update_map_data(df_map_base, df):
     # Create map info by joining geo_df_map_info with map_line_color from traffic_df_id_bc (based on bike/car ratios)
     df_map = df_map_base.join(df)
 
-    nan_rows = df_map[df_map['osm.name'].isnull()]
+    nan_rows = df_map[df_map['segment_id'].isnull()]
+    #nan_rows = df_map[df_map['osm.name'].isnull()]
     df_map = df_map.drop(nan_rows.index)
 
     # Add map_line_color category and add column information to cover inactive traffic counters
@@ -268,7 +269,6 @@ ADFC_orange = '#D78432'
 ADFC_crimson = '#B44958'
 ADFC_pink = '#EB9AAC'
 ADFC_yellow = '#EEDE72'
-
 
 street_name = 'Alte Jakobstraße'
 segment_id = '9000002582'
@@ -362,12 +362,13 @@ def serve_layout():
         dcc.Location(id='url', refresh=True),
         dbc.Row([
             dbc.Col([
-                html.H1('Berlin zählt Mobilität', style={'margin-left': 50, 'margin-top': 40, 'margin-bottom': 00, 'margin-right': 00, 'font-family': 'Calibri', 'font-weight': 'bold', 'color': ADFC_darkblue, 'font-style': 'italic', 'text-shadow': '3px 2px lightblue'}),
-            ], width=4),
+                html.H1('Berlin zählt Mobilität',
+                        style={'margin-left': 50, 'margin-top': 40, 'margin-bottom': 00, 'margin-right': 00, 'font-size': '50px', 'font-family': 'Calibri', 'font-weight': 'bold', 'color': ADFC_darkblue, 'font-style': 'italic', 'text-shadow': '3px 2px lightblue'}),
+            ], width=5),
             dbc.Col([
                 html.Img(src=app.get_asset_url('DLR_und_adfc_logos.png'), className='img-fluid' 'd-flex align-items-end',
-                         style={'margin-left': 40, 'margin-top': 40, 'margin-bottom': 00, 'margin-right': 00, 'height': '60px'})
-            ], width=6),
+                         style={'margin-left': 00, 'margin-top': 40, 'margin-bottom': 00, 'margin-right': 00, 'height': '60px'})
+            ], width=5),
             dbc.Col([
                 html.Img(src=app.get_asset_url('Telraam.png'), className='img-fluid.max-width: 50%', height='120px')
             ], width=2),
@@ -391,6 +392,7 @@ def serve_layout():
                         value=language
                     ),
                 ], width = {'size': 4, 'offset': 8}), #width=4),
+                #TODO: differentiate streets with the same name (e.g. Hauptstraße)
                 html.H4(_('Select street:'), style={'margin-top': 20, 'margin-bottom': 10}),
                 dcc.Dropdown(id='street_name_dd',
                     options=sorted([{'label': i, 'value': i} for i in traffic_df['osm.name'].unique()], key=lambda x: x['label']),
@@ -800,7 +802,6 @@ def get_language(lang_code_dd):
 )
 
 def get_street_name(clickData):
-    callback_trigger = ctx.triggered_id
 
     if clickData:
         # Get street name from map click
@@ -819,21 +820,29 @@ def get_street_name(clickData):
 
 @callback(
     Output(component_id='street_map', component_property='figure'),
+    #Input(component_id='segment_id_value', component_property='data'),
+    Input(component_id='street_map', component_property='clickData'),
     Input(component_id='street_name_dd', component_property='value'),
 )
 
-def update_map(street_name):
+def update_map(clickData, street_name):
     callback_trigger = ctx.triggered_id
 
-    if callback_trigger == 'street_name_dd':
+    if clickData:
+        segment_id = str(clickData['points'][0]['customdata'][0])
+
+    if callback_trigger == 'street_map':
+        segment_id = clickData['points'][0]['customdata'][0]
+        idx = df_map.loc[df_map['segment_id'] == segment_id]
+        zoom_factor = 13
+    elif callback_trigger == 'street_name_dd':
+        idx = df_map.loc[df_map['osm.name'] == street_name]
         zoom_factor = 13
     else:
-         zoom_factor = 11
+        idx = df_map.loc[df_map['osm.name'] == street_name]
+        zoom_factor = 11
 
     # TODO: improve efficiency by managing translation w/o recalculating bc ratios
-    #traffic_df_id_bc = get_bike_car_ratios(traffic_df_upt)
-    #df_map = update_map_data(df_map_base, traffic_df_id_bc)
-    idx = df_map.loc[df_map['osm.name'] == street_name]
     lon_str = idx['x'].values[0]
     lat_str = idx['y'].values[0]
 

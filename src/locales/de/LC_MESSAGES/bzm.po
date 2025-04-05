@@ -270,6 +270,9 @@ msgstr "Weitere Informationen zur "
 msgid " initiative."
 msgstr " Initiative."
 
+msgid " and "
+msgstr " und "
+
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:461
 msgid "Request a counter at the "
 msgstr "Fragen Sie nach einen Zähler beim "
@@ -287,8 +290,8 @@ msgid "Telraam camera"
 msgstr "Telraam Kamera"
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:466
-msgid " measurements."
-msgstr " Messungen."
+msgid " measurements"
+msgstr " Messungen"
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:471
 msgid "Contribute to the dashboard development ("
@@ -535,8 +538,8 @@ msgstr "Meine Straße"
 msgid "Disclaimer"
 msgstr "Haftungshinweis"
 
-msgid "The content published in the offer has been researched with the greatest care. Nevertheless, the Berlin Counts Mobility team cannot assume any liability for the topicality, correctness or completeness of the information provided. All information is provided without guarantee. liability claims against the Berlin Zählt Mobilität team or its supporting organizations derived from the use of this information are excluded. Despite careful control of the content, the Berlin Zählt Mobilität team and its supporting organizations assume no liability for the content of external links. The operators of the linked pages are solely responsible for their content. A constant control of the external links is not possible for the provider. If there are indications or knowledge of legal violations, the illegal links will be deleted immediately."
-msgstr "Die im Angebot veröffentlichten Inhalte sind mit größter Sorgfalt recherchiert. Dennoch kann das Berlin Zählt Mobilität-Team keine Gewähr für die Aktualität, Korrektheit oder Vollständigkeit der bereitgestellten Informationen übernehmen. Alle Angaben erfolgen ohne Gewähr. Aus der Nutzung dieser Informationen abgeleitete Haftungsansprüche gegen das Berlin Zählt Mobilität-Team oder deren unterstützenden Organisationen, sind ausgeschlossen. Trotz sorgfältiger inhaltlicher Kontrolle übernimmt 'Berlin Zählt Mobilität'-Team und deren unterstützenden Organisationen keine Haftung für die Inhalte externer Links. Für den Inhalt der verlinkten Seiten sind ausschließlich deren Betreiber verantwortlich. Eine ständige Kontrolle der externen Links ist für den Anbieter nicht möglich. Bei Anhaltspunkten oder Kenntnis von Rechtsverstößen werden die gesetzeswidrigen Links unverzüglich gelöscht."
+msgid "The content published in the offer has been researched with the greatest care. Nevertheless, the Berlin Counts Mobility team cannot assume any liability for the topicality, correctness or completeness of the information provided. All information is provided without guarantee. liability claims against the Berlin zählt Mobilität team or its supporting organizations derived from the use of this information are excluded. Despite careful control of the content, the Berlin zählt Mobilität team and its supporting organizations assume no liability for the content of external links. The operators of the linked pages are solely responsible for their content. A constant control of the external links is not possible for the provider. If there are indications or knowledge of legal violations, the illegal links will be deleted immediately."
+msgstr "Die im Angebot veröffentlichten Inhalte sind mit größter Sorgfalt recherchiert. Dennoch kann das Berlin zählt Mobilität-Team keine Gewähr für die Aktualität, Korrektheit oder Vollständigkeit der bereitgestellten Informationen übernehmen. Alle Angaben erfolgen ohne Gewähr. Aus der Nutzung dieser Informationen abgeleitete Haftungsansprüche gegen das Berlin zählt Mobilität-Team oder deren unterstützenden Organisationen, sind ausgeschlossen. Trotz sorgfältiger inhaltlicher Kontrolle übernimmt 'Berlin zählt Mobilität'-Team und deren unterstützenden Organisationen keine Haftung für die Inhalte externer Links. Für den Inhalt der verlinkten Seiten sind ausschließlich deren Betreiber verantwortlich. Eine ständige Kontrolle der externen Links ist für den Anbieter nicht möglich. Bei Anhaltspunkten oder Kenntnis von Rechtsverstößen werden die gesetzeswidrigen Links unverzüglich gelöscht."
 
 msgid "Copyright"
 msgstr "Urheberrecht"

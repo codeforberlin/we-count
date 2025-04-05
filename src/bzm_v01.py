@@ -15,8 +15,7 @@
 import gettext
 import json
 import os
-from pydoc import classname
-
+from tkinter import filedialog
 import dash_bootstrap_components as dbc
 import geopandas as gpd
 import pandas as pd
@@ -33,14 +32,9 @@ import bzm_get_data
 
 DEPLOYED = __name__ != '__main__'
 
-def save_df(df:pd.DataFrame, file_name: str, verbose=False) -> None:
-    path = os.path.join(ASSET_DIR, file_name)
-    if verbose:
-        print('Saving '+ path)
-    if file_name.endswith(".xlsx"):
-        df.to_excel(path, index=False)
-    else:
-        df.to_csv(path, index=False)
+def output_df(df, file_name):
+    output_folder_path = filedialog.askdirectory(title='Select output folder')
+    df.to_excel(output_folder_path + file_name + '.xlsx', index=False)
 
 #### Retrieve Data ####
 def get_locations(filepath="https://berlin-zaehlt.de/csv/bzm_telraam_segments.geojson"):
@@ -171,10 +165,7 @@ def filter_dt(df, start_date, end_date, hour_range):
         hour_range[1] = hour_range[1]+1
 
     df_dates_hours = df_dates.loc[df_dates['hour'].between(hour_range[0], hour_range[1]-1)]
-    #df_dates_delta_hours = df_dates_delta.loc[df_dates_delta['hour'].between(hour_range[0], hour_range[1]-1)]
-
     traffic_df_upt_dt = df_dates_hours
-    #traffic_df_upt_dt_delta = df_dates_delta_hours
 
     return traffic_df_upt_dt, min_date, max_date, min_hour, max_hour
 
@@ -278,6 +269,10 @@ zoom_factor = 11
 init_language = 'de'
 update_language(init_language)
 
+cloud_icon = html.I(className='bi bi-cloud-arrow-down-fill me-2')
+email_icon = html.I(className='bi bi-envelope-at-fill me-2')
+table_icon = html.I(className='bi bi-table me-2')
+
 geo_df, json_df_features, traffic_df = retrieve_data()
 
 # Hour column for  hour range calculations
@@ -361,10 +356,9 @@ def serve_layout():
     [
         dcc.Location(id='url', refresh=True),
         dbc.Row([
-            dbc.Col([
-                html.H1('Berlin zählt Mobilität',
-                        style={'margin-left': 50, 'margin-top': 40, 'margin-bottom': 00, 'margin-right': 00, 'font-size': '50px', 'font-family': 'Calibri', 'font-weight': 'bold', 'color': ADFC_darkblue, 'font-style': 'italic', 'text-shadow': '3px 2px lightblue'}),
+            dbc.Col([html.H1('Berlin zählt Mobilität', style={'margin-left': 50, 'margin-top': 40, 'margin-bottom': 00, 'margin-right': 00, 'font-size': '50px', 'font-family': 'Calibri', 'font-weight': 'bold', 'color': ADFC_darkblue, 'font-style': 'italic', 'text-shadow': '3px 2px lightblue'}),
             ], width=5),
+            #TODO: link branding images,
             dbc.Col([
                 html.Img(src=app.get_asset_url('DLR_und_adfc_logos.png'), className='img-fluid' 'd-flex align-items-end',
                          style={'margin-left': 00, 'margin-top': 40, 'margin-bottom': 00, 'margin-right': 00, 'height': '60px'})
@@ -463,7 +457,6 @@ def serve_layout():
                 ], width=3),
 
         ], style={'margin-left': 40, 'margin-right': 40, 'background-color': ADFC_skyblue, 'opacity': 1.0}, className='sticky-top rounded "g-0"'),
-
         # Absolute traffic
         dbc.Row([
             dbc.Col([
@@ -485,8 +478,11 @@ def serve_layout():
                     inputStyle={"margin-right": "5px", "margin-left": "20px"},
                     style={'margin-left': 40, 'margin-bottom': 00},
                 ),
-            ], width=6
-            ),
+            ], width=10),
+            dbc.Col([
+                #dbc.Button([_('Download Excel '), table_icon], id='download_absolute_traffic', color='secondary', outline=True, size='sm',
+                #           style={'margin-left': 30, 'margin-right': 40, 'margin-top': 90, 'margin-bottom': 0}),
+            ], width=2),
         ]),
         dbc.Row([
             dbc.Col([
@@ -494,7 +490,6 @@ def serve_layout():
             ], width=12
             ),
         ]),
-
         # Average traffic
         dbc.Row([
             dbc.Col([
@@ -717,7 +712,7 @@ def serve_layout():
                     style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 10}),
             dbc.Col([
                 html.H6([_('More information about the '),
-                        html.A(_('Berlin Zählt Mobilität'), href="https://berlin.adfc.de/artikel/berlin-zaehlt-mobilitaet-adfc-berlin-dlr-rufen-zu-citizen-science-projekt-auf", target="_blank"),_(' (BzM) initiative'),],
+                        html.A('Berlin zählt Mobilität', href="https://berlin.adfc.de/artikel/berlin-zaehlt-mobilitaet-adfc-berlin-dlr-rufen-zu-citizen-science-projekt-auf", target="_blank"),_(' (BzM) initiative'),],
                         style={'margin-left': 40, 'margin-right': 40, 'margin-top': 10, 'margin-bottom': 10}
                        ),
                 html.H6([_('Request a counter at the '),
@@ -730,7 +725,7 @@ def serve_layout():
                        ),
             ], width=6),
             dbc.Col([
-                html.H6([_('Dashboard development & creation:'),  html.Br(), ('E. Klaassen and M. Behrisch')],
+                html.H6([_('Dashboard development & creation:'),  html.Br(), ('Egbert Klaassen'), _(' and '),('Michael Behrisch')],
                         style={'margin-left': 40, 'margin-right': 0, 'margin-top': 10, 'margin-bottom': 10}
                         ),
                 html.H6([_('For dashboard improvement requests email us:')],
@@ -739,21 +734,21 @@ def serve_layout():
             ], width=4),
             dbc.Col([
                 dbc.Row([
-                    dbc.Button(_(html.A('Contact Us!', href='mailto: berlinzaehltmobilitaet@gmail.com')),
-                       id='floating_button',
-                       class_name='btn btn-outline-info',  # rounded-pill
-                       outline=False,
-                       color='info',
-                       style={
-                           #'position': 'absolute', # For absolute position use: 'absolute',  # For floating use: 'fixed',
-                           #'top': '0px',
-                           #'right': '100px',
-                           #'background - color': ADFC_cyan,
-                           'border-radius': '50%',
-                           'width': '100px',
-                           'height': '100px',
-                           'font-size': '16px',
-                           'font-weight': 'bold'
+                    dbc.Button([_('Contact Us!'), html.Br(), email_icon],
+                        id='floating_button',
+                        class_name='btn btn-info',  # rounded-pill
+                        href='mailto: berlinzaehltmobilitaet@gmail.com',
+                        style={
+                            #'position': 'absolute', # For absolute position use: 'absolute',  # For floating use: 'fixed',
+                            #'top': '0px',
+                            #'right': '100px',
+                            'border-radius': '50%',
+                            'width': '120px',
+                            'height': '120px',
+                            'white-space': 'nowrap',
+                            'padding-top': '30px',
+                            'font-size': '17px',
+                            'font-weight': 'bold'
                        }),
                 ]),
                 dbc.Row([
@@ -768,7 +763,7 @@ def serve_layout():
         dbc.Row([
             dbc.Col([
                 html.P(_('Disclaimer'), style= {'font-size': 12, 'color': ADFC_darkgrey}),
-                html.P(_('The content published in the offer has been researched with the greatest care. Nevertheless, the Berlin Counts Mobility team cannot assume any liability for the topicality, correctness or completeness of the information provided. All information is provided without guarantee. liability claims against the Berlin Zählt Mobilität team or its supporting organizations derived from the use of this information are excluded. Despite careful control of the content, the Berlin Zählt Mobilität team and its supporting organizations assume no liability for the content of external links. The operators of the linked pages are solely responsible for their content. A constant control of the external links is not possible for the provider. If there are indications or knowledge of legal violations, the illegal links will be deleted immediately.'), style= {'font-size': 10, 'color': ADFC_darkgrey}),
+                html.P(_('The content published in the offer has been researched with the greatest care. Nevertheless, the Berlin Counts Mobility team cannot assume any liability for the topicality, correctness or completeness of the information provided. All information is provided without guarantee. liability claims against the Berlin zählt Mobilität team or its supporting organizations derived from the use of this information are excluded. Despite careful control of the content, the Berlin zählt Mobilität team and its supporting organizations assume no liability for the content of external links. The operators of the linked pages are solely responsible for their content. A constant control of the external links is not possible for the provider. If there are indications or knowledge of legal violations, the illegal links will be deleted immediately.'), style= {'font-size': 10, 'color': ADFC_darkgrey}),
                 html.P(_('Copyright'), style= {'font-size': 12, 'color': ADFC_darkgrey}),
                 html.P(_('The layout and design of the offer as a whole as well as its individual elements are protected by copyright. The same applies to the images, graphics and editorial contributions used in detail as well as their selection and compilation. Further use and reproduction are only permitted for private purposes. No changes may be made to it. Public use of the offer may only take place with the consent of the operator.'), style= {'font-size': 10, 'color': ADFC_darkgrey}),
             ], width=12),
@@ -829,7 +824,9 @@ def update_map(clickData, street_name):
     callback_trigger = ctx.triggered_id
 
     if clickData:
-        segment_id = str(clickData['points'][0]['customdata'][0])
+        #segment_id = str(clickData['points'][0]['customdata'][0])
+        print(clickData['points'][0]['customdata'][1])
+        #TODO: V1 V2 cameras
 
     if callback_trigger == 'street_map':
         segment_id = clickData['points'][0]['customdata'][0]
@@ -848,7 +845,7 @@ def update_map(clickData, street_name):
 
     sep = '&nbsp;|&nbsp;'
 
-    street_map = px.line_map(df_map, lat='y', lon='x', custom_data='segment_id',line_group='segment_id', hover_name = 'osm.name', color= 'map_line_color', color_discrete_map= {
+    street_map = px.line_map(df_map, lat='y', lon='x', custom_data=['segment_id','cameras'],line_group='segment_id', hover_name = 'osm.name', color= 'map_line_color', color_discrete_map= {
         'More bikes than cars': ADFC_green,
         'More cars than bikes': ADFC_blue,
         'Over 2x more cars': ADFC_orange,
@@ -894,6 +891,15 @@ def update_output(n_clicks):
     else:
         return  #f"Button clicked {n_clicks} times."
 
+# @app.callback(
+#     Input('download_absolute_traffic', 'n_clicks')
+# )
+# def download_excel(n_clicks):
+#     if n_clicks is None:
+#         return #"Button not clicked yet."
+#     else:
+#         return  #f"Button clicked {n_clicks} times."
+
 ### General traffic callback ###
 @callback(
     Output(component_id='selected_street_header', component_property='children'),
@@ -924,10 +930,12 @@ def update_output(n_clicks):
     Input(component_id='range_slider', component_property='value'),
     Input(component_id='toggle_uptime_filter', component_property='value'),
     Input(component_id='radio_y_axis', component_property='value'),
-    prevent_initial_call='initial_duplicate',
+    Input('floating_button', 'n_clicks'),
+    #Input('download_absolute_traffic', 'n_clicks'),
+prevent_initial_call='initial_duplicate',
 )
 
-def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_json, dropdown_year_A, dropdown_year_month_A, dropdown_year_week_A, dropdown_date_A, dropdown_year_B, dropdown_year_month_B, dropdown_year_week_B, dropdown_date_B, start_date, end_date, hour_range, toggle_uptime_filter, radio_y_axis):
+def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_json, dropdown_year_A, dropdown_year_month_A, dropdown_year_week_A, dropdown_date_A, dropdown_year_B, dropdown_year_month_B, dropdown_year_week_B, dropdown_date_B, start_date, end_date, hour_range, toggle_uptime_filter, radio_y_axis, floating_button): #, download_absolute_traffic
     callback_trigger = ctx.triggered_id
 
     # If uptime filter changed, reload traffic_df_upt
@@ -981,6 +989,12 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
     if radio_time_division == 'date_hour':
         df_line_abs_traffic = df_line_abs_traffic.sort_values(by=['street_selection', radio_time_division], ascending=True)
 
+    #TODO: save df
+    if callback_trigger == 'download_absolute_traffic':
+        path = os.path.join(ASSET_DIR, 'df_line_abs_traffic.xlsx')
+        df_line_abs_traffic.to_excel(path, index=False)
+        #dcc.send_data_frame(df_line_abs_traffic.to_excel, ASSET_DIR+'/'+'mydf.xlsx', sheet_name="Sheet_name_1")
+
     line_abs_traffic = px.scatter(df_line_abs_traffic,
         x=radio_time_division, y=['ped_total', 'bike_total', 'car_total', 'heavy_total'],
         #markers=True, # In case of line graph
@@ -992,12 +1006,11 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
         title=_('Absolute traffic count')
     ).update_traces(mode="lines+markers", connectgaps=False)
 
-    line_abs_traffic.update_layout({'plot_bgcolor': ADFC_palegrey,'paper_bgcolor': ADFC_palegrey})
     line_abs_traffic.update_layout({'plot_bgcolor': ADFC_palegrey, 'paper_bgcolor': ADFC_palegrey})
     line_abs_traffic.update_layout(legend_title_text=_('Traffic Type'))
     line_abs_traffic.update_layout(yaxis_title= _('Absolute traffic count'))
     line_abs_traffic.update_yaxes(matches=None)
-    line_abs_traffic.update_xaxes(matches= None)
+    line_abs_traffic.update_xaxes(matches=None)
     line_abs_traffic.for_each_yaxis(lambda yaxis: yaxis.update(showticklabels=True))
     line_abs_traffic.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
     for annotation in line_abs_traffic.layout.annotations: annotation['font'] = {'size': 14}
@@ -1043,7 +1056,6 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
 
     # TODO: inplement improved axis labels https://plotly.com/python/time-series/
     # fig.update_xaxes(dtick="M1", tickformat="%b\n%Y")
-
 
     ### Create percentage speed bar chart
 
@@ -1257,4 +1269,4 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
     return selected_street_header, color, pie_traffic, line_abs_traffic, bar_avg_traffic, line_avg_delta_traffic, bar_perc_speed, bar_avg_speed, bar_v85, bar_ranking, segment_id_json
 
 if __name__ == "__main__":
-    app.run_server(debug=False)
+    app.run_server(debug=True)

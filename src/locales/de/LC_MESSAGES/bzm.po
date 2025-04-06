@@ -313,9 +313,21 @@ msgid "Dashboard development & creation:"
 msgstr "Dashboard Entwicklung & Kreation:"
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:541
+
+msgid "Highway type"
+msgstr "Straßentyp"
+
 msgid "Street color"
 msgstr "Straßenfarbe"
 
+msgid "City"
+msgstr "Stadt"
+
+msgid "Postal code"
+msgstr "Postleitzahl"
+
+msgid "District"
+msgstr "Bezirk"
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:366
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:386
@@ -530,10 +542,15 @@ msgstr "v85 in km/h"
 msgid "Absolute count"
 msgstr "Absolute Anzahl"
 
-
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:739
 msgid "My Street"
 msgstr "Meine Straße"
+
+msgid "Download all graphs (.html)   "
+msgstr "Grafiken herunterladen (.html)   "
+
+msgid "Download all graphs in html-format to your default download directory"
+msgstr "Laden Sie alle Grafiken im HTML-Format in Ihr Standard-Download-Verzeichnis herunter"
 
 msgid "Disclaimer"
 msgstr "Haftungshinweis"

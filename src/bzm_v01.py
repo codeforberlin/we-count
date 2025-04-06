@@ -20,7 +20,7 @@ import dash_bootstrap_components as dbc
 import geopandas as gpd
 import pandas as pd
 import plotly.express as px
-from dash import Dash, html, dcc, Output, Input, State, callback, ctx, clientside_callback, callback_context
+from dash import Dash, html, dcc, Output, Input, State, callback, ctx
 from dash.exceptions import PreventUpdate
 import datetime
 import locale
@@ -28,13 +28,12 @@ import locale
 import common
 import bzm_get_data
 
-# TODO: from functools import lru_cache
 
 DEPLOYED = __name__ != '__main__'
 
 def output_df(df, file_name):
-    output_folder_path = filedialog.askdirectory(title='Select output folder')
-    df.to_excel(output_folder_path + file_name + '.xlsx', index=False)
+    #output_folder_path = filedialog.askdirectory(title='Select output folder')
+    df.to_excel(ASSET_DIR + file_name + '.xlsx', index=False)
 
 #### Retrieve Data ####
 def get_locations(filepath="https://berlin-zaehlt.de/csv/bzm_telraam_segments.geojson"):
@@ -241,10 +240,15 @@ def update_map_data(df_map_base, df):
     # Sort data to get desired legend order
     df_map = df_map.sort_values(by=['map_line_color'])
 
+    # Move segment_id index to column (avoid ambiguity by two segment_id columns in line_map Plotly v6.0)
+    df_map = df_map.drop('segment_id', axis=1)
+    df_map.reset_index(level=0, inplace=True)
+
     return df_map
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 ASSET_DIR = os.path.join(os.path.dirname(__file__), 'assets')
+DOWNLOAD_DIR = os.path.join(os.path.expanduser('~'), 'downloads')
 
 # Initialize constants, variables and get data
 ADFC_green = '#1C9873'
@@ -272,6 +276,7 @@ update_language(init_language)
 cloud_icon = html.I(className='bi bi-cloud-arrow-down-fill me-2')
 email_icon = html.I(className='bi bi-envelope-at-fill me-2')
 table_icon = html.I(className='bi bi-table me-2')
+graph_icon = html.I(className='bi bi-graph-up me-2')
 
 geo_df, json_df_features, traffic_df = retrieve_data()
 
@@ -335,6 +340,7 @@ df_map_base = geo_df_map_info.join(json_df_features)
 # Prepare map data
 df_map = update_map_data(df_map_base, traffic_df_id_bc)
 
+
 ### Run Dash app ###
 if not DEPLOYED:
     print(_('Start dash...'))
@@ -358,13 +364,12 @@ def serve_layout():
         dbc.Row([
             dbc.Col([html.H1('Berlin zählt Mobilität', style={'margin-left': 50, 'margin-top': 40, 'margin-bottom': 00, 'margin-right': 00, 'font-size': '50px', 'font-family': 'Calibri', 'font-weight': 'bold', 'color': ADFC_darkblue, 'font-style': 'italic', 'text-shadow': '3px 2px lightblue'}),
             ], width=5),
-            #TODO: link branding images,
             dbc.Col([
-                html.Img(src=app.get_asset_url('DLR_und_adfc_logos.png'), className='img-fluid' 'd-flex align-items-end',
+                html.Img(src=app.get_asset_url('DLR_und_adfc_logos.png'), title='Das Deutsche Zentrum für Luft- und Raumfahrt, Allgemeiner Deutscher Fahrrad-Club', className='img-fluid' 'd-flex align-items-end',
                          style={'margin-left': 00, 'margin-top': 40, 'margin-bottom': 00, 'margin-right': 00, 'height': '60px'})
             ], width=5),
             dbc.Col([
-                html.Img(src=app.get_asset_url('Telraam.png'), className='img-fluid.max-width: 50%', height='120px')
+                html.Img(src=app.get_asset_url('Telraam.png'), title='Berlin zählt Mobilität: ADFC Berlin & DLR Citizen Science- Projekt', className='img-fluid.max-width: 50%', height='120px')
             ], width=2),
         ], style={'background-color': ADFC_skyblue, 'opacity': 1.0}
         ),
@@ -400,8 +405,7 @@ def serve_layout():
                     html.I(className='bi bi-info-circle-fill h6', id='popover_traffic_type', style={'margin-left': 10, 'margin-top': 10, 'margin-bottom': 20, 'align': 'top', 'color': ADFC_lightgrey}),
                     dbc.Popover(
                         dbc.PopoverBody(_('Traffic type split of the currently selected street, based on currently selected date and hour range.')),
-                    target="popover_traffic_type",
-                    trigger="hover")
+                    target="popover_traffic_type", trigger="hover")
                 ]),
                 # Pie chart
                 dcc.Graph(id='pie_traffic', figure={}),
@@ -450,18 +454,17 @@ def serve_layout():
                     html.I(className='bi bi-info-circle-fill h6',
                         id='popover_filter',
                         style={'margin-left': 10, 'margin-top': 0, 'color': ADFC_lightgrey}),
-                     dbc.Popover(
+                    dbc.Popover(
                          dbc.PopoverBody(_('A high 0.7-0.8 uptime will always mean very good data. The first and last daylight hour of the day will always have lower uptimes. If uptimes during the day are below 0.5, that is usually a clear sign that something is probably wrong with the instance.')),
                          target="popover_filter", trigger="hover")
-                     ]),
-                ], width=3),
-
+                ]),
+            ], width=3),
         ], style={'margin-left': 40, 'margin-right': 40, 'background-color': ADFC_skyblue, 'opacity': 1.0}, className='sticky-top rounded "g-0"'),
         # Absolute traffic
         dbc.Row([
             dbc.Col([
                 # Radio time division
-                html.H4(_('Absolute traffic'), style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 30}),
+                html.H4(_('Absolute traffic'), style={'margin-left': 40, 'margin-right': 0, 'margin-top': 30, 'margin-bottom': 30}),
 
                 # Select a time division
                 dcc.RadioItems(
@@ -478,11 +481,18 @@ def serve_layout():
                     inputStyle={"margin-right": "5px", "margin-left": "20px"},
                     style={'margin-left': 40, 'margin-bottom': 00},
                 ),
-            ], width=10),
+            ], width=9),
             dbc.Col([
-                #dbc.Button([_('Download Excel '), table_icon], id='download_absolute_traffic', color='secondary', outline=True, size='sm',
-                #           style={'margin-left': 30, 'margin-right': 40, 'margin-top': 90, 'margin-bottom': 0}),
-            ], width=2),
+                html.Span([
+                    dbc.Button([_('Download all graphs (.html)   '), graph_icon], id='download_html_graphs', color='secondary', outline=True, size='sm'),
+                    html.I(className='bi bi-info-circle-fill h6', id='download_html',
+                        style={'margin-left': 10, 'color': ADFC_lightgrey}),
+                    dbc.Popover(
+                        dbc.PopoverBody(_('Download all graphs in html-format to your default download directory')),
+                        target="download_html", trigger="hover")
+                ], style={'margin-left': 30, 'margin-right': 40, 'margin-top': 90, 'margin-bottom': 0,
+                        'display': 'inline-block'}),
+            ], width=3),
         ]),
         dbc.Row([
             dbc.Col([
@@ -844,25 +854,27 @@ def update_map(clickData, street_name):
     lat_str = idx['y'].values[0]
 
     sep = '&nbsp;|&nbsp;'
-
-    street_map = px.line_map(df_map, lat='y', lon='x', custom_data=['segment_id','cameras'],line_group='segment_id', hover_name = 'osm.name', color= 'map_line_color', color_discrete_map= {
+    street_map = px.line_map(df_map, lat='y', lon='x', custom_data=['segment_id', 'cameras'],line_group='segment_id', hover_name = 'osm.name', color= 'map_line_color',
+        color_discrete_map= {
         'More bikes than cars': ADFC_green,
         'More cars than bikes': ADFC_blue,
         'Over 2x more cars': ADFC_orange,
         'Over 5x more cars': ADFC_crimson,
         'Over 10x more cars': ADFC_pink,
         'Inactive - no data': ADFC_lightgrey},
+        hover_data={'map_line_color': False, 'osm.highway': True, 'osm.address.city': True, 'osm.address.suburb': True, 'osm.address.postcode': True},
+        labels={'segment_id': _('Segment'), 'osm.highway': _('Highway type'), 'x': _('lon'), 'y': _('lat'), 'osm.address.city': _('City'), 'osm.address.suburb': _('District'), 'osm.address.postcode': _('Postal code')},
         map_style="streets", center= dict(lat=lat_str, lon=lon_str), height=600, zoom= zoom_factor)
 
     street_map.update_traces(line_width=5, opacity=1.0)
-    street_map.update_layout(margin=dict(l=40, r=20, t=40, b=30))
-    street_map.update_layout(legend_title=_('Street color'))
     street_map.update_traces({'name': _('More bikes than cars')}, selector={'name': 'More bikes than cars'})
     street_map.update_traces({'name': _('More cars than bikes')}, selector={'name': 'More cars than bikes'})
     street_map.update_traces({'name': _('Over 2x more cars')}, selector={'name': 'Over 2x more cars'})
     street_map.update_traces({'name': _('Over 5x more cars')}, selector={'name': 'Over 5x more cars'})
     street_map.update_traces({'name': _('Over 10x more cars')}, selector={'name': 'Over 10x more cars'})
     street_map.update_traces({'name': _('Inactive - no data')}, selector={'name': 'Inactive - no data'})
+    street_map.update_layout(margin=dict(l=40, r=20, t=40, b=30))
+    street_map.update_layout(legend_title=_('Street color'))
     street_map.update_layout(legend=dict(yanchor="top", y=0.99, xanchor="right", x=0.99))
     street_map.update_layout(annotations=[
         dict(
@@ -891,14 +903,14 @@ def update_output(n_clicks):
     else:
         return  #f"Button clicked {n_clicks} times."
 
-# @app.callback(
-#     Input('download_absolute_traffic', 'n_clicks')
-# )
-# def download_excel(n_clicks):
-#     if n_clicks is None:
-#         return #"Button not clicked yet."
-#     else:
-#         return  #f"Button clicked {n_clicks} times."
+@app.callback(
+    Input('download_html_graphs', 'n_clicks')
+)
+def download_excel(n_clicks):
+    if n_clicks is None:
+        return #"Button not clicked yet."
+    else:
+        return  #f"Button clicked {n_clicks} times."
 
 ### General traffic callback ###
 @callback(
@@ -930,12 +942,12 @@ def update_output(n_clicks):
     Input(component_id='range_slider', component_property='value'),
     Input(component_id='toggle_uptime_filter', component_property='value'),
     Input(component_id='radio_y_axis', component_property='value'),
-    Input('floating_button', 'n_clicks'),
-    #Input('download_absolute_traffic', 'n_clicks'),
+    Input(component_id='floating_button', component_property='n_clicks'),
+    Input(component_id='download_html_graphs', component_property='n_clicks'),
 prevent_initial_call='initial_duplicate',
 )
 
-def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_json, dropdown_year_A, dropdown_year_month_A, dropdown_year_week_A, dropdown_date_A, dropdown_year_B, dropdown_year_month_B, dropdown_year_week_B, dropdown_date_B, start_date, end_date, hour_range, toggle_uptime_filter, radio_y_axis, floating_button): #, download_absolute_traffic
+def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_json, dropdown_year_A, dropdown_year_month_A, dropdown_year_week_A, dropdown_date_A, dropdown_year_B, dropdown_year_month_B, dropdown_year_week_B, dropdown_date_B, start_date, end_date, hour_range, toggle_uptime_filter, radio_y_axis, floating_button, download_html_graphs):
     callback_trigger = ctx.triggered_id
 
     # If uptime filter changed, reload traffic_df_upt
@@ -988,12 +1000,6 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
     df_line_abs_traffic = traffic_df_upt_dt_str.groupby(by=[radio_time_division, 'street_selection'], sort = False, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
     if radio_time_division == 'date_hour':
         df_line_abs_traffic = df_line_abs_traffic.sort_values(by=['street_selection', radio_time_division], ascending=True)
-
-    #TODO: save df
-    if callback_trigger == 'download_absolute_traffic':
-        path = os.path.join(ASSET_DIR, 'df_line_abs_traffic.xlsx')
-        df_line_abs_traffic.to_excel(path, index=False)
-        #dcc.send_data_frame(df_line_abs_traffic.to_excel, ASSET_DIR+'/'+'mydf.xlsx', sheet_name="Sheet_name_1")
 
     line_abs_traffic = px.scatter(df_line_abs_traffic,
         x=radio_time_division, y=['ped_total', 'bike_total', 'car_total', 'heavy_total'],
@@ -1266,7 +1272,28 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
     line_avg_delta_traffic.update_xaxes(dtick = 1, tickformat=".0f")
     for annotation in line_avg_delta_traffic.layout.annotations: annotation['font'] = {'size': 14}
 
+    # Save dataframes or graph images
+    if callback_trigger == 'download_html_graphs':
+        # Download df
+        # df_line_abs_traffic.to_excel(path, index=False)
+
+        # Download images
+        path = os.path.join(DOWNLOAD_DIR, 'pie_traffic.html')
+        pie_traffic.write_html(path)
+        path = os.path.join(DOWNLOAD_DIR, 'line_abs_traffic.html')
+        line_abs_traffic.write_html(path)
+        path = os.path.join(DOWNLOAD_DIR, 'bar_avg_traffic.html')
+        bar_avg_traffic.write_html(path)
+        path = os.path.join(DOWNLOAD_DIR, 'bar_perc_speed.html')
+        bar_perc_speed.write_html(path)
+        path = os.path.join(DOWNLOAD_DIR, 'bar_v85.html')
+        bar_v85.write_html(path)
+        path = os.path.join(DOWNLOAD_DIR, 'bar_ranking.html')
+        bar_ranking.write_html(path)
+        path = os.path.join(DOWNLOAD_DIR, 'line_avg_delta_traffic.html')
+        line_avg_delta_traffic.write_html(path)
+
     return selected_street_header, color, pie_traffic, line_abs_traffic, bar_avg_traffic, line_avg_delta_traffic, bar_perc_speed, bar_avg_speed, bar_v85, bar_ranking, segment_id_json
 
 if __name__ == "__main__":
-    app.run_server(debug=True)
+    app.run_server(debug=False)

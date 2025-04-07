@@ -546,11 +546,17 @@ msgstr "Absolute Anzahl"
 msgid "My Street"
 msgstr "Meine Straße"
 
+msgid "Download graphs   "
+msgstr "Grafiken herunterladen   "
+
 msgid "Download all graphs (.html)   "
 msgstr "Grafiken herunterladen (.html)   "
 
 msgid "Download all graphs in html-format to your default download directory"
 msgstr "Laden Sie alle Grafiken im HTML-Format in Ihr Standard-Download-Verzeichnis herunter"
+
+msgid "Hover over the top-right of a graph and click the camera symbol to download in png-format"
+msgstr "Bewegen Sie den Mauszeiger über die obere rechte Ecke eines Diagramms und klicken Sie auf das Kamerasymbol, um es im PNG-Format herunterzuladen"
 
 msgid "Disclaimer"
 msgstr "Haftungshinweis"

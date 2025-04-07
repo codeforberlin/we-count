@@ -24,7 +24,7 @@ from dash import Dash, html, dcc, Output, Input, State, callback, ctx
 from dash.exceptions import PreventUpdate
 import datetime
 import locale
-import plotly.io as pio
+import io
 
 import common
 import bzm_get_data
@@ -274,10 +274,12 @@ zoom_factor = 11
 init_language = 'de'
 update_language(init_language)
 
+info_icon = html.I(className='bi bi-info-circle-fill me-2')
 cloud_icon = html.I(className='bi bi-cloud-arrow-down-fill me-2')
 email_icon = html.I(className='bi bi-envelope-at-fill me-2')
 table_icon = html.I(className='bi bi-table me-2')
 graph_icon = html.I(className='bi bi-graph-up me-2')
+camera_icon = html.I(className='bi bi-camera-fill me-2')
 
 geo_df, json_df_features, traffic_df = retrieve_data()
 
@@ -483,16 +485,27 @@ def serve_layout():
                     style={'margin-left': 40, 'margin-bottom': 00},
                 ),
             ], width=9),
+            # dbc.Col([
+            #     html.Span([
+            #         dbc.Button([_('Download all graphs (.html)   '), graph_icon], id='download_html_graphs', color='secondary', outline=True, size='sm'),
+            #         html.I(className='bi bi-info-circle-fill h6', id='download_html',
+            #             style={'margin-left': 10, 'color': ADFC_lightgrey}),
+            #         dbc.Popover(
+            #             dbc.PopoverBody(_('Download all graphs in html-format to your default download directory')),
+            #             target="download_html", trigger="hover")
+            #     ], style={'margin-left': 30, 'margin-right': 40, 'margin-top': 90, 'margin-bottom': 0,
+            #             'display': 'inline-block'}),
+            # ], width=3),
             dbc.Col([
                 html.Span([
-                    dbc.Button([_('Download all graphs (.html)   '), graph_icon], id='download_html_graphs', color='secondary', outline=True, size='sm'),
-                    html.I(className='bi bi-info-circle-fill h6', id='download_html',
-                        style={'margin-left': 10, 'color': ADFC_lightgrey}),
+                    html.H6([_('Download graphs   '), info_icon], id='download_html_graphs'),
+                    #html.I(className='bi bi-info-circle-fill h6', id='download_html',
+                    #    style={'margin-left': 10, 'color': ADFC_lightgrey}),
                     dbc.Popover(
-                        dbc.PopoverBody(_('Download all graphs in html-format to your default download directory')),
-                        target="download_html", trigger="hover")
-                ], style={'margin-left': 30, 'margin-right': 40, 'margin-top': 90, 'margin-bottom': 0,
-                        'display': 'inline-block'}),
+                        dbc.PopoverBody(_('Hover over the top-right of a graph and click the camera symbol to download in png-format')),
+                        target="download_html_graphs", trigger="hover")
+                ], style={'margin-left': 75, 'margin-right': 40, 'margin-top': 95, 'margin-bottom': 0,
+                        'display': 'inline-block', 'color': ADFC_lightgrey}),
             ], width=3),
         ]),
         dbc.Row([
@@ -1273,47 +1286,8 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
     line_avg_delta_traffic.update_xaxes(dtick = 1, tickformat=".0f")
     for annotation in line_avg_delta_traffic.layout.annotations: annotation['font'] = {'size': 14}
 
-    # Save dataframes or graph images
-    if callback_trigger == 'download_html_graphs':
-        # Download df
-        # df_line_abs_traffic.to_excel(path, index=False)
-
-        # Download images
-        #path = os.path.join(DOWNLOAD_DIR, 'pie_traffic.html')
-        #pie_traffic.write_html(path)
-        #path = os.path.join(DOWNLOAD_DIR, 'line_abs_traffic.html')
-        #line_abs_traffic.write_html(path)
-        #path = os.path.join(DOWNLOAD_DIR, 'bar_avg_traffic.html')
-        #bar_avg_traffic.write_html(path)
-        #path = os.path.join(DOWNLOAD_DIR, 'bar_perc_speed.html')
-        #bar_perc_speed.write_html(path)
-        #path = os.path.join(DOWNLOAD_DIR, 'bar_v85.html')
-        #bar_v85.write_html(path)
-        #path = os.path.join(DOWNLOAD_DIR, 'bar_ranking.html')
-        #bar_ranking.write_html(path)
-        #path = os.path.join(DOWNLOAD_DIR, 'line_avg_delta_traffic.html')
-        #line_avg_delta_traffic.write_html(path)
-
-        directory_path = 'BzM_images'
-        if not os.path.exists(directory_path):
-            os.makedirs(directory_path)
-        file_path = os.path.join(directory_path, 'pie_traffic.html')
-        pio.write_html(pie_traffic, file=file_path, full_html=False, include_plotlyjs='cdn')
-        file_path = os.path.join(directory_path, 'line_abs_traffic.html')
-        pio.write_html(line_abs_traffic, file=file_path, full_html=False, include_plotlyjs='cdn')
-        file_path = os.path.join(directory_path, 'bar_avg_traffic.html')
-        pio.write_html(bar_avg_traffic, file=file_path, full_html=False, include_plotlyjs='cdn')
-        file_path = os.path.join(directory_path, 'bar_perc_speed.html')
-        pio.write_html(bar_perc_speed, file=file_path, full_html=False, include_plotlyjs='cdn')
-        file_path = os.path.join(directory_path, 'bar_v85.html')
-        pio.write_html(bar_v85, file=file_path, full_html=False, include_plotlyjs='cdn')
-        file_path = os.path.join(directory_path, 'bar_ranking.html')
-        pio.write_html(bar_ranking, file=file_path, full_html=False, include_plotlyjs='cdn')
-        file_path = os.path.join(directory_path, 'line_avg_delta_traffic.html')
-        pio.write_html(line_avg_delta_traffic, file=file_path, full_html=False, include_plotlyjs='cdn')
-
-
     return selected_street_header, color, pie_traffic, line_abs_traffic, bar_avg_traffic, line_avg_delta_traffic, bar_perc_speed, bar_avg_speed, bar_v85, bar_ranking, segment_id_json
+
 
 if __name__ == "__main__":
     app.run_server(debug=False)

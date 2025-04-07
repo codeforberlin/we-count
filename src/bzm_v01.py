@@ -24,6 +24,7 @@ from dash import Dash, html, dcc, Output, Input, State, callback, ctx
 from dash.exceptions import PreventUpdate
 import datetime
 import locale
+import plotly.io as pio
 
 import common
 import bzm_get_data
@@ -1278,20 +1279,39 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
         # df_line_abs_traffic.to_excel(path, index=False)
 
         # Download images
-        path = os.path.join(DOWNLOAD_DIR, 'pie_traffic.html')
-        pie_traffic.write_html(path)
-        path = os.path.join(DOWNLOAD_DIR, 'line_abs_traffic.html')
-        line_abs_traffic.write_html(path)
-        path = os.path.join(DOWNLOAD_DIR, 'bar_avg_traffic.html')
-        bar_avg_traffic.write_html(path)
-        path = os.path.join(DOWNLOAD_DIR, 'bar_perc_speed.html')
-        bar_perc_speed.write_html(path)
-        path = os.path.join(DOWNLOAD_DIR, 'bar_v85.html')
-        bar_v85.write_html(path)
-        path = os.path.join(DOWNLOAD_DIR, 'bar_ranking.html')
-        bar_ranking.write_html(path)
-        path = os.path.join(DOWNLOAD_DIR, 'line_avg_delta_traffic.html')
-        line_avg_delta_traffic.write_html(path)
+        #path = os.path.join(DOWNLOAD_DIR, 'pie_traffic.html')
+        #pie_traffic.write_html(path)
+        #path = os.path.join(DOWNLOAD_DIR, 'line_abs_traffic.html')
+        #line_abs_traffic.write_html(path)
+        #path = os.path.join(DOWNLOAD_DIR, 'bar_avg_traffic.html')
+        #bar_avg_traffic.write_html(path)
+        #path = os.path.join(DOWNLOAD_DIR, 'bar_perc_speed.html')
+        #bar_perc_speed.write_html(path)
+        #path = os.path.join(DOWNLOAD_DIR, 'bar_v85.html')
+        #bar_v85.write_html(path)
+        #path = os.path.join(DOWNLOAD_DIR, 'bar_ranking.html')
+        #bar_ranking.write_html(path)
+        #path = os.path.join(DOWNLOAD_DIR, 'line_avg_delta_traffic.html')
+        #line_avg_delta_traffic.write_html(path)
+
+        directory_path = 'BzM_images'
+        if not os.path.exists(directory_path):
+            os.makedirs(directory_path)
+        file_path = os.path.join(directory_path, 'pie_traffic.html')
+        pio.write_html(pie_traffic, file=file_path, full_html=False, include_plotlyjs='cdn')
+        file_path = os.path.join(directory_path, 'line_abs_traffic.html')
+        pio.write_html(line_abs_traffic, file=file_path, full_html=False, include_plotlyjs='cdn')
+        file_path = os.path.join(directory_path, 'bar_avg_traffic.html')
+        pio.write_html(bar_avg_traffic, file=file_path, full_html=False, include_plotlyjs='cdn')
+        file_path = os.path.join(directory_path, 'bar_perc_speed.html')
+        pio.write_html(bar_perc_speed, file=file_path, full_html=False, include_plotlyjs='cdn')
+        file_path = os.path.join(directory_path, 'bar_v85.html')
+        pio.write_html(bar_v85, file=file_path, full_html=False, include_plotlyjs='cdn')
+        file_path = os.path.join(directory_path, 'bar_ranking.html')
+        pio.write_html(bar_ranking, file=file_path, full_html=False, include_plotlyjs='cdn')
+        file_path = os.path.join(directory_path, 'line_avg_delta_traffic.html')
+        pio.write_html(line_avg_delta_traffic, file=file_path, full_html=False, include_plotlyjs='cdn')
+
 
     return selected_street_header, color, pie_traffic, line_abs_traffic, bar_avg_traffic, line_avg_delta_traffic, bar_perc_speed, bar_avg_speed, bar_v85, bar_ranking, segment_id_json
 

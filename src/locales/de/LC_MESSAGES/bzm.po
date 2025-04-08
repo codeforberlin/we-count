@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-01-29 22:42+0100\n"
+"POT-Creation-Date: 2025-04-08 07:35+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,84 +17,70 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-msgid "Note: street colors represent bike/car ratios based on all data available and do not change with date- or hour selection. The map allows street segments to be selected individually. To select whole streets, select a street name from the drop down menu."
-msgstr "Hinweis: Die Straßenfarben stellen das Fahrrad-Auto-Verhältnis auf Grundlage aller verfügbaren Daten dar und ändern sich nicht mit der Datums- oder Stundenauswahl. Die Karte ermöglicht die Auswahl einzelner Straßenabschnitte. Um ganze Straßen auszuwählen, wähle einen Straßennamen aus dem Dropdown-Menü."
-
-msgid "This chart allows four period-lengths to be compared: day, week, month or year. For each of these, two periods can be compared, period A and period B (e.g. week A vs. week B or day A vs. day B). Solid lines represent period A and dashed lines represent period B. The date and hour filters in the upper menu bar have no effect, however 'filter uptime' does!"
-msgstr "Dieses Diagramm ermöglicht den Vergleich von vier Zeiträumen: Tag, Woche, Monat oder Jahr. Für jeden dieser Zeiträume können zwei Zeiträume verglichen werden: Zeitraum A und Zeitraum B (z. B. Woche A vs. Woche B oder Tag A vs. Tag B). Durchgezogene Linien repräsentieren Zeitraum A, gestrichelte Linien Zeitraum B. Die Datums- und Stundenfilter in der oberen Menüleiste haben keine Wirkung, der Filter 'Filter Uptime' hingegen schon!"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:81
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:87
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:493
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:534
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:568
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:592
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:640
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:100
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:114
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:198
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:202
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:996
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1032
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1070
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1104
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1138
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1234
 msgid "All Streets"
 msgstr "Alle Straßen"
 
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:158
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:447
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:196
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:956
+msgid "full street"
+msgstr "Gesamtstraße"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:229
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:871
 msgid "Over 10x more cars"
 msgstr "Über 10x mehr Autos"
 
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:158
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:446
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:229
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:870
 msgid "Over 5x more cars"
 msgstr "Über 5x mehr Autos"
 
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:158
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:445
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:229
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:869
 msgid "Over 2x more cars"
 msgstr "Über 2x mehr Autos"
 
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:158
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:444
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:229
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:868
 msgid "More cars than bikes"
 msgstr "Mehr Autos als Zweiräder"
 
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:158
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:443
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:229
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:867
 msgid "More bikes than cars"
 msgstr "Mehr Zweiräder als Autos"
 
-msgid "Inactive - no data"
-msgstr "Inaktiv - keine Daten"
-
-msgid "Compare traffic periods"
-msgstr "Vergleiche Verkehrsperioden"
-
-msgid "Select periods to compare"
-msgstr "Wähle Verkehrsperioden zum vergleichen"
-
-msgid "Period"
-msgstr "Periode"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:200
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:345
 msgid "Start dash..."
 msgstr "Starte Dash..."
 
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:211
-msgid "Berlin Counts Mobility"
-msgstr "Berlin zählt Mobilität"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:217
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:387
 msgid "English"
-msgstr "English"
+msgstr "Englisch"
 
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:218
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:388
 msgid "Deutsch"
 msgstr "German"
 
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:233
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:394
 msgid "Select street:"
 msgstr "Wähle Straße:"
 
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:238
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:403
 msgid "Traffic type - selected street"
 msgstr "Verkehrstyp - gewählte Straße"
 
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:273
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:406
 msgid ""
 "Traffic type split of the currently selected street, based on currently "
 "selected date and hour range."
@@ -102,307 +88,27 @@ msgstr ""
 "Verkehrsartenaufteilung der aktuell ausgewählten Straße, basierend auf dem aktuell "
 "ausgewählten Datums- und Stundenbereich."
 
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:248
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:412
+msgid "Note: street colors represent bike/car ratios based on all data available and do not change with date- or hour selection. The map allows street segments to be selected individually. To select whole streets, select a street name from the drop down menu."
+msgstr "Hinweis: Die Straßenfarben stellen das Fahrrad-Auto-Verhältnis auf Grundlage aller verfügbaren Daten dar und ändern sich nicht mit der Datums- oder Stundenauswahl. Die Karte ermöglicht die Auswahl einzelner Straßenabschnitte. Um ganze Straßen auszuwählen, wähle einen Straßennamen aus dem Dropdown-Menü."
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:419
 msgid "Set hour range:"
 msgstr "Stelle Zeitfenster ein:"
 
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:248
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:427
 msgid " Hour"
 msgstr " Uhr"
 
-msgid "Hour"
-msgstr "Stunde"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:256
-msgid "always_visible"
-msgstr "immer sichtbar"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:288
-msgid " Filter uptime > 0.7"
-msgstr " Filter Uptime > 0.7"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:259
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:430
 msgid "Pick date range:"
 msgstr "Wähle Start- und Enddatum:"
 
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:277
-msgid "Absolute traffic"
-msgstr "Absolute Verkehrszahl"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:283
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:494
-msgid "Year"
-msgstr "Jahr"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:284
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:494
-msgid "Month"
-msgstr "Monat"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:285
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:494
-msgid "Week"
-msgstr "Woche"
-
-msgid "Week day"
-msgstr "Wochentag"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:321
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:558
-msgid "Day"
-msgstr "Tag"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:286
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:494
-msgid "Date"
-msgstr "Datum"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:307
-msgid "Average traffic"
-msgstr "Durchschnittlicher Verkehr"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:312
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:537
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:571
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:595
-msgid "Yearly"
-msgstr "Jährlich"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:313
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:537
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:571
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:595
-msgid "Monthly"
-msgstr "Monatlich"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:314
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:537
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:571
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:595
-msgid "Weekly"
-msgstr "Wöchentlich"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:315
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:537
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:571
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:595
-msgid "Daily"
-msgstr "Täglich"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:316
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:537
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:571
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:596
-msgid "Hourly"
-msgstr "Stündlich"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:334
-msgid "Percentage car speed - by time unit"
-msgstr "Prozentuale Auto Geschwindigkeit - pro Zeiteinheit"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:341
-msgid "Percentage car speed - average"
-msgstr "Prozentuale Auto Geschwindigkeit - Durchschnitt"
-
-msgid "until"
-msgstr "bis"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:367
-msgid "v85 car speed"
-msgstr "v85 Geschwindigkeit"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:350
-msgid "Explore"
-msgstr "Entdecken"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:357
-msgid "X-Axis:"
-msgstr "X-Achse"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:411
-msgid "Street ranking by traffic type"
-msgstr "Straßenranking nach Verkehrsart"
-
-msgid "No data available for selected range!"
-msgstr "Keine Daten für Ausgewählte Zeiten!"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:362
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:382
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:513
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:519
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:644
-msgid "Pedestrians"
-msgstr "Fußgänger"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:363
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:383
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:513
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:519
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:644
-msgid "Bikes"
-msgstr "Zweiräder"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:364
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:384
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:513
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:519
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:644
-msgid "Cars"
-msgstr "Autos"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:365
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:385
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:513
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:519
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:644
-msgid "Heavy"
-msgstr "LKWs"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:454
-msgid "Feedback and contact"
-msgstr "Feedback und Kontakt"
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:448
+msgid " Filter uptime > 0.7"
+msgstr " Filter Uptime > 0.7"
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:457
-msgid "More information about the "
-msgstr "Weitere Informationen zur "
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:458
-msgid " initiative."
-msgstr " Initiative."
-
-msgid " and "
-msgstr " und "
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:461
-msgid "Request a counter at the "
-msgstr "Fragen Sie nach einen Zähler beim "
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:462
-msgid "Citizen Science-Projekt"
-msgstr "Citizen Science-Projekt"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:465
-msgid "Data protection around the "
-msgstr "Datenschutz rund um die "
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:466
-msgid "Telraam camera"
-msgstr "Telraam Kamera"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:466
-msgid " measurements"
-msgstr " Messungen"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:471
-msgid "Contribute to the dashboard development ("
-msgstr "Tragen Sie zur Dashboard-Entwicklung bei ("
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:472
-msgid "GitHub"
-msgstr "GitHub"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:476
-msgid "For dashboard improvement requests email us:"
-msgstr "Für Vorschläge oder Verbesserungen E-Mail:"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:475
-msgid "email us:"
-msgstr "E-MAIL: "
-
-msgid "Dashboard development & creation:"
-msgstr "Dashboard Entwicklung & Kreation:"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:541
-
-msgid "Highway type"
-msgstr "Straßentyp"
-
-msgid "Street color"
-msgstr "Straßenfarbe"
-
-msgid "City"
-msgstr "Stadt"
-
-msgid "Postal code"
-msgstr "Postleitzahl"
-
-msgid "District"
-msgstr "Bezirk"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:366
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:386
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:644
-msgid "Street Length"
-msgstr "Straßenlänge"
-
-msgid "all street segments"
-msgstr "alle Straßensegmente"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:367
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:387
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:644
-msgid "Max Speed"
-msgstr "Maximale Geschwindigkeit"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:378
-msgid "Y-Axis:"
-msgstr "Y-Achse"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:493
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:535
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:569
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:593
-msgid "Mon"
-msgstr "Mo."
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:493
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:535
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:569
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:593
-msgid "Tue"
-msgstr "Di."
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:493
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:535
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:569
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:593
-msgid "Wed"
-msgstr "Mi."
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:493
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:535
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:569
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:593
-msgid "Thu"
-msgstr "Do."
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:493
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:535
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:569
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:593
-msgid "Fri"
-msgstr "Fr."
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:493
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:535
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:569
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:593
-msgid "Sat"
-msgstr "Sa."
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:493
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:535
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:569
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:593
-msgid "Sun"
-msgstr "So."
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:497
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:503
-msgid "Absolute traffic count"
-msgstr "Absolute Verkehrszahl"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:321
 msgid ""
 "A high 0.7-0.8 uptime will always mean very good data. The first and last "
 "daylight hour of the day will always have lower uptimes. If uptimes during "
@@ -413,7 +119,109 @@ msgstr ""
 "Tagesstunde weisen immer geringere Verfügbarkeiten auf. Wenn die Verfügbarkeiten während "
 " des Tages unter 0,5 liegen, ist das normalerweise ein klares Zeichen dafür, dass mit der Instanz wahrscheinlich etwas nicht stimmt."
 
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:321
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:466
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1171
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1189
+msgid "Absolute traffic"
+msgstr "Absolute Verkehrszahl"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:472
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:601
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:997
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1235
+msgid "Year"
+msgstr "Jahr"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:473
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:604
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:997
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1235
+msgid "Month"
+msgstr "Monat"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:474
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:607
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:997
+msgid "Week"
+msgstr "Woche"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:475
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:610
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:997
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1235
+msgid "Day"
+msgstr "Tag"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:476
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:997
+msgid "Hour"
+msgstr "Stunde"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:486
+msgid "Download graphs   "
+msgstr "Grafiken herunterladen   "
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:488
+msgid "Hover over the top-right of a graph and click the camera symbol to download in png-format"
+msgstr "Bewegen Sie den Mauszeiger über die obere rechte Ecke eines Diagramms und klicken Sie auf das Kamerasymbol, um es im PNG-Format herunterzuladen"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:504
+msgid "Average traffic"
+msgstr "Durchschnittlicher Verkehr"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:509
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1033
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1071
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1105
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1140
+msgid "Yearly"
+msgstr "Jährlich"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:510
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1033
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1071
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1105
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1140
+msgid "Monthly"
+msgstr "Monatlich"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:511
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1033
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1071
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1105
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1140
+msgid "Weekly"
+msgstr "Wöchentlich"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:512
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1033
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1071
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1105
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1140
+msgid "Daily"
+msgstr "Täglich"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:513
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1033
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1071
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1105
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1140
+msgid "Hourly"
+msgstr "Stündlich"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:531
+msgid "Percentage car speed - by time unit"
+msgstr "Prozentuale Auto Geschwindigkeit - pro Zeiteinheit"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:538
+msgid "Percentage car speed - average"
+msgstr "Prozentuale Auto Geschwindigkeit - Durchschnitt"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:546
+msgid "v85 car speed"
+msgstr "v85 Geschwindigkeit"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:553
 msgid ""
 "The V85 is a widely used indicator in the world of mobility and road safety, "
 "as it is deemed to be representative of the speed one can reasonably "
@@ -423,149 +231,257 @@ msgstr ""
 "weit verbreiteter Indikator, da er als repräsentativ für die Geschwindigkeit "
 "gilt, die auf einer Straße vernünftigerweise eingehalten werden kann."
 
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:501
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:545
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:579
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:650
-msgid "Traffic Type"
-msgstr "Verkehrstyp"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:536
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:570
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:594
-msgid "Jan"
-msgstr "Jan"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:536
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:570
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:594
-msgid "Feb"
-msgstr "Feb"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:536
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:570
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:594
-msgid "Mar"
-msgstr "Mär"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:536
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:570
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:594
-msgid "Apr."
-msgstr "Apr"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:536
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:570
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:594
-msgid "May"
-msgstr "Mai"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:536
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:570
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:594
-msgid "Jun"
-msgstr "Jun"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:536
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:570
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:594
-msgid "Jul"
-msgstr "Jul"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:536
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:570
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:594
-msgid "Aug"
-msgstr "Aug"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:536
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:570
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:594
-msgid "Sep"
-msgstr "Sep"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:536
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:570
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:594
-msgid "Oct"
-msgstr "Okt"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:536
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:570
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:594
-msgid "Nov"
-msgstr "Nov"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:536
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:570
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:594
-msgid "Dec"
-msgstr "Dez"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:541
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:547
-msgid "Average traffic count"
-msgstr "Durchschnittliche Verkehrszahl"
-
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:549
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:578
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:605
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:649
-msgid " (segment:"
-msgstr " (Segment:"
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:565
+msgid "Street ranking by traffic type"
+msgstr "Straßenranking nach Verkehrsart"
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:574
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:601
-msgid "Percentage speed"
-msgstr "Prozentuale Geschwindigkeit"
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:976
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:981
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1011
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1043
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1170
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1188
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1250
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1254
+msgid "Pedestrians"
+msgstr "Fußgänger"
 
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:581
-msgid "Percentage car speed"
-msgstr "Prozentualer Anteil"
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:575
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:976
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:981
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1012
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1044
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1170
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1188
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1251
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1255
+msgid "Bikes"
+msgstr "Zweiräder"
 
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:606
-msgid "Car speed"
-msgstr "Auto Geschwindigkeit"
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:576
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:976
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:981
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1013
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1045
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1170
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1188
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1252
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1256
+msgid "Cars"
+msgstr "Autos"
 
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:608
-msgid "Average percentage car speed"
-msgstr "Durchschnittliche prozentuale Auto Geschwindigkeit"
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:577
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:976
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:981
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1014
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1046
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1170
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1188
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1253
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1257
+msgid "Heavy"
+msgstr "LKWs"
 
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:657
-msgid "Speed cars v85"
-msgstr "v85 Geschwindigkeit Autos"
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:598
+msgid "Select periods to compare"
+msgstr "Wähle Verkehrsperioden zum vergleichen"
 
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:664
-msgid "v85 in km/h"
-msgstr "v85 in km/h"
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:614
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:656
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1247
+msgid "Period"
+msgstr "Periode"
 
-msgid "Absolute count"
-msgstr "Absolute Anzahl"
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:697
+msgid "Compare traffic periods"
+msgstr "Vergleiche Verkehrsperioden"
 
-#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:739
-msgid "My Street"
-msgstr "Meine Straße"
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:705
+msgid "This chart allows four period-lengths to be compared: day, week, month or year. For each of these, two periods can be compared, period A and period B (e.g. week A vs. week B or day A vs. day B). Solid lines represent period A and dashed lines represent period B. The date and hour filters in the upper menu bar have no effect, however 'filter uptime' does!"
+msgstr "Dieses Diagramm ermöglicht den Vergleich von vier Zeiträumen: Tag, Woche, Monat oder Jahr. Für jeden dieser Zeiträume können zwei Zeiträume verglichen werden: Zeitraum A und Zeitraum B (z. B. Woche A vs. Woche B oder Tag A vs. Tag B). Durchgezogene Linien repräsentieren Zeitraum A, gestrichelte Linien Zeitraum B. Die Datums- und Stundenfilter in der oberen Menüleiste haben keine Wirkung, der Filter 'Filter Uptime' hingegen schon!"
 
-msgid "Download graphs   "
-msgstr "Grafiken herunterladen   "
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:718
+msgid "Feedback and contact"
+msgstr "Feedback und Kontakt"
 
-msgid "Download all graphs (.html)   "
-msgstr "Grafiken herunterladen (.html)   "
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:721
+msgid "More information about the "
+msgstr "Weitere Informationen zur "
 
-msgid "Download all graphs in html-format to your default download directory"
-msgstr "Laden Sie alle Grafiken im HTML-Format in Ihr Standard-Download-Verzeichnis herunter"
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:722
+msgid " (BzM) initiative"
+msgstr " (BzM) Initiative"
 
-msgid "Hover over the top-right of a graph and click the camera symbol to download in png-format"
-msgstr "Bewegen Sie den Mauszeiger über die obere rechte Ecke eines Diagramms und klicken Sie auf das Kamerasymbol, um es im PNG-Format herunterzuladen"
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:725
+msgid "Request a counter at the "
+msgstr "Fragen Sie nach einen Zähler beim "
 
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:726
+msgid "Citizen Science-Projekt"
+msgstr "Citizen Science-Projekt"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:729
+msgid "Data protection around the "
+msgstr "Datenschutz rund um die "
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:730
+msgid "Telraam camera"
+msgstr "Telraam Kamera"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:730
+msgid " measurements"
+msgstr " Messungen"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:735
+msgid "Dashboard development & creation:"
+msgstr "Dashboard Entwicklung & Kreation:"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:735
+msgid " and "
+msgstr " und "
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:738
+msgid "For dashboard improvement requests email us:"
+msgstr "Für Vorschläge oder Verbesserungen E-Mail:"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:744
+msgid "Contact Us!"
+msgstr ""
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:772
 msgid "Disclaimer"
 msgstr "Haftungshinweis"
 
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:773
 msgid "The content published in the offer has been researched with the greatest care. Nevertheless, the Berlin Counts Mobility team cannot assume any liability for the topicality, correctness or completeness of the information provided. All information is provided without guarantee. liability claims against the Berlin zählt Mobilität team or its supporting organizations derived from the use of this information are excluded. Despite careful control of the content, the Berlin zählt Mobilität team and its supporting organizations assume no liability for the content of external links. The operators of the linked pages are solely responsible for their content. A constant control of the external links is not possible for the provider. If there are indications or knowledge of legal violations, the illegal links will be deleted immediately."
 msgstr "Die im Angebot veröffentlichten Inhalte sind mit größter Sorgfalt recherchiert. Dennoch kann das Berlin zählt Mobilität-Team keine Gewähr für die Aktualität, Korrektheit oder Vollständigkeit der bereitgestellten Informationen übernehmen. Alle Angaben erfolgen ohne Gewähr. Aus der Nutzung dieser Informationen abgeleitete Haftungsansprüche gegen das Berlin zählt Mobilität-Team oder deren unterstützenden Organisationen, sind ausgeschlossen. Trotz sorgfältiger inhaltlicher Kontrolle übernimmt 'Berlin zählt Mobilität'-Team und deren unterstützenden Organisationen keine Haftung für die Inhalte externer Links. Für den Inhalt der verlinkten Seiten sind ausschließlich deren Betreiber verantwortlich. Eine ständige Kontrolle der externen Links ist für den Anbieter nicht möglich. Bei Anhaltspunkten oder Kenntnis von Rechtsverstößen werden die gesetzeswidrigen Links unverzüglich gelöscht."
 
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:774
 msgid "Copyright"
 msgstr "Urheberrecht"
 
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:775
 msgid "The layout and design of the offer as a whole as well as its individual elements are protected by copyright. The same applies to the images, graphics and editorial contributions used in detail as well as their selection and compilation. Further use and reproduction are only permitted for private purposes. No changes may be made to it. Public use of the offer may only take place with the consent of the operator."
 msgstr "Layout und Gestaltung des Angebots insgesamt sowie seiner einzelnen Elemente sind urheberrechtlich geschützt. Gleiches gilt für die verwendeten Bilder, Grafiken und redaktionellen Beiträge im Einzelnen sowie ihre Auswahl und Zusammenstellung. Weiterverwendung und Vervielfältigung sind nur zu privaten Zwecken gestattet. Veränderungen daran dürfen nicht vorgenommen werden. Eine öffentliche Verwendung des Angebots darf nur mit Zustimmung des Betreibers erfolgen."
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:818
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:872
+msgid "Inactive - no data"
+msgstr "Inaktiv - keine Daten"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:863
+msgid "Highway type"
+msgstr "Straßentyp"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:863
+msgid "City"
+msgstr "Stadt"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:863
+msgid "District"
+msgstr "Bezirk"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:863
+msgid "Postal code"
+msgstr "Postleitzahl"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:874
+msgid "Street color"
+msgstr "Straßenfarbe"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:967
+msgid "No data available for selected range!"
+msgstr "Keine Daten für Ausgewählte Zeiten!"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1000
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1005
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1248
+msgid "Absolute traffic count"
+msgstr "Absolute Verkehrsanzahl"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1004
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1042
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1146
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1178
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1249
+msgid "Traffic Type"
+msgstr "Verkehrstyp"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1015
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1038
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1081
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1115
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1145
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1176
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1244
+msgid " (segment:"
+msgstr " (Segment:"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1035
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1041
+msgid "Average traffic count"
+msgstr "Durchschnittliche Verkehrszahl"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1077
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1092
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1126
+msgid "Percentage car speed"
+msgstr "Prozentualer Anteil"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1082
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1116
+msgid "Car speed"
+msgstr "Auto Geschwindigkeit"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1084
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1085
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1086
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1087
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1088
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1089
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1090
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1118
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1119
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1120
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1121
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1122
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1123
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1124
+msgid "until"
+msgstr "bis"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1111
+msgid "Average percentage car speed"
+msgstr "Durchschnittliche prozentuale Auto Geschwindigkeit"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1141
+msgid "Speed cars v85"
+msgstr "v85 Geschwindigkeit Autos"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1148
+msgid "v85 in km/h"
+msgstr "v85 in km/h"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1170
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1188
+msgid "Street Length"
+msgstr "Straßenlänge"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1170
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1188
+msgid "Max Speed"
+msgstr "Maximale Geschwindigkeit"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1170
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1188
+msgid "Street"
+msgstr "Straße"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1180
+msgid "Absolute count"
+msgstr "Absolute Anzahl"
+
+#: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1235
+msgid "Week day"
+msgstr "Wochentag"

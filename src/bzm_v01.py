@@ -12,19 +12,17 @@
 # json_df           - json dataframe based on the same geojson as geo_df, providing features such as street names
 """
 
-import gettext
-import json
 import os
-from tkinter import filedialog
-import dash_bootstrap_components as dbc
-import geopandas as gpd
+import gettext
+import locale
+import datetime
 import pandas as pd
-import plotly.express as px
+import json
+import geopandas as gpd
+import dash_bootstrap_components as dbc
 from dash import Dash, html, dcc, Output, Input, State, callback, ctx
 from dash.exceptions import PreventUpdate
-import datetime
-import locale
-import io
+import plotly.express as px
 
 import common
 import bzm_get_data
@@ -32,9 +30,15 @@ import bzm_get_data
 
 DEPLOYED = __name__ != '__main__'
 
-def output_df(df, file_name):
-    #output_folder_path = filedialog.askdirectory(title='Select output folder')
-    df.to_excel(ASSET_DIR + file_name + '.xlsx', index=False)
+def output_Excel(df, file_name):
+    path = os.path.join(ASSET_DIR, file_name + '.xlsx')
+    print(path)
+    df.to_excel(path, index=False)
+
+def output_csv(df, file_name):
+    path = os.path.join(ASSET_DIR, file_name + '.csv')
+    print(path)
+    df.to_csv(path, index=False)
 
 #### Retrieve Data ####
 def get_locations(filepath="https://berlin-zaehlt.de/csv/bzm_telraam_segments.geojson"):
@@ -64,7 +68,6 @@ def get_locations(filepath="https://berlin-zaehlt.de/csv/bzm_telraam_segments.ge
     nan_rows = df_geojson[df_geojson['osm.name'].isnull()]
     return df_geojson.drop(nan_rows.index)
 
-#@lru_cache(maxsize=128)
 def retrieve_data():
 
     # Read geojson data file to access geometry coordinates - using URL
@@ -76,6 +79,9 @@ def retrieve_data():
     if not DEPLOYED:
         print('Reading json data...')
     json_df_features = get_locations(geojson_url)
+    # Drop instance_ids.9571 columns
+    unwanted = json_df_features.columns[json_df_features.columns.str.startswith('instance_ids.9571')]
+    json_df_features.drop(unwanted, axis=1, inplace=True)
 
     # Read traffic data from file
     if not DEPLOYED:
@@ -88,8 +94,6 @@ def retrieve_data():
     # Set data types for clean representation
     json_df_features['segment_id']=json_df_features['segment_id'].astype(str)
     traffic_df['segment_id']=traffic_df['segment_id'].astype(str)
-    #traffic_df['year']=traffic_df['year'].astype(str)
-    #traffic_df['hour']=traffic_df['hour'].astype(int)
 
     # Add street column for facet graphs - check efficiency!
     traffic_df['street_selection'] = traffic_df.loc[:, 'osm.name']
@@ -230,11 +234,9 @@ def update_map_data(df_map_base, df):
     df_map = df_map_base.join(df)
 
     nan_rows = df_map[df_map['segment_id'].isnull()]
-    #nan_rows = df_map[df_map['osm.name'].isnull()]
     df_map = df_map.drop(nan_rows.index)
 
     # Add map_line_color category and add column information to cover inactive traffic counters
-    #df_map['map_line_color'] = df_map['map_line_color'].astype('category')
     df_map['map_line_color'] = df_map['map_line_color'].cat.add_categories([('Inactive - no data')])
     df_map.fillna({"map_line_color": ('Inactive - no data')}, inplace=True)
 
@@ -247,9 +249,7 @@ def update_map_data(df_map_base, df):
 
     return df_map
 
-DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 ASSET_DIR = os.path.join(os.path.dirname(__file__), 'assets')
-DOWNLOAD_DIR = os.path.join(os.path.expanduser('~'), 'downloads')
 
 # Initialize constants, variables and get data
 ADFC_green = '#1C9873'
@@ -275,10 +275,7 @@ init_language = 'de'
 update_language(init_language)
 
 info_icon = html.I(className='bi bi-info-circle-fill me-2')
-cloud_icon = html.I(className='bi bi-cloud-arrow-down-fill me-2')
 email_icon = html.I(className='bi bi-envelope-at-fill me-2')
-table_icon = html.I(className='bi bi-table me-2')
-graph_icon = html.I(className='bi bi-graph-up me-2')
 camera_icon = html.I(className='bi bi-camera-fill me-2')
 
 geo_df, json_df_features, traffic_df = retrieve_data()
@@ -342,7 +339,6 @@ df_map_base = geo_df_map_info.join(json_df_features)
 
 # Prepare map data
 df_map = update_map_data(df_map_base, traffic_df_id_bc)
-
 
 ### Run Dash app ###
 if not DEPLOYED:
@@ -485,22 +481,9 @@ def serve_layout():
                     style={'margin-left': 40, 'margin-bottom': 00},
                 ),
             ], width=9),
-            # dbc.Col([
-            #     html.Span([
-            #         dbc.Button([_('Download all graphs (.html)   '), graph_icon], id='download_html_graphs', color='secondary', outline=True, size='sm'),
-            #         html.I(className='bi bi-info-circle-fill h6', id='download_html',
-            #             style={'margin-left': 10, 'color': ADFC_lightgrey}),
-            #         dbc.Popover(
-            #             dbc.PopoverBody(_('Download all graphs in html-format to your default download directory')),
-            #             target="download_html", trigger="hover")
-            #     ], style={'margin-left': 30, 'margin-right': 40, 'margin-top': 90, 'margin-bottom': 0,
-            #             'display': 'inline-block'}),
-            # ], width=3),
             dbc.Col([
                 html.Span([
                     html.H6([_('Download graphs   '), info_icon], id='download_html_graphs'),
-                    #html.I(className='bi bi-info-circle-fill h6', id='download_html',
-                    #    style={'margin-left': 10, 'color': ADFC_lightgrey}),
                     dbc.Popover(
                         dbc.PopoverBody(_('Hover over the top-right of a graph and click the camera symbol to download in png-format')),
                         target="download_html_graphs", trigger="hover")
@@ -877,7 +860,7 @@ def update_map(clickData, street_name):
         'Over 10x more cars': ADFC_pink,
         'Inactive - no data': ADFC_lightgrey},
         hover_data={'map_line_color': False, 'osm.highway': True, 'osm.address.city': True, 'osm.address.suburb': True, 'osm.address.postcode': True},
-        labels={'segment_id': _('Segment'), 'osm.highway': _('Highway type'), 'x': _('lon'), 'y': _('lat'), 'osm.address.city': _('City'), 'osm.address.suburb': _('District'), 'osm.address.postcode': _('Postal code')},
+        labels={'segment_id': 'Segment', 'osm.highway': _('Highway type'), 'x': 'Lon', 'y': 'Lat', 'osm.address.city': _('City'), 'osm.address.suburb': _('District'), 'osm.address.postcode': _('Postal code')},
         map_style="streets", center= dict(lat=lat_str, lon=lon_str), height=600, zoom= zoom_factor)
 
     street_map.update_traces(line_width=5, opacity=1.0)
@@ -917,14 +900,6 @@ def update_output(n_clicks):
     else:
         return  #f"Button clicked {n_clicks} times."
 
-@app.callback(
-    Input('download_html_graphs', 'n_clicks')
-)
-def download_excel(n_clicks):
-    if n_clicks is None:
-        return #"Button not clicked yet."
-    else:
-        return  #f"Button clicked {n_clicks} times."
 
 ### General traffic callback ###
 @callback(
@@ -957,11 +932,10 @@ def download_excel(n_clicks):
     Input(component_id='toggle_uptime_filter', component_property='value'),
     Input(component_id='radio_y_axis', component_property='value'),
     Input(component_id='floating_button', component_property='n_clicks'),
-    Input(component_id='download_html_graphs', component_property='n_clicks'),
 prevent_initial_call='initial_duplicate',
 )
 
-def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_json, dropdown_year_A, dropdown_year_month_A, dropdown_year_week_A, dropdown_date_A, dropdown_year_B, dropdown_year_month_B, dropdown_year_week_B, dropdown_date_B, start_date, end_date, hour_range, toggle_uptime_filter, radio_y_axis, floating_button, download_html_graphs):
+def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_json, dropdown_year_A, dropdown_year_month_A, dropdown_year_week_A, dropdown_date_A, dropdown_year_B, dropdown_year_month_B, dropdown_year_week_B, dropdown_date_B, start_date, end_date, hour_range, toggle_uptime_filter, radio_y_axis, floating_button):
     callback_trigger = ctx.triggered_id
 
     # If uptime filter changed, reload traffic_df_upt
@@ -1287,7 +1261,6 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
     for annotation in line_avg_delta_traffic.layout.annotations: annotation['font'] = {'size': 14}
 
     return selected_street_header, color, pie_traffic, line_abs_traffic, bar_avg_traffic, line_avg_delta_traffic, bar_perc_speed, bar_avg_speed, bar_v85, bar_ranking, segment_id_json
-
 
 if __name__ == "__main__":
     app.run_server(debug=False)

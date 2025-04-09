@@ -13,6 +13,14 @@ body {
 .rc-slider-rail {
     background-color: white;
 }
+ /* border on focus - default is blue
+ * shadow box around input box.  default is blue
+ */
+.is-focused:not(.is-open) > .Select-control {
+  /* border-color: orange; */
+  border-width: 2px;
+  box-shadow: 2px 2px 8px; /*0px 4px 8px rgba(0, 0, 0, 0.2)
+}
 /*#floating_button {
     /* z-index: 9999; /* Ensures it appears on top */
     /* position: absolute; /* Keeps it in place while scrolling */

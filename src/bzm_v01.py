@@ -365,9 +365,9 @@ def serve_layout():
             dbc.Col([
                 html.Img(src=app.get_asset_url('DLR_und_adfc_logos.png'), title='Das Deutsche Zentrum für Luft- und Raumfahrt, Allgemeiner Deutscher Fahrrad-Club', className='img-fluid' 'd-flex align-items-end',
                          style={'margin-left': 00, 'margin-top': 40, 'margin-bottom': 00, 'margin-right': 00, 'height': '60px'})
-            ], width=5),
+            ], width=4),
             dbc.Col([
-                html.Img(src=app.get_asset_url('Telraam.png'), title='Berlin zählt Mobilität: ADFC Berlin & DLR Citizen Science- Projekt', className='img-fluid.max-width: 50%', height='120px')
+                html.Img(src=app.get_asset_url('Telraam.png'), title='Berlin zählt Mobilität: ADFC Berlin & DLR Citizen Science- Projekt', className='img-fluid.max-width: 50%', height='120px', style={'margin-left': 65})
             ], width=2),
         ], style={'background-color': ADFC_skyblue, 'opacity': 1.0}
         ),
@@ -410,7 +410,7 @@ def serve_layout():
                 html.H6('Map info', id='popover_map_info', className='text-start', style={'margin-left': 0, 'margin-top': 0, 'margin-bottom': 0, 'margin-right': 0, 'color': ADFC_darkgrey}),
                 dbc.Popover(dbc.PopoverBody(_('Note: street colors represent bike/car ratios based on all data available and do not change with date- or hour selection. The map allows street segments to be selected individually. To select whole streets, select a street name from the drop down menu.')), target="popover_map_info", trigger="hover"),
             ], width=4),
-        ]),
+        ], style= {'margin-right': 40}),
         # Date/Time selection and Uptime filter
         dbc.Row([
             #html.Hr(),
@@ -1196,6 +1196,7 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
     ### Create comparison Graph
     callback_trigger = ctx.triggered_id
     if callback_trigger == 'dropdown_year_A' or callback_trigger == 'dropdown_year_B':
+        return {'width': '70%', 'backgroundColor': 'red'}
         time_division = 'year'
         selected_value_A = dropdown_year_A
         selected_value_B = dropdown_year_B
@@ -1267,4 +1268,4 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
     return selected_street_header, color, pie_traffic, line_abs_traffic, bar_avg_traffic, line_avg_delta_traffic, bar_perc_speed, bar_avg_speed, bar_v85, bar_ranking, segment_id_json
 
 if __name__ == "__main__":
-    app.run_server(debug=False)
+    app.run_server(debug=True)

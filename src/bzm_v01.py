@@ -829,8 +829,8 @@ def update_map(clickData, street_name):
     callback_trigger = ctx.triggered_id
 
     if clickData:
-        #segment_id = str(clickData['points'][0]['customdata'][0])
-        print(clickData['points'][0]['customdata'][1])
+        segment_id = str(clickData['points'][0]['customdata'][0])
+        #print(clickData['points'][0]['customdata'][1])
         #TODO: V1 V2 cameras
 
     if callback_trigger == 'street_map':
@@ -1268,4 +1268,4 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
     return selected_street_header, color, pie_traffic, line_abs_traffic, bar_avg_traffic, line_avg_delta_traffic, bar_perc_speed, bar_avg_speed, bar_v85, bar_ranking, segment_id_json
 
 if __name__ == "__main__":
-    app.run_server(debug=True)
+    app.run_server(debug=False)

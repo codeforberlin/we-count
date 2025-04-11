@@ -30,14 +30,12 @@ import bzm_get_data
 
 DEPLOYED = __name__ != '__main__'
 
-def output_Excel(df, file_name):
+def output_excel(df, file_name):
     path = os.path.join(ASSET_DIR, file_name + '.xlsx')
-    print(path)
     df.to_excel(path, index=False)
 
 def output_csv(df, file_name):
     path = os.path.join(ASSET_DIR, file_name + '.csv')
-    print(path)
     df.to_csv(path, index=False)
 
 #### Retrieve Data ####
@@ -285,7 +283,8 @@ traffic_df['date'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%d/%m/%Y
 traffic_df['date_hour'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%d/%m/%y - %H')
 traffic_df['day'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%d')
 # Leave hour column to datetime to enable hour range calculations
-traffic_df.insert(0, 'hour', traffic_df['date_local'].dt.hour)
+traffic_df['date_local']=pd.to_datetime(traffic_df['date_local']) # In case csv.gz file available!
+#traffic_df.insert(0, 'hour', traffic_df['date_local'].dt.hour) # In case of csv.gz download!
 
 # Start with traffic df with uptime filtered
 traffic_df_upt = filter_uptime(traffic_df)
@@ -833,9 +832,9 @@ def update_map(clickData, street_name):
 
     if clickData:
         segment_id = str(clickData['points'][0]['customdata'][0])
-        print(clickData['points'][0]['customdata'][1])
-        print(clickData['points'][0]['customdata'][1][0])
-        print(clickData['points'][0]['customdata'][1][0]['hardware_version'])
+        #print(clickData['points'][0]['customdata'][1])
+        #print(clickData['points'][0]['customdata'][1][0])
+        #print(clickData['points'][0]['customdata'][1][0]['hardware_version'])
         #TODO: V1 V2 cameras
 
     if callback_trigger == 'street_map':
@@ -894,14 +893,14 @@ def update_map(clickData, street_name):
 
     return street_map
 
-# @app.callback(
-#     Input('floating_button', 'n_clicks')
-# )
-# def update_output(n_clicks):
-#     if n_clicks is None:
-#         return #"Button not clicked yet."
-#     else:
-#         return  #f"Button clicked {n_clicks} times."
+@app.callback(
+    Input('floating_button', 'n_clicks')
+)
+def update_output(n_clicks):
+    if n_clicks is None:
+        return #"Button not clicked yet."
+    else:
+        return  #f"Button clicked {n_clicks} times."
 
 
 ### General traffic callback ###

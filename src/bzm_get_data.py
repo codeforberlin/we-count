@@ -81,7 +81,7 @@ def get_locations(filepath="https://berlin-zaehlt.de/csv/bzm_telraam_segments.ge
     return df_geojson.drop(nan_rows.index)
 
 
-def _read_csv(months=4, verbose=False):
+def _read_csv(months=8, verbose=False):
     month, year = datetime.now().month, datetime.now().year
     all_files = []
     for offset in range(months):
@@ -102,7 +102,6 @@ def _read_csv(months=4, verbose=False):
 
     # Fill missing dates
     return fill_missing_dates(df)
-
 
 # def _read_sql(options):
 #     start = datetime.now() - timedelta(days=30*options.months)

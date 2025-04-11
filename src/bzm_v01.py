@@ -4,7 +4,7 @@
 
 # @file    bzm_performance.py
 # @author  Egbert Klaassen
-# @date    2025-04-03
+# @date    2025-04-11
 
 """"
 # traffic_df        - dataframe with measured traffic data file
@@ -23,6 +23,7 @@ import dash_bootstrap_components as dbc
 from dash import Dash, html, dcc, Output, Input, State, callback, ctx
 from dash.exceptions import PreventUpdate
 import plotly.express as px
+from pathlib import Path
 
 import common
 import bzm_get_data
@@ -87,10 +88,18 @@ def retrieve_data():
     # Read traffic data from file
     if not DEPLOYED:
         print('Reading traffic data...')
-    with common.Benchmarker(not DEPLOYED, "Load traffic data"):
-        traffic_df = bzm_get_data.merge_data(json_df_features)
-    #traffic_file = os.path.join(ASSET_DIR, 'traffic_df_2024_Q4_2025_YTD.csv.gz')
-    #traffic_df = pd.read_csv(traffic_file)
+    #with common.Benchmarker(not DEPLOYED, "Load traffic data"):
+    #    traffic_df = bzm_get_data.merge_data(json_df_features)
+
+    # Former off-line approach
+    # traffic_file = os.path.join(ASSET_DIR, 'traffic_df_2023_2024_2025_YTD.csv.gz')
+
+    # PythonAnywhere compatible
+    THIS_FOLDER = Path(__file__).parent.resolve()
+    traffic_file = THIS_FOLDER / 'assets/traffic_df_2023_2024_2025_YTD.csv.gz'
+    print(traffic_file)
+    #traffic_file = ('/home/eklaassen/bzm/we-count/src/assets/traffic_df_2023_2024_2025_YTD.csv.gz')
+    traffic_df = pd.read_csv(traffic_file)
 
     # Set data types for clean representation
     json_df_features['segment_id']=json_df_features['segment_id'].astype(str)
@@ -893,14 +902,14 @@ def update_map(clickData, street_name):
 
     return street_map
 
-@app.callback(
-    Input('floating_button', 'n_clicks')
-)
-def update_output(n_clicks):
-    if n_clicks is None:
-        return #"Button not clicked yet."
-    else:
-        return  #f"Button clicked {n_clicks} times."
+# @app.callback(
+#     Input('floating_button', 'n_clicks')
+# )
+# def update_output(n_clicks):
+#     if n_clicks is None:
+#         return #"Button not clicked yet."
+#     else:
+#         return  #f"Button clicked {n_clicks} times."
 
 
 ### General traffic callback ###

@@ -30,7 +30,7 @@ class TZDateTime(TypeDecorator):
 def parse_utc(date):
     if isinstance(date, datetime.datetime):
         return date.astimezone(datetime.timezone.utc)
-    return datetime.datetime.fromisoformat(date.replace("Z", "+00:00")) if date else None
+    return datetime.datetime.fromisoformat(date.replace("Z", "+00:00")) if date and date != "NaT" else None
 
 
 class Base(DeclarativeBase):

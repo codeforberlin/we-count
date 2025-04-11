@@ -81,7 +81,7 @@ def get_locations(filepath="https://berlin-zaehlt.de/csv/bzm_telraam_segments.ge
     return df_geojson.drop(nan_rows.index)
 
 
-def _read_csv(months=24, verbose=False):
+def _read_csv(months=4, verbose=False):
     month, year = datetime.now().month, datetime.now().year
     all_files = []
     for offset in range(months):

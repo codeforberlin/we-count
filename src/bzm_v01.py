@@ -83,6 +83,9 @@ def retrieve_data():
     unwanted = json_df_features.columns[json_df_features.columns.str.startswith('instance_ids.9571')]
     json_df_features.drop(unwanted, axis=1, inplace=True)
 
+    # Get camera info
+    #print(json_df_features['cameras'][0][0]['hardware_version'])
+
     # Read traffic data from file
     if not DEPLOYED:
         print('Reading traffic data...')
@@ -365,9 +368,9 @@ def serve_layout():
             dbc.Col([
                 html.Img(src=app.get_asset_url('DLR_und_adfc_logos.png'), title='Das Deutsche Zentrum für Luft- und Raumfahrt, Allgemeiner Deutscher Fahrrad-Club', className='img-fluid' 'd-flex align-items-end',
                          style={'margin-left': 00, 'margin-top': 40, 'margin-bottom': 00, 'margin-right': 00, 'height': '60px'})
-            ], width=4),
+            ], width=5),
             dbc.Col([
-                html.Img(src=app.get_asset_url('Telraam.png'), title='Berlin zählt Mobilität: ADFC Berlin & DLR Citizen Science- Projekt', className='img-fluid.max-width: 50%', height='120px', style={'margin-left': 65})
+                html.Img(src=app.get_asset_url('Telraam.png'), title='Berlin zählt Mobilität: ADFC Berlin & DLR Citizen Science- Projekt', className='img-fluid.max-width: 50%' 'align-items-right', height='120px')
             ], width=2),
         ], style={'background-color': ADFC_skyblue, 'opacity': 1.0}
         ),
@@ -830,7 +833,9 @@ def update_map(clickData, street_name):
 
     if clickData:
         segment_id = str(clickData['points'][0]['customdata'][0])
-        #print(clickData['points'][0]['customdata'][1])
+        print(clickData['points'][0]['customdata'][1])
+        print(clickData['points'][0]['customdata'][1][0])
+        print(clickData['points'][0]['customdata'][1][0]['hardware_version'])
         #TODO: V1 V2 cameras
 
     if callback_trigger == 'street_map':
@@ -1196,7 +1201,6 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
     ### Create comparison Graph
     callback_trigger = ctx.triggered_id
     if callback_trigger == 'dropdown_year_A' or callback_trigger == 'dropdown_year_B':
-        return {'width': '70%', 'backgroundColor': 'red'}
         time_division = 'year'
         selected_value_A = dropdown_year_A
         selected_value_B = dropdown_year_B

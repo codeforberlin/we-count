@@ -26,7 +26,6 @@ import plotly.express as px
 from pathlib import Path
 
 import common
-import bzm_get_data
 
 
 DEPLOYED = __name__ != '__main__'
@@ -68,7 +67,6 @@ def get_locations(filepath="https://berlin-zaehlt.de/csv/bzm_telraam_segments.ge
     return df_geojson.drop(nan_rows.index)
 
 def retrieve_data():
-
     # Read geojson data file to access geometry coordinates - using URL
     geojson_url = 'https://berlin-zaehlt.de/csv/bzm_telraam_segments.geojson'
     if not DEPLOYED:
@@ -82,24 +80,20 @@ def retrieve_data():
     unwanted = json_df_features.columns[json_df_features.columns.str.startswith('instance_ids.9571')]
     json_df_features.drop(unwanted, axis=1, inplace=True)
 
-    # Get camera info
+    # Get camera info (under development)
     #print(json_df_features['cameras'][0][0]['hardware_version'])
 
     # Read traffic data from file
     if not DEPLOYED:
         print('Reading traffic data...')
-    #with common.Benchmarker(not DEPLOYED, "Load traffic data"):
-    #    traffic_df = bzm_get_data.merge_data(json_df_features)
+    with common.Benchmarker(not DEPLOYED, "Load traffic data"):
+        #traffic_df = bzm_get_data_v02.merge_data(json_df_features)
 
-    # Former off-line approach
-    # traffic_file = os.path.join(ASSET_DIR, 'traffic_df_2023_2024_2025_YTD.csv.gz')
-
-    # PythonAnywhere compatible
-    THIS_FOLDER = Path(__file__).parent.resolve()
-    traffic_file = THIS_FOLDER / 'assets/traffic_df_2023_2024_2025_YTD.csv.gz'
-    print(traffic_file)
-    #traffic_file = ('/home/eklaassen/bzm/we-count/src/assets/traffic_df_2023_2024_2025_YTD.csv.gz')
-    traffic_df = pd.read_csv(traffic_file)
+        # PythonAnywhere: '/home/eklaassen/bzm/we-count/src/assets/traffic_df_2023_2024_2025_YTD.csv.gz'
+        THIS_FOLDER = Path(__file__).parent.resolve()
+        traffic_file_path = THIS_FOLDER / 'assets/traffic_df_2023_2024_2025_YTD.csv.gz'
+        print(traffic_file_path)
+        traffic_df = pd.read_csv(traffic_file_path)
 
     # Set data types for clean representation
     json_df_features['segment_id']=json_df_features['segment_id'].astype(str)
@@ -177,6 +171,8 @@ def filter_dt(df, start_date, end_date, hour_range):
     return traffic_df_upt_dt, min_date, max_date, min_hour, max_hour
 
 def get_comparison_data(df, radio_time_division, group_by, selected_value_A, selected_value_B):
+    print(selected_value_A)
+    print(type(selected_value_A))
     df_period_A = df[df[radio_time_division]==selected_value_A]
     df_period_grp_A = df_period_A.groupby(by=[group_by, 'street_selection'], sort=False, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
     if radio_time_division == 'date':
@@ -283,37 +279,35 @@ camera_icon = html.I(className='bi bi-camera-fill me-2')
 geo_df, json_df_features, traffic_df = retrieve_data()
 
 # Format datetime columns to formatted strings
-traffic_df['year'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%Y')
-traffic_df['month'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%b')
-traffic_df['year_month'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%b %Y')
-traffic_df['year_week'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%U/%Y')
-traffic_df['weekday'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%a')
-traffic_df['date'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%d/%m/%Y')
-traffic_df['date_hour'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%d/%m/%y - %H')
-traffic_df['day'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%d')
-# Leave hour column to datetime to enable hour range calculations
-traffic_df['date_local']=pd.to_datetime(traffic_df['date_local']) # In case csv.gz file available!
-#traffic_df.insert(0, 'hour', traffic_df['date_local'].dt.hour) # In case of csv.gz download!
+traffic_df = traffic_df.astype({'year': str}, errors='ignore')
+#traffic_df['year'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%Y')
+#traffic_df['month'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%b')
+#traffic_df['year_month'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%b %Y')
+#traffic_df['year_week'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%U/%Y')
+#traffic_df['weekday'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%a')
+#traffic_df['date'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%d/%m/%Y')
+#traffic_df['date_hour'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%d/%m/%y - %H')
+#traffic_df['day'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%d')
 
 # Start with traffic df with uptime filtered
 traffic_df_upt = filter_uptime(traffic_df)
 
-# traffic_df_upt_dt
+# Get start date, end date and hour range (str)
 start_date = traffic_df_upt['date_local'].min()
 end_date = traffic_df_upt['date_local'].max()
 
 format_string = '%Y-%m-%d %H:%M:%S'
-#start_date_dt = convert(str(start_date), format_string)
-#end_date_dt = convert(str(end_date), format_string)
-#try_start_date = end_date_dt + datetime.timedelta(days=-13)
-try_start_date = end_date + datetime.timedelta(days=-13)
-if try_start_date > start_date:
-    start_date = try_start_date
-    #start_date = start_date.strftime(format_string)
+# Convert to dt do enable time.delta
+start_date_dt = convert(str(start_date), format_string)
+end_date_dt = convert(str(end_date), format_string)
+try_start_date = end_date_dt + datetime.timedelta(days=-13)
+if try_start_date > start_date_dt:
+    start_date_dt = try_start_date
+    # Convert back to str, format for DatePicker
+    start_date = start_date_dt.strftime('%Y-%m-%d')
 
-# Convert to Str format for Datepicker
-start_date = start_date.strftime('%Y-%m-%d')
-end_date = end_date.strftime('%Y-%m-%d')
+# Convert back to str, format for DatePicker
+end_date = end_date_dt.strftime('%Y-%m-%d')
 
 hour_range = [traffic_df_upt['hour'].min(), traffic_df_upt['hour'].max()]
 
@@ -841,10 +835,11 @@ def update_map(clickData, street_name):
 
     if clickData:
         segment_id = str(clickData['points'][0]['customdata'][0])
+        #TODO: V1 V2 cameras
+        # Get camera info (under development)
         #print(clickData['points'][0]['customdata'][1])
         #print(clickData['points'][0]['customdata'][1][0])
         #print(clickData['points'][0]['customdata'][1][0]['hardware_version'])
-        #TODO: V1 V2 cameras
 
     if callback_trigger == 'street_map':
         segment_id = clickData['points'][0]['customdata'][0]

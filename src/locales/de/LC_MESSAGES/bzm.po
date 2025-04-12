@@ -33,7 +33,7 @@ msgstr "Alle Straßen"
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:196
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:956
 msgid "full street"
-msgstr "Gesamtstraße"
+msgstr "gesamte Straße"
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:229
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:871
@@ -106,7 +106,7 @@ msgstr "Wähle Start- und Enddatum:"
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:448
 msgid " Filter uptime > 0.7"
-msgstr " Filter Uptime > 0.7"
+msgstr " Filtere Verfügbarkeit > 70%"
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:457
 msgid ""
@@ -115,15 +115,15 @@ msgid ""
 "the day are below 0.5, that is usually a clear sign that something is "
 "probably wrong with the instance."
 msgstr ""
-"Eine hohe Verfügbarkeit von 0,7-0,8 bedeutet immer sehr gute Daten. Die erste und die letzte "
+"Eine Verfügbarkeit von 70-80% bedeutet in der Regel sehr gute Daten. Die erste und die letzte "
 "Tagesstunde weisen immer geringere Verfügbarkeiten auf. Wenn die Verfügbarkeiten während "
-" des Tages unter 0,5 liegen, ist das normalerweise ein klares Zeichen dafür, dass mit der Instanz wahrscheinlich etwas nicht stimmt."
+"des Tages unter 50% liegen, ist das normalerweise ein Zeichen dafür, dass mit der Instanz etwas nicht stimmt."
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:466
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1171
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1189
 msgid "Absolute traffic"
-msgstr "Absolute Verkehrszahl"
+msgstr "Gesamtverkehr"
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:472
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:601
@@ -219,7 +219,7 @@ msgstr "Prozentuale Auto Geschwindigkeit - Durchschnitt"
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:546
 msgid "v85 car speed"
-msgstr "v85 Geschwindigkeit"
+msgstr "v85 Autogeschwindigkeit"
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:553
 msgid ""
@@ -295,7 +295,7 @@ msgstr "Periode"
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:697
 msgid "Compare traffic periods"
-msgstr "Vergleiche Verkehrsperioden"
+msgstr "Vergleiche Verkehrszeiträume"
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:705
 msgid "This chart allows four period-lengths to be compared: day, week, month or year. For each of these, two periods can be compared, period A and period B (e.g. week A vs. week B or day A vs. day B). Solid lines represent period A and dashed lines represent period B. The date and hour filters in the upper menu bar have no effect, however 'filter uptime' does!"
@@ -335,7 +335,7 @@ msgstr " Messungen"
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:735
 msgid "Dashboard development & creation:"
-msgstr "Dashboard Entwicklung & Kreation:"
+msgstr "Dashboard-Entwicklung & Entwurf:"
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:735
 msgid " and "
@@ -343,7 +343,7 @@ msgstr " und "
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:738
 msgid "For dashboard improvement requests email us:"
-msgstr "Für Vorschläge oder Verbesserungen E-Mail:"
+msgstr "Für Vorschläge oder Verbesserungen senden Sie uns eine E-Mail:"
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:744
 msgid "Contact Us!"
@@ -392,13 +392,13 @@ msgstr "Straßenfarbe"
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:967
 msgid "No data available for selected range!"
-msgstr "Keine Daten für Ausgewählte Zeiten!"
+msgstr "Keine Daten für den gewählten Zeitraum!"
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1000
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1005
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1248
 msgid "Absolute traffic count"
-msgstr "Absolute Verkehrsanzahl"
+msgstr "Absolute Verkehrszählung"
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1004
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1042
@@ -421,7 +421,7 @@ msgstr " (Segment:"
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1035
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1041
 msgid "Average traffic count"
-msgstr "Durchschnittliche Verkehrszahl"
+msgstr "Durchschnittliche Verkehrszählung"
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1077
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1092
@@ -453,11 +453,11 @@ msgstr "bis"
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1111
 msgid "Average percentage car speed"
-msgstr "Durchschnittliche prozentuale Auto Geschwindigkeit"
+msgstr "Durchschnittliche prozentuale Auto-Geschwindigkeit"
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1141
 msgid "Speed cars v85"
-msgstr "v85 Geschwindigkeit Autos"
+msgstr "v85 Auto-Geschwindigkeit"
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1148
 msgid "v85 in km/h"
@@ -480,7 +480,7 @@ msgstr "Straße"
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1180
 msgid "Absolute count"
-msgstr "Absolute Anzahl"
+msgstr "Gesamtzahl"
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1235
 msgid "Week day"

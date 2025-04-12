@@ -107,9 +107,17 @@ def retrieve_data():
     return geo_df, json_df_features, traffic_df
 
 def translate_traffic_df_data():
+    # traffic_df['year'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%Y')
+    traffic_df['month'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%b')
+    traffic_df['year_month'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%b %Y')
+    # traffic_df['year_week'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%U/%Y')
+    traffic_df['weekday'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%a')
+    # traffic_df['date'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%d/%m/%Y')
+    # traffic_df['date_hour'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%d/%m/%y - %H')
+    # traffic_df['day'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%d')
 
-    all_map = {'All Streets': _('All Streets'), 'Alle Straßen': _('All Streets')}
-    traffic_df['street_selection'] = traffic_df['street_selection'].map(all_map)
+    #all_map = {'All Streets': _('All Streets'), 'Alle Straßen': _('All Streets')}
+    #traffic_df['street_selection'] = traffic_df['street_selection'].map(all_map)
 
 #### Set Language ####
 def update_language(lang_code):
@@ -128,6 +136,7 @@ def update_language(lang_code):
     translations = gettext.translation(appname, localedir, fallback=True, languages=[language])
     # Install translation function
     translations.install()
+
     return
 
 def filter_uptime(df):
@@ -171,8 +180,6 @@ def filter_dt(df, start_date, end_date, hour_range):
     return traffic_df_upt_dt, min_date, max_date, min_hour, max_hour
 
 def get_comparison_data(df, radio_time_division, group_by, selected_value_A, selected_value_B):
-    print(selected_value_A)
-    print(type(selected_value_A))
     df_period_A = df[df[radio_time_division]==selected_value_A]
     df_period_grp_A = df_period_A.groupby(by=[group_by, 'street_selection'], sort=False, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
     if radio_time_division == 'date':
@@ -280,14 +287,8 @@ geo_df, json_df_features, traffic_df = retrieve_data()
 
 # Format datetime columns to formatted strings
 traffic_df = traffic_df.astype({'year': str}, errors='ignore')
-#traffic_df['year'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%Y')
-#traffic_df['month'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%b')
-#traffic_df['year_month'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%b %Y')
-#traffic_df['year_week'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%U/%Y')
-#traffic_df['weekday'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%a')
-#traffic_df['date'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%d/%m/%Y')
-#traffic_df['date_hour'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%d/%m/%y - %H')
-#traffic_df['day'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%d')
+
+translate_traffic_df_data()
 
 # Start with traffic df with uptime filtered
 traffic_df_upt = filter_uptime(traffic_df)
@@ -796,7 +797,7 @@ app.layout = serve_layout
 )
 def get_language(lang_code_dd):
     update_language(lang_code_dd)
-    #translate_traffic_df_data()
+    translate_traffic_df_data()
     return '/'
 
 ### Map callback ###

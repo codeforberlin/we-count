@@ -4,7 +4,7 @@
 
 # @file    bzm_performance.py
 # @author  Egbert Klaassen
-# @date    2025-04-11
+# @date    2025-04-13
 
 """"
 # traffic_df        - dataframe with measured traffic data file
@@ -27,7 +27,6 @@ from pathlib import Path
 
 import common
 
-
 DEPLOYED = __name__ != '__main__'
 
 def output_excel(df, file_name):
@@ -39,7 +38,7 @@ def output_csv(df, file_name):
     df.to_csv(path, index=False)
 
 #### Retrieve Data ####
-def get_locations(filepath="https://berlin-zaehlt.de/csv/bzm_telraam_segments.geojson"):
+def get_locations(filepath):
     df_geojson = pd.read_json(filepath)
 
     # Flatten the json structure
@@ -92,7 +91,6 @@ def retrieve_data():
         # PythonAnywhere: '/home/eklaassen/bzm/we-count/src/assets/traffic_df_2023_2024_2025_YTD.csv.gz'
         THIS_FOLDER = Path(__file__).parent.resolve()
         traffic_file_path = THIS_FOLDER / 'assets/traffic_df_2023_2024_2025_YTD.csv.gz'
-        print(traffic_file_path)
         traffic_df = pd.read_csv(traffic_file_path)
 
     # Set data types for clean representation
@@ -285,6 +283,19 @@ camera_icon = html.I(className='bi bi-camera-fill me-2')
 
 geo_df, json_df_features, traffic_df = retrieve_data()
 
+#TODO: move to geo_df code to remember:
+
+# Parse osm to new column (geopandas)
+# geo_df['parsed_osm'] = geo_df['osm'].apply(json.loads)
+# Get parsed osm_name to new column osm_name (geopandas)
+# geo_df['osm_name'] = geo_df['parsed_osm'].apply(lambda x: x.get('name', 'Unknown'))
+# Flatten all osm columns
+# geo_df_osm = pd.json_normalize(geo_df['parsed_osm'])
+# geo_df_all = pd.concat([geo_df, geo_df_osm], axis=1)
+# Parse and flatten cameras to new dataframe - multiple instances per camera!
+# exploded_gdf = geo_df.explode('parsed_cameras', ignore_index=True)
+# exploded_gdf = pd.json_normalize(exploded_gdf['parsed_cameras'])
+
 # Format datetime columns to formatted strings
 traffic_df = traffic_df.astype({'year': str}, errors='ignore')
 
@@ -339,7 +350,7 @@ geo_df_map_info['segment_id'] = geo_df_map_info['segment_id'].astype(int)
 geo_df_map_info.set_index('segment_id', drop= False, inplace=True)
 json_df_features['segment_id'] = json_df_features['segment_id'].astype(int)
 json_df_features.set_index('segment_id', inplace=True)
-# join geo_df_map_info and json_df_features to get map info with name date (extract from geo_df json?)
+#TODO: join geo_df_map_info and json_df_features to get map info with name date: extract from geo_df json
 df_map_base = geo_df_map_info.join(json_df_features)
 
 # Prepare map data

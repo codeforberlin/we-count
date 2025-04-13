@@ -1,38 +1,68 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3.13
 # Copyright (c) 2024-2025 Berlin zaehlt Mobilitaet
 # SPDX-License-Identifier: MIT
 
 # @file    bzm_get_data.py
 # @author  Egbert Klaassen
 # @author  Michael Behrisch
-# @date    2025-03-28
+# @date    2025-04-13
 
 import os
 import pandas as pd
 import requests
 import pandas_geojson as pdg
+import geopandas as gpd
 from bs4 import BeautifulSoup
 from pathlib import Path
+import json
+
+
+def output_excel(df, file_name, path):
+    path = os.path.join(path, file_name + '.xlsx')
+    df.to_excel(path, index=False)
+
+def output_csv(df, file_name, path):
+    path = os.path.join(path, file_name + '.csv')
+    df.to_csv(path, index=False)
+
+
+THIS_FOLDER = Path(__file__).parent.resolve()
+assets_file_path = THIS_FOLDER / 'assets/'
 
 ### Get geojson file
-filename_geojson = 'bzm_telraam_segments.geojson'
-path_geojson = 'D:/OneDrive/PycharmProjects/bzm_performance/data' + '/' + filename_geojson
-geojson = pdg.read_geojson(path_geojson)
-df_geojson = geojson.to_dataframe()
-df_geojson.columns = df_geojson.columns.str.replace('properties.segment_id', 'segment_id')
-df_geojson.columns = df_geojson.columns.str.replace('properties.', '', regex=True)
+
+# Geopandas df route
+geojson_url = 'https://berlin-zaehlt.de/csv/bzm_telraam_segments.geojson'
+geo_df = gpd.read_file(geojson_url)
+
+geo_df['parsed_osm'] = geo_df['osm'].apply(json.loads)
+geo_df_osm = pd.json_normalize(geo_df['parsed_osm'])
+df_geojson = pd.concat([geo_df, geo_df_osm], axis=1)
+
+# json to df route
+#filename_geojson = 'bzm_telraam_segments.geojson'
+#path_geojson = 'D:/OneDrive/PycharmProjects/bzm_performance/data' + '/' + filename_geojson
+#geojson = pdg.read_geojson(path_geojson)
+
+# Original approach
+#df_geojson = geojson.to_dataframe()
+#df_geojson.columns = df_geojson.columns.str.replace('properties.segment_id', 'segment_id')
+#df_geojson.columns = df_geojson.columns.str.replace('properties.', '', regex=True)
+#output_excel(df_geojson,'df_geojson_json', assets_file_path)
 
 # Drop uptime and v85 to avoid duplicates (these will come from traffic data)
 df_geojson = df_geojson.drop(['uptime', 'v85'], axis=1)
+# Drop unnecessary load
+df_geojson = df_geojson.drop(['timezone', 'parsed_osm'], axis=1)
 
 # Replace "list" entries (Telraam!) with none
 for i in range(len(df_geojson)):
-    if isinstance(df_geojson['osm.width'].values[i],list):
-        df_geojson['osm.width'].values[i]=''
-    if isinstance(df_geojson['osm.lanes'].values[i],list):
-        df_geojson['osm.lanes'].values[i]=''
-    if isinstance(df_geojson['osm.maxspeed'].values[i],list):
-        df_geojson['osm.maxspeed'].values[i]=''
+    if isinstance(df_geojson['width'].values[i],list):
+        df_geojson['width'].values[i]=''
+    if isinstance(df_geojson['lanes'].values[i],list):
+        df_geojson['lanes'].values[i]=''
+    if isinstance(df_geojson['maxspeed'].values[i],list):
+        df_geojson['maxspeed'].values[i]=''
 
 ### Get traffic file
 
@@ -53,7 +83,7 @@ for link in links:
     filename = link.split('/')[-1]
 
     # Loop through gz files, filter by "start with" string, add to Dataframe
-    if filename[12:16] in ['2024', '2025']:
+    if filename[12:16] in ['2023', '2024', '2025']:
         print('Processing: ' + filename)
         df = pd.read_csv(os.path.join(url, filename), compression='gzip', header=0, sep=',', quotechar='"')
         df_csv_append = df_csv_append._append(df, ignore_index=True)
@@ -66,11 +96,16 @@ for link in links:
     #    df = pd.read_csv(os.path.join(url,filename), compression='gzip', header=0, sep=',', quotechar='"')
     #    df_csv_append = df_csv_append._append(df, ignore_index=True)
 
+
 # Merge traffic data with geojson information, select columns, define data formats and add date_time columns
 print('Combining traffic and geojson data...')
-df_comb = pd.merge(df_csv_append, df_geojson, on = 'segment_id', how = 'outer')
+df_comb = pd.merge(df_csv_append, df_geojson, on = 'segment_id', how = 'left')
+
 print('Creating df with selected columns')
-selected_columns = ['date_local','segment_id','uptime','ped_lft','ped_rgt','ped_total','bike_lft','bike_rgt','bike_total','car_lft','car_rgt','car_total','heavy_lft','heavy_rgt','heavy_total','v85','car_speed0','car_speed10','car_speed20','car_speed30','car_speed40','car_speed50','car_speed60','car_speed70','osm.name','osm.highway','osm.length','osm.width','osm.lanes','osm.maxspeed']
+#selected_columns = ['date_local','segment_id','uptime','ped_lft','ped_rgt','ped_total','bike_lft','bike_rgt','bike_total','car_lft','car_rgt','car_total','heavy_lft','heavy_rgt','heavy_total','v85','car_speed0','car_speed10','car_speed20','car_speed30','car_speed40','car_speed50','car_speed60','car_speed70','osm.name','osm.highway','osm.length','osm.width','osm.lanes','osm.maxspeed']
+#TODO: rename to street_name or similar
+df_comb = df_comb.rename(columns={'name': 'osm.name'})
+selected_columns = ['date_local','segment_id','uptime','ped_lft','ped_rgt','ped_total','bike_lft','bike_rgt','bike_total','car_lft','car_rgt','car_total','heavy_lft','heavy_rgt','heavy_total','v85','car_speed0','car_speed10','car_speed20','car_speed30','car_speed40','car_speed50','car_speed60','car_speed70','osm.name','highway','length','width','lanes','maxspeed']
 traffic_df = pd.DataFrame(df_comb, columns=selected_columns)
 traffic_df['date_local'] = pd.to_datetime(traffic_df['date_local'])
 

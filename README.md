@@ -125,7 +125,7 @@ pip install -r requirements.txt
 
 ### Ingest data
 
-Run the following script to ingest the mobility data as a compressed file (note: currently bzm_v01 will currently work with off-line version only):
+Run the following script to ingest the mobility data as a compressed file (note: currently bzm_v01 will work with off-line version only):
 
 ```sh
 python src/bzm_get_data.py

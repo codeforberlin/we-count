@@ -24,6 +24,8 @@ def output_csv(df, file_name, path):
     df.to_csv(path, index=False)
 
 
+verbose = False
+
 THIS_FOLDER = Path(__file__).parent.resolve()
 assets_file_path = THIS_FOLDER / 'assets/'
 
@@ -55,7 +57,8 @@ for i in range(len(df_geojson)):
 ### Get csv traffic files
 
 # Retrieve file links
-print('Getting traffic data files...')
+if verbose:
+    print('Getting traffic data files...')
 url = 'https://berlin-zaehlt.de/csv/'
 page = requests.get(url).text
 soup = BeautifulSoup(page, 'html.parser')
@@ -72,7 +75,8 @@ for link in links:
 
     # Loop through gz files, filter by "start with" string, add to Dataframe
     if filename[12:16] in ['2023', '2024', '2025']:
-        print('Processing: ' + filename)
+        if verbose:
+            print('Processing: ' + filename)
         df = pd.read_csv(os.path.join(url, filename), compression='gzip', header=0, sep=',', quotechar='"')
         df_csv_append = df_csv_append._append(df, ignore_index=True)
 
@@ -80,16 +84,20 @@ for link in links:
     # substrings= ['_07','_08','_09']
     #substrings = ['2024_10','2024_11','2024_12', '2025_01']
     #if any(sub in filename for sub in substrings):
+    #    if verbose:
     #    print('Processing: ' + filename)
     #    df = pd.read_csv(os.path.join(url,filename), compression='gzip', header=0, sep=',', quotechar='"')
     #    df_csv_append = df_csv_append._append(df, ignore_index=True)
 
 
 ### Merge traffic data with geojson information, select columns, add date_time columns and define data formats
-print('Combining traffic and geojson data...')
+if verbose:
+    print('Combining traffic and geojson data...')
+
 df_comb = pd.merge(df_csv_append, df_geojson, on = 'segment_id', how = 'left')
 
-print('Creating df with selected columns')
+if verbose:
+    print('Creating df with selected columns')
 #TODO: remove "osm", needs bzm_v01 to be updated
 df_comb = df_comb.rename(
     columns={'name': 'osm.name', 'highway': 'osm.highway', 'address.city': 'osm.address.city',
@@ -98,13 +106,15 @@ selected_columns = ['date_local','segment_id','uptime','ped_lft','ped_rgt','ped_
 traffic_df = pd.DataFrame(df_comb, columns=selected_columns)
 traffic_df['date_local'] = pd.to_datetime(traffic_df['date_local'])
 
-print('Drop empty rows...')
+if verbose:
+    print('Drop empty rows...')
 nan_rows = traffic_df[traffic_df['date_local'].isnull()]
 traffic_df = traffic_df.drop(nan_rows.index)
 nan_rows = traffic_df[traffic_df['osm.name'].isnull()]
 traffic_df = traffic_df.drop(nan_rows.index)
 
-print('Break down date_local to formatted string columns, except "hour"...')
+if verbose:
+    print('Break down date_local to formatted string columns, except "hour"...')
 traffic_df['year'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%Y')
 traffic_df['month'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%b')
 traffic_df['year_month'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%b %Y')
@@ -116,9 +126,11 @@ traffic_df['day'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%d')
 traffic_df.insert(0, 'hour', traffic_df['date_local'].dt.hour) # In case of csv.gz download!
 
 # Save data package to file - change file name!
-print("Saving data package...")
+if verbose:
+    print("Saving data package...")
 THIS_FOLDER = Path(__file__).parent.resolve()
 traffic_file_path = THIS_FOLDER / 'assets/traffic_df_2023_2024_2025_YTD.csv.gz'
 traffic_df.to_csv(traffic_file_path, index=False, compression='gzip')
 
-print('Finished.')
+if verbose:
+    print('Finished.')

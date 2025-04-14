@@ -38,29 +38,35 @@ def output_csv(df, file_name):
     df.to_csv(path, index=False)
 
 #### Retrieve Data ####
-def get_locations(filepath):
-    df_geojson = pd.read_json(filepath)
+def get_locations(geojson_url):
 
+    # original route
+    #df_geojson = pd.read_json(filepath)
     # Flatten the json structure
-    df_geojson = pd.json_normalize(df_geojson['features'])
-
+    #df_geojson = pd.json_normalize(df_geojson['features'])
     # Remove 'properties' from column names for ease of use
-    df_geojson.columns = df_geojson.columns.str.replace('properties.', '', regex=True)
+    #df_geojson.columns = df_geojson.columns.str.replace('properties.', '', regex=True)
 
+    # Geopandas route
+    geo_df = gpd.read_file(geojson_url)
+    geo_df['parsed_osm'] = geo_df['osm'].apply(json.loads)
+    geo_df_osm = pd.json_normalize(geo_df['parsed_osm'])
+    df_geojson = pd.concat([geo_df, geo_df_osm], axis=1)
     # Drop uptime and v85 to avoid duplicates as these will come from traffic data
     df_geojson = df_geojson.drop(['uptime', 'v85'], axis=1)
+    # Temp renaming until fully implemented
+    df_geojson = df_geojson.rename(columns={'name': 'osm.name', 'highway': 'osm.highway', 'address.city': 'osm.address.city', 'address.suburb': 'osm.address.suburb', 'address.postcode': 'osm.address.postcode'})
 
     # Replace "list" entries (Telraam!) with none
     for i in range(len(df_geojson)):
-        if isinstance(df_geojson['osm.width'].values[i],list):
-            df_geojson['osm.width'].values[i]=''
-        if isinstance(df_geojson['osm.lanes'].values[i],list):
-            df_geojson['osm.lanes'].values[i]=''
-        if isinstance(df_geojson['osm.maxspeed'].values[i],list):
-            df_geojson['osm.maxspeed'].values[i]=''
-        if isinstance(df_geojson['osm.name'].values[i],list):
-            df_geojson['osm.name'].values[i]=pd.NA
-
+        if isinstance(df_geojson['width'].values[i],list):
+            df_geojson['width'].values[i]=''
+        if isinstance(df_geojson['lanes'].values[i],list):
+            df_geojson['lanes'].values[i]=''
+        if isinstance(df_geojson['maxspeed'].values[i],list):
+            df_geojson['maxspeed'].values[i]=''
+        #if isinstance(df_geojson['osm.name'].values[i],list):
+        #    df_geojson['osm.name'].values[i]=pd.NA
     # Remove segments w/o street name
     nan_rows = df_geojson[df_geojson['osm.name'].isnull()]
     return df_geojson.drop(nan_rows.index)
@@ -78,9 +84,6 @@ def retrieve_data():
     # Drop instance_ids.9571 columns
     unwanted = json_df_features.columns[json_df_features.columns.str.startswith('instance_ids.9571')]
     json_df_features.drop(unwanted, axis=1, inplace=True)
-
-    # Get camera info (under development)
-    #print(json_df_features['cameras'][0][0]['hardware_version'])
 
     # Read traffic data from file
     if not DEPLOYED:
@@ -157,8 +160,15 @@ def filter_dt(df, start_date, end_date, hour_range):
     # Get min/max dates
     min_date = df['date_local'].min()
     max_date = df['date_local'].max()
+
+    # Add one day as filter is in between
+    max_date_dt = convert(str(max_date), format_string)
+    max_date_dt = max_date_dt + datetime.timedelta(days=1)
+    max_date = max_date_dt.strftime('%Y-%m-%d')
+
     # Set selected dates
-    df_dates = df.loc[df['date_local'].between(start_date, end_date)]
+    #df_dates = df.loc[df['date_local'].between(start_date, end_date)] # use alternative below
+    df_dates = df[df.date_local.between(start_date, end_date)]
 
     # Get min/max street hours, add 1 to max for slider representation
     min_hour = df_dates["hour"].min()
@@ -283,19 +293,6 @@ camera_icon = html.I(className='bi bi-camera-fill me-2')
 
 geo_df, json_df_features, traffic_df = retrieve_data()
 
-#TODO: move to geo_df code to remember:
-
-# Parse osm to new column (geopandas)
-# geo_df['parsed_osm'] = geo_df['osm'].apply(json.loads)
-# Get parsed osm_name to new column osm_name (geopandas)
-# geo_df['osm_name'] = geo_df['parsed_osm'].apply(lambda x: x.get('name', 'Unknown'))
-# Flatten all osm columns
-# geo_df_osm = pd.json_normalize(geo_df['parsed_osm'])
-# geo_df_all = pd.concat([geo_df, geo_df_osm], axis=1)
-# Parse and flatten cameras to new dataframe - multiple instances per camera!
-# exploded_gdf = geo_df.explode('parsed_cameras', ignore_index=True)
-# exploded_gdf = pd.json_normalize(exploded_gdf['parsed_cameras'])
-
 # Format datetime columns to formatted strings
 traffic_df = traffic_df.astype({'year': str}, errors='ignore')
 
@@ -308,10 +305,16 @@ traffic_df_upt = filter_uptime(traffic_df)
 start_date = traffic_df_upt['date_local'].min()
 end_date = traffic_df_upt['date_local'].max()
 
+#end_date_dt = datetime.datetime.strptime(end_date, '%Y-%m-%d')
+#end_date_dt_plus = end_date_dt + datetime.timedelta(days=1)
+#end_date = end_date_dt_plus.strftime('%Y-%m-%d')
+
 format_string = '%Y-%m-%d %H:%M:%S'
 # Convert to dt do enable time.delta
 start_date_dt = convert(str(start_date), format_string)
 end_date_dt = convert(str(end_date), format_string)
+# Add one day as filter is "in between"
+end_date_dt = end_date_dt + datetime.timedelta(days=1)
 try_start_date = end_date_dt + datetime.timedelta(days=-13)
 if try_start_date > start_date_dt:
     start_date_dt = try_start_date
@@ -350,7 +353,7 @@ geo_df_map_info['segment_id'] = geo_df_map_info['segment_id'].astype(int)
 geo_df_map_info.set_index('segment_id', drop= False, inplace=True)
 json_df_features['segment_id'] = json_df_features['segment_id'].astype(int)
 json_df_features.set_index('segment_id', inplace=True)
-#TODO: join geo_df_map_info and json_df_features to get map info with name date: extract from geo_df json
+#TODO: move json_df_features to geopandas
 df_map_base = geo_df_map_info.join(json_df_features)
 
 # Prepare map data
@@ -909,6 +912,8 @@ def update_map(clickData, street_name):
 
     return street_map
 
+#TODO: remove after thorough testing
+
 # @app.callback(
 #     Input('floating_button', 'n_clicks')
 # )
@@ -1068,8 +1073,6 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
     bar_avg_traffic.for_each_yaxis(lambda yaxis: yaxis.update(showticklabels=True))
     for annotation in bar_avg_traffic.layout.annotations: annotation['font'] = {'size': 14}
 
-    # TODO: inplement improved axis labels https://plotly.com/python/time-series/
-    # fig.update_xaxes(dtick="M1", tickformat="%b\n%Y")
 
     ### Create percentage speed bar chart
 
@@ -1214,6 +1217,7 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
         )
 
     ### Create comparison Graph
+    #TODO: bug dec 2023-2024 on day sort order
     callback_trigger = ctx.triggered_id
     if callback_trigger == 'dropdown_year_A' or callback_trigger == 'dropdown_year_B':
         time_division = 'year'
@@ -1248,6 +1252,7 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
 
     # Prepare traffic_df_upt by selected street
     no_data, traffic_df_upt_str = update_selected_street(traffic_df_upt, segment_id, street_name)
+    #output_csv(traffic_df_upt_str,'traffic_df_upt_str')
     df_avg_traffic_delta_concat = get_comparison_data(traffic_df_upt_str, time_division, group_by, selected_value_A, selected_value_B)
 
     line_avg_delta_traffic = px.line(df_avg_traffic_delta_concat,

@@ -5,22 +5,20 @@
 # @file    bzm_get_data.py
 # @author  Egbert Klaassen
 # @author  Michael Behrisch
-# @date    2025-04-13
+# @date    2025-04-14
 
 import os
 import pandas as pd
 import requests
-import pandas_geojson as pdg
 import geopandas as gpd
 from bs4 import BeautifulSoup
 from pathlib import Path
 import json
 
-
+# For debugging purposes
 def output_excel(df, file_name, path):
     path = os.path.join(path, file_name + '.xlsx')
     df.to_excel(path, index=False)
-
 def output_csv(df, file_name, path):
     path = os.path.join(path, file_name + '.csv')
     df.to_csv(path, index=False)
@@ -29,7 +27,7 @@ def output_csv(df, file_name, path):
 THIS_FOLDER = Path(__file__).parent.resolve()
 assets_file_path = THIS_FOLDER / 'assets/'
 
-### Get geojson file
+### Get geojson file with street information
 
 # Geopandas df route
 geojson_url = 'https://berlin-zaehlt.de/csv/bzm_telraam_segments.geojson'
@@ -38,17 +36,6 @@ geo_df = gpd.read_file(geojson_url)
 geo_df['parsed_osm'] = geo_df['osm'].apply(json.loads)
 geo_df_osm = pd.json_normalize(geo_df['parsed_osm'])
 df_geojson = pd.concat([geo_df, geo_df_osm], axis=1)
-
-# json to df route
-#filename_geojson = 'bzm_telraam_segments.geojson'
-#path_geojson = 'D:/OneDrive/PycharmProjects/bzm_performance/data' + '/' + filename_geojson
-#geojson = pdg.read_geojson(path_geojson)
-
-# Original approach
-#df_geojson = geojson.to_dataframe()
-#df_geojson.columns = df_geojson.columns.str.replace('properties.segment_id', 'segment_id')
-#df_geojson.columns = df_geojson.columns.str.replace('properties.', '', regex=True)
-#output_excel(df_geojson,'df_geojson_json', assets_file_path)
 
 # Drop uptime and v85 to avoid duplicates (these will come from traffic data)
 df_geojson = df_geojson.drop(['uptime', 'v85'], axis=1)
@@ -64,7 +51,8 @@ for i in range(len(df_geojson)):
     if isinstance(df_geojson['maxspeed'].values[i],list):
         df_geojson['maxspeed'].values[i]=''
 
-### Get traffic file
+
+### Get csv traffic files
 
 # Retrieve file links
 print('Getting traffic data files...')
@@ -97,14 +85,15 @@ for link in links:
     #    df_csv_append = df_csv_append._append(df, ignore_index=True)
 
 
-# Merge traffic data with geojson information, select columns, define data formats and add date_time columns
+### Merge traffic data with geojson information, select columns, add date_time columns and define data formats
 print('Combining traffic and geojson data...')
 df_comb = pd.merge(df_csv_append, df_geojson, on = 'segment_id', how = 'left')
 
 print('Creating df with selected columns')
-#selected_columns = ['date_local','segment_id','uptime','ped_lft','ped_rgt','ped_total','bike_lft','bike_rgt','bike_total','car_lft','car_rgt','car_total','heavy_lft','heavy_rgt','heavy_total','v85','car_speed0','car_speed10','car_speed20','car_speed30','car_speed40','car_speed50','car_speed60','car_speed70','osm.name','osm.highway','osm.length','osm.width','osm.lanes','osm.maxspeed']
-#TODO: rename to street_name or similar
-df_comb = df_comb.rename(columns={'name': 'osm.name'})
+#TODO: remove "osm", needs bzm_v01 to be updated
+df_comb = df_comb.rename(
+    columns={'name': 'osm.name', 'highway': 'osm.highway', 'address.city': 'osm.address.city',
+             'address.suburb': 'osm.address.suburb', 'address.postcode': 'osm.address.postcode'})
 selected_columns = ['date_local','segment_id','uptime','ped_lft','ped_rgt','ped_total','bike_lft','bike_rgt','bike_total','car_lft','car_rgt','car_total','heavy_lft','heavy_rgt','heavy_total','v85','car_speed0','car_speed10','car_speed20','car_speed30','car_speed40','car_speed50','car_speed60','car_speed70','osm.name','highway','length','width','lanes','maxspeed']
 traffic_df = pd.DataFrame(df_comb, columns=selected_columns)
 traffic_df['date_local'] = pd.to_datetime(traffic_df['date_local'])
@@ -128,7 +117,6 @@ traffic_df.insert(0, 'hour', traffic_df['date_local'].dt.hour) # In case of csv.
 
 # Save data package to file - change file name!
 print("Saving data package...")
-#traffic_df.to_excel("D:/OneDrive/PycharmProjects/bzm_telraam/Data_files/traffic_df_2024_Q4_2025_YTD.xlsx", index=False)
 THIS_FOLDER = Path(__file__).parent.resolve()
 traffic_file_path = THIS_FOLDER / 'assets/traffic_df_2023_2024_2025_YTD.csv.gz'
 traffic_df.to_csv(traffic_file_path, index=False, compression='gzip')

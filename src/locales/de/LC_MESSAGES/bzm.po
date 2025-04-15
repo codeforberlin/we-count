@@ -485,3 +485,12 @@ msgstr "Gesamtzahl"
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1235
 msgid "Week day"
 msgstr "Wochentag"
+
+msgid "weekday"
+msgstr "Wochentag"
+
+msgid "month"
+msgstr "Monat"
+
+msgid "year_month"
+msgstr "jahr_monat"

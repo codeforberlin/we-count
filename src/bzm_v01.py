@@ -4,7 +4,7 @@
 
 # @file    bzm_performance.py
 # @author  Egbert Klaassen
-# @date    2025-04-13
+# @date    2025-04-15
 
 """"
 # traffic_df        - dataframe with measured traffic data file
@@ -106,20 +106,6 @@ def retrieve_data():
 
     return geo_df, json_df_features, traffic_df
 
-def translate_traffic_df_data():
-    # traffic_df['year'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%Y')
-    traffic_df['month'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%b')
-    traffic_df['year_month'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%b %Y')
-    # traffic_df['year_week'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%U/%Y')
-    traffic_df['weekday'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%a')
-    # traffic_df['date'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%d/%m/%Y')
-    # traffic_df['date_hour'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%d/%m/%y - %H')
-    # traffic_df['day'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%d')
-
-    #all_map = {'All Streets': _('All Streets'), 'Alle Straßen': _('All Streets')}
-    #traffic_df['street_selection'] = traffic_df['street_selection'].map(all_map)
-
-#### Set Language ####
 def update_language(lang_code):
     global language
     language=lang_code
@@ -128,8 +114,6 @@ def update_language(lang_code):
         locale.setlocale(locale.LC_ALL, 'de_DE.UTF-8')
     elif language == 'en':
         locale.setlocale(locale.LC_ALL, 'en_GB.UTF-8')
-
-    translate_traffic_df_data()
 
     # Initiate translation
     appname = 'bzm'
@@ -239,10 +223,6 @@ def get_bike_car_ratios(df):
 
     return traffic_df_id_bc
 
-# def translate_bc_labels():
-#     speed_labels = {'Over 10x more cars': _('Over 10x more cars'), 'Over 5x more cars': _('Over 5x more cars'), 'Over 2x more cars': _('Over 2x more cars'), 'More cars than bikes': _('More cars than bikes'), 'More bikes than cars': _('More bikes than cars')}
-#     traffic_df_id_bc['map_line_color'] = traffic_df_id_bc['map_line_color'].map(speed_labels)
-
 def update_map_data(df_map_base, df):
     # Create map info by joining geo_df_map_info with map_line_color from traffic_df_id_bc (based on bike/car ratios)
     df_map = df_map_base.join(df)
@@ -303,10 +283,6 @@ traffic_df_upt = filter_uptime(traffic_df)
 # Get start date, end date and hour range (str)
 start_date = traffic_df_upt['date_local'].min()
 end_date = traffic_df_upt['date_local'].max()
-
-#end_date_dt = datetime.datetime.strptime(end_date, '%Y-%m-%d')
-#end_date_dt_plus = end_date_dt + datetime.timedelta(days=1)
-#end_date = end_date_dt_plus.strftime('%Y-%m-%d')
 
 format_string = '%Y-%m-%d %H:%M:%S'
 # Convert to dt do enable time.delta
@@ -488,7 +464,7 @@ def serve_layout():
                     id='radio_time_division',
                     options=[
                         {'label': _('Year'), 'value': 'year'},
-                        {'label': _('Month'), 'value': 'year_month'},
+                        {'label': _('Month'), 'value': _('year_month')},
                         {'label': _('Week'), 'value': 'year_week'},
                         {'label': _('Day'), 'value': 'date'},
                         {'label': _('Hour'), 'value': 'date_hour'}
@@ -525,12 +501,12 @@ def serve_layout():
                     id='radio_time_unit',
                     options=[
                         {'label': _('Yearly'), 'value': 'year'},
-                        {'label': _('Monthly'), 'value': 'month'},
-                        {'label': _('Weekly'), 'value': 'weekday'},
+                        {'label': _('Monthly'), 'value': _('month')},
+                        {'label': _('Weekly'), 'value': _('weekday')},
                         {'label': _('Daily'), 'value': 'day'},
                         {'label': _('Hourly'), 'value': 'hour'}
                     ],
-                    value='weekday',
+                    value=_('weekday'),
                     inline=True,
                     inputStyle={"margin-right": "5px", "margin-left": "20px"},
                     style={'margin-left': 40, 'margin-bottom': 00},
@@ -911,15 +887,6 @@ def update_map(clickData, street_name):
     return street_map
 
 #TODO: remove after thorough testing
-
-# @app.callback(
-#     Input('floating_button', 'n_clicks')
-# )
-# def update_output(n_clicks):
-#     if n_clicks is None:
-#         return #"Button not clicked yet."
-#     else:
-#         return  #f"Button clicked {n_clicks} times."
 
 
 ### General traffic callback ###

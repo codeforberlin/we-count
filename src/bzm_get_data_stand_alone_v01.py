@@ -5,7 +5,7 @@
 # @file    bzm_get_data.py
 # @author  Egbert Klaassen
 # @author  Michael Behrisch
-# @date    2025-04-14
+# @date    2025-04-15
 
 import os
 import pandas as pd
@@ -23,7 +23,6 @@ def output_excel(df, file_name, path):
 def output_csv(df, file_name, path):
     path = os.path.join(path, file_name + '.csv')
     df.to_csv(path, index=False)
-
 
 verbose = False
 
@@ -121,14 +120,19 @@ if verbose:
 locale.setlocale(locale.LC_ALL, 'de_DE.UTF-8')
 
 traffic_df['year'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%Y')
-traffic_df['month'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%b')
-traffic_df['year_month'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%b %Y')
+traffic_df['Monat'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%b')
+traffic_df['jahr_monat'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%b %Y')
 traffic_df['year_week'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%U/%Y')
-traffic_df['weekday'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%a')
+traffic_df['Wochentag'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%a')
 traffic_df['date'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%d/%m/%Y')
 traffic_df['date_hour'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%d/%m/%y - %H')
 traffic_df['day'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%d')
 traffic_df.insert(0, 'hour', traffic_df['date_local'].dt.hour) # In case of csv.gz download!
+
+locale.setlocale(locale.LC_ALL, 'en_GB.UTF-8')
+traffic_df['month'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%b')
+traffic_df['weekday'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%a')
+traffic_df['year_month'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%b %Y')
 
 # Save data package to file - change file name!
 if verbose:

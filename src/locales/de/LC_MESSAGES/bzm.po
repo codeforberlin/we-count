@@ -97,8 +97,8 @@ msgid "Set hour range:"
 msgstr "Stelle Zeitfenster ein:"
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:427
-msgid " Hour"
-msgstr " Uhr"
+msgid "Hour"
+msgstr "Stunde"
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:430
 msgid "Pick date range:"
@@ -154,7 +154,7 @@ msgstr "Tag"
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:476
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:997
-msgid "Hour"
+msgid "hour"
 msgstr "Stunde"
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:486
@@ -494,3 +494,9 @@ msgstr "Monat"
 
 msgid "year_month"
 msgstr "jahr_monat"
+
+msgid "day"
+msgstr "Tag"
+
+msgid "year"
+msgstr "Jahr"

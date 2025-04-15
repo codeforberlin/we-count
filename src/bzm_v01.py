@@ -37,7 +37,6 @@ def output_csv(df, file_name):
     path = os.path.join(ASSET_DIR, file_name + '.csv')
     df.to_csv(path, index=False)
 
-#### Retrieve Data ####
 def get_locations(geojson_url):
 
     # original route
@@ -347,6 +346,8 @@ app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.BOOTS
 #            external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP, dbc_css],
 #            meta_tags=[{'name': 'viewport', 'content': 'width=device-width, initial-scale=1'}]
 #            )
+
+app.title = "Berlin-zaehlt"
 
 server = app.server
 
@@ -973,16 +974,20 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
     pie_traffic.update_traces(textposition='inside', textinfo='percent+label')
 
     ### Create absolute line chart
-    df_line_abs_traffic = traffic_df_upt_dt_str.groupby(by=[radio_time_division, 'street_selection'], sort = False, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
+    #df_line_abs_traffic = traffic_df_upt_dt_str.groupby(by=[radio_time_division, 'street_selection'], sort = False, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
+
     if radio_time_division == 'date_hour':
-        df_line_abs_traffic = df_line_abs_traffic.sort_values(by=['street_selection', radio_time_division], ascending=True)
+        #df_line_abs_traffic = df_line_abs_traffic.sort_values(by=['street_selection', radio_time_division], ascending=True)
+        df_line_abs_traffic = traffic_df_upt_dt_str.groupby(by=['street_selection', radio_time_division], as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
+    else:
+        df_line_abs_traffic = traffic_df_upt_dt_str.groupby(by=[radio_time_division, 'street_selection'], sort=False, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
 
     line_abs_traffic = px.scatter(df_line_abs_traffic,
         x=radio_time_division, y=['ped_total', 'bike_total', 'car_total', 'heavy_total'],
         #markers=True, # In case of line graph
         facet_col='street_selection',
         category_orders={'street_selection': [street_name, 'All Streets']},
-        labels={'year': _('Year'), 'year_month': _('Month'), 'year_week': _('Week'), 'date': _('Day'), 'date_hour': _('Hour')},
+        labels={'year': _('Year'), _('year_month'): _('Month'), 'year_week': _('Week'), 'date': _('Day'), 'date_hour': _('Hour')},
         color_discrete_map={'ped_total': ADFC_lightblue, 'bike_total': ADFC_green, 'car_total': ADFC_orange, 'heavy_total': ADFC_crimson},
         facet_col_spacing=0.04,
         title=_('Absolute traffic count')
@@ -1004,10 +1009,13 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
     line_abs_traffic.for_each_annotation(lambda a: a.update(text=a.text.replace('All Streets', _('All Streets'))))
 
     ### Create average traffic bar chart
-    df_avg_traffic = traffic_df_upt_dt_str.groupby(by=[radio_time_unit, 'street_selection'], sort= False, as_index=False).agg({'ped_total': 'mean', 'bike_total': 'mean', 'car_total': 'mean', 'heavy_total': 'mean'})
+    #df_avg_traffic = traffic_df_upt_dt_str.groupby(by=[radio_time_unit, 'street_selection'], sort= False, as_index=False).agg({'ped_total': 'mean', 'bike_total': 'mean', 'car_total': 'mean', 'heavy_total': 'mean'})
     # Sort on hour to avoid line graph jumps around hour gaps
     if radio_time_unit == 'hour' or radio_time_unit == 'day':
-        df_avg_traffic = df_avg_traffic.sort_values(by=[radio_time_unit], ascending=True)
+        #df_avg_traffic = df_avg_traffic.sort_values(by=[radio_time_unit], ascending=True)
+        df_avg_traffic = traffic_df_upt_dt_str.groupby(by=[radio_time_unit, 'street_selection'], as_index=False).agg({'ped_total': 'mean', 'bike_total': 'mean', 'car_total': 'mean', 'heavy_total': 'mean'})
+    else:
+        df_avg_traffic = traffic_df_upt_dt_str.groupby(by=[radio_time_unit, 'street_selection'], sort=False, as_index=False).agg({'ped_total': 'mean', 'bike_total': 'mean', 'car_total': 'mean', 'heavy_total': 'mean'})
 
     # Create date period for below four graph titles, convert formats from '%Y-%m-%d' format requitred by Datepicker!
     start_date = format_str_date(start_date, '%Y-%m-%d','%d %b %Y')
@@ -1019,7 +1027,7 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
         facet_col='street_selection',
         facet_col_spacing=0.04,
         category_orders={'street_selection': [street_name, 'All Streets']},
-        labels={'year': _('Yearly'), 'month': _('Monthly'), 'weekday': _('Weekly'), 'day': _('Daily'), 'hour': _('Hourly'), '1': 'Mon'},
+        labels={'year': _('Year'), 'month': _('Month'), 'weekday': _('Week'), 'day': _('Day'), 'hour': _('Hour')},
         color_discrete_map={'ped_total': ADFC_lightblue, 'bike_total': ADFC_green, 'car_total': ADFC_orange, 'heavy_total': ADFC_crimson},
         title=(_('Average traffic count')  + ' (' + start_date + ' - ' + end_date + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)')
     )
@@ -1056,7 +1064,7 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
          barmode='stack',
          facet_col='street_selection',
          category_orders={'street_selection': [street_name, 'All Streets']},
-         labels={'year': _('Yearly'), 'month': _('Monthly'), 'weekday': _('Weekly'), 'day': _('Daily'), 'hour': _('Hourly')},
+         labels={'year': _('Year'), 'month': _('Month'), 'weekday': _('Week'), 'day': _('Day'), 'hour': _('Hour')},
          color_discrete_map={'car_speed0': ADFC_lightgrey, 'car_speed10': ADFC_lightblue,
                              'car_speed20': ADFC_lightblue, 'car_speed30': ADFC_green,
                              'car_speed40': ADFC_green, 'car_speed50': ADFC_orange,
@@ -1091,7 +1099,7 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
         barmode='group',
         facet_col='street_selection',
         category_orders={'street_selection': [street_name, 'All Streets']},
-        labels={'year': _('Yearly'), 'month': _('Monthly'), 'weekday': _('Weekly'), 'day': _('Daily'), 'hour': _('Hourly')},
+        labels={'year': _('Year'), 'month': _('Month'), 'weekday': _('Week'), 'day': _('Day'), 'hour': _('Hour')},
         color_discrete_map={'car_speed0': ADFC_lightgrey, 'car_speed10': ADFC_lightblue,
                             'car_speed20': ADFC_lightblue, 'car_speed30': ADFC_green,
                             'car_speed40': ADFC_green, 'car_speed50': ADFC_orange,
@@ -1127,7 +1135,7 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
         facet_col='street_selection',
         category_orders={'street_selection': [street_name, 'All Streets']},
         facet_col_spacing=0.04,
-        labels={'year': _('Yearly'), 'month': _('Monthly'), 'weekday': _('Weekly'), 'day': _('Daily'), 'hour': _('Hourly')},
+        labels={'year': _('Year'), 'month': _('Month'), 'weekday': _('Week'), 'day': _('Day'), 'hour': _('Hour')},
         title=(_('Speed cars v85') + ' (' + start_date + ' - ' + end_date + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)')
     )
 

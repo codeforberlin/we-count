@@ -1,6 +1,7 @@
 /*General layout*/
 body {
   margin: 0;
+ font-family: 'Calibri', 'Arial', sans-serif;
 }
 /*Actually either class is good, use both just to be sure*/
 .DateInput_input, .DateInput_input_1 {

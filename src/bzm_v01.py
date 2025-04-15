@@ -102,7 +102,6 @@ def retrieve_data():
 
     # Add street column for facet graphs - check efficiency!
     traffic_df['street_selection'] = traffic_df.loc[:, 'osm.name']
-    #traffic_df.loc[traffic_df['street_selection'] != 'does not exist', 'street_selection'] = _('All Streets')
     traffic_df.loc[traffic_df['street_selection'] != 'does not exist', 'street_selection'] = 'All Streets'
 
     return geo_df, json_df_features, traffic_df
@@ -129,6 +128,8 @@ def update_language(lang_code):
         locale.setlocale(locale.LC_ALL, 'de_DE.UTF-8')
     elif language == 'en':
         locale.setlocale(locale.LC_ALL, 'en_GB.UTF-8')
+
+    translate_traffic_df_data()
 
     # Initiate translation
     appname = 'bzm'
@@ -282,21 +283,19 @@ ADFC_yellow = '#EEDE72'
 street_name = 'Alte Jakobstraße'
 segment_id = '9000002582'
 
-zoom_factor = 11
-
-init_language = 'de'
-update_language(init_language)
-
 info_icon = html.I(className='bi bi-info-circle-fill me-2')
 email_icon = html.I(className='bi bi-envelope-at-fill me-2')
 camera_icon = html.I(className='bi bi-camera-fill me-2')
+zoom_factor = 11
 
 geo_df, json_df_features, traffic_df = retrieve_data()
 
+# Set initial language
+init_language = 'de'
+update_language(init_language)
+
 # Format datetime columns to formatted strings
 traffic_df = traffic_df.astype({'year': str}, errors='ignore')
-
-translate_traffic_df_data()
 
 # Start with traffic df with uptime filtered
 traffic_df_upt = filter_uptime(traffic_df)
@@ -380,7 +379,7 @@ def serve_layout():
     [
         dcc.Location(id='url', refresh=True),
         dbc.Row([
-            dbc.Col([html.H1('Berlin zählt Mobilität', style={'margin-left': 50, 'margin-top': 40, 'margin-bottom': 00, 'margin-right': 00, 'font-size': '50px', 'font-family': 'Calibri', 'font-weight': 'bold', 'color': ADFC_darkblue, 'font-style': 'italic', 'text-shadow': '3px 2px lightblue'}),
+            dbc.Col([html.H1('Berlin zählt Mobilität', style={'margin-left': 50, 'margin-top': 40, 'margin-bottom': 00, 'margin-right': 00, 'font-size': '50px', 'font-weight': 'bold', 'color': ADFC_darkblue, 'font-style': 'italic', 'text-shadow': '3px 2px lightblue'}),
             ], width=5),
             dbc.Col([
                 html.Img(src=app.get_asset_url('DLR_und_adfc_logos.png'), title='Das Deutsche Zentrum für Luft- und Raumfahrt, Allgemeiner Deutscher Fahrrad-Club', className='img-fluid' 'd-flex align-items-end',
@@ -811,7 +810,6 @@ app.layout = serve_layout
 )
 def get_language(lang_code_dd):
     update_language(lang_code_dd)
-    translate_traffic_df_data()
     return '/'
 
 ### Map callback ###

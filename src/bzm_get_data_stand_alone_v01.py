@@ -14,6 +14,7 @@ import geopandas as gpd
 from bs4 import BeautifulSoup
 from pathlib import Path
 import json
+import locale
 
 # For debugging purposes
 def output_excel(df, file_name, path):
@@ -115,6 +116,10 @@ traffic_df = traffic_df.drop(nan_rows.index)
 
 if verbose:
     print('Break down date_local to formatted string columns, except "hour"...')
+
+# Initiation with German
+locale.setlocale(locale.LC_ALL, 'de_DE.UTF-8')
+
 traffic_df['year'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%Y')
 traffic_df['month'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%b')
 traffic_df['year_month'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%b %Y')

@@ -916,10 +916,11 @@ def update_map(clickData, street_name):
     Input(component_id='toggle_uptime_filter', component_property='value'),
     Input(component_id='radio_y_axis', component_property='value'),
     Input(component_id='floating_button', component_property='n_clicks'),
+    Input('language_selector', 'value'),
 prevent_initial_call='initial_duplicate',
 )
 
-def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_json, dropdown_year_A, dropdown_year_month_A, dropdown_year_week_A, dropdown_date_A, dropdown_year_B, dropdown_year_month_B, dropdown_year_week_B, dropdown_date_B, start_date, end_date, hour_range, toggle_uptime_filter, radio_y_axis, floating_button):
+def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_json, dropdown_year_A, dropdown_year_month_A, dropdown_year_week_A, dropdown_date_A, dropdown_year_B, dropdown_year_month_B, dropdown_year_week_B, dropdown_date_B, start_date, end_date, hour_range, toggle_uptime_filter, radio_y_axis, floating_button, language_selector):
     callback_trigger = ctx.triggered_id
 
     # If uptime filter changed, reload traffic_df_upt

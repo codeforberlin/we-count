@@ -109,11 +109,6 @@ def update_language(lang_code):
     global language
     language=lang_code
 
-    if language == 'de':
-        locale.setlocale(locale.LC_ALL, 'de_DE.UTF-8')
-    elif language == 'en':
-        locale.setlocale(locale.LC_ALL, 'en_GB.UTF-8')
-
     # Initiate translation
     appname = 'bzm'
     localedir = os.path.join(os.path.dirname(__file__), 'locales')

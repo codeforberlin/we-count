@@ -14,7 +14,6 @@
 
 import os
 import gettext
-import locale
 import datetime
 import pandas as pd
 import json
@@ -25,7 +24,11 @@ from dash.exceptions import PreventUpdate
 import plotly.express as px
 from pathlib import Path
 
+from pygments.console import dark_colors
+from werkzeug.debug.repr import missing
+
 import common
+from src.bzm_get_data import save_df
 
 DEPLOYED = __name__ != '__main__'
 
@@ -136,17 +139,17 @@ def format_str_date(str_date, from_date_format, to_date_format):
 
 def filter_dt(df, start_date, end_date, hour_range):
 
-    # Get min/max dates
+    # Get min/max dates to set DatePicker range
     min_date = df['date_local'].min()
     max_date = df['date_local'].max()
-
     # Add one day as filter is in between
     max_date_dt = convert(str(max_date), format_string)
     max_date_dt = max_date_dt + datetime.timedelta(days=1)
+    # Re-format for DatePicker
+    min_date = datetime.datetime.strptime(min_date, format_string).strftime('%Y-%m-%d')
     max_date = max_date_dt.strftime('%Y-%m-%d')
 
-    # Set selected dates
-    #df_dates = df.loc[df['date_local'].between(start_date, end_date)] # use alternative below
+    # Filter selected dates
     df_dates = df[df.date_local.between(start_date, end_date)]
 
     # Get min/max street hours, add 1 to max for slider representation
@@ -186,6 +189,11 @@ def get_comparison_data(df, radio_time_division, group_by, selected_value_A, sel
     return df_avg_traffic_delta_concat
 
 def update_selected_street(df, segment_id, street_name):
+    #print('def update_selected_street')
+    #print(segment_id)
+    #print(street_name)
+    #print(len(df))
+
     if segment_id == _('full street'):
         df_str = df[df['osm.name'] == street_name]
         df_str.loc[df_str['street_selection'] == 'All Streets', 'street_selection'] = street_name
@@ -194,14 +202,15 @@ def update_selected_street(df, segment_id, street_name):
         df_str = df[df['segment_id'] == segment_id]
         df_str.loc[df_str['street_selection'] == 'All Streets', 'street_selection'] = street_name
 
-    if len(df_str) == 0:
-        no_data = True
-    else:
-        no_data = False
+    #if len(df_str) == 0:
+    #    no_data = True
+    #    print('def update selected street - no data')
+    #else:
+    #    no_data = False
 
     # Add selected street to all streets
     traffic_df_upt_dt_str = df._append(df_str, ignore_index=True)
-    return no_data, traffic_df_upt_dt_str
+    return traffic_df_upt_dt_str
 
 def get_bike_car_ratios(df):
     traffic_df_id_bc = df.groupby(by=['segment_id'], as_index=False).agg(bike_total=('bike_total', 'sum'), car_total=('car_total', 'sum'))
@@ -236,6 +245,49 @@ def update_map_data(df_map_base, df):
     df_map.reset_index(level=0, inplace=True)
 
     return df_map
+
+
+def get_min_max_str(df, street_name, start_date, end_date):
+    format_string = '%Y-%m-%d %H:%M:%S'
+    missing_data = False
+    message = 'none'
+
+    # Get min/max dates for the current street
+    df_str = df[df['osm.name'] == street_name]
+    min_date_str = df_str['date_local'].min()
+    max_date_str = df_str['date_local'].max()
+
+    # Add one day from end_time as it was added before as well
+    max_date_str_dt = datetime.datetime.strptime(max_date_str, format_string)
+    max_date_str_dt = max_date_str_dt + datetime.timedelta(days=1)
+
+    min_date_str = datetime.datetime.strptime(min_date_str, format_string).strftime('%Y-%m-%d')
+    max_date_str = max_date_str_dt.strftime('%Y-%m-%d')
+
+    if start_date > max_date_str or end_date < min_date_str:
+        missing_data = True
+        message = 'Dates out of range'
+        print(message)
+        start_date = min_date_str
+        end_date = max_date_str
+    elif min_date_str <= start_date <= max_date_str and end_date > max_date_str:
+        missing_data = True
+        message = 'End date out of range'
+        print(message)
+        end_date = max_date_str
+    elif min_date_str <= end_date <= max_date_str and start_date < min_date_str:
+        missing_data = True
+        message = 'Start date out of range'
+        print(message)
+        start_date = min_date_str
+    elif start_date < min_date_str or end_date > max_date_str:
+        missing_data = True
+        message = 'Narrowed down range'
+        print(message)
+        start_date = min_date_str
+        end_date = max_date_str
+
+    return min_date_str, max_date_str, start_date, end_date, message, missing_data
 
 ASSET_DIR = os.path.join(os.path.dirname(__file__), 'assets')
 
@@ -298,7 +350,7 @@ hour_range = [traffic_df_upt['hour'].min(), traffic_df_upt['hour'].max()]
 traffic_df_upt_dt, min_date, max_date, min_hour, max_hour = filter_dt(traffic_df_upt, start_date, end_date, hour_range)
 
 # traffic_df_upt_dt_str
-no_data, traffic_df_upt_dt_str = update_selected_street(traffic_df_upt_dt, segment_id, street_name)
+#traffic_df_upt_dt_str = update_selected_street(traffic_df_upt_dt, segment_id, street_name)
 
 ### Prepare map data ###
 if not DEPLOYED:
@@ -336,11 +388,7 @@ if not DEPLOYED:
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP],
            meta_tags=[{'name': 'viewport', 'content': 'width=device-width, initial-scale=1'}]
            )
-# BZM-CGI
-# app = Dash(__name__, requests_pathname_prefix="/cgi-bin/bzm.cgi/" if DEPLOYED else None,
-#            external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP, dbc_css],
-#            meta_tags=[{'name': 'viewport', 'content': 'width=device-width, initial-scale=1'}]
-#            )
+
 
 app.title = "Berlin-zaehlt"
 
@@ -348,66 +396,73 @@ server = app.server
 
 def serve_layout():
     return dbc.Container(
-    [
-        dcc.Location(id='url', refresh=True),
+        [
         dbc.Row([
-            dbc.Col([html.H1('Berlin zählt Mobilität', style={'margin-left': 50, 'margin-top': 40, 'margin-bottom': 00, 'margin-right': 00, 'font-size': '50px', 'font-weight': 'bold', 'color': ADFC_darkblue, 'font-style': 'italic', 'text-shadow': '3px 2px lightblue'}),
-            ], width=5),
-            dbc.Col([
-                html.Img(src=app.get_asset_url('DLR_und_adfc_logos.png'), title='Das Deutsche Zentrum für Luft- und Raumfahrt, Allgemeiner Deutscher Fahrrad-Club', className='img-fluid' 'd-flex align-items-end',
-                         style={'margin-left': 00, 'margin-top': 40, 'margin-bottom': 00, 'margin-right': 00, 'height': '60px'})
-            ], width=5),
-            dbc.Col([
-                html.Img(src=app.get_asset_url('Telraam.png'), title='Berlin zählt Mobilität: ADFC Berlin & DLR Citizen Science- Projekt', className='img-fluid.max-width: 50%' 'align-items-right', height='120px')
-            ], width=2),
-        ], style={'background-color': ADFC_skyblue, 'opacity': 1.0}
+            dcc.Location(id='url', refresh=True),
+            dbc.Col(
+                html.H1('Berlin zählt Mobilität', className='text-sm-start ms-2 text-nowrap', style={'font-weight': 'bold', 'color': ADFC_darkblue, 'font-style': 'italic', 'text-shadow': '3px 2px lightblue'}),
+                sm=6),
+            dbc.Col(
+                html.Img(src=app.get_asset_url('DLR_und_adfc_logos-cut.png'), title='Das Deutsche Zentrum für Luft- und Raumfahrt, Allgemeiner Deutscher Fahrrad-Club', className='w-75'),
+                sm=4,
+            ),
+            dbc.Col(
+                html.Img(src=app.get_asset_url('Telraam.png'), title='Berlin zählt Mobilität: ADFC Berlin & DLR Citizen Science- Projekt', className='w-75'),
+                sm=2,
+            ),
+        ], className= 'g-2 p-1 mb-3', align='center', style={'background-color': ADFC_skyblue, 'opacity': 1.0}
         ),
         dbc.Row([
             # Street map
             dbc.Col([
-                dcc.Graph(id='street_map', figure={},className='bg-#F2F2F2'),
-            ], width=8),
+                dcc.Graph(id='street_map', figure={}, className='bg-#F2F2F2'),
+            ],  sm=8),
             # General controls
             dbc.Col([
-                dbc.Col([
-                    # Street drop down
-                    dcc.Dropdown(
-                        id='language_selector',
-                        options=[
-                            {'label': '🇬🇧' + ' ' + _('English'), 'value': 'en'},
-                            {'label': '🇩🇪' + ' ' + _('Deutsch'), 'value': 'de'},
-                        ],
-                        value=language
-                    ),
-                ], width = {'size': 4, 'offset': 8}), #width=4),
+                dbc.Row([
+                    dbc.Col([
+                        html.H6('Map info', id='popover_map_info', className='text-start', style={'color': ADFC_darkgrey}),
+                        dbc.Popover(dbc.PopoverBody(_('Note: street colors represent bike/car ratios based on all data available and do not change with date- or hour selection. The map allows street segments to be selected individually. To select whole streets, select a street name from the drop down menu.')), target='popover_map_info', trigger='hover', placement='bottom'),
+                    ], sm=5),
+                    dbc.Col([
+                        # Street drop down
+                        dcc.Dropdown(
+                            id='language_selector',
+                            options=[
+                                {'label': '🇬🇧' + ' ' + _('English'), 'value': 'en'},
+                                {'label': '🇩🇪' + ' ' + _('Deutsch'), 'value': 'de'},
+                            ],
+                            value=language
+                        ),
+                    ], sm=7),
+                ], justify='end'),
                 #TODO: differentiate streets with the same name (e.g. Hauptstraße)
-                html.H4(_('Select street:'), style={'margin-top': 20, 'margin-bottom': 10}),
+                html.H4(_('Select street:'), className='my-2'),
                 dcc.Dropdown(id='street_name_dd',
                     options=sorted([{'label': i, 'value': i} for i in traffic_df['osm.name'].unique()], key=lambda x: x['label']),
                     value=street_name,
-                    style={'margin-top': 10, 'margin-bottom': 30}
+                    #style={'margin-top': 10, 'margin-bottom': 30}
                 ),
                 dcc.Store(id='store_segment_id_value', storage_type='memory'),
-                html.Hr(),
+                #html.Hr(),
                 html.Span([
-                    html.H4(_('Traffic type - selected street'), id='selected_street_header',  style={'margin-top': 10, 'margin-bottom': 20, 'color': 'black'}, className='d-inline-block'),
-                    html.I(className='bi bi-info-circle-fill h6', id='popover_traffic_type', style={'margin-left': 10, 'margin-top': 10, 'margin-bottom': 20, 'align': 'top', 'color': ADFC_lightgrey}),
+                    html.H4(_('Traffic type - selected street'), id='selected_street_header', style={'color': 'black'}, className='my-2 d-inline-block'),
+                    html.I(className='bi bi-info-circle-fill h6 ms-1', id='popover_traffic_type', style={'align': 'top', 'color': ADFC_lightgrey}),
                     dbc.Popover(
                         dbc.PopoverBody(_('Traffic type split of the currently selected street, based on currently selected date and hour range.')),
                     target="popover_traffic_type", trigger="hover")
                 ]),
                 # Pie chart
                 dcc.Graph(id='pie_traffic', figure={}),
-                html.H6('Map info', id='popover_map_info', className='text-start', style={'margin-left': 0, 'margin-top': 0, 'margin-bottom': 0, 'margin-right': 0, 'color': ADFC_darkgrey}),
-                dbc.Popover(dbc.PopoverBody(_('Note: street colors represent bike/car ratios based on all data available and do not change with date- or hour selection. The map allows street segments to be selected individually. To select whole streets, select a street name from the drop down menu.')), target="popover_map_info", trigger="hover"),
-            ], width=4),
-        ], style= {'margin-right': 40}),
+                #html.H6('Map info', id='popover_map_info', className='text-start', style={'color': ADFC_darkgrey}),
+                #dbc.Popover(dbc.PopoverBody(_('Note: street colors represent bike/car ratios based on all data available and do not change with date- or hour selection. The map allows street segments to be selected individually. To select whole streets, select a street name from the drop down menu.')), target="popover_map_info", trigger="hover"),
+            ], sm=4),
+        ], className= 'g-2 p-1 mb-3 text-start'), #style= {'margin-right': 40}),
         # Date/Time selection and Uptime filter
         dbc.Row([
-            #html.Hr(),
             dbc.Col([
-                html.H6(_('Set hour range:'), style={'margin-left': 40, 'margin-right': 40, 'margin-top': 10, 'margin-bottom': 10}),
-                # Hour slice
+                html.H6(_('Set hour range:'), className='text-sm-start ms-2'), #style={'margin-left': 40, 'margin-right': 40, 'margin-top': 10, 'margin-bottom': 10}),
+                # Hour slider
                 dcc.RangeSlider(
                     id='range_slider',
                     min= min_hour,
@@ -415,9 +470,9 @@ def serve_layout():
                     step=1,
                     value = hour_range,
                     tooltip={'always_visible': True, 'placement' : 'bottom', 'template': "{value}" + _(" Hour")}),
-            ], width=6),
+            ], sm=6),
             dbc.Col([
-                html.H6(_('Pick date range:'), style={'margin-left': 00, 'margin-right': 40, 'margin-top': 10, 'margin-bottom': 10}),
+                html.H6(_('Pick date range:'), className='text-sm-start ms-2', id='date_range_text'), #style={'margin-left': 00, 'margin-right': 40, 'margin-top': 10, 'margin-bottom': 10}),
                 # Date picker
                 dcc.DatePickerRange(
                     id="date_filter",
@@ -427,34 +482,34 @@ def serve_layout():
                     max_date_allowed=max_date,
                     display_format='DD-MM-YYYY',
                     end_date_placeholder_text='DD-MM-YYYY',
+                    number_of_months_shown=2,
                     minimum_nights=1,
+                    className='d-flex justify-content-start',
                 ),
-            ], width=3),
-
+            ], sm=3),
             dbc.Col([
                 html.Span([
                     dbc.Checklist(
                         id='toggle_uptime_filter',
                         options=[{'label': _(' Filter uptime > 0.7'), 'value': 'filter_uptime_selected'}],
                         value= ['filter_uptime_selected'],
-                        style = {'color' : ADFC_darkgrey, 'font_size' : 14, 'margin-left': 30, 'margin-top': 40, 'margin-bottom': 30},
-                        className='d-inline-block'
+                        style = {'color' : ADFC_darkgrey, 'font_size' : 14},
+                        className='d-inline-block text-center'
                     ),
-                    html.I(className='bi bi-info-circle-fill h6',
+                    html.I(className='bi bi-info-circle-fill h6 ms-1',
                         id='popover_filter',
-                        style={'margin-left': 10, 'margin-top': 0, 'color': ADFC_lightgrey}),
+                        style={'color': ADFC_lightgrey}),
                     dbc.Popover(
                          dbc.PopoverBody(_('A high 0.7-0.8 uptime will always mean very good data. The first and last daylight hour of the day will always have lower uptimes. If uptimes during the day are below 0.5, that is usually a clear sign that something is probably wrong with the instance.')),
                          target="popover_filter", trigger="hover")
                 ]),
-            ], width=3),
-        ], style={'margin-left': 40, 'margin-right': 40, 'background-color': ADFC_skyblue, 'opacity': 1.0}, className='sticky-top rounded "g-0"'),
+            ], sm=3),
+        ], className='g-2 p-1 sticky-top rounded text-sm-center', style={'background-color': ADFC_skyblue, 'opacity': 1.0}),
         # Absolute traffic
         dbc.Row([
             dbc.Col([
                 # Radio time division
-                html.H4(_('Absolute traffic'), style={'margin-left': 40, 'margin-right': 0, 'margin-top': 30, 'margin-bottom': 30}),
-
+                html.H4(_('Absolute traffic'), className='my-3'),
                 # Select a time division
                 dcc.RadioItems(
                     id='radio_time_division',
@@ -468,30 +523,29 @@ def serve_layout():
                     value='date',
                     inline=True,
                     inputStyle={"margin-right": "5px", "margin-left": "20px"},
-                    style={'margin-left': 40, 'margin-bottom': 00},
+                    #style={'margin-left': 40, 'margin-bottom': 00},
                 ),
-            ], width=9),
+            ], sm=10),
             dbc.Col([
                 html.Span([
-                    html.H6([_('Download graphs   '), info_icon], id='download_html_graphs'),
+                    html.H6([_('Download graphs   '), info_icon], id='download_html_graphs', className='my-3'),
                     dbc.Popover(
                         dbc.PopoverBody(_('Hover over the top-right of a graph and click the camera symbol to download in png-format')),
                         target="download_html_graphs", trigger="hover")
-                ], style={'margin-left': 75, 'margin-right': 40, 'margin-top': 95, 'margin-bottom': 0,
-                        'display': 'inline-block', 'color': ADFC_lightgrey}),
-            ], width=3),
-        ]),
+                ], style={'display': 'inline-block', 'color': ADFC_lightgrey}),
+            ], sm=2),
+        ], className='g-2 p-1'),
         dbc.Row([
             dbc.Col([
-                dcc.Graph(id='line_abs_traffic', figure={}, style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 30}),
-            ], width=12
+                dcc.Graph(id='line_abs_traffic', figure={}), #style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 30}),
+            ], sm=12
             ),
-        ]),
+        ], className='g-2 p-1'),
         # Average traffic
         dbc.Row([
             dbc.Col([
                 # Radio time unit
-                html.H4(_('Average traffic'), style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 30}),
+                html.H4(_('Average traffic'), className='my-3'), #style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 30}),
 
                 dcc.RadioItems(
                     id='radio_time_unit',
@@ -505,57 +559,54 @@ def serve_layout():
                     value=_('weekday'),
                     inline=True,
                     inputStyle={"margin-right": "5px", "margin-left": "20px"},
-                    style={'margin-left': 40, 'margin-bottom': 00},
+                    #style={'margin-left': 40, 'margin-bottom': 00},
                 ),
-            ], width=6
+            ], sm=6
             ),
-        ]),
+        ], className='g-2 p-1'),
         dbc.Row([
             dbc.Col([
-                dcc.Graph(id='bar_avg_traffic', figure={}, style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 30})
-            ], width=12
+                dcc.Graph(id='bar_avg_traffic', figure={}), #style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 30})
+            ], sm=12
             ),
-        ]),
+        ], className='g-2 p-1'),
         dbc.Row([
             dbc.Col([
-                html.H4(_('Percentage car speed - by time unit'),style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 00}),
-                dcc.Graph(id='bar_perc_speed', figure={}, style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 30})
-            ], width=12
+                html.H4(_('Percentage car speed - by time unit'), className='my-3'),
+                dcc.Graph(id='bar_perc_speed', figure={}), #style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 30})
+            ], sm=12
             ),
-        ]),
+        ], className='g-2 p-1'),
         dbc.Row([
             dbc.Col([
-                html.H4(_('Percentage car speed - average'),style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 00}),
-                dcc.Graph(id='bar_avg_speed', figure={},
-                          style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 30})
-            ], width=12
+                html.H4(_('Percentage car speed - average'), className='my-3'),
+                dcc.Graph(id='bar_avg_speed', figure={}),
+                          #style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 30})
+            ], sm=12
             ),
-        ]),
+        ], className='g-2 p-1'),
         dbc.Row([
             dbc.Col([
-                html.Span([html.H4(_('v85 car speed'),
-                                   style={'margin-left': 40, 'margin-right': 00, 'margin-top': 30, 'margin-bottom': 00, 'display': 'inline-block'}),
+                html.Span([html.H4(_('v85 car speed'), className='my-3 me-2', style={'display': 'inline-block'}),
                            html.I(className='bi bi-info-circle-fill h6', id='popover_v85_speed',
-                                  style={'margin-left': 5, 'margin-top': 30, 'margin-bottom': 00,
-                                         'display': 'inline-block', 'color': ADFC_lightgrey})]),
+                                  style={'display': 'inline-block', 'color': ADFC_lightgrey})]),
                 dbc.Popover(
                     dbc.PopoverBody(
                         _('The V85 is a widely used indicator in the world of mobility and road safety, as it is deemed to be representative of the speed one can reasonably maintain on a road.')),
                     target='popover_v85_speed',
                     trigger='hover'
                 ),
-                dcc.Graph(id='bar_v85', figure={},
-                          style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 30})
-            ], width=12
+                dcc.Graph(id='bar_v85', figure={}),
+            ], sm=12
             ),
-        ]),
+        ], className='g-2 p-1'),
         # Ranking bar chart
         dbc.Row([
             dbc.Col([
-                html.H4(_('Street ranking by traffic type'), style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 30}),
-            ], width=12
+                html.H4(_('Street ranking by traffic type'), className='my-3'),
+            ], sm=12
             ),
-        ]),
+        ], className='g-2 p-1'),
         dbc.Row([
             dbc.Col([
                 dcc.RadioItems(
@@ -569,127 +620,120 @@ def serve_layout():
                     value='car_total',
                     inline=True,
                     inputStyle={"margin-right": "5px", "margin-left": "20px"},
-                    style={'margin-left': 40, 'margin-bottom': 00, 'margin-right': 40},
                 ),
-            ], width=12
+            ], sm=12
             ),
-        ]),
-        html.Br(),
+        ], className='g-2 p-1'),
         dbc.Row([
             dbc.Col([
-                dcc.Graph(id='bar_ranking', figure={}, style={'margin-left': 40, 'margin-right': 40, 'margin-top': 10, 'margin-bottom': 30})
-            ], width=12
+                dcc.Graph(id='bar_ranking', figure={})
+            ], sm=12
             ),
-        ]),
+        ], className='g-2 p-1 mb-3'),
 
         ### Compare traffic graph
         dbc.Row([
             dbc.Col([
-                html.H6(_('Select periods to compare')+':', style={'margin-left': 40, 'margin-right': 00, 'margin-top': 10, 'margin-bottom': 10}),
-            ], width=3),
+                html.H6(_('Select periods to compare')+':'),
+            ], sm=3),
             dbc.Col([
-                html.H6(_('Year')+':', style={'margin-left': 00, 'margin-right': 00, 'margin-top': 10, 'margin-bottom': 10}),
-            ], width=2),
+                html.H6(_('Year')+':'),
+            ], sm=2),
             dbc.Col([
-                html.H6(_('Month')+':', style={'margin-left': 00, 'margin-right': 00, 'margin-top': 10, 'margin-bottom': 10}),
-            ], width=2),
+                html.H6(_('Month')+':'),
+            ], sm=2),
             dbc.Col([
-                html.H6(_('Week') + ':', style={'margin-left': 00, 'margin-right': 00, 'margin-top': 10, 'margin-bottom': 10}),
-            ], width=2),
+                html.H6(_('Week') + ':'),
+            ], sm=2),
             dbc.Col([
-                html.H6(_('Day') + ':', style={'margin-left': 00, 'margin-right': 00, 'margin-top': 10, 'margin-bottom': 10}),
-            ], width=2),
+                html.H6(_('Day') + ':'),
+            ], sm=2),
 
             dbc.Col([
-                html.H6(_('Period') + ' A',
-                        style={'margin-left': 40, 'margin-right': 00, 'margin-top': 10, 'margin-bottom': 10, 'textAlign': 'right'}),
-            ], width=3
+                html.H6(_('Period') + ' A', style={'textAlign': 'right'}),
+            ], sm=3
             ),
             dbc.Col([
                 dcc.Dropdown(
                     id='dropdown_year_A',
                     options=[{'label': i, 'value': i} for i in traffic_df['year'].unique()],
                     value=traffic_df['year'][len(traffic_df['year']) - 1],
-                    style={'margin-left': 00, 'margin-bottom': 5},
+                    #style={'margin-left': 00, 'margin-bottom': 5},
                     clearable=False
                 ),
-            ], width=2),
+            ], sm=2),
             dbc.Col([
                 dcc.Dropdown(
                     id='dropdown_year_month_A',
                     options=[{'label': i, 'value': i} for i in traffic_df['year_month'].unique()],
                     value=traffic_df['year_month'][len(traffic_df['year_month']) - 1],
-                    style={'margin-left': 00, 'margin-bottom': 5},
+                    #style={'margin-left': 00, 'margin-bottom': 5},
                     clearable=False
                 ),
-            ], width=2),
+            ], sm=2),
             dbc.Col([
                 dcc.Dropdown(
                     id='dropdown_year_week_A',
                     options=[{'label': i, 'value': i} for i in traffic_df['year_week'].unique()],
                     value=traffic_df['year_week'][len(traffic_df['year_week']) - 1],
-                    style={'margin-left': 00, 'margin-bottom': 5},
+                    #style={'margin-left': 00, 'margin-bottom': 5},
                     clearable=False
                 ),
-            ], width=2),
+            ], sm=2),
             dbc.Col([
                 dcc.Dropdown(
                     id='dropdown_date_A',
                     options=[{'label': i, 'value': i} for i in traffic_df['date'].unique()],
                     value=traffic_df['date'][len(traffic_df['date']) - 1],
-                    style={'margin-left': 00, 'margin-bottom': 5},
+                    #style={'margin-left': 00, 'margin-bottom': 5},
                     clearable=False
                 ),
-            ], width=2),
+            ], sm=2),
 
             dbc.Col([
                 html.H6(_('Period') + ' B', style={'margin-left': 40, 'margin-right': 00, 'margin-top': 10, 'margin-bottom': 10, 'textAlign': 'right'}),
-            ], width=3),
+            ], sm=3),
             dbc.Col([
                 dcc.Dropdown(
                     id='dropdown_year_B',
                     options=[{'label': i, 'value': i} for i in traffic_df['year'].unique()],
                     value=traffic_df['year'][1],
-                    style={'margin-left': 00, 'margin-bottom': 00},
+                    #style={'margin-left': 00, 'margin-bottom': 00},
                     clearable=False
                 ),
-            ], width=2),
+            ], sm=2),
             dbc.Col([
                 dcc.Dropdown(
                     id='dropdown_year_month_B',
                     options=[{'label': i, 'value': i} for i in traffic_df['year_month'].unique()],
                     value=traffic_df['year_month'][1],
-                    style={'margin-left': 00, 'margin-bottom': 00},
+                    #style={'margin-left': 00, 'margin-bottom': 00},
                     clearable=False
                 ),
-            ], width=2),
+            ], sm=2),
             dbc.Col([
                 dcc.Dropdown(
                     id='dropdown_year_week_B',
                     options=[{'label': i, 'value': i} for i in traffic_df['year_week'].unique()],
                     value=traffic_df['year_week'][1],
-                    style={'margin-left': 00, 'margin-bottom': 00},
+                    #style={'margin-left': 00, 'margin-bottom': 00},
                     clearable=False
                 ),
-            ], width=2),
+            ], sm=2),
             dbc.Col([
                 dcc.Dropdown(
                     id='dropdown_date_B',
                         options=[{'label': i, 'value': i} for i in traffic_df['date'].unique()],
                     value=traffic_df['date'][1],
-                    style={'margin-left': 00, 'margin-bottom': 20},
+                    #style={'margin-left': 00, 'margin-bottom': 20},
                     clearable=False
                 ),
-            ], width=2),
-        html.Br(),
-        ], style={'margin-left': 40, 'margin-right': 40, 'background-color': ADFC_skyblue, 'opacity': 1.0}, className='sticky-top rounded "g-0"'),
+            ], sm=2),
+        ], className='sticky-top rounded g-2 p-1', style={'background-color': ADFC_skyblue, 'opacity': 1.0}),
         dbc.Row([
-            html.Span([html.H4(_('Compare traffic periods'),
-                               style={'margin-left': 40, 'margin-right': 00, 'margin-top': 30, 'margin-bottom': 00,
-                                      'display': 'inline-block'}),
+            html.Span([html.H4(_('Compare traffic periods'), className='my-3 me-2', style={'display': 'inline-block'}),
                        html.I(className='bi bi-info-circle-fill h6', id='compare_traffic_periods',
-                              style={'margin-left': 5, 'margin-top': 30, 'margin-bottom': 00,
-                                     'display': 'inline-block', 'color': ADFC_lightgrey})]),
+                              style={'display': 'inline-block', 'color': ADFC_lightgrey})]),
             dbc.Popover(
                 dbc.PopoverBody(
                     _('This chart allows four period-lengths to be compared: day, week, month or year. For each of these, two periods can be compared, period A and period B (e.g. week A vs. week B or day A vs. day B). Solid lines represent period A and dashed lines represent period B. The date and hour filters in the upper menu bar have no effect, however \'filter uptime\' does!')),
@@ -697,11 +741,10 @@ def serve_layout():
                 trigger='hover'
             ),
             dbc.Col([
-                dcc.Graph(id='line_avg_delta_traffic', figure={},
-                          style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 30})
-            ], width=12
+                dcc.Graph(id='line_avg_delta_traffic', figure={})
+            ], sm=12
             ),
-        ]),
+        ], className='g-2 p-1 mb-3'),
 
         # Feedback and contact
         dbc.Row([
@@ -720,7 +763,7 @@ def serve_layout():
                         html.A(_('Telraam camera'), href="https://telraam.net/home/blog/telraam-privacy", target="_blank"),_(' measurements'),],
                         style={'margin-left': 40, 'margin-right': 40, 'margin-top': 10, 'margin-bottom': 40}
                        ),
-            ], width=6),
+            ], sm=6),
             dbc.Col([
                 html.H6([_('Dashboard development & creation:'),  html.Br(), ('Egbert Klaassen'), _(' and '),('Michael Behrisch')],
                         style={'margin-left': 40, 'margin-right': 0, 'margin-top': 10, 'margin-bottom': 10}
@@ -728,12 +771,12 @@ def serve_layout():
                 html.H6([_('For dashboard improvement requests email us:')],
                         style={'margin-left': 40, 'margin-right': 0, 'margin-top': 10, 'margin-bottom': 40}
                         ),
-            ], width=4),
+            ], sm=4),
             dbc.Col([
                 dbc.Row([
                     dbc.Button([_('Contact Us!'), html.Br(), email_icon],
                         id='floating_button',
-                        class_name='btn btn-info',  # rounded-pill
+                        class_name='btn btn-info align-start',  # rounded-pill
                         href='mailto: berlinzaehltmobilitaet@gmail.com',
                         style={
                             #'position': 'absolute', # For absolute position use: 'absolute',  # For floating use: 'fixed',
@@ -748,25 +791,19 @@ def serve_layout():
                             'font-weight': 'bold'
                        }),
                 ]),
-                dbc.Row([
-                    html.Br(),
-                    html.Br(),
-                    html.Br(),
-                ]),
-                ], width=2, align='end'
+            ], sm=2, align='center'
             ),
-        html.Br(),
-        ], style={'margin-left': 40, 'margin-right': 40, 'margin-bottom': 40, 'background-color': ADFC_yellow, 'opacity': 0.7}, className='rounded text-black'),
+        ], className= 'rounded text-black g-0 p-1 mb-3', style={'background-color': ADFC_yellow, 'opacity': 1.0}),
+
+        ### Legal disclaimeers
         dbc.Row([
             dbc.Col([
                 html.P(_('Disclaimer'), style= {'font-size': 12, 'color': ADFC_darkgrey}),
                 html.P(_('The content published in the offer has been researched with the greatest care. Nevertheless, the Berlin Counts Mobility team cannot assume any liability for the topicality, correctness or completeness of the information provided. All information is provided without guarantee. liability claims against the Berlin zählt Mobilität team or its supporting organizations derived from the use of this information are excluded. Despite careful control of the content, the Berlin zählt Mobilität team and its supporting organizations assume no liability for the content of external links. The operators of the linked pages are solely responsible for their content. A constant control of the external links is not possible for the provider. If there are indications or knowledge of legal violations, the illegal links will be deleted immediately.'), style= {'font-size': 10, 'color': ADFC_darkgrey}),
                 html.P(_('Copyright'), style= {'font-size': 12, 'color': ADFC_darkgrey}),
                 html.P(_('The layout and design of the offer as a whole as well as its individual elements are protected by copyright. The same applies to the images, graphics and editorial contributions used in detail as well as their selection and compilation. Further use and reproduction are only permitted for private purposes. No changes may be made to it. Public use of the offer may only take place with the consent of the operator.'), style= {'font-size': 10, 'color': ADFC_darkgrey}),
-            ], width=12),
-            html.Br(),
-        ], style={'margin-left': 40, 'margin-right': 40, 'margin-bottom': 40}),
-        html.Br(),
+            ], sm=12),
+        ], className='g-2 p-1'),
     ],
     fluid = True,
     className = 'dbc'
@@ -822,9 +859,6 @@ def update_map(clickData, street_name, lang_code_dd):
     if clickData:
         segment_id = str(clickData['points'][0]['customdata'][0])
         #TODO: V1 V2 cameras
-        # Get camera info (under development)
-        #print(clickData['points'][0]['customdata'][1])
-        #print(clickData['points'][0]['customdata'][1][0])
         #print(clickData['points'][0]['customdata'][1][0]['hardware_version'])
 
     if callback_trigger == 'street_map':
@@ -853,7 +887,7 @@ def update_map(clickData, street_name, lang_code_dd):
         'Inactive - no data': ADFC_lightgrey},
         hover_data={'map_line_color': False, 'osm.highway': True, 'osm.address.city': True, 'osm.address.suburb': True, 'osm.address.postcode': True},
         labels={'segment_id': 'Segment', 'osm.highway': _('Highway type'), 'x': 'Lon', 'y': 'Lat', 'osm.address.city': _('City'), 'osm.address.suburb': _('District'), 'osm.address.postcode': _('Postal code')},
-        map_style="streets", center= dict(lat=lat_str, lon=lon_str), height=600, zoom= zoom_factor)
+        map_style="streets", center= dict(lat=lat_str, lon=lon_str), zoom= zoom_factor)
 
     street_map.update_traces(line_width=5, opacity=1.0)
     street_map.update_traces({'name': _('More bikes than cars')}, selector={'name': 'More bikes than cars'})
@@ -862,7 +896,12 @@ def update_map(clickData, street_name, lang_code_dd):
     street_map.update_traces({'name': _('Over 5x more cars')}, selector={'name': 'Over 5x more cars'})
     street_map.update_traces({'name': _('Over 10x more cars')}, selector={'name': 'Over 10x more cars'})
     street_map.update_traces({'name': _('Inactive - no data')}, selector={'name': 'Inactive - no data'})
-    street_map.update_layout(margin=dict(l=40, r=20, t=40, b=30))
+    street_map.update_layout(
+        autosize=False,
+        #width=800,
+        height=500,
+    )
+    street_map.update_layout(margin=dict(l=0, r=0, t=0, b=10))
     street_map.update_layout(legend_title=_('Street color'))
     street_map.update_layout(legend=dict(yanchor="top", y=0.99, xanchor="right", x=0.99))
     street_map.update_layout(annotations=[
@@ -890,6 +929,8 @@ def update_map(clickData, street_name, lang_code_dd):
 @callback(
     Output(component_id='selected_street_header', component_property='children'),
     Output(component_id='selected_street_header', component_property='style'),
+    Output(component_id='date_range_text', component_property='children'),
+    Output(component_id='date_range_text', component_property='style'),
     Output(component_id='pie_traffic', component_property='figure'),
     Output(component_id='line_abs_traffic', component_property='figure'),
     Output(component_id='bar_avg_traffic', component_property='figure'),
@@ -931,31 +972,63 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
     else:
         traffic_df_upt = traffic_df
 
-    # Filter on selected dates and hours
-    # TODO: trigger only in case of relevant callback
-    traffic_df_upt_dt, min_date, max_date, min_hour, max_hour = filter_dt(traffic_df_upt, start_date, end_date, hour_range)
-
-    # Get segment_id using dcc.Store or dropdown callbacks, elif for initiation
+    # Get segment_id/'full_street' using dcc.Store, callbacks, or initiate
+    # Check if dcc.Store was populated (segment selected on map)
     segment_id = json.dumps(segment_id_json)
-    if segment_id_json != None:
+    if segment_id_json is not None:
         segment_id = json.dumps(segment_id_json)
-    elif callback_trigger == 'street_name_dd':
+    # Set to 'full street' if street was selected from dropdown
+    elif callback_trigger in {'street_name_dd'}:
         segment_id = _('full street')
-    elif (segment_id == None) or (segment_id == 'null'):
+    # If date/or range slider were used, keep 'full_street' if segment_id is not 'null'
+    elif callback_trigger in {'date_filter', 'range_slider'}:
+        if segment_id == 'null':
+            segment_id = _('full street')
+        else:
+            pass
+    # Otherwise initiate
+    elif (segment_id is None) or (segment_id == 'null'):
         segment_id_index = traffic_df_upt.loc[traffic_df_upt['osm.name'] == street_name]
         segment_id = segment_id_index['segment_id'].values[0]
 
     # Reset segment_id to dcc.Store
     segment_id_json= None
 
-    # Update selected street
-    no_data, traffic_df_upt_dt_str = update_selected_street(traffic_df_upt_dt, segment_id, street_name)
-    if no_data == True:
-        selected_street_header = _('No data available for selected range!')
-        color = {'color': ADFC_crimson}
-    else:
+
+    # Prepare data for graphs
+    missing_data = False
+    message = ''
+
+    # TODO: trigger only in case of relevant callback
+    #if not callback_trigger or callback_trigger in {'street_name_dd', 'range_slider', 'date_filter'}:
+
+    # Check if selected street has data for selected data range
+    min_date_str, max_date_str, start_date, end_date, message, missing_data = get_min_max_str(traffic_df_upt, street_name, start_date, end_date)
+    traffic_df_upt_dt, min_date, max_date, min_hour, max_hour = filter_dt(traffic_df_upt, start_date, end_date, hour_range)
+    traffic_df_upt_dt_str = update_selected_street(traffic_df_upt_dt, segment_id, street_name)
+
+    start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d').strftime('%d %b %Y')
+    end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d').strftime('%d %b %Y')
+    min_date_str = datetime.datetime.strptime(min_date_str, '%Y-%m-%d').strftime('%d-%m-%Y')
+    max_date_str = datetime.datetime.strptime(max_date_str, '%Y-%m-%d').strftime('%d-%m-%Y')
+
+    # Provide warnings in case of missing data
+    if missing_data:
+        # Add warnings to layout
         selected_street_header = street_name
-        color = {'color': ADFC_green}
+        selected_street_header_color = {'color': ADFC_crimson}
+        date_range_text = _(message +', available: ' + min_date_str + _(' to ') + max_date_str)
+        if message == 'Dates out of range':
+            date_range_color = {'color': ADFC_crimson}
+        else:
+            date_range_color = {'color': ADFC_orange}
+    else:
+        # Update selected street - street data range covered
+        #traffic_df_upt_dt_str = update_selected_street(traffic_df_upt_dt, segment_id, street_name)
+        selected_street_header = street_name
+        selected_street_header_color = {'color': ADFC_green}
+        date_range_text = _('Pick date range:')
+        date_range_color = {'color': 'black'}
 
     # Create pie chart
     df_pie = traffic_df_upt_dt_str[traffic_df_upt_dt_str['street_selection'] == street_name]
@@ -993,6 +1066,7 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
 
     line_abs_traffic.update_layout({'plot_bgcolor': ADFC_palegrey, 'paper_bgcolor': ADFC_palegrey})
     line_abs_traffic.update_layout(legend_title_text=_('Traffic Type'))
+    #line_abs_traffic.update_layout(legend=dict(orientation='h', yanchor= 'bottom', y= 1.14, xanchor= 'right', x=0.65))
     line_abs_traffic.update_layout(yaxis_title= _('Absolute traffic count'))
     line_abs_traffic.update_yaxes(matches=None)
     line_abs_traffic.update_xaxes(matches=None)
@@ -1015,9 +1089,9 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
     else:
         df_avg_traffic = traffic_df_upt_dt_str.groupby(by=[radio_time_unit, 'street_selection'], sort=False, as_index=False).agg({'ped_total': 'mean', 'bike_total': 'mean', 'car_total': 'mean', 'heavy_total': 'mean'})
 
-    # Create date period for below four graph titles, convert formats from '%Y-%m-%d' format requitred by Datepicker!
-    start_date = format_str_date(start_date, '%Y-%m-%d','%d %b %Y')
-    end_date = format_str_date(end_date, '%Y-%m-%d','%d %b %Y')
+    # Create date period for below four graph titles, convert formats from '%Y-%m-%d' format required by DatePicker!
+    #start_date = format_str_date(start_date, '%d-%m-%Y','%d %b %Y')
+    #end_date = format_str_date(end_date, '%Y-%m-%d','%d %b %Y')
 
     bar_avg_traffic = px.bar(df_avg_traffic,
         x=radio_time_unit, y=['ped_total', 'bike_total', 'car_total', 'heavy_total'],
@@ -1155,37 +1229,36 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
     df_bar_ranking.reset_index(inplace=True)
 
     # Assess x and y for annotation
-    if no_data == False:
-        annotation_index = df_bar_ranking[df_bar_ranking['osm.name'] == street_name].index[0]
-        annotation_x = annotation_index
-        annotation_y = df_bar_ranking[radio_y_axis].values[annotation_x]
+    #if not missing_data:
+    annotation_index = df_bar_ranking[df_bar_ranking['osm.name'] == street_name].index[0]
+    annotation_x = annotation_index
+    annotation_y = df_bar_ranking[radio_y_axis].values[annotation_x]
 
-        bar_ranking = px.bar(df_bar_ranking,
-            x='osm.name', y=radio_y_axis,
-            color=radio_y_axis,
-            color_continuous_scale='temps',
-            labels={'ped_total': _('Pedestrians'), 'bike_total': _('Bikes'), 'car_total': _('Cars'), 'heavy_total': _('Heavy'), 'osm.length': _('Street Length'), 'osm.maxspeed': _('Max Speed'), 'osm.name': _('Street')},
-            title=(_('Absolute traffic') + ' (' + start_date + ' - ' + end_date + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)'),
-            height=600,
-        )
+    bar_ranking = px.bar(df_bar_ranking,
+        x='osm.name', y=radio_y_axis,
+        color=radio_y_axis,
+        color_continuous_scale='temps',
+        labels={'ped_total': _('Pedestrians'), 'bike_total': _('Bikes'), 'car_total': _('Cars'), 'heavy_total': _('Heavy'), 'osm.length': _('Street Length'), 'osm.maxspeed': _('Max Speed'), 'osm.name': _('Street')},
+        title=(_('Absolute traffic') + ' (' + start_date + ' - ' + end_date + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)'),
+        height=600,
+    )
 
-        bar_ranking.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
-        bar_ranking.add_annotation(x=annotation_x, y=annotation_y, text= street_name + '<br>' + _(' (segment:') + segment_id + ')', showarrow=True)
-        bar_ranking.update_annotations(ax=0, ay=-40, arrowhead=2, arrowsize=2, arrowwidth = 1, arrowcolor= ADFC_darkgrey, xanchor='left')
-        bar_ranking.update_layout(legend_title_text=_('Traffic Type'))
-        bar_ranking.update_layout({'plot_bgcolor': ADFC_palegrey,'paper_bgcolor': ADFC_palegrey})
-        bar_ranking.update_layout(yaxis_title= _('Absolute count'))
-        for annotation in bar_ranking.layout.annotations: annotation['font'] = {'size': 14}
-
-    else:
-        bar_ranking = px.bar(df_bar_ranking,
-            x='osm.name', y=radio_y_axis,
-            color=radio_y_axis,
-            color_continuous_scale='temps',
-            labels={'ped_total': _('Pedestrians'), 'bike_total': _('Bikes'), 'car_total': _('Cars'), 'heavy_total': _('Heavy'), 'osm.length': _('Street Length'), 'osm.maxspeed': _('Max Speed'), 'osm.name': _('Street')},
-            title=(_('Absolute traffic') + ' (' + start_date.split(' ')[0] + ' - ' + end_date.split(' ')[0] + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)'),
-            height=600,
-        )
+    bar_ranking.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
+    bar_ranking.add_annotation(x=annotation_x, y=annotation_y, text= street_name + '<br>' + _(' (segment:') + segment_id + ')', showarrow=True)
+    bar_ranking.update_annotations(ax=0, ay=-40, arrowhead=2, arrowsize=2, arrowwidth = 1, arrowcolor= ADFC_darkgrey, xanchor='left')
+    bar_ranking.update_layout(legend_title_text=_('Traffic Type'))
+    bar_ranking.update_layout({'plot_bgcolor': ADFC_palegrey,'paper_bgcolor': ADFC_palegrey})
+    bar_ranking.update_layout(yaxis_title= _('Absolute count'))
+    for annotation in bar_ranking.layout.annotations: annotation['font'] = {'size': 14}
+    #else:
+    # bar_ranking = px.bar(df_bar_ranking,
+    #     x='osm.name', y=radio_y_axis,
+    #     color=radio_y_axis,
+    #     color_continuous_scale='temps',
+    #     labels={'ped_total': _('Pedestrians'), 'bike_total': _('Bikes'), 'car_total': _('Cars'), 'heavy_total': _('Heavy'), 'osm.length': _('Street Length'), 'osm.maxspeed': _('Max Speed'), 'osm.name': _('Street')},
+    #     title=(_('Absolute traffic') + ' no data!!! (' + start_date.split(' ')[0] + ' - ' + end_date.split(' ')[0] + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)'),
+    #     height=600,
+    # )
 
     ### Create comparison Graph
     #TODO: bug dec 2023-2024 on day sort order
@@ -1222,8 +1295,7 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
         label = 'Date'
 
     # Prepare traffic_df_upt by selected street
-    no_data, traffic_df_upt_str = update_selected_street(traffic_df_upt, segment_id, street_name)
-    #output_csv(traffic_df_upt_str,'traffic_df_upt_str')
+    traffic_df_upt_str = update_selected_street(traffic_df_upt, segment_id, street_name)
     df_avg_traffic_delta_concat = get_comparison_data(traffic_df_upt_str, time_division, group_by, selected_value_A, selected_value_B)
 
     line_avg_delta_traffic = px.line(df_avg_traffic_delta_concat,
@@ -1260,7 +1332,7 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
     line_avg_delta_traffic.update_xaxes(dtick = 1, tickformat=".0f")
     for annotation in line_avg_delta_traffic.layout.annotations: annotation['font'] = {'size': 14}
 
-    return selected_street_header, color, pie_traffic, line_abs_traffic, bar_avg_traffic, line_avg_delta_traffic, bar_perc_speed, bar_avg_speed, bar_v85, bar_ranking, segment_id_json
+    return selected_street_header, selected_street_header_color, date_range_text, date_range_color, pie_traffic, line_abs_traffic, bar_avg_traffic, line_avg_delta_traffic, bar_perc_speed, bar_avg_speed, bar_v85, bar_ranking, segment_id_json
 
 if __name__ == "__main__":
     app.run_server(debug=True)

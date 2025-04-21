@@ -9,8 +9,11 @@ body {
   font-family: inherit;
   font-weight: 400;
   font-style: inherit;
-  }
+  Padding: 1px;
+  Width: 100px;
+  Height: 20px;
+}
 /* Change the track's color */
 .rc-slider-rail {
-    background-color: white;
+    'background-color': 'white';
 }

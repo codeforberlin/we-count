@@ -24,11 +24,7 @@ from dash.exceptions import PreventUpdate
 import plotly.express as px
 from pathlib import Path
 
-from pygments.console import dark_colors
-from werkzeug.debug.repr import missing
-
 import common
-from src.bzm_get_data import save_df
 
 DEPLOYED = __name__ != '__main__'
 
@@ -189,10 +185,6 @@ def get_comparison_data(df, radio_time_division, group_by, selected_value_A, sel
     return df_avg_traffic_delta_concat
 
 def update_selected_street(df, segment_id, street_name):
-    #print('def update_selected_street')
-    #print(segment_id)
-    #print(street_name)
-    #print(len(df))
 
     if segment_id == _('full street'):
         df_str = df[df['osm.name'] == street_name]
@@ -201,12 +193,6 @@ def update_selected_street(df, segment_id, street_name):
         # Generate "selected street only" df and populate "street_selection"
         df_str = df[df['segment_id'] == segment_id]
         df_str.loc[df_str['street_selection'] == 'All Streets', 'street_selection'] = street_name
-
-    #if len(df_str) == 0:
-    #    no_data = True
-    #    print('def update selected street - no data')
-    #else:
-    #    no_data = False
 
     # Add selected street to all streets
     traffic_df_upt_dt_str = df._append(df_str, ignore_index=True)
@@ -267,23 +253,19 @@ def get_min_max_str(df, street_name, start_date, end_date):
     if start_date > max_date_str or end_date < min_date_str:
         missing_data = True
         message = 'Dates out of range'
-        print(message)
         start_date = min_date_str
         end_date = max_date_str
     elif min_date_str <= start_date <= max_date_str and end_date > max_date_str:
         missing_data = True
         message = 'End date out of range'
-        print(message)
         end_date = max_date_str
     elif min_date_str <= end_date <= max_date_str and start_date < min_date_str:
         missing_data = True
         message = 'Start date out of range'
-        print(message)
         start_date = min_date_str
     elif start_date < min_date_str or end_date > max_date_str:
         missing_data = True
         message = 'Narrowed down range'
-        print(message)
         start_date = min_date_str
         end_date = max_date_str
 

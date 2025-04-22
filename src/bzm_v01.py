@@ -397,7 +397,7 @@ def serve_layout():
         dbc.Row([
             # Street map
             dbc.Col([
-                dcc.Graph(id='street_map', figure={}, className='bg-#F2F2F2'),
+                dcc.Graph(id='street_map', figure={}, className='bg-#F2F2F2', style={'height': 500}),
             ],  sm=8),
             # General controls
             dbc.Col([
@@ -881,9 +881,9 @@ def update_map(clickData, street_name, lang_code_dd):
     street_map.update_layout(
         autosize=False,
         #width=800,
-        height=500,
+        #height=500,
     )
-    street_map.update_layout(margin=dict(l=0, r=0, t=0, b=10))
+    street_map.update_layout(margin=dict(l=0, r=0, t=0, b=0))
     street_map.update_layout(legend_title=_('Street color'))
     street_map.update_layout(legend=dict(yanchor="top", y=0.99, xanchor="right", x=0.99))
     street_map.update_layout(annotations=[
@@ -1001,8 +1001,10 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
         selected_street_header_color = {'color': ADFC_crimson}
         date_range_text = _(message +', available: ' + min_date_str + _(' to ') + max_date_str)
         if message == 'Dates out of range':
+            selected_street_header_color = {'color': ADFC_crimson}
             date_range_color = {'color': ADFC_crimson}
         else:
+            selected_street_header_color = {'color': ADFC_orange}
             date_range_color = {'color': ADFC_orange}
     else:
         # Update selected street - street data range covered

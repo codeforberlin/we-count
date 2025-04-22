@@ -759,7 +759,7 @@ def serve_layout():
                     dbc.Button([_('Contact Us!'), html.Br(), email_icon],
                         id='floating_button',
                         class_name='btn btn-info align-start',  # rounded-pill
-                        href='mailto: berlinzaehltmobilitaet@gmail.com',
+                        href='mailto: kontakt@berlin-zaehlt.de',
                         style={
                             #'position': 'absolute', # For absolute position use: 'absolute',  # For floating use: 'fixed',
                             #'top': '0px',

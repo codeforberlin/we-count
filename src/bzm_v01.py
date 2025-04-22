@@ -1319,4 +1319,4 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
     return selected_street_header, selected_street_header_color, date_range_text, date_range_color, pie_traffic, line_abs_traffic, bar_avg_traffic, line_avg_delta_traffic, bar_perc_speed, bar_avg_speed, bar_v85, bar_ranking, segment_id_json
 
 if __name__ == "__main__":
-    app.run_server(debug=True)
+    app.run_server(debug=False)

@@ -10,10 +10,13 @@ body {
   font-weight: 400;
   font-style: inherit;
   Padding: 1px;
-  Width: 100px;
   Height: 20px;
+}
+/* change the background color */
+.navbar-custom {
+    background-color: #4433cc;
 }
 /* Change the track's color */
 .rc-slider-rail {
-    'background-color': 'white';
+    background-color: lightgrey;
 }

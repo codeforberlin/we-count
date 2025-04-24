@@ -379,21 +379,24 @@ server = app.server
 def serve_layout():
     return dbc.Container(
         [
-        dbc.Row([
-            dcc.Location(id='url', refresh=True),
-            dbc.Col(
-                html.H1('Berlin zählt Mobilität', className='text-sm-start ms-2 text-nowrap', style={'font-weight': 'bold', 'color': ADFC_darkblue, 'font-style': 'italic', 'text-shadow': '3px 2px lightblue'}),
-                sm=6),
-            dbc.Col(
-                html.Img(src=app.get_asset_url('DLR_und_adfc_logos-cut.png'), title='Das Deutsche Zentrum für Luft- und Raumfahrt, Allgemeiner Deutscher Fahrrad-Club', className='w-75'),
-                sm=4,
-            ),
-            dbc.Col(
-                html.Img(src=app.get_asset_url('Telraam.png'), title='Berlin zählt Mobilität: ADFC Berlin & DLR Citizen Science- Projekt', className='w-75'),
-                sm=2,
-            ),
-        ], className= 'g-2 p-1 mb-3', align='center', style={'background-color': ADFC_skyblue, 'opacity': 1.0}
+        dbc.NavbarSimple(
+            children=[
+                dbc.NavItem(dbc.NavLink("Project partners: ", href="#"), class_name='align-top'),
+                dbc.Col(html.Img(src=app.get_asset_url('DLR_und_adfc_logos-cut.png'), title='Das Deutsche Zentrum für Luft- und Raumfahrt, Allgemeiner Deutscher Fahrrad-Club', height="50px"), className='ms-3'),
+                dbc.Col(html.Img(src=app.get_asset_url('CodeFor-berlin.svg'), title='Code for Berlin', height="50px"), className='ms-3'),
+                dbc.Col(html.Img(src=app.get_asset_url('Telraam.png'), title='Berlin zählt Mobilität, Citizen Science Project: ADFC Berlin, DLR & Telraam', height="50px"), className='ms-3')
+            ],
+            brand="Berlin zählt Mobilität",
+            brand_style={'font-size': 36,'font-weight': 'bold', 'color': ADFC_darkblue, 'font-style': 'italic', 'text-shadow': '3px 2px lightblue'},
+            #brand_href='https://adfc-tk.de/wir-zaehlen/',
+            #brand_external_link=True,
+            color=ADFC_skyblue,
+            dark=False,
         ),
+        dbc.Row([
+            # Anchor for language swithch
+            dcc.Location(id='url', refresh=True),
+        ]),
         dbc.Row([
             # Street map
             dbc.Col([
@@ -423,10 +426,8 @@ def serve_layout():
                 dcc.Dropdown(id='street_name_dd',
                     options=sorted([{'label': i, 'value': i} for i in traffic_df['osm.name'].unique()], key=lambda x: x['label']),
                     value=street_name,
-                    #style={'margin-top': 10, 'margin-bottom': 30}
                 ),
                 dcc.Store(id='store_segment_id_value', storage_type='memory'),
-                #html.Hr(),
                 html.Span([
                     html.H4(_('Traffic type - selected street'), id='selected_street_header', style={'color': 'black'}, className='my-2 d-inline-block'),
                     html.I(className='bi bi-info-circle-fill h6 ms-1', id='popover_traffic_type', style={'align': 'top', 'color': ADFC_lightgrey}),
@@ -436,14 +437,12 @@ def serve_layout():
                 ]),
                 # Pie chart
                 dcc.Graph(id='pie_traffic', figure={}),
-                #html.H6('Map info', id='popover_map_info', className='text-start', style={'color': ADFC_darkgrey}),
-                #dbc.Popover(dbc.PopoverBody(_('Note: street colors represent bike/car ratios based on all data available and do not change with date- or hour selection. The map allows street segments to be selected individually. To select whole streets, select a street name from the drop down menu.')), target="popover_map_info", trigger="hover"),
             ], sm=4),
-        ], className= 'g-2 p-1 mb-3 text-start'), #style= {'margin-right': 40}),
+        ], className= 'g-2 mt-1 mb-3 text-start'), #style= {'margin-right': 40}),
         # Date/Time selection and Uptime filter
         dbc.Row([
             dbc.Col([
-                html.H6(_('Set hour range:'), className='text-sm-start ms-2'), #style={'margin-left': 40, 'margin-right': 40, 'margin-top': 10, 'margin-bottom': 10}),
+                html.H6(_('Set hour range:'), className='ms-2 mt-2'),
                 # Hour slider
                 dcc.RangeSlider(
                     id='range_slider',
@@ -451,10 +450,11 @@ def serve_layout():
                     max= max_hour,
                     step=1,
                     value = hour_range,
-                    tooltip={'always_visible': True, 'placement' : 'bottom', 'template': "{value}" + _(" Hour")}),
+                    className='align-bottom mb-2',
+                    tooltip={'always_visible': False, 'placement' : 'bottom', 'template': '{value}' + _(" Hour")}),
             ], sm=6),
             dbc.Col([
-                html.H6(_('Pick date range:'), className='text-sm-start ms-2', id='date_range_text'), #style={'margin-left': 00, 'margin-right': 40, 'margin-top': 10, 'margin-bottom': 10}),
+                html.H6(_('Pick date range:'), className='ms-2 mt-2 text-nowrap', id='date_range_text'),
                 # Date picker
                 dcc.DatePickerRange(
                     id="date_filter",
@@ -466,7 +466,7 @@ def serve_layout():
                     end_date_placeholder_text='DD-MM-YYYY',
                     number_of_months_shown=2,
                     minimum_nights=1,
-                    className='d-flex justify-content-start',
+                    className='align-bottom ms-2 mb-2',
                 ),
             ], sm=3),
             dbc.Col([
@@ -475,19 +475,21 @@ def serve_layout():
                         id='toggle_uptime_filter',
                         options=[{'label': _(' Filter uptime > 0.7'), 'value': 'filter_uptime_selected'}],
                         value= ['filter_uptime_selected'],
-                        style = {'color' : ADFC_darkgrey, 'font_size' : 14},
-                        className='d-inline-block text-center'
+                        #style = {'color' : ADFC_darkgrey, 'font_size' : 14},
+                        inline=False,
+                        switch=True,
+                        className='d-inline-block ms-2 my-2'
                     ),
-                    html.I(className='bi bi-info-circle-fill h6 ms-1',
+                    html.I(className='bi bi-info-circle-fill h6 ms-2',
                         id='popover_filter',
                         style={'color': ADFC_lightgrey}),
                     dbc.Popover(
-                         dbc.PopoverBody(_('A high 0.7-0.8 uptime will always mean very good data. The first and last daylight hour of the day will always have lower uptimes. If uptimes during the day are below 0.5, that is usually a clear sign that something is probably wrong with the instance.')),
-                         target="popover_filter", trigger="hover")
+                        dbc.PopoverBody(_('A high 0.7-0.8 uptime will always mean very good data. The first and last daylight hour of the day will always have lower uptimes. If uptimes during the day are below 0.5, that is usually a clear sign that something is probably wrong with the instance.')),
+                        target="popover_filter", trigger="hover")
                 ]),
             ], sm=3),
-        ], className='g-2 p-1 sticky-top rounded text-sm-center', style={'background-color': ADFC_skyblue, 'opacity': 1.0}),
-        # Absolute traffic
+        ], className='g-2 sticky-top rounded', style={'background-color': ADFC_skyblue}),
+        #Absolute traffic
         dbc.Row([
             dbc.Col([
                 # Radio time division
@@ -613,128 +615,179 @@ def serve_layout():
             ),
         ], className='g-2 p-1 mb-3'),
 
-        ### Compare traffic graph
+        ## Compare traffic graph
         dbc.Row([
+            #dbc.Col([
+            #    html.H6(_('Select periods to compare')+':'),
+            #], sm=2),
             dbc.Col([
-                html.H6(_('Select periods to compare')+':'),
+                html.H6(_('Compare'), className='text-end me-2 fw-bold'),
+                html.H6(_('Period') + ' A', className='text-end me-2 my-3'),
+                html.H6(_('Period') + ' B', className='text-end me-2 my-3'),
             ], sm=3),
             dbc.Col([
-                html.H6(_('Year')+':'),
-            ], sm=2),
-            dbc.Col([
-                html.H6(_('Month')+':'),
-            ], sm=2),
-            dbc.Col([
-                html.H6(_('Week') + ':'),
-            ], sm=2),
-            dbc.Col([
-                html.H6(_('Day') + ':'),
-            ], sm=2),
-
-            dbc.Col([
-                html.H6(_('Period') + ' A', style={'textAlign': 'right'}),
-            ], sm=3
-            ),
-            dbc.Col([
+                html.H6(_('Year')+':', className='fw-bold text-center'),
                 dcc.Dropdown(
                     id='dropdown_year_A',
                     options=[{'label': i, 'value': i} for i in traffic_df['year'].unique()],
                     value=traffic_df['year'][len(traffic_df['year']) - 1],
-                    #style={'margin-left': 00, 'margin-bottom': 5},
-                    clearable=False
+                    clearable=False,
                 ),
-            ], sm=2),
-            dbc.Col([
-                dcc.Dropdown(
-                    id='dropdown_year_month_A',
-                    options=[{'label': i, 'value': i} for i in traffic_df['year_month'].unique()],
-                    value=traffic_df['year_month'][len(traffic_df['year_month']) - 1],
-                    #style={'margin-left': 00, 'margin-bottom': 5},
-                    clearable=False
-                ),
-            ], sm=2),
-            dbc.Col([
-                dcc.Dropdown(
-                    id='dropdown_year_week_A',
-                    options=[{'label': i, 'value': i} for i in traffic_df['year_week'].unique()],
-                    value=traffic_df['year_week'][len(traffic_df['year_week']) - 1],
-                    #style={'margin-left': 00, 'margin-bottom': 5},
-                    clearable=False
-                ),
-            ], sm=2),
-            dbc.Col([
-                dcc.Dropdown(
-                    id='dropdown_date_A',
-                    options=[{'label': i, 'value': i} for i in traffic_df['date'].unique()],
-                    value=traffic_df['date'][len(traffic_df['date']) - 1],
-                    #style={'margin-left': 00, 'margin-bottom': 5},
-                    clearable=False
-                ),
-            ], sm=2),
-
-            dbc.Col([
-                html.H6(_('Period') + ' B', style={'margin-left': 40, 'margin-right': 00, 'margin-top': 10, 'margin-bottom': 10, 'textAlign': 'right'}),
-            ], sm=3),
-            dbc.Col([
                 dcc.Dropdown(
                     id='dropdown_year_B',
                     options=[{'label': i, 'value': i} for i in traffic_df['year'].unique()],
                     value=traffic_df['year'][1],
-                    #style={'margin-left': 00, 'margin-bottom': 00},
                     clearable=False
                 ),
             ], sm=2),
             dbc.Col([
+                html.H6(_('Month')+':', className='fw-bold text-center'),
+                dcc.Dropdown(
+                    id='dropdown_year_month_A',
+                    options=[{'label': i, 'value': i} for i in traffic_df['year_month'].unique()],
+                    value=traffic_df['year_month'][len(traffic_df['year_month']) - 1],
+                    clearable=False
+                ),
                 dcc.Dropdown(
                     id='dropdown_year_month_B',
                     options=[{'label': i, 'value': i} for i in traffic_df['year_month'].unique()],
                     value=traffic_df['year_month'][1],
-                    #style={'margin-left': 00, 'margin-bottom': 00},
                     clearable=False
                 ),
             ], sm=2),
             dbc.Col([
+                html.H6(_('Week') + ':', className='fw-bold text-center'),
+                dcc.Dropdown(
+                    id='dropdown_year_week_A',
+                    options=[{'label': i, 'value': i} for i in traffic_df['year_week'].unique()],
+                    value=traffic_df['year_week'][len(traffic_df['year_week']) - 1],
+                    clearable=False
+                ),
                 dcc.Dropdown(
                     id='dropdown_year_week_B',
                     options=[{'label': i, 'value': i} for i in traffic_df['year_week'].unique()],
                     value=traffic_df['year_week'][1],
-                    #style={'margin-left': 00, 'margin-bottom': 00},
                     clearable=False
                 ),
-            ], sm=2),
+            ], className='', sm=2),
             dbc.Col([
+                html.H6(_('Day') + ':', className='fw-bold text-center'),
+                dcc.Dropdown(
+                    id='dropdown_date_A',
+                    options=[{'label': i, 'value': i} for i in traffic_df['date'].unique()],
+                    value=traffic_df['date'][len(traffic_df['date']) - 1],
+                    clearable=False
+                ),
                 dcc.Dropdown(
                     id='dropdown_date_B',
-                        options=[{'label': i, 'value': i} for i in traffic_df['date'].unique()],
+                    options=[{'label': i, 'value': i} for i in traffic_df['date'].unique()],
                     value=traffic_df['date'][1],
-                    #style={'margin-left': 00, 'margin-bottom': 20},
                     clearable=False
                 ),
             ], sm=2),
         ], className='sticky-top rounded g-2 p-1', style={'background-color': ADFC_skyblue, 'opacity': 1.0}),
+
+        # dbc.Row([
+        #     dbc.Col([
+        #         html.H6(_('Compare:'), className='fw-bold'),
+        #     ], className='g-0 text-center', sm=2),
+        #     dbc.Col([
+        #         html.H6(_('Period') + ' A', className='my-2'),
+        #         html.H6(_('Period') + ' B', className='my-2'),
+        #     ], className='g-0 text-center', sm=2),
+        #     dbc.Col([
+        #         dbc.Accordion([
+        #             dbc.AccordionItem([
+        #                 dcc.Dropdown(
+        #                     id='dropdown_year_A',
+        #                     options=[{'label': i, 'value': i} for i in traffic_df['year'].unique()],
+        #                     value=traffic_df['year'][len(traffic_df['year']) - 1],
+        #                     clearable=False,
+        #                 ),
+        #                 dcc.Dropdown(
+        #                     id='dropdown_year_B',
+        #                     options=[{'label': i, 'value': i} for i in traffic_df['year'].unique()],
+        #                     value=traffic_df['year'][1],
+        #                     clearable=False
+        #                 ),
+        #             ], title= _('Year')+':'), #className='g-0 ms-2', sm=2),
+        #             dbc.AccordionItem([
+        #                 dcc.Dropdown(
+        #                     id='dropdown_year_month_A',
+        #                     options=[{'label': i, 'value': i} for i in traffic_df['year_month'].unique()],
+        #                     value=traffic_df['year_month'][len(traffic_df['year_month']) - 1],
+        #                     clearable=False
+        #                 ),
+        #                 dcc.Dropdown(
+        #                     id='dropdown_year_month_B',
+        #                     options=[{'label': i, 'value': i} for i in traffic_df['year_month'].unique()],
+        #                     value=traffic_df['year_month'][1],
+        #                     clearable=False
+        #                 ),
+        #             ], title=(_('Month')+':')),
+        #         ], start_collapsed=True),
+        #     ], className='g-0', sm=3), #className='g-0 ms-2', sm=2),
+        #     dbc.Col([
+        #         dbc.Accordion([
+        #             dbc.AccordionItem([
+        #                 #html.H6(_('Week') + ':', className='fw-bold text-center'),
+        #                 dcc.Dropdown(
+        #                     id='dropdown_year_week_A',
+        #                     options=[{'label': i, 'value': i} for i in traffic_df['year_week'].unique()],
+        #                     value=traffic_df['year_week'][len(traffic_df['year_week']) - 1],
+        #                     clearable=False
+        #                 ),
+        #                 dcc.Dropdown(
+        #                     id='dropdown_year_week_B',
+        #                     options=[{'label': i, 'value': i} for i in traffic_df['year_week'].unique()],
+        #                     value=traffic_df['year_week'][1],
+        #                     clearable=False
+        #                 ),
+        #             ], title=(_('Week') + ':')), #className='g-0 ms-2', sm=2),
+        #             dbc.AccordionItem([
+        #                 #html.H6(_('Day') + ':', className='fw-bold text-center'),
+        #                 dcc.Dropdown(
+        #                     id='dropdown_date_A',
+        #                     options=[{'label': i, 'value': i} for i in traffic_df['date'].unique()],
+        #                     value=traffic_df['date'][len(traffic_df['date']) - 1],
+        #                     clearable=False
+        #                 ),
+        #                 dcc.Dropdown(
+        #                     id='dropdown_date_B',
+        #                     options=[{'label': i, 'value': i} for i in traffic_df['date'].unique()],
+        #                     value=traffic_df['date'][1],
+        #                     clearable=False
+        #                 ),
+        #             ], title=(_('Day') + ':')), #className='g-0 ms-2', sm=2),
+        #         ], start_collapsed=True),
+        #     ], className='g-0', sm=3),
+        # ], className='sticky-top rounded g-2 p-1', style={'background-color': ADFC_skyblue, 'opacity': 1.0}),
+
         dbc.Row([
-            html.Span([html.H4(_('Compare traffic periods'), className='my-3 me-2', style={'display': 'inline-block'}),
-                       html.I(className='bi bi-info-circle-fill h6', id='compare_traffic_periods',
-                              style={'display': 'inline-block', 'color': ADFC_lightgrey})]),
+            html.Span(
+                [html.H4(_('Compare traffic periods'), className='my-3 me-2', style={'display': 'inline-block'}),
+                 html.I(className='bi bi-info-circle-fill h6', id='compare_traffic_periods',
+                        style={'display': 'inline-block', 'color': ADFC_lightgrey})]),
             dbc.Popover(
                 dbc.PopoverBody(
                     _('This chart allows four period-lengths to be compared: day, week, month or year. For each of these, two periods can be compared, period A and period B (e.g. week A vs. week B or day A vs. day B). Solid lines represent period A and dashed lines represent period B. The date and hour filters in the upper menu bar have no effect, however \'filter uptime\' does!')),
                 target='compare_traffic_periods',
                 trigger='hover'
             ),
+        ], className='g-2 p-1 mb-3'),
+        dbc.Row([
             dbc.Col([
                 dcc.Graph(id='line_avg_delta_traffic', figure={})
-            ], sm=12
-            ),
+            ], sm=12),
         ], className='g-2 p-1 mb-3'),
 
-        # Feedback and contact
+        ### Feedback and contact
         dbc.Row([
             html.H4(_('Feedback and contact'),
                     style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 10}),
             dbc.Col([
                 html.H6([_('More information about the '),
-                        html.A('Berlin zählt Mobilität', href="https://adfc-tk.de/wir-zaehlen/", target="_blank"),_(' (BzM) initiative'),],
+                        html.A('Berlin zählt Mobilität', href='https://adfc-tk.de/wir-zaehlen/', target="_blank"),_(' (BzM) initiative'),],
                         style={'margin-left': 40, 'margin-right': 40, 'margin-top': 10, 'margin-bottom': 10}
                        ),
                 html.H6([_('Request a counter at the '),
@@ -787,7 +840,7 @@ def serve_layout():
             ], sm=12),
         ], className='g-2 p-1'),
     ],
-    fluid = True,
+    fluid = 'sm',
     className = 'dbc'
 )
 
@@ -1319,4 +1372,4 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
     return selected_street_header, selected_street_header_color, date_range_text, date_range_color, pie_traffic, line_abs_traffic, bar_avg_traffic, line_avg_delta_traffic, bar_perc_speed, bar_avg_speed, bar_v85, bar_ranking, segment_id_json
 
 if __name__ == "__main__":
-    app.run_server(debug=False)
+    app.run_server(debug=True)

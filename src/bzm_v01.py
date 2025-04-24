@@ -478,7 +478,7 @@ def serve_layout():
                         #style = {'color' : ADFC_darkgrey, 'font_size' : 14},
                         inline=False,
                         switch=True,
-                        className='d-inline-block ms-2 my-2'
+                        className='d-inline-block ms-2 mt-4'
                     ),
                     html.I(className='bi bi-info-circle-fill h6 ms-2',
                         id='popover_filter',

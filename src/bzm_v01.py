@@ -19,6 +19,7 @@ import pandas as pd
 import json
 import geopandas as gpd
 import dash_bootstrap_components as dbc
+from PIL.ImageChops import offset
 from dash import Dash, html, dcc, Output, Input, State, callback, ctx
 from dash.exceptions import PreventUpdate
 import plotly.express as px
@@ -686,83 +687,6 @@ def serve_layout():
                 ),
             ], sm=2),
         ], className='sticky-top rounded g-2 p-1', style={'background-color': ADFC_skyblue, 'opacity': 1.0}),
-
-        # dbc.Row([
-        #     dbc.Col([
-        #         html.H6(_('Compare:'), className='fw-bold'),
-        #     ], className='g-0 text-center', sm=2),
-        #     dbc.Col([
-        #         html.H6(_('Period') + ' A', className='my-2'),
-        #         html.H6(_('Period') + ' B', className='my-2'),
-        #     ], className='g-0 text-center', sm=2),
-        #     dbc.Col([
-        #         dbc.Accordion([
-        #             dbc.AccordionItem([
-        #                 dcc.Dropdown(
-        #                     id='dropdown_year_A',
-        #                     options=[{'label': i, 'value': i} for i in traffic_df['year'].unique()],
-        #                     value=traffic_df['year'][len(traffic_df['year']) - 1],
-        #                     clearable=False,
-        #                 ),
-        #                 dcc.Dropdown(
-        #                     id='dropdown_year_B',
-        #                     options=[{'label': i, 'value': i} for i in traffic_df['year'].unique()],
-        #                     value=traffic_df['year'][1],
-        #                     clearable=False
-        #                 ),
-        #             ], title= _('Year')+':'), #className='g-0 ms-2', sm=2),
-        #             dbc.AccordionItem([
-        #                 dcc.Dropdown(
-        #                     id='dropdown_year_month_A',
-        #                     options=[{'label': i, 'value': i} for i in traffic_df['year_month'].unique()],
-        #                     value=traffic_df['year_month'][len(traffic_df['year_month']) - 1],
-        #                     clearable=False
-        #                 ),
-        #                 dcc.Dropdown(
-        #                     id='dropdown_year_month_B',
-        #                     options=[{'label': i, 'value': i} for i in traffic_df['year_month'].unique()],
-        #                     value=traffic_df['year_month'][1],
-        #                     clearable=False
-        #                 ),
-        #             ], title=(_('Month')+':')),
-        #         ], start_collapsed=True),
-        #     ], className='g-0', sm=3), #className='g-0 ms-2', sm=2),
-        #     dbc.Col([
-        #         dbc.Accordion([
-        #             dbc.AccordionItem([
-        #                 #html.H6(_('Week') + ':', className='fw-bold text-center'),
-        #                 dcc.Dropdown(
-        #                     id='dropdown_year_week_A',
-        #                     options=[{'label': i, 'value': i} for i in traffic_df['year_week'].unique()],
-        #                     value=traffic_df['year_week'][len(traffic_df['year_week']) - 1],
-        #                     clearable=False
-        #                 ),
-        #                 dcc.Dropdown(
-        #                     id='dropdown_year_week_B',
-        #                     options=[{'label': i, 'value': i} for i in traffic_df['year_week'].unique()],
-        #                     value=traffic_df['year_week'][1],
-        #                     clearable=False
-        #                 ),
-        #             ], title=(_('Week') + ':')), #className='g-0 ms-2', sm=2),
-        #             dbc.AccordionItem([
-        #                 #html.H6(_('Day') + ':', className='fw-bold text-center'),
-        #                 dcc.Dropdown(
-        #                     id='dropdown_date_A',
-        #                     options=[{'label': i, 'value': i} for i in traffic_df['date'].unique()],
-        #                     value=traffic_df['date'][len(traffic_df['date']) - 1],
-        #                     clearable=False
-        #                 ),
-        #                 dcc.Dropdown(
-        #                     id='dropdown_date_B',
-        #                     options=[{'label': i, 'value': i} for i in traffic_df['date'].unique()],
-        #                     value=traffic_df['date'][1],
-        #                     clearable=False
-        #                 ),
-        #             ], title=(_('Day') + ':')), #className='g-0 ms-2', sm=2),
-        #         ], start_collapsed=True),
-        #     ], className='g-0', sm=3),
-        # ], className='sticky-top rounded g-2 p-1', style={'background-color': ADFC_skyblue, 'opacity': 1.0}),
-
         dbc.Row([
             html.Span(
                 [html.H4(_('Compare traffic periods'), className='my-3 me-2', style={'display': 'inline-block'}),
@@ -783,51 +707,51 @@ def serve_layout():
 
         ### Feedback and contact
         dbc.Row([
-            html.H4(_('Feedback and contact'),
-                    style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 10}),
+            dbc.Col([
+                html.H4(_('Feedback and contact'), className='ms-2, my-2'),
+            ], className= 'ms-3', sm=12),
             dbc.Col([
                 html.H6([_('More information about the '),
                         html.A('Berlin zählt Mobilität', href='https://adfc-tk.de/wir-zaehlen/', target="_blank"),_(' (BzM) initiative'),],
-                        style={'margin-left': 40, 'margin-right': 40, 'margin-top': 10, 'margin-bottom': 10}
+                        #style={'margin-left': 40, 'margin-right': 40, 'margin-top': 10, 'margin-bottom': 10},
+                        className='ms-2',
                        ),
                 html.H6([_('Request a counter at the '),
                         html.A(_('Citizen Science-Projekt'), href="https://telraam.net/en/candidates/berlin-zaehlt-mobilitaet/berlin-zaehlt-mobilitaet", target="_blank"),],
-                        style={'margin-left': 40, 'margin-right': 40, 'margin-top': 10, 'margin-bottom': 10}
-                       ),
+                        className='ms-2',
+                        ),
                 html.H6([_('Data protection around the '),
                         html.A(_('Telraam camera'), href="https://telraam.net/home/blog/telraam-privacy", target="_blank"),_(' measurements'),],
-                        style={'margin-left': 40, 'margin-right': 40, 'margin-top': 10, 'margin-bottom': 40}
-                       ),
-            ], sm=6),
+                        className='ms-2',
+                        ),
+            ], className= 'ms-3', sm=5),
             dbc.Col([
                 html.H6([_('Dashboard development & creation:'),  html.Br(), ('Egbert Klaassen'), _(' and '),('Michael Behrisch')],
-                        style={'margin-left': 40, 'margin-right': 0, 'margin-top': 10, 'margin-bottom': 10}
-                        ),
+                        className='ms-2',
+                        ), #className='ms-5'),
                 html.H6([_('For dashboard improvement requests email us:')],
-                        style={'margin-left': 40, 'margin-right': 0, 'margin-top': 10, 'margin-bottom': 40}
-                        ),
-            ], sm=4),
+                        className='ms-2',
+                        ), #className='my-2'),
+            ], className= 'ms-3', sm=4),
             dbc.Col([
-                dbc.Row([
-                    dbc.Button([_('Contact Us!'), html.Br(), email_icon],
-                        id='floating_button',
-                        class_name='btn btn-info align-start',  # rounded-pill
-                        href='mailto: kontakt@berlin-zaehlt.de',
-                        style={
-                            #'position': 'absolute', # For absolute position use: 'absolute',  # For floating use: 'fixed',
-                            #'top': '0px',
-                            #'right': '100px',
-                            'border-radius': '50%',
-                            'width': '120px',
-                            'height': '120px',
-                            'white-space': 'nowrap',
-                            'padding-top': '30px',
-                            'font-size': '17px',
-                            'font-weight': 'bold'
-                       }),
-                ]),
-            ], sm=2, align='center'
-            ),
+                dbc.Button([_('Contact Us!'), html.Br(), email_icon],
+                    id='floating_button',
+                    class_name='btn-info rounded-pill',  # rounded-pill
+                    href='mailto: kontakt@berlin-zaehlt.de',
+                    #style={
+                        #'position': 'absolute', # For absolute position use: 'absolute',  # For floating use: 'fixed',
+                        #'top': '0px',
+                        #'right': '100px',
+                        #'border-radius': '50%',
+                        #'width': '100px',
+                        #'height': '100px',
+                        #'white-space': 'nowrap',
+                        #'padding-top': '30px',
+                        #'font-size': '17px',
+                        #'font-weight': 'bold'
+                   #}
+                ),
+            ], className='ms-4', sm=2),
         ], className= 'rounded text-black g-0 p-1 mb-3', style={'background-color': ADFC_yellow, 'opacity': 1.0}),
 
         ### Legal disclaimeers

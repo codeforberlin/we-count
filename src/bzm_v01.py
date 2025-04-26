@@ -19,7 +19,6 @@ import pandas as pd
 import json
 import geopandas as gpd
 import dash_bootstrap_components as dbc
-from PIL.ImageChops import offset
 from dash import Dash, html, dcc, Output, Input, State, callback, ctx
 from dash.exceptions import PreventUpdate
 import plotly.express as px

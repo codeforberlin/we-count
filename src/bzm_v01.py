@@ -4,7 +4,7 @@
 
 # @file    bzm_performance.py
 # @author  Egbert Klaassen
-# @date    2025-04-15
+# @date    2025-04-26
 
 """"
 # traffic_df        - dataframe with measured traffic data file
@@ -618,75 +618,99 @@ def serve_layout():
 
         ## Compare traffic graph
         dbc.Row([
-            #dbc.Col([
-            #    html.H6(_('Select periods to compare')+':'),
-            #], sm=2),
             dbc.Col([
-                html.H6(_('Compare'), className='text-end me-2 fw-bold'),
-                html.H6(_('Period') + ' A', className='text-end me-2 my-3'),
-                html.H6(_('Period') + ' B', className='text-end me-2 my-3'),
-            ], sm=3),
+                dbc.Col([
+                    dbc.Col([
+                        html.H6(_('Year'+' A:'), className='fw-bold text-end'),
+                        html.H6(_('Year'+' B:'), className='fw-bold text-end'),
+                        ], className='d-inline-block align-top me-3 my-3', style={'min-width': '90px'}),
+                    dbc.Col([
+                        dcc.Dropdown(
+                            id='dropdown_year_A',
+                            options=[{'label': i, 'value': i} for i in traffic_df['year'].unique()],
+                            value=traffic_df['year'][len(traffic_df['year']) - 1],
+                            clearable=False,
+                            style={'min-width': '180px'}
+                        ),
+                        dcc.Dropdown(
+                            id='dropdown_year_B',
+                            options=[{'label': i, 'value': i} for i in traffic_df['year'].unique()],
+                            value=traffic_df['year'][1],
+                            clearable=False,
+                            style={'min-width': '180px'}
+                        ),
+                    ], className='d-inline-block'),
+                ], className='d-inline-block'),
+                dbc.Col([
+                    dbc.Col([
+                        html.H6(_('Month'+' A:'), className='fw-bold text-end'),
+                        html.H6(_('Month'+' B:'), className='fw-bold text-end'),
+                    ], className='d-inline-block align-top me-3 my-3', style={'min-width': '90px'}),
+                    dbc.Col([
+                        dcc.Dropdown(
+                            id='dropdown_year_month_A',
+                            options=[{'label': i, 'value': i} for i in traffic_df['year_month'].unique()],
+                            value=traffic_df['year_month'][len(traffic_df['year_month']) - 1],
+                            clearable=False,
+                            style={'min-width': '180px'}
+                        ),
+                        dcc.Dropdown(
+                            id='dropdown_year_month_B',
+                            options=[{'label': i, 'value': i} for i in traffic_df['year_month'].unique()],
+                            value=traffic_df['year_month'][1],
+                            clearable=False,
+                            style={'min-width': '180px'}
+                        ),
+                    ], className='d-inline-block'),
+                ], className='d-inline-block'),
+            ]),
             dbc.Col([
-                html.H6(_('Year')+':', className='fw-bold text-center'),
-                dcc.Dropdown(
-                    id='dropdown_year_A',
-                    options=[{'label': i, 'value': i} for i in traffic_df['year'].unique()],
-                    value=traffic_df['year'][len(traffic_df['year']) - 1],
-                    clearable=False,
-                ),
-                dcc.Dropdown(
-                    id='dropdown_year_B',
-                    options=[{'label': i, 'value': i} for i in traffic_df['year'].unique()],
-                    value=traffic_df['year'][1],
-                    clearable=False
-                ),
-            ], sm=2),
-            dbc.Col([
-                html.H6(_('Month')+':', className='fw-bold text-center'),
-                dcc.Dropdown(
-                    id='dropdown_year_month_A',
-                    options=[{'label': i, 'value': i} for i in traffic_df['year_month'].unique()],
-                    value=traffic_df['year_month'][len(traffic_df['year_month']) - 1],
-                    clearable=False
-                ),
-                dcc.Dropdown(
-                    id='dropdown_year_month_B',
-                    options=[{'label': i, 'value': i} for i in traffic_df['year_month'].unique()],
-                    value=traffic_df['year_month'][1],
-                    clearable=False
-                ),
-            ], sm=2),
-            dbc.Col([
-                html.H6(_('Week') + ':', className='fw-bold text-center'),
-                dcc.Dropdown(
-                    id='dropdown_year_week_A',
-                    options=[{'label': i, 'value': i} for i in traffic_df['year_week'].unique()],
-                    value=traffic_df['year_week'][len(traffic_df['year_week']) - 1],
-                    clearable=False
-                ),
-                dcc.Dropdown(
-                    id='dropdown_year_week_B',
-                    options=[{'label': i, 'value': i} for i in traffic_df['year_week'].unique()],
-                    value=traffic_df['year_week'][1],
-                    clearable=False
-                ),
-            ], className='', sm=2),
-            dbc.Col([
-                html.H6(_('Day') + ':', className='fw-bold text-center'),
-                dcc.Dropdown(
-                    id='dropdown_date_A',
-                    options=[{'label': i, 'value': i} for i in traffic_df['date'].unique()],
-                    value=traffic_df['date'][len(traffic_df['date']) - 1],
-                    clearable=False
-                ),
-                dcc.Dropdown(
-                    id='dropdown_date_B',
-                    options=[{'label': i, 'value': i} for i in traffic_df['date'].unique()],
-                    value=traffic_df['date'][1],
-                    clearable=False
-                ),
-            ], sm=2),
-        ], className='sticky-top rounded g-2 p-1', style={'background-color': ADFC_skyblue, 'opacity': 1.0}),
+                dbc.Col([
+                    dbc.Col([
+                        html.H6(_('Week') + ' A:', className='fw-bold text-end'),
+                        html.H6(_('Week') + ' B:', className='fw-bold text-end'),
+                    ], className='d-inline-block align-top me-3 my-3', style={'min-width': '90px'}),
+                    dbc.Col([
+                        dcc.Dropdown(
+                            id='dropdown_year_week_A',
+                            options=[{'label': i, 'value': i} for i in traffic_df['year_week'].unique()],
+                            value=traffic_df['year_week'][len(traffic_df['year_week']) - 1],
+                            clearable=False,
+                            style={'min-width': '180px'}
+                        ),
+                        dcc.Dropdown(
+                            id='dropdown_year_week_B',
+                            options=[{'label': i, 'value': i} for i in traffic_df['year_week'].unique()],
+                            value=traffic_df['year_week'][1],
+                            clearable=False,
+                            style={'min-width': '180px'}
+                        ),
+                    ], className='d-inline-block'),
+                ], className='d-inline-block'),
+                dbc.Col([
+                    dbc.Col([
+                        html.H6(_('Day') + ' A:', className='fw-bold text-end'),
+                        html.H6(_('Day') + ' B:', className='fw-bold text-end'),
+                    ], className='d-inline-block align-top me-3 my-3', style={'min-width': '90px'}),
+                    dbc.Col([
+                        dcc.Dropdown(
+                            id='dropdown_date_A',
+                            options=[{'label': i, 'value': i} for i in traffic_df['date'].unique()],
+                            value=traffic_df['date'][len(traffic_df['date']) - 1],
+                            clearable=False,
+                            style={'min-width': '180px'}
+                        ),
+                        dcc.Dropdown(
+                            id='dropdown_date_B',
+                            options=[{'label': i, 'value': i} for i in traffic_df['date'].unique()],
+                            value=traffic_df['date'][1],
+                            clearable=False,
+                            style={'min-width': '180px'}
+                        ),
+                    ], className='d-inline-block'),
+                ], className='d-inline-block'),
+            ]),
+        ], className='sticky-top rounded g-2 p-1 d-flex flex-wrap', style={'background-color': ADFC_skyblue, 'opacity': 1.0}),
         dbc.Row([
             html.Span(
                 [html.H4(_('Compare traffic periods'), className='my-3 me-2', style={'display': 'inline-block'}),
@@ -738,18 +762,6 @@ def serve_layout():
                     id='floating_button',
                     class_name='btn-info rounded-pill',  # rounded-pill
                     href='mailto: kontakt@berlin-zaehlt.de',
-                    #style={
-                        #'position': 'absolute', # For absolute position use: 'absolute',  # For floating use: 'fixed',
-                        #'top': '0px',
-                        #'right': '100px',
-                        #'border-radius': '50%',
-                        #'width': '100px',
-                        #'height': '100px',
-                        #'white-space': 'nowrap',
-                        #'padding-top': '30px',
-                        #'font-size': '17px',
-                        #'font-weight': 'bold'
-                   #}
                 ),
             ], className='ms-4', sm=2),
         ], className= 'rounded text-black g-0 p-1 mb-3', style={'background-color': ADFC_yellow, 'opacity': 1.0}),
@@ -1296,4 +1308,4 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
     return selected_street_header, selected_street_header_color, date_range_text, date_range_color, pie_traffic, line_abs_traffic, bar_avg_traffic, line_avg_delta_traffic, bar_perc_speed, bar_avg_speed, bar_v85, bar_ranking, segment_id_json
 
 if __name__ == "__main__":
-    app.run_server(debug=True)
+    app.run_server(debug=False)

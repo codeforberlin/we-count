@@ -620,8 +620,8 @@ def serve_layout():
             dbc.Col([
                 dbc.Col([
                     dbc.Col([
-                        html.H6(_('Year'+' A:'), className='fw-bold text-end'),
-                        html.H6(_('Year'+' B:'), className='fw-bold text-end'),
+                        html.H6(_('Year') +' A:', className='fw-bold text-end'),
+                        html.H6(_('Year') +' B:', className='fw-bold text-end'),
                         ], className='d-inline-block align-top me-3 my-3', style={'min-width': '90px'}),
                     dbc.Col([
                         dcc.Dropdown(
@@ -642,8 +642,8 @@ def serve_layout():
                 ], className='d-inline-block'),
                 dbc.Col([
                     dbc.Col([
-                        html.H6(_('Month'+' A:'), className='fw-bold text-end'),
-                        html.H6(_('Month'+' B:'), className='fw-bold text-end'),
+                        html.H6(_('Month')+' A:', className='fw-bold text-end'),
+                        html.H6(_('Month')+' B:', className='fw-bold text-end'),
                     ], className='d-inline-block align-top me-3 my-3', style={'min-width': '90px'}),
                     dbc.Col([
                         dcc.Dropdown(

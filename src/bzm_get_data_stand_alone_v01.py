@@ -125,6 +125,7 @@ traffic_df['jahr_monat'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%b
 traffic_df['year_week'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%U/%Y')
 traffic_df['Wochentag'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%a')
 traffic_df['date'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%d/%m/%Y')
+traffic_df['hr'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%H')
 traffic_df['date_hour'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%d/%m/%y - %H')
 traffic_df['day'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%d')
 traffic_df.insert(0, 'hour', traffic_df['date_local'].dt.hour) # In case of csv.gz download!

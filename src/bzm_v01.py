@@ -72,6 +72,8 @@ def get_locations(geojson_url):
 def retrieve_data():
     # Read geojson data file to access geometry coordinates - using URL
     geojson_url = 'https://berlin-zaehlt.de/csv/bzm_telraam_segments.geojson'
+    #ASSET_DIR = os.path.join(os.path.dirname(__file__), 'assets')
+    #geojson_url = os.path.join(ASSET_DIR, 'bzm_telraam_segments.geojson')
     if not DEPLOYED:
         print('Reading geojson data...')
     geo_df = gpd.read_file(geojson_url)
@@ -168,7 +170,7 @@ def filter_dt(df, start_date, end_date, hour_range):
 def get_comparison_data(df, radio_time_division, group_by, selected_value_A, selected_value_B):
     df_period_A = df[df[radio_time_division]==selected_value_A]
     df_period_grp_A = df_period_A.groupby(by=[group_by, 'street_selection'], sort=False, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
-    if radio_time_division == 'date':
+    if radio_time_division == 'year_month' or radio_time_division == 'date':
         df_period_grp_A = df_period_grp_A.sort_values(by=['street_selection', group_by], ascending=True)
     df_avg_traffic_delta_A = df_period_grp_A
 
@@ -252,20 +254,20 @@ def get_min_max_str(df, street_name, start_date, end_date):
 
     if start_date > max_date_str or end_date < min_date_str:
         missing_data = True
-        message = 'Dates out of range'
+        message = _('Dates out of range')
         start_date = min_date_str
         end_date = max_date_str
     elif min_date_str <= start_date <= max_date_str and end_date > max_date_str:
         missing_data = True
-        message = 'End date out of range'
+        message = _('End date out of range')
         end_date = max_date_str
     elif min_date_str <= end_date <= max_date_str and start_date < min_date_str:
         missing_data = True
-        message = 'Start date out of range'
+        message = _('Start date out of range')
         start_date = min_date_str
     elif start_date < min_date_str or end_date > max_date_str:
         missing_data = True
-        message = 'Narrowed down range'
+        message = _('Narrowed down range')
         start_date = min_date_str
         end_date = max_date_str
 
@@ -987,8 +989,8 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
         # Add warnings to layout
         selected_street_header = street_name
         selected_street_header_color = {'color': ADFC_crimson}
-        date_range_text = _(message +', available: ' + min_date_str + _(' to ') + max_date_str)
-        if message == 'Dates out of range':
+        date_range_text = _(message +', ' + _('available') + ': ' + min_date_str + _(' to ') + max_date_str)
+        if message == _('Dates out of range'):
             selected_street_header_color = {'color': ADFC_crimson}
             date_range_color = {'color': ADFC_crimson}
         else:
@@ -1017,11 +1019,9 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
     pie_traffic.update_traces(textposition='inside', textinfo='percent+label')
 
     ### Create absolute line chart
-    #df_line_abs_traffic = traffic_df_upt_dt_str.groupby(by=[radio_time_division, 'street_selection'], sort = False, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
-
     if radio_time_division == 'date_hour':
-        #df_line_abs_traffic = df_line_abs_traffic.sort_values(by=['street_selection', radio_time_division], ascending=True)
-        df_line_abs_traffic = traffic_df_upt_dt_str.groupby(by=['street_selection', radio_time_division], as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
+        df_line_abs_traffic = traffic_df_upt_dt_str.groupby(by=['street_selection', 'date_local', radio_time_division], sort=False, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
+        df_line_abs_traffic = df_line_abs_traffic.sort_values(by=['date_local'], ascending=True)
     else:
         df_line_abs_traffic = traffic_df_upt_dt_str.groupby(by=[radio_time_division, 'street_selection'], sort=False, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
 

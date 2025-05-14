@@ -64,6 +64,24 @@ msgstr "Mehr Zweiräder als Autos"
 msgid "Start dash..."
 msgstr "Starte Dash..."
 
+msgid "Dates out of range"
+msgstr "Daten außerhalb des Bereichs"
+
+msgid "End date out of range"
+msgstr "Enddatum außerhalb des Bereichs"
+
+msgid "Start date out of range"
+msgstr "Startdatum außerhalb des Bereichs"
+
+msgid "Narrowed down range"
+msgstr "Eingegrenzter Bereich"
+
+msgid "available"
+msgstr "verfügbar"
+
+msgid " to "
+msgstr " bis "
+
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:387
 msgid "English"
 msgstr "Englisch"

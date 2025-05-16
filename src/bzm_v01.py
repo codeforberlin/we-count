@@ -4,7 +4,7 @@
 
 # @file    bzm_performance.py
 # @author  Egbert Klaassen
-# @date    2025-04-26
+# @date    2025-05-15
 
 """"
 # traffic_df        - dataframe with measured traffic data file
@@ -36,19 +36,14 @@ def output_csv(df, file_name):
     path = os.path.join(ASSET_DIR, file_name + '.csv')
     df.to_csv(path, index=False)
 
+#TODO: rationalize get_locations vs. retrieve_data vs. bzm_get_data_stand_alone
 def get_locations(geojson_url):
-
-    # original route
-    #df_geojson = pd.read_json(filepath)
-    # Flatten the json structure
-    #df_geojson = pd.json_normalize(df_geojson['features'])
-    # Remove 'properties' from column names for ease of use
-    #df_geojson.columns = df_geojson.columns.str.replace('properties.', '', regex=True)
-
-    # Geopandas route
+    # Read with geopandas
     geo_df = gpd.read_file(geojson_url)
     geo_df['parsed_osm'] = geo_df['osm'].apply(json.loads)
     geo_df_osm = pd.json_normalize(geo_df['parsed_osm'])
+    geo_df_osm = geo_df_osm.drop(['last_osm_fetch', 'ref', 'junction', 'service', 'oneway', 'reversed'], axis=1)
+
     df_geojson = pd.concat([geo_df, geo_df_osm], axis=1)
     # Drop uptime and v85 to avoid duplicates as these will come from traffic data
     df_geojson = df_geojson.drop(['uptime', 'v85'], axis=1)
@@ -57,14 +52,11 @@ def get_locations(geojson_url):
 
     # Replace "list" entries (Telraam!) with none
     for i in range(len(df_geojson)):
-        if isinstance(df_geojson['width'].values[i],list):
-            df_geojson['width'].values[i]=''
         if isinstance(df_geojson['lanes'].values[i],list):
             df_geojson['lanes'].values[i]=''
         if isinstance(df_geojson['maxspeed'].values[i],list):
             df_geojson['maxspeed'].values[i]=''
-        #if isinstance(df_geojson['osm.name'].values[i],list):
-        #    df_geojson['osm.name'].values[i]=pd.NA
+
     # Remove segments w/o street name
     nan_rows = df_geojson[df_geojson['osm.name'].isnull()]
     return df_geojson.drop(nan_rows.index)
@@ -82,19 +74,19 @@ def retrieve_data():
         print('Reading json data...')
     json_df_features = get_locations(geojson_url)
     # Drop instance_ids.9571 columns
-    unwanted = json_df_features.columns[json_df_features.columns.str.startswith('instance_ids.9571')]
-    json_df_features.drop(unwanted, axis=1, inplace=True)
+    instance_cols = json_df_features.columns[json_df_features.columns.str.startswith('instance_ids.9571')]
+    json_df_features.drop(instance_cols, axis=1, inplace=True)
 
     # Read traffic data from file
     if not DEPLOYED:
         print('Reading traffic data...')
-    with common.Benchmarker(not DEPLOYED, "Load traffic data"):
+    #with common.Benchmarker(not DEPLOYED, "Load traffic data"):
         #traffic_df = bzm_get_data_v02.merge_data(json_df_features)
 
-        # PythonAnywhere: '/home/eklaassen/bzm/we-count/src/assets/traffic_df_2023_2024_2025_YTD.csv.gz'
-        THIS_FOLDER = Path(__file__).parent.resolve()
-        traffic_file_path = THIS_FOLDER / 'assets/traffic_df_2023_2024_2025_YTD.csv.gz'
-        traffic_df = pd.read_csv(traffic_file_path)
+    # PythonAnywhere: '/home/eklaassen/bzm/we-count/src/assets/traffic_df_2023_2024_2025_YTD.csv.gz'
+    THIS_FOLDER = Path(__file__).parent.resolve()
+    traffic_file_path = THIS_FOLDER / 'assets/traffic_df_2023_2024_2025_YTD.csv.gz'
+    traffic_df = pd.read_csv(traffic_file_path)
 
     # Set data types for clean representation
     json_df_features['segment_id']=json_df_features['segment_id'].astype(str)
@@ -545,7 +537,6 @@ def serve_layout():
                     value=_('weekday'),
                     inline=True,
                     inputStyle={"margin-right": "5px", "margin-left": "20px"},
-                    #style={'margin-left': 40, 'margin-bottom': 00},
                 ),
             ], sm=6
             ),
@@ -1053,17 +1044,12 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
     line_abs_traffic.for_each_annotation(lambda a: a.update(text=a.text.replace('All Streets', _('All Streets'))))
 
     ### Create average traffic bar chart
-    #df_avg_traffic = traffic_df_upt_dt_str.groupby(by=[radio_time_unit, 'street_selection'], sort= False, as_index=False).agg({'ped_total': 'mean', 'bike_total': 'mean', 'car_total': 'mean', 'heavy_total': 'mean'})
     # Sort on hour to avoid line graph jumps around hour gaps
     if radio_time_unit == 'hour' or radio_time_unit == 'day':
         #df_avg_traffic = df_avg_traffic.sort_values(by=[radio_time_unit], ascending=True)
         df_avg_traffic = traffic_df_upt_dt_str.groupby(by=[radio_time_unit, 'street_selection'], as_index=False).agg({'ped_total': 'mean', 'bike_total': 'mean', 'car_total': 'mean', 'heavy_total': 'mean'})
     else:
         df_avg_traffic = traffic_df_upt_dt_str.groupby(by=[radio_time_unit, 'street_selection'], sort=False, as_index=False).agg({'ped_total': 'mean', 'bike_total': 'mean', 'car_total': 'mean', 'heavy_total': 'mean'})
-
-    # Create date period for below four graph titles, convert formats from '%Y-%m-%d' format required by DatePicker!
-    #start_date = format_str_date(start_date, '%d-%m-%Y','%d %b %Y')
-    #end_date = format_str_date(end_date, '%Y-%m-%d','%d %b %Y')
 
     bar_avg_traffic = px.bar(df_avg_traffic,
         x=radio_time_unit, y=['ped_total', 'bike_total', 'car_total', 'heavy_total'],
@@ -1307,4 +1293,4 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
     return selected_street_header, selected_street_header_color, date_range_text, date_range_color, pie_traffic, line_abs_traffic, bar_avg_traffic, line_avg_delta_traffic, bar_perc_speed, bar_avg_speed, bar_v85, bar_ranking, segment_id_json
 
 if __name__ == "__main__":
-    app.run_server(debug=False)
+    app.run(debug=False)

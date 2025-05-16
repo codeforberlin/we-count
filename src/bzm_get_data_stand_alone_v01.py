@@ -5,7 +5,7 @@
 # @file    bzm_get_data.py
 # @author  Egbert Klaassen
 # @author  Michael Behrisch
-# @date    2025-04-15
+# @date    2025-05-15
 
 import os
 import pandas as pd
@@ -15,46 +15,73 @@ from bs4 import BeautifulSoup
 from pathlib import Path
 import json
 import locale
+from memory_profiler import profile
 
 # For debugging purposes
-def output_excel(df, file_name, path):
-    path = os.path.join(path, file_name + '.xlsx')
+def output_excel(df, file_name):
+    path = os.path.join(ASSET_DIR, file_name + '.xlsx')
     df.to_excel(path, index=False)
-def output_csv(df, file_name, path):
-    path = os.path.join(path, file_name + '.csv')
+def output_csv(df, file_name):
+    path = os.path.join(ASSET_DIR, file_name + '.csv')
     df.to_csv(path, index=False)
+
+def get_file_size(url):
+    try:
+        response = requests.head(url, allow_redirects=True)
+        if 'Content-Length' in response.headers:
+            size_in_bytes = int(response.headers['Content-Length'])
+            return size_in_bytes
+        else:
+            return "File size not available in headers."
+    except requests.RequestException as e:
+        return f"An error occurred: {e}"
 
 verbose = False
 
 THIS_FOLDER = Path(__file__).parent.resolve()
 assets_file_path = THIS_FOLDER / 'assets/'
+ASSET_DIR = os.path.join(os.path.dirname(__file__), 'assets')
+
+
+#@profile
+#def my_function():
 
 ### Get geojson file with street information
 
 # Geopandas df route
+# Read file
 geojson_url = 'https://berlin-zaehlt.de/csv/bzm_telraam_segments.geojson'
-geo_df = gpd.read_file(geojson_url)
+# Pre-select columns
+# Check for file health, use off-line if test failed
+geojson_file_size = get_file_size(geojson_url)
+if geojson_file_size > 500:
+    geo_cols = ['segment_id', 'osm', 'cameras', 'geometry']
+    geo_df = gpd.read_file(geojson_url, columns=geo_cols)
+else:
+    print('geojson_file_size: ' + str(geojson_file_size))
+    geojson_url = os.path.join(ASSET_DIR, 'bzm_telraam_segments.geojson')
+    geo_df = gpd.read_file(geojson_url)
 
+# Parse osm column
 geo_df['parsed_osm'] = geo_df['osm'].apply(json.loads)
 geo_df_osm = pd.json_normalize(geo_df['parsed_osm'])
+geo_df_osm = geo_df_osm.drop(['width', 'last_osm_fetch', 'ref', 'junction', 'service', 'oneway', 'reversed'], axis=1)
+address_cols = geo_df_osm.columns[geo_df_osm.columns.str.startswith('address')]
+geo_df_osm.drop(address_cols, axis=1, inplace=True)
+
+# Recombine and remove redundant osm columns
 df_geojson = pd.concat([geo_df, geo_df_osm], axis=1)
+df_geojson = df_geojson.drop(['osm', 'parsed_osm'], axis=1)
 
-# Drop uptime and v85 to avoid duplicates (these will come from traffic data)
-df_geojson = df_geojson.drop(['uptime', 'v85'], axis=1)
-# Drop unnecessary load
-df_geojson = df_geojson.drop(['timezone', 'parsed_osm'], axis=1)
-
-# Replace "list" entries (Telraam!) with none
+# Replace "list" entries with none
 for i in range(len(df_geojson)):
-    if isinstance(df_geojson['width'].values[i],list):
-        df_geojson['width'].values[i]=''
     if isinstance(df_geojson['lanes'].values[i],list):
         df_geojson['lanes'].values[i]=''
     if isinstance(df_geojson['maxspeed'].values[i],list):
         df_geojson['maxspeed'].values[i]=''
 
 
-### Get csv traffic files
+### Get csv traffic file
 
 # Retrieve file links
 if verbose:
@@ -77,7 +104,8 @@ for link in links:
     if filename[12:16] in ['2023', '2024', '2025']:
         if verbose:
             print('Processing: ' + filename)
-        df = pd.read_csv(os.path.join(url, filename), compression='gzip', header=0, sep=',', quotechar='"')
+        use_cols = ['segment_id', 'date_local', 'uptime', 'ped_total', 'bike_total', 'car_total', 'heavy_total', 'v85', 'car_speed0', 'car_speed10', 'car_speed20', 'car_speed30', 'car_speed40', 'car_speed50', 'car_speed60', 'car_speed70']
+        df = pd.read_csv(os.path.join(url, filename), usecols=use_cols, parse_dates=['date_local'],compression='gzip', header=0, sep=',', quotechar='"')
         df_csv_append = df_csv_append._append(df, ignore_index=True)
 
     # Alternative: Loop through gz files, filter by "contains substrings", add to Dataframe
@@ -94,17 +122,11 @@ for link in links:
 if verbose:
     print('Combining traffic and geojson data...')
 
-df_comb = pd.merge(df_csv_append, df_geojson, on = 'segment_id', how = 'left')
-
+traffic_df = pd.merge(df_csv_append, df_geojson, on = 'segment_id', how = 'left')
 if verbose:
     print('Creating df with selected columns')
 #TODO: remove "osm", needs bzm_v01 to be updated
-df_comb = df_comb.rename(
-    columns={'name': 'osm.name', 'highway': 'osm.highway', 'address.city': 'osm.address.city',
-             'address.suburb': 'osm.address.suburb', 'address.postcode': 'osm.address.postcode'})
-selected_columns = ['date_local','segment_id','uptime','ped_lft','ped_rgt','ped_total','bike_lft','bike_rgt','bike_total','car_lft','car_rgt','car_total','heavy_lft','heavy_rgt','heavy_total','v85','car_speed0','car_speed10','car_speed20','car_speed30','car_speed40','car_speed50','car_speed60','car_speed70','osm.name','highway','length','width','lanes','maxspeed']
-traffic_df = pd.DataFrame(df_comb, columns=selected_columns)
-traffic_df['date_local'] = pd.to_datetime(traffic_df['date_local'])
+traffic_df = traffic_df.rename(columns={'name': 'osm.name', 'highway': 'osm.highway'})
 
 if verbose:
     print('Drop empty rows...')
@@ -125,7 +147,6 @@ traffic_df['jahr_monat'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%b
 traffic_df['year_week'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%U/%Y')
 traffic_df['Wochentag'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%a')
 traffic_df['date'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%d/%m/%Y')
-traffic_df['hr'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%H')
 traffic_df['date_hour'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%d/%m/%y - %H')
 traffic_df['day'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%d')
 traffic_df.insert(0, 'hour', traffic_df['date_local'].dt.hour) # In case of csv.gz download!
@@ -141,6 +162,10 @@ if verbose:
 THIS_FOLDER = Path(__file__).parent.resolve()
 traffic_file_path = THIS_FOLDER / 'assets/traffic_df_2023_2024_2025_YTD.csv.gz'
 traffic_df.to_csv(traffic_file_path, index=False, compression='gzip')
+
+#    return traffic_df
+
+#my_function()
 
 if verbose:
     print('Finished.')

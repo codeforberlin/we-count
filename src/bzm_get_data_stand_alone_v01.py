@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 from pathlib import Path
 import json
 import locale
-from memory_profiler import profile
+#from memory_profiler import profile
 
 # For debugging purposes
 def output_excel(df, file_name):

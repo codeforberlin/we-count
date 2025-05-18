@@ -36,35 +36,32 @@ def output_csv(df, file_name):
     path = os.path.join(ASSET_DIR, file_name + '.csv')
     df.to_csv(path, index=False)
 
-#TODO: rationalize get_locations vs. retrieve_data vs. bzm_get_data_stand_alone
-def get_locations(geojson_url):
-    # Read with geopandas
-    geo_df = gpd.read_file(geojson_url)
-    geo_df['parsed_osm'] = geo_df['osm'].apply(json.loads)
-    geo_df_osm = pd.json_normalize(geo_df['parsed_osm'])
-    geo_df_osm = geo_df_osm.drop(['last_osm_fetch', 'ref', 'junction', 'service', 'oneway', 'reversed'], axis=1)
-
-    df_geojson = pd.concat([geo_df, geo_df_osm], axis=1)
-    # Drop uptime and v85 to avoid duplicates as these will come from traffic data
-    df_geojson = df_geojson.drop(['uptime', 'v85'], axis=1)
-    # Temp renaming until fully implemented
-    df_geojson = df_geojson.rename(columns={'name': 'osm.name', 'highway': 'osm.highway', 'address.city': 'osm.address.city', 'address.suburb': 'osm.address.suburb', 'address.postcode': 'osm.address.postcode'})
-
-    # Replace "list" entries (Telraam!) with none
-    for i in range(len(df_geojson)):
-        if isinstance(df_geojson['lanes'].values[i],list):
-            df_geojson['lanes'].values[i]=''
-        if isinstance(df_geojson['maxspeed'].values[i],list):
-            df_geojson['maxspeed'].values[i]=''
-
-    # Remove segments w/o street name
-    nan_rows = df_geojson[df_geojson['osm.name'].isnull()]
-    return df_geojson.drop(nan_rows.index)
+# def get_locations(geojson_url):
+#     # Read with geopandas
+#     geo_df = gpd.read_file(geojson_url)
+#     geo_df['parsed_osm'] = geo_df['osm'].apply(json.loads)
+#     geo_df_osm = pd.json_normalize(geo_df['parsed_osm'])
+#     geo_df_osm = geo_df_osm.drop(['width', 'last_osm_fetch', 'ref', 'junction', 'service', 'oneway', 'reversed'], axis=1)
+#
+#     df_geojson = pd.concat([geo_df, geo_df_osm], axis=1)
+#     # Drop uptime and v85 to avoid duplicates as these will come from traffic data
+#     df_geojson = df_geojson.drop(['uptime', 'v85'], axis=1)
+#     # Temp renaming until fully implemented
+#     df_geojson = df_geojson.rename(columns={'name': 'osm.name', 'highway': 'osm.highway', 'address.city': 'osm.address.city', 'address.suburb': 'osm.address.suburb', 'address.postcode': 'osm.address.postcode'})
+#     # Replace "list" entries (Telraam!) with none
+#     for i in range(len(df_geojson)):
+#         if isinstance(df_geojson['lanes'].values[i],list):
+#             df_geojson['lanes'].values[i]=''
+#         if isinstance(df_geojson['maxspeed'].values[i],list):
+#             df_geojson['maxspeed'].values[i]=''
+#
+#     # Remove segments w/o street name
+#     nan_rows = df_geojson[df_geojson['osm.name'].isnull()]
+#     return df_geojson.drop(nan_rows.index)
 
 def retrieve_data():
     # Read geojson data file to access geometry coordinates - using URL
     geojson_url = 'https://berlin-zaehlt.de/csv/bzm_telraam_segments.geojson'
-    #ASSET_DIR = os.path.join(os.path.dirname(__file__), 'assets')
     #geojson_url = os.path.join(ASSET_DIR, 'bzm_telraam_segments.geojson')
     if not DEPLOYED:
         print('Reading geojson data...')
@@ -72,20 +69,13 @@ def retrieve_data():
 
     if not DEPLOYED:
         print('Reading json data...')
-    json_df_features = get_locations(geojson_url)
-    # Drop instance_ids.9571 columns
-    instance_cols = json_df_features.columns[json_df_features.columns.str.startswith('instance_ids.9571')]
-    json_df_features.drop(instance_cols, axis=1, inplace=True)
+    geo_file_path = os.path.join(ASSET_DIR, 'df_geojson.csv.gz')
+    json_df_features = pd.read_csv(geo_file_path)
 
     # Read traffic data from file
     if not DEPLOYED:
         print('Reading traffic data...')
-    #with common.Benchmarker(not DEPLOYED, "Load traffic data"):
-        #traffic_df = bzm_get_data_v02.merge_data(json_df_features)
-
-    # PythonAnywhere: '/home/eklaassen/bzm/we-count/src/assets/traffic_df_2023_2024_2025_YTD.csv.gz'
-    THIS_FOLDER = Path(__file__).parent.resolve()
-    traffic_file_path = THIS_FOLDER / 'assets/traffic_df_2023_2024_2025_YTD.csv.gz'
+    traffic_file_path = os.path.join(ASSET_DIR, 'traffic_df_2023_2024_2025_YTD.csv.gz')
     traffic_df = pd.read_csv(traffic_file_path)
 
     # Set data types for clean representation
@@ -157,6 +147,9 @@ def filter_dt(df, start_date, end_date, hour_range):
     df_dates_hours = df_dates.loc[df_dates['hour'].between(hour_range[0], hour_range[1]-1)]
     traffic_df_upt_dt = df_dates_hours
 
+    # Free memory
+    del df, df_dates, df_dates_hours
+
     return traffic_df_upt_dt, min_date, max_date, min_hour, max_hour
 
 def get_comparison_data(df, radio_time_division, group_by, selected_value_A, selected_value_B):
@@ -176,6 +169,9 @@ def get_comparison_data(df, radio_time_division, group_by, selected_value_A, sel
 
     df_avg_traffic_delta_concat = pd.concat([df_avg_traffic_delta_A, df_avg_traffic_delta_B])
 
+    # Free memory
+    del df, df_period_A, df_period_B, df_period_grp_A, df_period_grp_B, df_avg_traffic_delta_A, df_avg_traffic_delta_B
+
     return df_avg_traffic_delta_concat
 
 def update_selected_street(df, segment_id, street_name):
@@ -190,6 +186,10 @@ def update_selected_street(df, segment_id, street_name):
 
     # Add selected street to all streets
     traffic_df_upt_dt_str = df._append(df_str, ignore_index=True)
+
+    # Free memory
+    del df, df_str
+
     return traffic_df_upt_dt_str
 
 def get_bike_car_ratios(df):
@@ -197,12 +197,14 @@ def get_bike_car_ratios(df):
     traffic_df_id_bc['bike_car_ratio'] = traffic_df_id_bc['bike_total'] / traffic_df_id_bc['car_total']
 
     bins = [0, 0.1, 0.2, 0.5, 1, 500]
-    #speed_labels = [_('Over 10x more cars'), _('Over 5x more cars'), _('Over 2x more cars'), _('More cars than bikes'), _('More bikes than cars')]
     speed_labels = ['Over 10x more cars', 'Over 5x more cars', 'Over 2x more cars', 'More cars than bikes', 'More bikes than cars']
     traffic_df_id_bc['map_line_color'] = pd.cut(traffic_df_id_bc['bike_car_ratio'], bins=bins, labels=speed_labels)
     # Prepare traffic_df_id_bc for join operation
     traffic_df_id_bc['segment_id'] = traffic_df_id_bc['segment_id'].astype(int)
     traffic_df_id_bc.set_index('segment_id', inplace=True)
+
+    # Free memory
+    del df
 
     return traffic_df_id_bc
 
@@ -223,6 +225,9 @@ def update_map_data(df_map_base, df):
     # Move segment_id index to column (avoid ambiguity by two segment_id columns in line_map Plotly v6.0)
     df_map = df_map.drop('segment_id', axis=1)
     df_map.reset_index(level=0, inplace=True)
+
+    # Free memory
+    del df, df_map_base
 
     return df_map
 
@@ -262,6 +267,9 @@ def get_min_max_str(df, street_name, start_date, end_date):
         message = _('Narrowed down range')
         start_date = min_date_str
         end_date = max_date_str
+
+    # Free memory
+    del df
 
     return min_date_str, max_date_str, start_date, end_date, message, missing_data
 
@@ -344,6 +352,9 @@ geo_df_coords = geo_df.get_coordinates()
 geo_df_ids = geo_df[['segment_id']]
 # Join x y and segment_id into e new dataframe
 geo_df_map_info = geo_df_coords.join(geo_df_ids)
+
+# Free memory
+del geo_df_coords,geo_df_ids
 
 # Prepare geo_df_map_info and json_df_features and join
 geo_df_map_info['segment_id'] = geo_df_map_info['segment_id'].astype(int)

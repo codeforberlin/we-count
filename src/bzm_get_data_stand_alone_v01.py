@@ -5,14 +5,13 @@
 # @file    bzm_get_data.py
 # @author  Egbert Klaassen
 # @author  Michael Behrisch
-# @date    2025-05-15
+# @date    2025-05-18
 
 import os
 import pandas as pd
 import requests
 import geopandas as gpd
 from bs4 import BeautifulSoup
-from pathlib import Path
 import json
 import locale
 #from memory_profiler import profile
@@ -38,34 +37,32 @@ def get_file_size(url):
 
 verbose = False
 
-THIS_FOLDER = Path(__file__).parent.resolve()
-assets_file_path = THIS_FOLDER / 'assets/'
 ASSET_DIR = os.path.join(os.path.dirname(__file__), 'assets')
-
 
 #@profile
 #def my_function():
 
-### Get geojson file with street information
+### Prepare geojson file with street information
 
-# Geopandas df route
-# Read file
+# Read file, pre-select columns, check for file health, use off-line if size test failed
 geojson_url = 'https://berlin-zaehlt.de/csv/bzm_telraam_segments.geojson'
-# Pre-select columns
-# Check for file health, use off-line if test failed
+geo_cols = ['segment_id', 'osm', 'cameras', 'geometry']
 geojson_file_size = get_file_size(geojson_url)
 if geojson_file_size > 500:
-    geo_cols = ['segment_id', 'osm', 'cameras', 'geometry']
     geo_df = gpd.read_file(geojson_url, columns=geo_cols)
 else:
-    print('geojson_file_size: ' + str(geojson_file_size))
+    print('Suspected error, geojson_file_size: ' + str(geojson_file_size))
     geojson_url = os.path.join(ASSET_DIR, 'bzm_telraam_segments.geojson')
-    geo_df = gpd.read_file(geojson_url)
+    geo_df = gpd.read_file(geojson_url, columns=geo_cols)
 
 # Parse osm column
 geo_df['parsed_osm'] = geo_df['osm'].apply(json.loads)
 geo_df_osm = pd.json_normalize(geo_df['parsed_osm'])
 geo_df_osm = geo_df_osm.drop(['width', 'last_osm_fetch', 'ref', 'junction', 'service', 'oneway', 'reversed'], axis=1)
+#TODO: rename not required if aligned with bzm_v01.py
+geo_df_osm = geo_df_osm.rename(columns={'name': 'osm.name', 'highway': 'osm.highway', 'address.city': 'osm.address.city',
+             'address.suburb': 'osm.address.suburb', 'address.postcode': 'osm.address.postcode'})
+# Drop remaining address columns
 address_cols = geo_df_osm.columns[geo_df_osm.columns.str.startswith('address')]
 geo_df_osm.drop(address_cols, axis=1, inplace=True)
 
@@ -80,6 +77,12 @@ for i in range(len(df_geojson)):
     if isinstance(df_geojson['maxspeed'].values[i],list):
         df_geojson['maxspeed'].values[i]=''
 
+# Remove rows with insufficient information
+nan_rows = df_geojson[df_geojson['osm.name'].isnull()]
+df_geojson.drop(nan_rows.index)
+
+save_file_path = os.path.join(ASSET_DIR, 'df_geojson.csv.gz')
+df_geojson.to_csv(save_file_path, index=False, compression='gzip')
 
 ### Get csv traffic file
 
@@ -123,6 +126,10 @@ if verbose:
     print('Combining traffic and geojson data...')
 
 traffic_df = pd.merge(df_csv_append, df_geojson, on = 'segment_id', how = 'left')
+
+# Remove dataframe from memory
+del df_geojson, df_csv_append
+
 if verbose:
     print('Creating df with selected columns')
 #TODO: remove "osm", needs bzm_v01 to be updated
@@ -159,11 +166,10 @@ traffic_df['year_month'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%b
 # Save data package to file - change file name!
 if verbose:
     print("Saving data package...")
-THIS_FOLDER = Path(__file__).parent.resolve()
-traffic_file_path = THIS_FOLDER / 'assets/traffic_df_2023_2024_2025_YTD.csv.gz'
-traffic_df.to_csv(traffic_file_path, index=False, compression='gzip')
+save_file_path = os.path.join(ASSET_DIR, 'traffic_df_2023_2024_2025_YTD.csv.gz')
+traffic_df.to_csv(save_file_path, index=False, compression='gzip')
 
-#    return traffic_df
+#    return
 
 #my_function()
 

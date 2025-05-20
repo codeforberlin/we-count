@@ -44,7 +44,6 @@ def retrieve_data():
     if not DEPLOYED:
         print('Reading geojson data...')
     geo_df = gpd.read_file(geojson_url)
-    print(geo_df.info())
 
     if not DEPLOYED:
         print('Reading json data...')

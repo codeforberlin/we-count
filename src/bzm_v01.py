@@ -36,36 +36,15 @@ def output_csv(df, file_name):
     path = os.path.join(ASSET_DIR, file_name + '.csv')
     df.to_csv(path, index=False)
 
-# def get_locations(geojson_url):
-#     # Read with geopandas
-#     geo_df = gpd.read_file(geojson_url)
-#     geo_df['parsed_osm'] = geo_df['osm'].apply(json.loads)
-#     geo_df_osm = pd.json_normalize(geo_df['parsed_osm'])
-#     geo_df_osm = geo_df_osm.drop(['width', 'last_osm_fetch', 'ref', 'junction', 'service', 'oneway', 'reversed'], axis=1)
-#
-#     df_geojson = pd.concat([geo_df, geo_df_osm], axis=1)
-#     # Drop uptime and v85 to avoid duplicates as these will come from traffic data
-#     df_geojson = df_geojson.drop(['uptime', 'v85'], axis=1)
-#     # Temp renaming until fully implemented
-#     df_geojson = df_geojson.rename(columns={'name': 'osm.name', 'highway': 'osm.highway', 'address.city': 'osm.address.city', 'address.suburb': 'osm.address.suburb', 'address.postcode': 'osm.address.postcode'})
-#     # Replace "list" entries (Telraam!) with none
-#     for i in range(len(df_geojson)):
-#         if isinstance(df_geojson['lanes'].values[i],list):
-#             df_geojson['lanes'].values[i]=''
-#         if isinstance(df_geojson['maxspeed'].values[i],list):
-#             df_geojson['maxspeed'].values[i]=''
-#
-#     # Remove segments w/o street name
-#     nan_rows = df_geojson[df_geojson['osm.name'].isnull()]
-#     return df_geojson.drop(nan_rows.index)
-
 def retrieve_data():
     # Read geojson data file to access geometry coordinates - using URL
-    geojson_url = 'https://berlin-zaehlt.de/csv/bzm_telraam_segments.geojson'
-    #geojson_url = os.path.join(ASSET_DIR, 'bzm_telraam_segments.geojson')
+    #geojson_url = 'https://berlin-zaehlt.de/csv/bzm_telraam_segments.geojson'
+    # Use offline file created by bzm_get_data_stand_alone_v01.py
+    geojson_url = os.path.join(ASSET_DIR, 'bzm_telraam_segments.geojson')
     if not DEPLOYED:
         print('Reading geojson data...')
     geo_df = gpd.read_file(geojson_url)
+    print(geo_df.info())
 
     if not DEPLOYED:
         print('Reading json data...')

@@ -16,6 +16,7 @@ import os
 import gettext
 import datetime
 import pandas as pd
+import requests
 import json
 import geopandas as gpd
 import dash_bootstrap_components as dbc
@@ -36,14 +37,31 @@ def output_csv(df, file_name):
     path = os.path.join(ASSET_DIR, file_name + '.csv')
     df.to_csv(path, index=False)
 
+def get_file_size(url):
+    try:
+        response = requests.head(url, allow_redirects=True)
+        if 'Content-Length' in response.headers:
+            size_in_bytes = int(response.headers['Content-Length'])
+            return size_in_bytes
+        else:
+            return "File size not available in headers."
+    except requests.RequestException as e:
+        return f"An error occurred: {e}"
+
 def retrieve_data():
-    # Read geojson data file to access geometry coordinates - using URL
-    #geojson_url = 'https://berlin-zaehlt.de/csv/bzm_telraam_segments.geojson'
-    # Use offline file created by bzm_get_data_stand_alone_v01.py
-    geojson_url = os.path.join(ASSET_DIR, 'bzm_telraam_segments.geojson')
+    # Read geojson data file to access geometry coordinates
     if not DEPLOYED:
         print('Reading geojson data...')
-    geo_df = gpd.read_file(geojson_url)
+
+    geojson_url = 'https://berlin-zaehlt.de/csv/bzm_telraam_segments.geojson'
+    geo_cols = ['segment_id', 'osm', 'cameras', 'geometry']
+    geojson_file_size = get_file_size(geojson_url)
+    if geojson_file_size > 500:
+        geo_df = gpd.read_file(geojson_url, columns=geo_cols)
+    else:
+        print('Suspected error, geojson_file_size: ' + str(geojson_file_size))
+        geojson_path = os.path.join(ASSET_DIR, 'bzm_telraam_segments.geojson')
+        geo_df = gpd.read_file(geojson_path, columns=geo_cols)
 
     if not DEPLOYED:
         print('Reading json data...')

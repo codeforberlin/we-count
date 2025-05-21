@@ -286,8 +286,8 @@ ADFC_crimson = '#B44958'
 ADFC_pink = '#EB9AAC'
 ADFC_yellow = '#EEDE72'
 
-street_name = 'Alte Jakobstraße'
-segment_id = '9000002582'
+street_name = 'Dresdener Straße'
+segment_id = '9000004944'
 
 info_icon = html.I(className='bi bi-info-circle-fill me-2')
 email_icon = html.I(className='bi bi-envelope-at-fill me-2')
@@ -425,7 +425,7 @@ def serve_layout():
                 #TODO: differentiate streets with the same name (e.g. Hauptstraße)
                 html.H4(_('Select street:'), className='my-2'),
                 dcc.Dropdown(id='street_name_dd',
-                    options=sorted([{'label': i, 'value': i} for i in traffic_df['osm.name'].unique()], key=lambda x: x['label']),
+                    options=[{'label': i, 'value': i} for i in sorted(traffic_df['osm.name'].unique())],
                     value=street_name,
                 ),
                 dcc.Store(id='store_segment_id_value', storage_type='memory'),

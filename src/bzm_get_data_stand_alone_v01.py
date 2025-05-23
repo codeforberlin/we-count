@@ -5,7 +5,7 @@
 # @file    bzm_get_data.py
 # @author  Egbert Klaassen
 # @author  Michael Behrisch
-# @date    2025-05-18
+# @date    2025-05-23
 
 import os
 import pandas as pd
@@ -52,13 +52,13 @@ if geojson_file_size > 500:
     geo_df = gpd.read_file(geojson_url, columns=geo_cols)
 else:
     print('Suspected error, geojson_file_size: ' + str(geojson_file_size))
-    geojson_url = os.path.join(ASSET_DIR, 'bzm_telraam_segments.geojson')
-    geo_df = gpd.read_file(geojson_url, columns=geo_cols)
+    geojson_path = os.path.join(ASSET_DIR, 'bzm_telraam_segments.geojson')
+    geo_df = gpd.read_file(geojson_path, columns=geo_cols)
 
 # Parse osm column
 geo_df['parsed_osm'] = geo_df['osm'].apply(json.loads)
 geo_df_osm = pd.json_normalize(geo_df['parsed_osm'])
-geo_df_osm = geo_df_osm.drop(['width', 'last_osm_fetch', 'ref', 'junction', 'service', 'oneway', 'reversed'], axis=1)
+geo_df_osm = geo_df_osm.drop(['lanes', 'width', 'last_osm_fetch', 'ref', 'junction', 'service', 'oneway', 'reversed'], axis=1)
 #TODO: rename not required if aligned with bzm_v01.py
 geo_df_osm = geo_df_osm.rename(columns={'name': 'osm.name', 'highway': 'osm.highway', 'address.city': 'osm.address.city',
              'address.suburb': 'osm.address.suburb', 'address.postcode': 'osm.address.postcode'})
@@ -70,10 +70,11 @@ geo_df_osm.drop(address_cols, axis=1, inplace=True)
 df_geojson = pd.concat([geo_df, geo_df_osm], axis=1)
 df_geojson = df_geojson.drop(['osm', 'parsed_osm'], axis=1)
 
+# Add street id column for dropdown selection
+df_geojson['id_street'] = df_geojson['osm.name'].astype(str) + ' (' + df_geojson['segment_id'].astype(str) + ')'
+
 # Replace "list" entries with none
 for i in range(len(df_geojson)):
-    if isinstance(df_geojson['lanes'].values[i],list):
-        df_geojson['lanes'].values[i]=''
     if isinstance(df_geojson['maxspeed'].values[i],list):
         df_geojson['maxspeed'].values[i]=''
 

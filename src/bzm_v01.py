@@ -4,7 +4,7 @@
 
 # @file    bzm_performance.py
 # @author  Egbert Klaassen
-# @date    2025-05-15
+# @date    2025-05-23
 
 """"
 # traffic_df        - dataframe with measured traffic data file
@@ -17,15 +17,11 @@ import gettext
 import datetime
 import pandas as pd
 import requests
-import json
 import geopandas as gpd
 import dash_bootstrap_components as dbc
 from dash import Dash, html, dcc, Output, Input, State, callback, ctx
 from dash.exceptions import PreventUpdate
 import plotly.express as px
-from pathlib import Path
-
-import common
 
 DEPLOYED = __name__ != '__main__'
 
@@ -228,13 +224,14 @@ def update_map_data(df_map_base, df):
     return df_map
 
 
-def get_min_max_str(df, street_name, start_date, end_date):
+def get_min_max_str(df, id_street, start_date, end_date):
     format_string = '%Y-%m-%d %H:%M:%S'
     missing_data = False
     message = 'none'
+    segment_id = id_street[-11:-1]
 
     # Get min/max dates for the current street
-    df_str = df[df['osm.name'] == street_name]
+    df_str = df[df['segment_id'] == segment_id]
     min_date_str = df_str['date_local'].min()
     max_date_str = df_str['date_local'].max()
 
@@ -287,7 +284,8 @@ ADFC_pink = '#EB9AAC'
 ADFC_yellow = '#EEDE72'
 
 street_name = 'Dresdener Straße'
-segment_id = '9000004944'
+segment_id = '9000006667'
+init_id_street = 'Dresdener Straße (9000006667)'
 
 info_icon = html.I(className='bi bi-info-circle-fill me-2')
 email_icon = html.I(className='bi bi-envelope-at-fill me-2')
@@ -328,9 +326,6 @@ end_date = end_date_dt.strftime('%Y-%m-%d')
 hour_range = [traffic_df_upt['hour'].min(), traffic_df_upt['hour'].max()]
 
 traffic_df_upt_dt, min_date, max_date, min_hour, max_hour = filter_dt(traffic_df_upt, start_date, end_date, hour_range)
-
-# traffic_df_upt_dt_str
-#traffic_df_upt_dt_str = update_selected_street(traffic_df_upt_dt, segment_id, street_name)
 
 ### Prepare map data ###
 if not DEPLOYED:
@@ -389,8 +384,6 @@ def serve_layout():
             ],
             brand="Berlin zählt Mobilität",
             brand_style={'font-size': 36,'font-weight': 'bold', 'color': ADFC_darkblue, 'font-style': 'italic', 'text-shadow': '3px 2px lightblue'},
-            #brand_href='https://adfc-tk.de/wir-zaehlen/',
-            #brand_external_link=True,
             color=ADFC_skyblue,
             dark=False,
         ),
@@ -422,13 +415,12 @@ def serve_layout():
                         ),
                     ], sm=7),
                 ], justify='end'),
-                #TODO: differentiate streets with the same name (e.g. Hauptstraße)
                 html.H4(_('Select street:'), className='my-2'),
                 dcc.Dropdown(id='street_name_dd',
-                    options=[{'label': i, 'value': i} for i in sorted(traffic_df['osm.name'].unique())],
-                    value=street_name,
+                    options=[{'label': i, 'value': i} for i in sorted(traffic_df['id_street'].unique())],
+                    value= init_id_street
                 ),
-                dcc.Store(id='store_segment_id_value', storage_type='memory'),
+                #dcc.Store(id='store_segment_id_value', storage_type='memory'),
                 html.Span([
                     html.H4(_('Traffic type - selected street'), id='selected_street_header', style={'color': 'black'}, className='my-2 d-inline-block'),
                     html.I(className='bi bi-info-circle-fill h6 ms-1', id='popover_traffic_type', style={'align': 'top', 'color': ADFC_lightgrey}),
@@ -794,7 +786,6 @@ def get_language(lang_code_dd):
 ### Map callback ###
 @callback(
     Output(component_id='street_name_dd',component_property='value'),
-    Output('store_segment_id_value', 'data', allow_duplicate=True),
     Input(component_id='street_map', component_property='clickData'),
     prevent_initial_call=True
 )
@@ -806,7 +797,6 @@ def get_street_name(clickData):
         street_name = clickData['points'][0]['hovertext']
         # Get segment_id from map click and prepare for dcc.Store
         segment_id = str(clickData['points'][0]['customdata'][0])
-        segment_id_json = json.loads(segment_id)
 
         # Check if street inactive
         idx = df_map.loc[df_map['osm.name'] == street_name]
@@ -814,7 +804,9 @@ def get_street_name(clickData):
         if map_color_status == _('Inactive - no data'):
             raise PreventUpdate
 
-    return street_name, segment_id_json
+        id_street = street_name + ' (' + segment_id + ')'
+
+    return id_street
 
 @callback(
     Output(component_id='street_map', component_property='figure'),
@@ -823,7 +815,8 @@ def get_street_name(clickData):
     Input(component_id='language_selector',component_property= 'value'),
 )
 
-def update_map(clickData, street_name, lang_code_dd):
+def update_map(clickData, id_street, lang_code_dd):
+    street_name = id_street.split(' (')[0]
     callback_trigger = ctx.triggered_id
 
     if clickData:
@@ -909,11 +902,11 @@ def update_map(clickData, street_name, lang_code_dd):
     Output(component_id='bar_avg_speed', component_property='figure'),
     Output(component_id='bar_v85', component_property='figure'),
     Output(component_id='bar_ranking', component_property='figure'),
-    Output(component_id='store_segment_id_value',component_property= 'data', allow_duplicate=True),
+    #Output(component_id='store_segment_id_value',component_property= 'data', allow_duplicate=True),
     Input(component_id='radio_time_division', component_property='value'),
     Input(component_id='radio_time_unit', component_property='value'),
     Input(component_id='street_name_dd', component_property='value'),
-    State(component_id='store_segment_id_value',component_property= 'data'),
+    #State(component_id='store_segment_id_value',component_property= 'data'),
     Input(component_id='dropdown_year_A', component_property='value'),
     Input(component_id='dropdown_year_month_A', component_property='value'),
     Input(component_id='dropdown_year_week_A', component_property='value'),
@@ -932,7 +925,7 @@ def update_map(clickData, street_name, lang_code_dd):
 prevent_initial_call='initial_duplicate',
 )
 
-def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_json, dropdown_year_A, dropdown_year_month_A, dropdown_year_week_A, dropdown_date_A, dropdown_year_B, dropdown_year_month_B, dropdown_year_week_B, dropdown_date_B, start_date, end_date, hour_range, toggle_uptime_filter, radio_y_axis, floating_button, lang_code_dd):
+def update_graphs(radio_time_division, radio_time_unit, id_street, dropdown_year_A, dropdown_year_month_A, dropdown_year_week_A, dropdown_date_A, dropdown_year_B, dropdown_year_month_B, dropdown_year_week_B, dropdown_date_B, start_date, end_date, hour_range, toggle_uptime_filter, radio_y_axis, floating_button, lang_code_dd):
 
     callback_trigger = ctx.triggered_id
 
@@ -942,51 +935,25 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
     else:
         traffic_df_upt = traffic_df
 
-    # Get segment_id/'full_street' using dcc.Store, callbacks, or initiate
-    # Check if dcc.Store was populated (segment selected on map)
-    segment_id = json.dumps(segment_id_json)
-    if segment_id_json is not None:
-        segment_id = json.dumps(segment_id_json)
-    # Set to 'full street' if street was selected from dropdown
-    elif callback_trigger in {'street_name_dd'}:
-        segment_id = _('full street')
-    # If date/or range slider were used, keep 'full_street' if segment_id is not 'null'
-    elif callback_trigger in {'date_filter', 'range_slider'}:
-        if segment_id == 'null':
-            segment_id = _('full street')
-        else:
-            pass
-    # Otherwise initiate
-    elif (segment_id is None) or (segment_id == 'null'):
-        segment_id_index = traffic_df_upt.loc[traffic_df_upt['osm.name'] == street_name]
-        segment_id = segment_id_index['segment_id'].values[0]
-
-    # Reset segment_id to dcc.Store
-    segment_id_json= None
-
-
-    # Prepare data for graphs
-    missing_data = False
-    message = ''
-
-    # TODO: trigger only in case of relevant callback
-    #if not callback_trigger or callback_trigger in {'street_name_dd', 'range_slider', 'date_filter'}:
+    # Get segment_id/street name
+    segment_id = id_street[-11:-1]
+    street_name = id_street.split(' (')[0]
 
     # Check if selected street has data for selected data range
-    min_date_str, max_date_str, start_date, end_date, message, missing_data = get_min_max_str(traffic_df_upt, street_name, start_date, end_date)
+    min_date_str, max_date_str, start_date, end_date, message, missing_data = get_min_max_str(traffic_df_upt, id_street, start_date, end_date)
     traffic_df_upt_dt, min_date, max_date, min_hour, max_hour = filter_dt(traffic_df_upt, start_date, end_date, hour_range)
     traffic_df_upt_dt_str = update_selected_street(traffic_df_upt_dt, segment_id, street_name)
 
+    # Format min_max output
     start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d').strftime('%d %b %Y')
     end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d').strftime('%d %b %Y')
     min_date_str = datetime.datetime.strptime(min_date_str, '%Y-%m-%d').strftime('%d-%m-%Y')
     max_date_str = datetime.datetime.strptime(max_date_str, '%Y-%m-%d').strftime('%d-%m-%Y')
 
     # Provide warnings in case of missing data
+    selected_street_header = street_name
     if missing_data:
         # Add warnings to layout
-        selected_street_header = street_name
-        selected_street_header_color = {'color': ADFC_crimson}
         date_range_text = _(message +', ' + _('available') + ': ' + min_date_str + _(' to ') + max_date_str)
         if message == _('Dates out of range'):
             selected_street_header_color = {'color': ADFC_crimson}
@@ -995,9 +962,7 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
             selected_street_header_color = {'color': ADFC_orange}
             date_range_color = {'color': ADFC_orange}
     else:
-        # Update selected street - street data range covered
-        #traffic_df_upt_dt_str = update_selected_street(traffic_df_upt_dt, segment_id, street_name)
-        selected_street_header = street_name
+        # Street data range covered
         selected_street_header_color = {'color': ADFC_green}
         date_range_text = _('Pick date range:')
         date_range_color = {'color': 'black'}
@@ -1215,15 +1180,6 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
     bar_ranking.update_layout({'plot_bgcolor': ADFC_palegrey,'paper_bgcolor': ADFC_palegrey})
     bar_ranking.update_layout(yaxis_title= _('Absolute count'))
     for annotation in bar_ranking.layout.annotations: annotation['font'] = {'size': 14}
-    #else:
-    # bar_ranking = px.bar(df_bar_ranking,
-    #     x='osm.name', y=radio_y_axis,
-    #     color=radio_y_axis,
-    #     color_continuous_scale='temps',
-    #     labels={'ped_total': _('Pedestrians'), 'bike_total': _('Bikes'), 'car_total': _('Cars'), 'heavy_total': _('Heavy'), 'osm.length': _('Street Length'), 'osm.maxspeed': _('Max Speed'), 'osm.name': _('Street')},
-    #     title=(_('Absolute traffic') + ' no data!!! (' + start_date.split(' ')[0] + ' - ' + end_date.split(' ')[0] + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)'),
-    #     height=600,
-    # )
 
     ### Create comparison Graph
     #TODO: bug dec 2023-2024 on day sort order
@@ -1297,7 +1253,7 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, segment_id_
     line_avg_delta_traffic.update_xaxes(dtick = 1, tickformat=".0f")
     for annotation in line_avg_delta_traffic.layout.annotations: annotation['font'] = {'size': 14}
 
-    return selected_street_header, selected_street_header_color, date_range_text, date_range_color, pie_traffic, line_abs_traffic, bar_avg_traffic, line_avg_delta_traffic, bar_perc_speed, bar_avg_speed, bar_v85, bar_ranking, segment_id_json
+    return selected_street_header, selected_street_header_color, date_range_text, date_range_color, pie_traffic, line_abs_traffic, bar_avg_traffic, line_avg_delta_traffic, bar_perc_speed, bar_avg_speed, bar_v85, bar_ranking
 
 if __name__ == "__main__":
     app.run(debug=False)

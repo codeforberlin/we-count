@@ -19,7 +19,7 @@ import pandas as pd
 import requests
 import geopandas as gpd
 import dash_bootstrap_components as dbc
-from dash import Dash, html, dcc, Output, Input, State, callback, ctx
+from dash import Dash, html, dcc, Output, Input, callback, ctx, no_update
 from dash.exceptions import PreventUpdate
 import plotly.express as px
 
@@ -50,8 +50,8 @@ def retrieve_data():
         print('Reading geojson data...')
 
     geojson_url = 'https://berlin-zaehlt.de/csv/bzm_telraam_segments.geojson'
-    geo_cols = ['segment_id', 'osm', 'cameras', 'geometry']
     geojson_file_size = get_file_size(geojson_url)
+    geo_cols = ['segment_id', 'osm', 'cameras', 'geometry']
     if geojson_file_size > 500:
         geo_df = gpd.read_file(geojson_url, columns=geo_cols)
     else:
@@ -75,8 +75,8 @@ def retrieve_data():
     traffic_df['segment_id']=traffic_df['segment_id'].astype(str)
 
     # Add street column for facet graphs - check efficiency!
-    traffic_df['street_selection'] = traffic_df.loc[:, 'osm.name']
-    traffic_df.loc[traffic_df['street_selection'] != 'does not exist', 'street_selection'] = 'All Streets'
+    #traffic_df['street_selection'] = traffic_df.loc[:, 'osm.name']
+    #traffic_df.loc[traffic_df['street_selection'] != 'does not exist', 'street_selection'] = 'All Streets'
 
     return geo_df, json_df_features, traffic_df
 
@@ -209,14 +209,14 @@ def update_map_data(df_map_base, df):
 
     # Add map_line_color category and add column information to cover inactive traffic counters
     df_map['map_line_color'] = df_map['map_line_color'].cat.add_categories([('Inactive - no data')])
-    df_map.fillna({"map_line_color": ('Inactive - no data')}, inplace=True)
-
+    df_map.fillna({'map_line_color': ('Inactive - no data')}, inplace=True)
     # Sort data to get desired legend order
     df_map = df_map.sort_values(by=['map_line_color'])
 
     # Move segment_id index to column (avoid ambiguity by two segment_id columns in line_map Plotly v6.0)
     df_map = df_map.drop('segment_id', axis=1)
     df_map.reset_index(level=0, inplace=True)
+    df_map['segment_id']=df_map['segment_id'].astype(str)
 
     # Free memory
     del df, df_map_base
@@ -793,17 +793,17 @@ def get_language(lang_code_dd):
 def get_street_name(clickData):
 
     if clickData:
-        # Get street name from map click
+        # Get street name and segment id from map click
         street_name = clickData['points'][0]['hovertext']
-        # Get segment_id from map click and prepare for dcc.Store
         segment_id = str(clickData['points'][0]['customdata'][0])
 
-        # Check if street inactive
-        idx = df_map.loc[df_map['osm.name'] == street_name]
+        # Check if street inactive, if so, prevent update
+        idx = df_map.loc[df_map['segment_id'] == segment_id]
         map_color_status = idx['map_line_color'].values[0]
-        if map_color_status == _('Inactive - no data'):
+        if map_color_status == 'Inactive - no data':
             raise PreventUpdate
 
+        # Otherwise, change to selected street
         id_street = street_name + ' (' + segment_id + ')'
 
     return id_street
@@ -816,23 +816,31 @@ def get_street_name(clickData):
 )
 
 def update_map(clickData, id_street, lang_code_dd):
-    street_name = id_street.split(' (')[0]
     callback_trigger = ctx.triggered_id
 
-    if clickData:
-        segment_id = str(clickData['points'][0]['customdata'][0])
-        #TODO: V1 V2 cameras
-        #print(clickData['points'][0]['customdata'][1][0]['hardware_version'])
+    #TODO: V1 V2 cameras
+    #print(clickData['points'][0]['customdata'][1][0]['hardware_version'])
 
     if callback_trigger == 'street_map':
+        street_name = clickData['points'][0]['hovertext']
         segment_id = clickData['points'][0]['customdata'][0]
         idx = df_map.loc[df_map['segment_id'] == segment_id]
-        zoom_factor = 13
+        # Check if street inactive, if so, prevent update
+        map_color_status = idx['map_line_color'].values[0]
+        if map_color_status == 'Inactive - no data':
+            raise PreventUpdate
+        else:
+            zoom_factor = 13
     elif callback_trigger == 'street_name_dd':
-        idx = df_map.loc[df_map['osm.name'] == street_name]
+        street_name = id_street.split(' (')[0]
+        segment_id = id_street[-11:-1]
+        idx = df_map.loc[df_map['segment_id'] == segment_id]
         zoom_factor = 13
     else:
-        idx = df_map.loc[df_map['osm.name'] == street_name]
+        # Initial view
+        street_name = id_street.split(' (')[0]
+        segment_id = id_street[-11:-1]
+        idx = df_map.loc[df_map['segment_id'] == segment_id]
         zoom_factor = 11
 
     # TODO: improve efficiency by managing translation w/o recalculating bc ratios
@@ -902,11 +910,9 @@ def update_map(clickData, id_street, lang_code_dd):
     Output(component_id='bar_avg_speed', component_property='figure'),
     Output(component_id='bar_v85', component_property='figure'),
     Output(component_id='bar_ranking', component_property='figure'),
-    #Output(component_id='store_segment_id_value',component_property= 'data', allow_duplicate=True),
     Input(component_id='radio_time_division', component_property='value'),
     Input(component_id='radio_time_unit', component_property='value'),
     Input(component_id='street_name_dd', component_property='value'),
-    #State(component_id='store_segment_id_value',component_property= 'data'),
     Input(component_id='dropdown_year_A', component_property='value'),
     Input(component_id='dropdown_year_month_A', component_property='value'),
     Input(component_id='dropdown_year_week_A', component_property='value'),
@@ -922,7 +928,7 @@ def update_map(clickData, id_street, lang_code_dd):
     Input(component_id='radio_y_axis', component_property='value'),
     Input(component_id='floating_button', component_property='n_clicks'),
     Input(component_id='language_selector', component_property='value'),
-prevent_initial_call='initial_duplicate',
+#prevent_initial_call='initial_duplicate',
 )
 
 def update_graphs(radio_time_division, radio_time_unit, id_street, dropdown_year_A, dropdown_year_month_A, dropdown_year_week_A, dropdown_date_A, dropdown_year_B, dropdown_year_month_B, dropdown_year_week_B, dropdown_date_B, start_date, end_date, hour_range, toggle_uptime_filter, radio_y_axis, floating_button, lang_code_dd):
@@ -939,6 +945,16 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, dropdown_year
     segment_id = id_street[-11:-1]
     street_name = id_street.split(' (')[0]
 
+    map_color_status = df_map.loc[df_map['segment_id'] == segment_id, 'map_line_color'].iloc[0]
+    if map_color_status == 'Inactive - no data':
+        print(map_color_status)
+    #    id_street = 'Dresdener Straße (9000006667)'
+        selected_street_header = 'Select active street'
+        selected_street_header_color = {'color': ADFC_lightgrey}
+    #    raise PreventUpdate
+    else:
+        selected_street_header = street_name
+
     # Check if selected street has data for selected data range
     min_date_str, max_date_str, start_date, end_date, message, missing_data = get_min_max_str(traffic_df_upt, id_street, start_date, end_date)
     traffic_df_upt_dt, min_date, max_date, min_hour, max_hour = filter_dt(traffic_df_upt, start_date, end_date, hour_range)
@@ -951,7 +967,6 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, dropdown_year
     max_date_str = datetime.datetime.strptime(max_date_str, '%Y-%m-%d').strftime('%d-%m-%Y')
 
     # Provide warnings in case of missing data
-    selected_street_header = street_name
     if missing_data:
         # Add warnings to layout
         date_range_text = _(message +', ' + _('available') + ': ' + min_date_str + _(' to ') + max_date_str)
@@ -1154,21 +1169,21 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, dropdown_year
         annotation['font'] = {'size': 14}
 
     ### Create ranking chart
-    df_bar_ranking = traffic_df_upt_dt.groupby(by=['osm.name', 'street_selection'], sort= False, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
+    df_bar_ranking = traffic_df_upt_dt.groupby(by=['id_street', 'street_selection'], sort=False, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
     df_bar_ranking = df_bar_ranking.sort_values(by=[radio_y_axis], ascending=False)
     df_bar_ranking.reset_index(inplace=True)
 
     # Assess x and y for annotation
     #if not missing_data:
-    annotation_index = df_bar_ranking[df_bar_ranking['osm.name'] == street_name].index[0]
+    annotation_index = df_bar_ranking[df_bar_ranking['id_street'] == id_street].index[0]
     annotation_x = annotation_index
     annotation_y = df_bar_ranking[radio_y_axis].values[annotation_x]
 
     bar_ranking = px.bar(df_bar_ranking,
-        x='osm.name', y=radio_y_axis,
+        x='id_street', y=radio_y_axis,
         color=radio_y_axis,
         color_continuous_scale='temps',
-        labels={'ped_total': _('Pedestrians'), 'bike_total': _('Bikes'), 'car_total': _('Cars'), 'heavy_total': _('Heavy'), 'osm.length': _('Street Length'), 'osm.maxspeed': _('Max Speed'), 'osm.name': _('Street')},
+        labels={'ped_total': _('Pedestrians'), 'bike_total': _('Bikes'), 'car_total': _('Cars'), 'heavy_total': _('Heavy'), 'id_street': _('Street (segment id)')},
         title=(_('Absolute traffic') + ' (' + start_date + ' - ' + end_date + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)'),
         height=600,
     )

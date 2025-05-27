@@ -66,21 +66,28 @@ geo_df_osm = geo_df_osm.rename(columns={'name': 'osm.name', 'highway': 'osm.high
 address_cols = geo_df_osm.columns[geo_df_osm.columns.str.startswith('address')]
 geo_df_osm.drop(address_cols, axis=1, inplace=True)
 
-# Recombine and remove redundant osm columns
+# Remove rows with insufficient information
+nan_rows = geo_df_osm[geo_df_osm['osm.name'].isnull()]
+geo_df_osm.drop(nan_rows.index)
+
+# Recombine and remove original osm columns
 df_geojson = pd.concat([geo_df, geo_df_osm], axis=1)
 df_geojson = df_geojson.drop(['osm', 'parsed_osm'], axis=1)
 
-# Add street id column for dropdown selection
+# Add id_street column for dropdown selection, remove input columns segment_id and osm.name
 df_geojson['id_street'] = df_geojson['osm.name'].astype(str) + ' (' + df_geojson['segment_id'].astype(str) + ')'
+
+# Parse cameras column
+geo_df['parsed_cameras'] = geo_df['cameras'].apply(json.loads)
+geo_df_cameras = pd.json_normalize(geo_df['parsed_cameras'])
+geo_df_cameras = geo_df_cameras.drop([1, 2, 3, 4, 5, 6, 7, 8, 9], axis=1)
+geo_df_0 = pd.json_normalize(geo_df_cameras[0])
+#output_excel(geo_df_0,'geo_df_0')
 
 # Replace "list" entries with none
 for i in range(len(df_geojson)):
     if isinstance(df_geojson['maxspeed'].values[i],list):
         df_geojson['maxspeed'].values[i]=''
-
-# Remove rows with insufficient information
-nan_rows = df_geojson[df_geojson['osm.name'].isnull()]
-df_geojson.drop(nan_rows.index)
 
 save_file_path = os.path.join(ASSET_DIR, 'df_geojson.csv.gz')
 df_geojson.to_csv(save_file_path, index=False, compression='gzip')
@@ -137,11 +144,21 @@ if verbose:
 traffic_df = traffic_df.rename(columns={'name': 'osm.name', 'highway': 'osm.highway'})
 
 if verbose:
-    print('Drop empty rows...')
+    print('Drop rows with critical data lacking...')
 nan_rows = traffic_df[traffic_df['date_local'].isnull()]
 traffic_df = traffic_df.drop(nan_rows.index)
 nan_rows = traffic_df[traffic_df['osm.name'].isnull()]
 traffic_df = traffic_df.drop(nan_rows.index)
+traffic_cols = ['ped_total', 'bike_total', 'car_total', 'heavy_total']
+traffic_df['check_sum'] = traffic_df[traffic_cols].sum(axis=1)
+nan_rows = traffic_df[traffic_df['check_sum'] == 0]
+traffic_df = traffic_df.drop(nan_rows.index)
+traffic_df = traffic_df.drop(['check_sum'], axis=1)
+
+# Add street column for facet graphs - check efficiency!
+traffic_df['street_selection'] = traffic_df.loc[:, 'osm.name']
+traffic_df.loc[traffic_df['street_selection'] != 'does not exist', 'street_selection'] = 'All Streets'
+traffic_df = traffic_df.drop(['osm.name'], axis=1)
 
 if verbose:
     print('Break down date_local to formatted string columns, except "hour"...')

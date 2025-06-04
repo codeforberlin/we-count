@@ -4,7 +4,7 @@
 
 # @file    bzm_performance.py
 # @author  Egbert Klaassen
-# @date    2025-05-23
+# @date    2025-06-04
 
 """"
 # traffic_df        - dataframe with measured traffic data file
@@ -50,6 +50,7 @@ def retrieve_data():
         print('Reading geojson data...')
 
     geojson_url = 'https://berlin-zaehlt.de/csv/bzm_telraam_segments.geojson'
+    #TODO: manage if offline, geojson_path = os.path.join(ASSET_DIR, 'bzm_telraam_segments.geojson')
     geojson_file_size = get_file_size(geojson_url)
     geo_cols = ['segment_id', 'osm', 'cameras', 'geometry']
     if geojson_file_size > 500:
@@ -71,12 +72,7 @@ def retrieve_data():
     traffic_df = pd.read_csv(traffic_file_path)
 
     # Set data types for clean representation
-    json_df_features['segment_id']=json_df_features['segment_id'].astype(str)
     traffic_df['segment_id']=traffic_df['segment_id'].astype(str)
-
-    # Add street column for facet graphs - check efficiency!
-    #traffic_df['street_selection'] = traffic_df.loc[:, 'osm.name']
-    #traffic_df.loc[traffic_df['street_selection'] != 'does not exist', 'street_selection'] = 'All Streets'
 
     return geo_df, json_df_features, traffic_df
 
@@ -223,7 +219,6 @@ def update_map_data(df_map_base, df):
 
     return df_map
 
-
 def get_min_max_str(df, id_street, start_date, end_date):
     format_string = '%Y-%m-%d %H:%M:%S'
     missing_data = False
@@ -355,6 +350,9 @@ json_df_features.set_index('segment_id', inplace=True)
 #TODO: move json_df_features to geopandas
 df_map_base = geo_df_map_info.join(json_df_features)
 
+# Free memory
+del json_df_features
+
 # Prepare map data
 df_map = update_map_data(df_map_base, traffic_df_id_bc)
 
@@ -478,7 +476,16 @@ def serve_layout():
                         style={'color': ADFC_lightgrey}),
                     dbc.Popover(
                         dbc.PopoverBody(_('A high 0.7-0.8 uptime will always mean very good data. The first and last daylight hour of the day will always have lower uptimes. If uptimes during the day are below 0.5, that is usually a clear sign that something is probably wrong with the instance.')),
-                        target="popover_filter", trigger="hover")
+                        target="popover_filter", trigger="hover"),
+                    dbc.Checklist(
+                        id='hardware_version',
+                        options=[{'label': _('Camera v1'), 'value': 1}, {'label': _('Camera v2'), 'value': 2}],
+                        value=[1, 2],
+                        # style = {'color' : ADFC_darkgrey, 'font_size' : 14},
+                        inline=True,
+                        switch=True,
+                        className='d-inline-block ms-2 mt-0'
+                    ),
                 ]),
             ], sm=3),
         ], className='g-2 sticky-top rounded', style={'background-color': ADFC_skyblue}),
@@ -785,7 +792,7 @@ def get_language(lang_code_dd):
 
 ### Map callback ###
 @callback(
-    Output(component_id='street_name_dd',component_property='value'),
+    Output(component_id='street_name_dd',component_property='value', allow_duplicate= True),
     Input(component_id='street_map', component_property='clickData'),
     prevent_initial_call=True
 )
@@ -810,37 +817,74 @@ def get_street_name(clickData):
 
 @callback(
     Output(component_id='street_map', component_property='figure'),
+    Output(component_id='hardware_version', component_property='value'),
+    Output(component_id='street_name_dd', component_property='options'),
+    Output(component_id='street_name_dd', component_property='value'),
     Input(component_id='street_map', component_property='clickData'),
     Input(component_id='street_name_dd', component_property='value'),
     Input(component_id='language_selector',component_property= 'value'),
+    Input(component_id='hardware_version',component_property= 'value'),
 )
 
-def update_map(clickData, id_street, lang_code_dd):
+def update_map(clickData, id_street, lang_code_dd, hardware_version):
     callback_trigger = ctx.triggered_id
 
-    #TODO: V1 V2 cameras
-    #print(clickData['points'][0]['customdata'][1][0]['hardware_version'])
+    # Get hardware version of currently selected street
+    current_hw = int(df_map.loc[df_map['id_street'] == id_street, 'hardware_version'].iloc[0])
+
+    # Camera hardware version change
+    if callback_trigger == 'hardware_version':
+        if hardware_version == [1]:
+            df_map_hw = df_map[df_map['hardware_version'] == 1]
+            # Switch selected street if camera hardware version does not fit selection
+            if current_hw == 2:
+                id_street = 'Alte Jakobstraße (9000002582)'
+        elif hardware_version == [2]:
+            df_map_hw = df_map[df_map['hardware_version'] == 2]
+            # Switch selected street if camera hardware version does not fit selection
+            if current_hw == 1:
+                id_street = 'Dresdener Straße (9000006667)'
+        else:
+            # Set both camera hardware versions if both or none are selected
+            hardware_version = [1, 2]
+            df_map_hw = df_map
+    else:
+        df_map_hw = df_map
+
+    # Update options for street_name_dd, remove inactive
+    df_map_hw_options = df_map_hw[df_map_hw['map_line_color']!='Inactive - no data']
+    street_name_dd_options = [{'label': i, 'value': i} for i in sorted(df_map_hw_options['id_street'].unique())]
+    # Free up memory
+    del df_map_hw_options
 
     if callback_trigger == 'street_map':
         street_name = clickData['points'][0]['hovertext']
         segment_id = clickData['points'][0]['customdata'][0]
-        idx = df_map.loc[df_map['segment_id'] == segment_id]
+        idx = df_map_hw.loc[df_map_hw['segment_id'] == segment_id]
         # Check if street inactive, if so, prevent update
         map_color_status = idx['map_line_color'].values[0]
         if map_color_status == 'Inactive - no data':
             raise PreventUpdate
         else:
-            zoom_factor = 13
-    elif callback_trigger == 'street_name_dd':
+            if hardware_version == [1] or hardware_version == [2]:
+                # Provide overview after camera hardware version change
+                zoom_factor = 11
+            else:
+                zoom_factor = 13
+    elif callback_trigger == 'street_name_dd' or hardware_version == [1] or hardware_version == [2]:
         street_name = id_street.split(' (')[0]
         segment_id = id_street[-11:-1]
-        idx = df_map.loc[df_map['segment_id'] == segment_id]
-        zoom_factor = 13
+        idx = df_map_hw.loc[df_map_hw['segment_id'] == segment_id]
+        if hardware_version == [1] or hardware_version == [2]:
+            # Provide overview after camera hardware version change
+            zoom_factor = 11
+        else:
+            zoom_factor = 13
     else:
         # Initial view
         street_name = id_street.split(' (')[0]
         segment_id = id_street[-11:-1]
-        idx = df_map.loc[df_map['segment_id'] == segment_id]
+        idx = df_map_hw.loc[df_map_hw['segment_id'] == segment_id]
         zoom_factor = 11
 
     # TODO: improve efficiency by managing translation w/o recalculating bc ratios
@@ -848,7 +892,7 @@ def update_map(clickData, id_street, lang_code_dd):
     lat_str = idx['y'].values[0]
 
     sep = '&nbsp;|&nbsp;'
-    street_map = px.line_map(df_map, lat='y', lon='x', custom_data=['segment_id', 'cameras'],line_group='segment_id', hover_name = 'osm.name', color= 'map_line_color',
+    street_map = px.line_map(df_map_hw, lat='y', lon='x', custom_data=['segment_id', 'hardware_version'],line_group='segment_id', hover_name = 'osm.name', color= 'map_line_color',
         color_discrete_map= {
         'More bikes than cars': ADFC_green,
         'More cars than bikes': ADFC_blue,
@@ -856,7 +900,7 @@ def update_map(clickData, id_street, lang_code_dd):
         'Over 5x more cars': ADFC_crimson,
         'Over 10x more cars': ADFC_pink,
         'Inactive - no data': ADFC_lightgrey},
-        hover_data={'map_line_color': False, 'osm.highway': True, 'osm.address.city': True, 'osm.address.suburb': True, 'osm.address.postcode': True},
+        hover_data={'map_line_color': False, 'osm.highway': True, 'osm.address.city': True, 'osm.address.suburb': True, 'osm.address.postcode': True, 'hardware_version': True},
         labels={'segment_id': 'Segment', 'osm.highway': _('Highway type'), 'x': 'Lon', 'y': 'Lat', 'osm.address.city': _('City'), 'osm.address.suburb': _('District'), 'osm.address.postcode': _('Postal code')},
         map_style="streets", center= dict(lat=lat_str, lon=lon_str), zoom= zoom_factor)
 
@@ -867,11 +911,7 @@ def update_map(clickData, id_street, lang_code_dd):
     street_map.update_traces({'name': _('Over 5x more cars')}, selector={'name': 'Over 5x more cars'})
     street_map.update_traces({'name': _('Over 10x more cars')}, selector={'name': 'Over 10x more cars'})
     street_map.update_traces({'name': _('Inactive - no data')}, selector={'name': 'Inactive - no data'})
-    street_map.update_layout(
-        autosize=False,
-        #width=800,
-        #height=500,
-    )
+    street_map.update_layout(autosize=False)
     street_map.update_layout(margin=dict(l=0, r=0, t=0, b=0))
     street_map.update_layout(legend_title=_('Street color'))
     street_map.update_layout(legend=dict(yanchor="top", y=0.99, xanchor="right", x=0.99))
@@ -891,9 +931,7 @@ def update_map(clickData, id_street, lang_code_dd):
         )
     ])
 
-    return street_map
-
-#TODO: remove after thorough testing
+    return street_map, hardware_version, street_name_dd_options, id_street
 
 
 ### General traffic callback ###
@@ -944,16 +982,15 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, dropdown_year
     # Get segment_id/street name
     segment_id = id_street[-11:-1]
     street_name = id_street.split(' (')[0]
+    selected_street_header = street_name
 
-    map_color_status = df_map.loc[df_map['segment_id'] == segment_id, 'map_line_color'].iloc[0]
-    if map_color_status == 'Inactive - no data':
-        print(map_color_status)
-    #    id_street = 'Dresdener Straße (9000006667)'
-        selected_street_header = 'Select active street'
-        selected_street_header_color = {'color': ADFC_lightgrey}
-    #    raise PreventUpdate
-    else:
-        selected_street_header = street_name
+    #map_color_status = df_map.loc[df_map['segment_id'] == segment_id, 'map_line_color'].iloc[0]
+    #print(map_color_status)
+    #if map_color_status == 'Inactive - no data':
+    #    selected_street_header = 'Select active street'
+    #    selected_street_header_color = {'color': ADFC_lightgrey}
+    #else:
+    #    selected_street_header = street_name
 
     # Check if selected street has data for selected data range
     min_date_str, max_date_str, start_date, end_date, message, missing_data = get_min_max_str(traffic_df_upt, id_street, start_date, end_date)

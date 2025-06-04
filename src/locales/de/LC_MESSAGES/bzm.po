@@ -126,6 +126,12 @@ msgstr "Wähle Start- und Enddatum:"
 msgid " Filter uptime > 0.7"
 msgstr " Filtere Verfügbarkeit > 70%"
 
+msgid "Camera v1"
+msgstr "Kamera v1"
+
+msgid "Camera v2"
+msgstr "Kamera v2"
+
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:457
 msgid ""
 "A high 0.7-0.8 uptime will always mean very good data. The first and last "
@@ -495,6 +501,9 @@ msgstr "Maximale Geschwindigkeit"
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1188
 msgid "Street"
 msgstr "Straße"
+
+msgid "Street (segment id)"
+msgstr "Straße (Segment id)"
 
 #: D:\OneDrive\PycharmProjects\we-count\src\bzm_v01.py:1180
 msgid "Absolute count"

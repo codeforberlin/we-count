@@ -5,7 +5,7 @@
 # @file    bzm_get_data.py
 # @author  Egbert Klaassen
 # @author  Michael Behrisch
-# @date    2025-05-23
+# @date    2025-06-04
 
 import os
 import pandas as pd
@@ -73,8 +73,7 @@ geo_df_osm.drop(nan_rows.index)
 # Recombine and remove original osm columns
 df_geojson = pd.concat([geo_df, geo_df_osm], axis=1)
 df_geojson = df_geojson.drop(['osm', 'parsed_osm'], axis=1)
-
-# Add id_street column for dropdown selection, remove input columns segment_id and osm.name
+# Add id_street column for dropdown selection
 df_geojson['id_street'] = df_geojson['osm.name'].astype(str) + ' (' + df_geojson['segment_id'].astype(str) + ')'
 
 # Parse cameras column
@@ -82,7 +81,13 @@ geo_df['parsed_cameras'] = geo_df['cameras'].apply(json.loads)
 geo_df_cameras = pd.json_normalize(geo_df['parsed_cameras'])
 geo_df_cameras = geo_df_cameras.drop([1, 2, 3, 4, 5, 6, 7, 8, 9], axis=1)
 geo_df_0 = pd.json_normalize(geo_df_cameras[0])
-#output_excel(geo_df_0,'geo_df_0')
+geo_df_0 = geo_df_0['hardware_version']
+
+# Recombine and remove original osm columns
+df_geojson = pd.concat([df_geojson, geo_df_0], axis=1)
+df_geojson = df_geojson.drop(['cameras'], axis=1)
+
+del geo_df_0, geo_df_cameras
 
 # Replace "list" entries with none
 for i in range(len(df_geojson)):

@@ -457,7 +457,7 @@ def serve_layout():
                     end_date_placeholder_text='DD-MM-YYYY',
                     number_of_months_shown=2,
                     minimum_nights=1,
-                    className='align-bottom ms-2 mb-2',
+                    className='align-bottom justify-center ms-2 mb-2',
                 ),
             ], sm=3),
             dbc.Col([
@@ -466,7 +466,6 @@ def serve_layout():
                         id='toggle_uptime_filter',
                         options=[{'label': _(' Filter uptime > 0.7'), 'value': 'filter_uptime_selected'}],
                         value= ['filter_uptime_selected'],
-                        #style = {'color' : ADFC_darkgrey, 'font_size' : 14},
                         inline=False,
                         switch=True,
                         className='d-inline-block ms-2 mt-4'
@@ -477,15 +476,22 @@ def serve_layout():
                     dbc.Popover(
                         dbc.PopoverBody(_('A high 0.7-0.8 uptime will always mean very good data. The first and last daylight hour of the day will always have lower uptimes. If uptimes during the day are below 0.5, that is usually a clear sign that something is probably wrong with the instance.')),
                         target="popover_filter", trigger="hover"),
-                    dbc.Checklist(
+                ]),
+                html.Span([
+                        dbc.Checklist(
                         id='hardware_version',
                         options=[{'label': _('Camera v1'), 'value': 1}, {'label': _('Camera v2'), 'value': 2}],
                         value=[1, 2],
-                        # style = {'color' : ADFC_darkgrey, 'font_size' : 14},
                         inline=True,
                         switch=True,
                         className='d-inline-block ms-2 mt-0'
                     ),
+                    html.I(className='bi bi-info-circle-fill h6 ms-0',
+                        id='popover_hardware_version',
+                        style={'color': ADFC_lightgrey}),
+                    dbc.Popover(
+                        dbc.PopoverBody(_("Click to show/hide cameras with hardware versions 1 and or 2. Switching off both, will re-enable both automatically. Note: the 'All streets' graphs below are based on all streets, regardless which camera hardware version is selected")),
+                        target="popover_hardware_version", trigger="hover"),
                 ]),
             ], sm=3),
         ], className='g-2 sticky-top rounded', style={'background-color': ADFC_skyblue}),
@@ -507,7 +513,6 @@ def serve_layout():
                     value='date',
                     inline=True,
                     inputStyle={"margin-right": "5px", "margin-left": "20px"},
-                    #style={'margin-left': 40, 'margin-bottom': 00},
                 ),
             ], sm=10),
             dbc.Col([

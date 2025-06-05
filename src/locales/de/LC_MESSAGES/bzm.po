@@ -527,3 +527,6 @@ msgstr "Tag"
 
 msgid "year"
 msgstr "Jahr"
+
+msgid "Click to show/hide cameras with hardware versions 1 and or 2. Switching off both, will re-enable both automatically. Note: the 'All streets' graphs below are based on all streets, regardless which camera hardware version is selected"
+msgstr "Klicken Sie hier, um Kameras mit den Hardwareversionen 1 und/oder 2 anzuzeigen/auszublenden. Wenn Sie beide ausschalten, werden beide automatisch wieder aktiviert. Hinweis: Die unten stehenden 'Alle Straßen'-Diagramme basieren auf allen Straßen, unabhängig davon, welche Kamera-Hardwareversion ausgewählt ist."

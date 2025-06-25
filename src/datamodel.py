@@ -81,7 +81,7 @@ class TrafficCount(Base):
             self.car_speed_histogram = ",".join(["%s" % c for c in counts])
 
     def _unscaled_car_count(self):
-        return round((self.car_lft + self.car_rgt) * self.uptime_rel)
+        return round(((self.car_lft or 0.) + (self.car_rgt or 0.)) * self.uptime_rel)
 
     @staticmethod
     def parse_histogram(speed_histogram, ucc):

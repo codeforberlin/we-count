@@ -1,54 +1,471 @@
 # SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# Copyright (C) 2025 THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
 #
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-01-28 22:10+0100\n"
+"POT-Creation-Date: 2025-07-19 15:25+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: en\n"
+"Language-Team: en <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.10.3\n"
 
-#: bzm_v01.py:115
-msgid "	Hello World"
-msgstr "Hello World"
+#: bzm_v01.py:167
+msgid "full street"
+msgstr ""
 
-#: bzm_v01.py:203
+#: bzm_v01.py:242 bzm_v01.py:1015
+msgid "Dates out of range"
+msgstr ""
+
+#: bzm_v01.py:247
+msgid "End date out of range"
+msgstr ""
+
+#: bzm_v01.py:251
+msgid "Start date out of range"
+msgstr ""
+
+#: bzm_v01.py:255
+msgid "Narrowed down range"
+msgstr ""
+
+#: bzm_v01.py:361
 msgid "Start dash..."
 msgstr "Start dash..."
 
-#: bzm_v01.py:216
-msgid "Berlin Counts Mobility"
-msgstr "Berlin Counts Mobility"
+#: bzm_v01.py:378
+msgid "Project partners: "
+msgstr ""
 
-#: bzm_v01.py:239
+#: bzm_v01.py:402
+msgid ""
+"Note: street colors represent bike/car ratios based on all data available"
+" and do not change with date- or hour selection. The map allows street "
+"segments to be selected individually. To select whole streets, select a "
+"street name from the drop down menu."
+msgstr ""
+
+#: bzm_v01.py:409
+msgid "English"
+msgstr ""
+
+#: bzm_v01.py:410
+msgid "Deutsch"
+msgstr ""
+
+#: bzm_v01.py:416
 msgid "Select street:"
 msgstr "Select street:"
 
-#: bzm_v01.py:244
-msgid "Traffic type (selected street)"
-msgstr "Traffic type (selected street)"
+#: bzm_v01.py:423
+msgid "Traffic type - selected street"
+msgstr ""
 
-#: bzm_v01.py:256
+#: bzm_v01.py:426
+msgid ""
+"Traffic type split of the currently selected street, based on currently "
+"selected date and hour range."
+msgstr ""
+
+#: bzm_v01.py:436
 msgid "Set hour range:"
 msgstr "Set hour range:"
 
-#: bzm_v01.py:267
+#: bzm_v01.py:445
+msgid " Hour"
+msgstr ""
+
+#: bzm_v01.py:448 bzm_v01.py:1024
 msgid "Pick date range:"
 msgstr "Pick date range:"
 
-#: bzm_v01.py:285
+#: bzm_v01.py:467
+msgid " Filter uptime > 0.7"
+msgstr ""
+
+#: bzm_v01.py:477
+msgid ""
+"A high 0.7-0.8 uptime will always mean very good data. The first and last"
+" daylight hour of the day will always have lower uptimes. If uptimes "
+"during the day are below 0.5, that is usually a clear sign that something"
+" is probably wrong with the instance."
+msgstr ""
+
+#: bzm_v01.py:483
+msgid "V1 Sensor"
+msgstr ""
+
+#: bzm_v01.py:483
+msgid "S2 Sensor"
+msgstr ""
+
+#: bzm_v01.py:493
+msgid ""
+"Click to show/hide cameras with hardware versions 1 and or 2. Switching "
+"off both, will re-enable both automatically. Note: the 'All streets' "
+"graphs below are based on all streets, regardless which camera hardware "
+"version is selected"
+msgstr ""
+
+#: bzm_v01.py:502 bzm_v01.py:1229
 msgid "Absolute traffic"
 msgstr "Absolute traffic"
 
-#: bzm_v01.py:291
+#: bzm_v01.py:507 bzm_v01.py:627 bzm_v01.py:628 bzm_v01.py:1053 bzm_v01.py:1089
+#: bzm_v01.py:1126 bzm_v01.py:1161 bzm_v01.py:1197 bzm_v01.py:1284
 msgid "Year"
 msgstr "Year"
+
+#: bzm_v01.py:508 bzm_v01.py:649 bzm_v01.py:650 bzm_v01.py:1053 bzm_v01.py:1089
+#: bzm_v01.py:1126 bzm_v01.py:1161 bzm_v01.py:1197 bzm_v01.py:1284
+msgid "Month"
+msgstr ""
+
+#: bzm_v01.py:508 bzm_v01.py:1053
+msgid "year_month"
+msgstr ""
+
+#: bzm_v01.py:509 bzm_v01.py:673 bzm_v01.py:674 bzm_v01.py:1053 bzm_v01.py:1089
+#: bzm_v01.py:1126 bzm_v01.py:1161 bzm_v01.py:1197
+msgid "Week"
+msgstr ""
+
+#: bzm_v01.py:510 bzm_v01.py:695 bzm_v01.py:696 bzm_v01.py:1053 bzm_v01.py:1089
+#: bzm_v01.py:1126 bzm_v01.py:1161 bzm_v01.py:1197 bzm_v01.py:1284
+msgid "Day"
+msgstr ""
+
+#: bzm_v01.py:511 bzm_v01.py:1053 bzm_v01.py:1089 bzm_v01.py:1126
+#: bzm_v01.py:1161 bzm_v01.py:1197
+msgid "Hour"
+msgstr ""
+
+#: bzm_v01.py:520
+msgid "Download graphs   "
+msgstr ""
+
+#: bzm_v01.py:522
+msgid ""
+"Hover over the top-right of a graph and click the camera symbol to "
+"download in png-format"
+msgstr ""
+
+#: bzm_v01.py:537
+msgid "Average traffic"
+msgstr ""
+
+#: bzm_v01.py:542
+msgid "Yearly"
+msgstr ""
+
+#: bzm_v01.py:543
+msgid "Monthly"
+msgstr ""
+
+#: bzm_v01.py:543
+msgid "month"
+msgstr ""
+
+#: bzm_v01.py:544
+msgid "Weekly"
+msgstr ""
+
+#: bzm_v01.py:544 bzm_v01.py:548
+msgid "weekday"
+msgstr ""
+
+#: bzm_v01.py:545
+msgid "Daily"
+msgstr ""
+
+#: bzm_v01.py:546
+msgid "Hourly"
+msgstr ""
+
+#: bzm_v01.py:563
+msgid "Percentage car speed - by time unit"
+msgstr ""
+
+#: bzm_v01.py:570
+msgid "Percentage car speed - average"
+msgstr ""
+
+#: bzm_v01.py:578
+msgid "v85 car speed"
+msgstr ""
+
+#: bzm_v01.py:583
+msgid ""
+"The V85 is a widely used indicator in the world of mobility and road "
+"safety, as it is deemed to be representative of the speed one can "
+"reasonably maintain on a road."
+msgstr ""
+
+#: bzm_v01.py:594
+msgid "Street ranking by traffic type"
+msgstr ""
+
+#: bzm_v01.py:603 bzm_v01.py:1030 bzm_v01.py:1035 bzm_v01.py:1068
+#: bzm_v01.py:1100 bzm_v01.py:1228 bzm_v01.py:1300 bzm_v01.py:1304
+msgid "Pedestrians"
+msgstr ""
+
+#: bzm_v01.py:604 bzm_v01.py:1030 bzm_v01.py:1035 bzm_v01.py:1069
+#: bzm_v01.py:1101 bzm_v01.py:1228 bzm_v01.py:1301 bzm_v01.py:1305
+msgid "Bikes"
+msgstr ""
+
+#: bzm_v01.py:605 bzm_v01.py:1030 bzm_v01.py:1035 bzm_v01.py:1070
+#: bzm_v01.py:1102 bzm_v01.py:1228 bzm_v01.py:1302 bzm_v01.py:1306
+msgid "Cars"
+msgstr ""
+
+#: bzm_v01.py:606 bzm_v01.py:1030 bzm_v01.py:1035 bzm_v01.py:1071
+#: bzm_v01.py:1103 bzm_v01.py:1228 bzm_v01.py:1303 bzm_v01.py:1307
+msgid "Heavy"
+msgstr ""
+
+#: bzm_v01.py:719
+msgid "Compare traffic periods"
+msgstr ""
+
+#: bzm_v01.py:724
+msgid ""
+"This chart allows four period-lengths to be compared: day, week, month or"
+" year. For each of these, two periods can be compared, period A and "
+"period B (e.g. week A vs. week B or day A vs. day B). Solid lines "
+"represent period A and dashed lines represent period B. The date and hour"
+" filters in the upper menu bar have no effect, however 'filter uptime' "
+"does!"
+msgstr ""
+
+#: bzm_v01.py:738
+msgid "Feedback and contact"
+msgstr ""
+
+#: bzm_v01.py:741
+msgid "More information about the "
+msgstr ""
+
+#: bzm_v01.py:742
+msgid " (BzM) initiative"
+msgstr ""
+
+#: bzm_v01.py:746
+msgid "Request a counter at the "
+msgstr ""
+
+#: bzm_v01.py:747
+msgid "Citizen Science-Projekt"
+msgstr ""
+
+#: bzm_v01.py:750
+msgid "Data protection around the "
+msgstr ""
+
+#: bzm_v01.py:751
+msgid "Telraam camera"
+msgstr ""
+
+#: bzm_v01.py:751
+msgid " measurements"
+msgstr ""
+
+#: bzm_v01.py:756
+msgid "Dashboard development & creation:"
+msgstr ""
+
+#: bzm_v01.py:756
+msgid " and "
+msgstr ""
+
+#: bzm_v01.py:759
+msgid "For dashboard improvement requests email us:"
+msgstr ""
+
+#: bzm_v01.py:764
+msgid "Contact Us!"
+msgstr ""
+
+#: bzm_v01.py:775
+msgid "Disclaimer"
+msgstr ""
+
+#: bzm_v01.py:776
+msgid ""
+"The content published in the offer has been researched with the greatest "
+"care. Nevertheless, the Berlin Counts Mobility team cannot assume any "
+"liability for the topicality, correctness or completeness of the "
+"information provided. All information is provided without guarantee. "
+"liability claims against the Berlin zählt Mobilität team or its "
+"supporting organizations derived from the use of this information are "
+"excluded. Despite careful control of the content, the Berlin zählt "
+"Mobilität team and its supporting organizations assume no liability for "
+"the content of external links. The operators of the linked pages are "
+"solely responsible for their content. A constant control of the external "
+"links is not possible for the provider. If there are indications or "
+"knowledge of legal violations, the illegal links will be deleted "
+"immediately."
+msgstr ""
+
+#: bzm_v01.py:777
+msgid "Copyright"
+msgstr ""
+
+#: bzm_v01.py:778
+msgid ""
+"The layout and design of the offer as a whole as well as its individual "
+"elements are protected by copyright. The same applies to the images, "
+"graphics and editorial contributions used in detail as well as their "
+"selection and compilation. Further use and reproduction are only "
+"permitted for private purposes. No changes may be made to it. Public use "
+"of the offer may only take place with the consent of the operator."
+msgstr ""
+
+#: bzm_v01.py:909
+msgid "Highway type"
+msgstr ""
+
+#: bzm_v01.py:909
+msgid "City"
+msgstr ""
+
+#: bzm_v01.py:909
+msgid "District"
+msgstr ""
+
+#: bzm_v01.py:909
+msgid "Postal code"
+msgstr ""
+
+#: bzm_v01.py:913
+msgid "More bikes than cars"
+msgstr ""
+
+#: bzm_v01.py:914
+msgid "More cars than bikes"
+msgstr ""
+
+#: bzm_v01.py:915
+msgid "Over 2x more cars"
+msgstr ""
+
+#: bzm_v01.py:916
+msgid "Over 5x more cars"
+msgstr ""
+
+#: bzm_v01.py:917
+msgid "Over 10x more cars"
+msgstr ""
+
+#: bzm_v01.py:918
+msgid "Inactive - no data"
+msgstr ""
+
+#: bzm_v01.py:921
+msgid "Street color"
+msgstr ""
+
+#: bzm_v01.py:1014
+msgid ", "
+msgstr ""
+
+#: bzm_v01.py:1014
+msgid "available"
+msgstr ""
+
+#: bzm_v01.py:1014
+msgid " to "
+msgstr ""
+
+#: bzm_v01.py:1056 bzm_v01.py:1062 bzm_v01.py:1298
+msgid "Absolute traffic count"
+msgstr ""
+
+#: bzm_v01.py:1060 bzm_v01.py:1099 bzm_v01.py:1204 bzm_v01.py:1236
+#: bzm_v01.py:1299
+msgid "Traffic Type"
+msgstr ""
+
+#: bzm_v01.py:1072 bzm_v01.py:1094 bzm_v01.py:1136 bzm_v01.py:1171
+#: bzm_v01.py:1202 bzm_v01.py:1234 bzm_v01.py:1293
+msgid " (segment:"
+msgstr ""
+
+#: bzm_v01.py:1073 bzm_v01.py:1095 bzm_v01.py:1137 bzm_v01.py:1172
+#: bzm_v01.py:1203 bzm_v01.py:1295
+msgid "All Streets"
+msgstr ""
+
+#: bzm_v01.py:1091 bzm_v01.py:1098
+msgid "Average traffic count"
+msgstr ""
+
+#: bzm_v01.py:1132 bzm_v01.py:1148 bzm_v01.py:1183
+msgid "Percentage car speed"
+msgstr ""
+
+#: bzm_v01.py:1138 bzm_v01.py:1173
+msgid "Car speed"
+msgstr ""
+
+#: bzm_v01.py:1140 bzm_v01.py:1141 bzm_v01.py:1142 bzm_v01.py:1143
+#: bzm_v01.py:1144 bzm_v01.py:1145 bzm_v01.py:1146 bzm_v01.py:1175
+#: bzm_v01.py:1176 bzm_v01.py:1177 bzm_v01.py:1178 bzm_v01.py:1179
+#: bzm_v01.py:1180 bzm_v01.py:1181
+msgid "until"
+msgstr ""
+
+#: bzm_v01.py:1167
+msgid "Average percentage car speed"
+msgstr ""
+
+#: bzm_v01.py:1198
+msgid "Speed cars v85"
+msgstr ""
+
+#: bzm_v01.py:1206
+msgid "v85 in km/h"
+msgstr ""
+
+#: bzm_v01.py:1228
+msgid "Street (segment id)"
+msgstr ""
+
+#: bzm_v01.py:1238
+msgid "Absolute count"
+msgstr ""
+
+#: bzm_v01.py:1284
+msgid "Week day"
+msgstr ""
+
+#: bzm_v01.py:1297
+msgid "Period"
+msgstr ""
+
+#~ msgid "\tHello World"
+#~ msgstr "Hello World"
+
+#~ msgid "Berlin Counts Mobility"
+#~ msgstr "Berlin Counts Mobility"
+
+#~ msgid "Traffic type (selected street)"
+#~ msgstr "Traffic type (selected street)"
+
+#~ msgid "Camera v1"
+#~ msgstr ""
+
+#~ msgid "Camera v2"
+#~ msgstr ""
+

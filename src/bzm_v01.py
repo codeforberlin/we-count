@@ -375,7 +375,7 @@ def serve_layout():
         [
         dbc.NavbarSimple(
             children=[
-                dbc.NavItem(dbc.NavLink("Project partners: ", href="#"), class_name='align-top'),
+                dbc.NavItem(dbc.NavLink(_("Project partners: "), href="#"), class_name='align-top'),
                 dbc.Col(html.Img(src=app.get_asset_url('DLR_und_adfc_logos-cut.png'), title='Das Deutsche Zentrum für Luft- und Raumfahrt, Allgemeiner Deutscher Fahrrad-Club', height="50px"), className='ms-3'),
                 dbc.Col(html.Img(src=app.get_asset_url('CodeFor-berlin.svg'), title='Code for Berlin', height="50px"), className='ms-3'),
                 dbc.Col(html.Img(src=app.get_asset_url('Telraam.png'), title='Berlin zählt Mobilität, Citizen Science Project: ADFC Berlin, DLR & Telraam', height="50px"), className='ms-3')
@@ -480,7 +480,7 @@ def serve_layout():
                 html.Span([
                         dbc.Checklist(
                         id='hardware_version',
-                        options=[{'label': _('Camera v1'), 'value': 1}, {'label': _('Camera v2'), 'value': 2}],
+                        options=[{'label': _('V1 Sensor'), 'value': 1}, {'label': _('S2 Sensor'), 'value': 2}],
                         value=[1, 2],
                         inline=True,
                         switch=True,

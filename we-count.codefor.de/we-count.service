@@ -1,0 +1,36 @@
+[Unit]
+Description=we-count gunicorn daemon
+After=network.target
+
+[Service]
+User=we-count
+Group=we-count
+
+LogsDirectory=gunicorn/we-count
+RuntimeDirectory=gunicorn/we-count
+
+WorkingDirectory=/home/we-count/we-count/src/
+
+Environment=GUNICORN_BIN=/home/we-count/venv_wecount/bin/gunicorn
+Environment=GUNICORN_WORKER=1
+Environment=GUNICORN_PORT=8000
+Environment=GUNICORN_TIMEOUT=30
+Environment=GUNICORN_PID_FILE=/run/gunicorn/we-count/pid
+Environment=GUNICORN_ACCESS_LOG_FILE=/var/log/gunicorn/we-count/access.log
+Environment=GUNICORN_ERROR_LOG_FILE=/var/log/gunicorn/we-count/error.log
+
+ExecStart=/bin/sh -c '${GUNICORN_BIN} \
+  --workers ${GUNICORN_WORKER} \
+  --pid ${GUNICORN_PID_FILE} \
+  --bind 0.0.0.0:${GUNICORN_PORT} \
+  --timeout ${GUNICORN_TIMEOUT} \
+  --access-logfile ${GUNICORN_ACCESS_LOG_FILE} \
+  --error-logfile ${GUNICORN_ERROR_LOG_FILE} \
+  "wsgi:application"'
+
+ExecReload=/bin/sh -c '/usr/bin/pkill -HUP -F ${GUNICORN_PID_FILE}'
+
+ExecStop=/bin/sh -c '/usr/bin/pkill -TERM -F ${GUNICORN_PID_FILE}'
+
+[Install]
+WantedBy=multi-user.target

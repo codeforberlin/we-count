@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-07-20 11:30+0200\n"
+"POT-Creation-Date: 2025-07-20 12:09+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
@@ -17,33 +17,33 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.10.3\n"
+"Generated-By: Babel 2.16.0\n"
 
-#: bzm_v01.py:167
+#: bzm_v01.py:179
 msgid "full street"
 msgstr "gesamte Straße"
 
-#: bzm_v01.py:242 bzm_v01.py:1015
+#: bzm_v01.py:254 bzm_v01.py:1028
 msgid "Dates out of range"
 msgstr "Daten außerhalb des Bereichs"
 
-#: bzm_v01.py:247
+#: bzm_v01.py:259
 msgid "End date out of range"
 msgstr "Enddatum außerhalb des Bereichs"
 
-#: bzm_v01.py:251
+#: bzm_v01.py:263
 msgid "Start date out of range"
 msgstr "Startdatum außerhalb des Bereichs"
 
-#: bzm_v01.py:255
+#: bzm_v01.py:267
 msgid "Narrowed down range"
 msgstr "Eingegrenzter Bereich"
 
-#: bzm_v01.py:378
+#: bzm_v01.py:391
 msgid "Project partners: "
-msgstr "Projektpartner"
+msgstr "Projektpartner: "
 
-#: bzm_v01.py:402
+#: bzm_v01.py:415
 msgid ""
 "Note: street colors represent bike/car ratios based on all data available"
 " and do not change with date- or hour selection. The map allows street "
@@ -56,23 +56,23 @@ msgstr ""
 "Straßenabschnitte. Um ganze Straßen auszuwählen, wähle einen Straßennamen"
 " aus dem Dropdown-Menü."
 
-#: bzm_v01.py:409
+#: bzm_v01.py:422
 msgid "English"
 msgstr "Englisch"
 
-#: bzm_v01.py:410
+#: bzm_v01.py:423
 msgid "Deutsch"
 msgstr "German"
 
-#: bzm_v01.py:416
+#: bzm_v01.py:429
 msgid "Select street:"
 msgstr "Wähle Straße:"
 
-#: bzm_v01.py:423
+#: bzm_v01.py:436
 msgid "Traffic type - selected street"
 msgstr "Verkehrstyp - gewählte Straße"
 
-#: bzm_v01.py:426
+#: bzm_v01.py:439
 msgid ""
 "Traffic type split of the currently selected street, based on currently "
 "selected date and hour range."
@@ -80,24 +80,24 @@ msgstr ""
 "Verkehrsartenaufteilung der aktuell ausgewählten Straße, basierend auf "
 "dem aktuell ausgewählten Datums- und Stundenbereich."
 
-#: bzm_v01.py:436
+#: bzm_v01.py:449
 msgid "Set hour range:"
 msgstr "Stelle Zeitfenster ein:"
 
-#: bzm_v01.py:445
+#: bzm_v01.py:458
 #, fuzzy
 msgid " Hour"
 msgstr "Stunde"
 
-#: bzm_v01.py:448 bzm_v01.py:1024
+#: bzm_v01.py:461 bzm_v01.py:1037
 msgid "Pick date range:"
 msgstr "Wähle Start- und Enddatum:"
 
-#: bzm_v01.py:467
+#: bzm_v01.py:480
 msgid " Filter uptime > 0.7"
 msgstr " Filtere Verfügbarkeit > 70%"
 
-#: bzm_v01.py:477
+#: bzm_v01.py:490
 msgid ""
 "A high 0.7-0.8 uptime will always mean very good data. The first and last"
 " daylight hour of the day will always have lower uptimes. If uptimes "
@@ -110,15 +110,15 @@ msgstr ""
 " liegen, ist das normalerweise ein Zeichen dafür, dass mit der Instanz "
 "etwas nicht stimmt."
 
-#: bzm_v01.py:483
+#: bzm_v01.py:496
 msgid "V1 Sensor"
 msgstr ""
 
-#: bzm_v01.py:483
+#: bzm_v01.py:496
 msgid "S2 Sensor"
 msgstr ""
 
-#: bzm_v01.py:493
+#: bzm_v01.py:506
 msgid ""
 "Click to show/hide cameras with hardware versions 1 and or 2. Switching "
 "off both, will re-enable both automatically. Note: the 'All streets' "
@@ -131,44 +131,44 @@ msgstr ""
 "Straßen'-Diagramme basieren auf allen Straßen, unabhängig davon, welche "
 "Kamera-Hardwareversion ausgewählt ist."
 
-#: bzm_v01.py:502 bzm_v01.py:1229
+#: bzm_v01.py:515 bzm_v01.py:1242
 msgid "Absolute traffic"
 msgstr "Gesamtverkehr"
 
-#: bzm_v01.py:507 bzm_v01.py:627 bzm_v01.py:628 bzm_v01.py:1053 bzm_v01.py:1089
-#: bzm_v01.py:1126 bzm_v01.py:1161 bzm_v01.py:1197 bzm_v01.py:1284
+#: bzm_v01.py:520 bzm_v01.py:640 bzm_v01.py:641 bzm_v01.py:1066 bzm_v01.py:1102
+#: bzm_v01.py:1139 bzm_v01.py:1174 bzm_v01.py:1210 bzm_v01.py:1297
 msgid "Year"
 msgstr "Jahr"
 
-#: bzm_v01.py:508 bzm_v01.py:649 bzm_v01.py:650 bzm_v01.py:1053 bzm_v01.py:1089
-#: bzm_v01.py:1126 bzm_v01.py:1161 bzm_v01.py:1197 bzm_v01.py:1284
+#: bzm_v01.py:521 bzm_v01.py:662 bzm_v01.py:663 bzm_v01.py:1066 bzm_v01.py:1102
+#: bzm_v01.py:1139 bzm_v01.py:1174 bzm_v01.py:1210 bzm_v01.py:1297
 msgid "Month"
 msgstr "Monat"
 
-#: bzm_v01.py:508 bzm_v01.py:1053
+#: bzm_v01.py:521 bzm_v01.py:1066
 msgid "year_month"
 msgstr "jahr_monat"
 
-#: bzm_v01.py:509 bzm_v01.py:673 bzm_v01.py:674 bzm_v01.py:1053 bzm_v01.py:1089
-#: bzm_v01.py:1126 bzm_v01.py:1161 bzm_v01.py:1197
+#: bzm_v01.py:522 bzm_v01.py:686 bzm_v01.py:687 bzm_v01.py:1066 bzm_v01.py:1102
+#: bzm_v01.py:1139 bzm_v01.py:1174 bzm_v01.py:1210
 msgid "Week"
 msgstr "Woche"
 
-#: bzm_v01.py:510 bzm_v01.py:695 bzm_v01.py:696 bzm_v01.py:1053 bzm_v01.py:1089
-#: bzm_v01.py:1126 bzm_v01.py:1161 bzm_v01.py:1197 bzm_v01.py:1284
+#: bzm_v01.py:523 bzm_v01.py:708 bzm_v01.py:709 bzm_v01.py:1066 bzm_v01.py:1102
+#: bzm_v01.py:1139 bzm_v01.py:1174 bzm_v01.py:1210 bzm_v01.py:1297
 msgid "Day"
 msgstr "Tag"
 
-#: bzm_v01.py:511 bzm_v01.py:1053 bzm_v01.py:1089 bzm_v01.py:1126
-#: bzm_v01.py:1161 bzm_v01.py:1197
+#: bzm_v01.py:524 bzm_v01.py:1066 bzm_v01.py:1102 bzm_v01.py:1139
+#: bzm_v01.py:1174 bzm_v01.py:1210
 msgid "Hour"
 msgstr "Stunde"
 
-#: bzm_v01.py:520
+#: bzm_v01.py:533
 msgid "Download graphs   "
 msgstr "Grafiken herunterladen   "
 
-#: bzm_v01.py:522
+#: bzm_v01.py:535
 msgid ""
 "Hover over the top-right of a graph and click the camera symbol to "
 "download in png-format"
@@ -176,51 +176,51 @@ msgstr ""
 "Bewegen Sie den Mauszeiger über die obere rechte Ecke eines Diagramms und"
 " klicken Sie auf das Kamerasymbol, um es im PNG-Format herunterzuladen"
 
-#: bzm_v01.py:537
+#: bzm_v01.py:550
 msgid "Average traffic"
 msgstr "Durchschnittlicher Verkehr"
 
-#: bzm_v01.py:542
+#: bzm_v01.py:555
 msgid "Yearly"
 msgstr "Jährlich"
 
-#: bzm_v01.py:543
+#: bzm_v01.py:556
 msgid "Monthly"
 msgstr "Monatlich"
 
-#: bzm_v01.py:543
+#: bzm_v01.py:556
 msgid "month"
 msgstr "Monat"
 
-#: bzm_v01.py:544
+#: bzm_v01.py:557
 msgid "Weekly"
 msgstr "Wöchentlich"
 
-#: bzm_v01.py:544 bzm_v01.py:548
+#: bzm_v01.py:557 bzm_v01.py:561
 msgid "weekday"
 msgstr "Wochentag"
 
-#: bzm_v01.py:545
+#: bzm_v01.py:558
 msgid "Daily"
 msgstr "Täglich"
 
-#: bzm_v01.py:546
+#: bzm_v01.py:559
 msgid "Hourly"
 msgstr "Stündlich"
 
-#: bzm_v01.py:563
+#: bzm_v01.py:576
 msgid "Percentage car speed - by time unit"
 msgstr "Prozentuale Autogeschwindigkeit - pro Zeiteinheit"
 
-#: bzm_v01.py:570
+#: bzm_v01.py:583
 msgid "Percentage car speed - average"
 msgstr "Prozentuale Autogeschwindigkeit - Durchschnitt"
 
-#: bzm_v01.py:578
+#: bzm_v01.py:591
 msgid "v85 car speed"
 msgstr "v85 Autogeschwindigkeit"
 
-#: bzm_v01.py:583
+#: bzm_v01.py:596
 msgid ""
 "The V85 is a widely used indicator in the world of mobility and road "
 "safety, as it is deemed to be representative of the speed one can "
@@ -231,35 +231,35 @@ msgstr ""
 "Geschwindigkeit gilt, die auf einer Straße vernünftigerweise eingehalten "
 "werden kann."
 
-#: bzm_v01.py:594
+#: bzm_v01.py:607
 msgid "Street ranking by traffic type"
 msgstr "Straßenranking nach Verkehrsart"
 
-#: bzm_v01.py:603 bzm_v01.py:1030 bzm_v01.py:1035 bzm_v01.py:1068
-#: bzm_v01.py:1100 bzm_v01.py:1228 bzm_v01.py:1300 bzm_v01.py:1304
+#: bzm_v01.py:616 bzm_v01.py:1043 bzm_v01.py:1048 bzm_v01.py:1081
+#: bzm_v01.py:1113 bzm_v01.py:1241 bzm_v01.py:1313 bzm_v01.py:1317
 msgid "Pedestrians"
 msgstr "Fußgänger"
 
-#: bzm_v01.py:604 bzm_v01.py:1030 bzm_v01.py:1035 bzm_v01.py:1069
-#: bzm_v01.py:1101 bzm_v01.py:1228 bzm_v01.py:1301 bzm_v01.py:1305
+#: bzm_v01.py:617 bzm_v01.py:1043 bzm_v01.py:1048 bzm_v01.py:1082
+#: bzm_v01.py:1114 bzm_v01.py:1241 bzm_v01.py:1314 bzm_v01.py:1318
 msgid "Bikes"
 msgstr "Zweiräder"
 
-#: bzm_v01.py:605 bzm_v01.py:1030 bzm_v01.py:1035 bzm_v01.py:1070
-#: bzm_v01.py:1102 bzm_v01.py:1228 bzm_v01.py:1302 bzm_v01.py:1306
+#: bzm_v01.py:618 bzm_v01.py:1043 bzm_v01.py:1048 bzm_v01.py:1083
+#: bzm_v01.py:1115 bzm_v01.py:1241 bzm_v01.py:1315 bzm_v01.py:1319
 msgid "Cars"
 msgstr "Autos"
 
-#: bzm_v01.py:606 bzm_v01.py:1030 bzm_v01.py:1035 bzm_v01.py:1071
-#: bzm_v01.py:1103 bzm_v01.py:1228 bzm_v01.py:1303 bzm_v01.py:1307
+#: bzm_v01.py:619 bzm_v01.py:1043 bzm_v01.py:1048 bzm_v01.py:1084
+#: bzm_v01.py:1116 bzm_v01.py:1241 bzm_v01.py:1316 bzm_v01.py:1320
 msgid "Heavy"
 msgstr "LKWs"
 
-#: bzm_v01.py:719
+#: bzm_v01.py:732
 msgid "Compare traffic periods"
 msgstr "Vergleiche Verkehrszeiträume"
 
-#: bzm_v01.py:724
+#: bzm_v01.py:737
 msgid ""
 "This chart allows four period-lengths to be compared: day, week, month or"
 " year. For each of these, two periods can be compared, period A and "
@@ -276,59 +276,59 @@ msgstr ""
 "oberen Menüleiste haben keine Wirkung, der Filter 'Filter Uptime' "
 "hingegen schon!"
 
-#: bzm_v01.py:738
+#: bzm_v01.py:751
 msgid "Feedback and contact"
 msgstr "Feedback und Kontakt"
 
-#: bzm_v01.py:741
+#: bzm_v01.py:754
 msgid "More information about the "
 msgstr "Weitere Informationen zur "
 
-#: bzm_v01.py:742
+#: bzm_v01.py:755
 msgid " (BzM) initiative"
 msgstr " (BzM) Initiative"
 
-#: bzm_v01.py:746
+#: bzm_v01.py:759
 msgid "Request a counter at the "
 msgstr "Fragen Sie nach einen Zähler beim "
 
-#: bzm_v01.py:747
+#: bzm_v01.py:760
 msgid "Citizen Science-Projekt"
 msgstr "Citizen Science-Projekt"
 
-#: bzm_v01.py:750
+#: bzm_v01.py:763
 msgid "Data protection around the "
 msgstr "Datenschutz rund um die "
 
-#: bzm_v01.py:751
+#: bzm_v01.py:764
 msgid "Telraam camera"
 msgstr "Telraam Kamera"
 
-#: bzm_v01.py:751
+#: bzm_v01.py:764
 msgid " measurements"
 msgstr " Messungen"
 
-#: bzm_v01.py:756
+#: bzm_v01.py:769
 msgid "Dashboard development & creation:"
 msgstr "Dashboard-Entwicklung & Entwurf:"
 
-#: bzm_v01.py:756
+#: bzm_v01.py:769
 msgid " and "
 msgstr " und "
 
-#: bzm_v01.py:759
+#: bzm_v01.py:772
 msgid "For dashboard improvement requests email us:"
 msgstr "Für Vorschläge oder Verbesserungen senden Sie uns eine E-Mail:"
 
-#: bzm_v01.py:764
-msgid "Contact Us!"
+#: bzm_v01.py:777
+msgid "Contact Us"
 msgstr "Kontakt"
 
-#: bzm_v01.py:775
+#: bzm_v01.py:788
 msgid "Disclaimer"
 msgstr "Haftungshinweis"
 
-#: bzm_v01.py:776
+#: bzm_v01.py:789
 msgid ""
 "The content published in the offer has been researched with the greatest "
 "care. Nevertheless, the Berlin Counts Mobility team cannot assume any "
@@ -358,11 +358,11 @@ msgstr ""
 "möglich. Bei Anhaltspunkten oder Kenntnis von Rechtsverstößen werden die "
 "gesetzeswidrigen Links unverzüglich gelöscht."
 
-#: bzm_v01.py:777
+#: bzm_v01.py:790
 msgid "Copyright"
 msgstr "Urheberrecht"
 
-#: bzm_v01.py:778
+#: bzm_v01.py:791
 msgid ""
 "The layout and design of the offer as a whole as well as its individual "
 "elements are protected by copyright. The same applies to the images, "
@@ -379,155 +379,125 @@ msgstr ""
 "daran dürfen nicht vorgenommen werden. Eine öffentliche Verwendung des "
 "Angebots darf nur mit Zustimmung des Betreibers erfolgen."
 
-#: bzm_v01.py:909
+#: bzm_v01.py:922
 msgid "Highway type"
 msgstr "Straßentyp"
 
-#: bzm_v01.py:909
+#: bzm_v01.py:922
 msgid "City"
 msgstr "Stadt"
 
-#: bzm_v01.py:909
+#: bzm_v01.py:922
 msgid "District"
 msgstr "Bezirk"
 
-#: bzm_v01.py:909
+#: bzm_v01.py:922
 msgid "Postal code"
 msgstr "Postleitzahl"
 
-#: bzm_v01.py:913
+#: bzm_v01.py:926
 msgid "More bikes than cars"
 msgstr "Mehr Zweiräder als Autos"
 
-#: bzm_v01.py:914
+#: bzm_v01.py:927
 msgid "More cars than bikes"
 msgstr "Mehr Autos als Zweiräder"
 
-#: bzm_v01.py:915
+#: bzm_v01.py:928
 msgid "Over 2x more cars"
 msgstr "Über 2x mehr Autos"
 
-#: bzm_v01.py:916
+#: bzm_v01.py:929
 msgid "Over 5x more cars"
 msgstr "Über 5x mehr Autos"
 
-#: bzm_v01.py:917
+#: bzm_v01.py:930
 msgid "Over 10x more cars"
 msgstr "Über 10x mehr Autos"
 
-#: bzm_v01.py:918
+#: bzm_v01.py:931
 msgid "Inactive - no data"
 msgstr "Inaktiv - keine Daten"
 
-#: bzm_v01.py:921
+#: bzm_v01.py:934
 msgid "Street color"
 msgstr "Straßenfarbe"
 
-#: bzm_v01.py:1014
+#: bzm_v01.py:1027
 msgid ", "
 msgstr ""
 
-#: bzm_v01.py:1014
+#: bzm_v01.py:1027
 msgid "available"
 msgstr "verfügbar"
 
-#: bzm_v01.py:1014
+#: bzm_v01.py:1027
 msgid " to "
 msgstr " bis "
 
-#: bzm_v01.py:1056 bzm_v01.py:1062 bzm_v01.py:1298
+#: bzm_v01.py:1069 bzm_v01.py:1075 bzm_v01.py:1311
 msgid "Absolute traffic count"
 msgstr "Absolute Verkehrsmenge"
 
-#: bzm_v01.py:1060 bzm_v01.py:1099 bzm_v01.py:1204 bzm_v01.py:1236
-#: bzm_v01.py:1299
+#: bzm_v01.py:1073 bzm_v01.py:1112 bzm_v01.py:1217 bzm_v01.py:1249
+#: bzm_v01.py:1312
 msgid "Traffic Type"
 msgstr "Verkehrstyp"
 
-#: bzm_v01.py:1072 bzm_v01.py:1094 bzm_v01.py:1136 bzm_v01.py:1171
-#: bzm_v01.py:1202 bzm_v01.py:1234 bzm_v01.py:1293
+#: bzm_v01.py:1085 bzm_v01.py:1107 bzm_v01.py:1149 bzm_v01.py:1184
+#: bzm_v01.py:1215 bzm_v01.py:1247 bzm_v01.py:1306
 msgid " (segment:"
 msgstr " (Segment:"
 
-#: bzm_v01.py:1073 bzm_v01.py:1095 bzm_v01.py:1137 bzm_v01.py:1172
-#: bzm_v01.py:1203 bzm_v01.py:1295
+#: bzm_v01.py:1086 bzm_v01.py:1108 bzm_v01.py:1150 bzm_v01.py:1185
+#: bzm_v01.py:1216 bzm_v01.py:1308
 msgid "All Streets"
 msgstr "Alle Straßen"
 
-#: bzm_v01.py:1091 bzm_v01.py:1098
+#: bzm_v01.py:1104 bzm_v01.py:1111
 msgid "Average traffic count"
 msgstr "Durchschnittliche Verkehrszählung"
 
-#: bzm_v01.py:1132 bzm_v01.py:1148 bzm_v01.py:1183
+#: bzm_v01.py:1145 bzm_v01.py:1161 bzm_v01.py:1196
 msgid "Percentage car speed"
 msgstr "Prozentualer Anteil"
 
-#: bzm_v01.py:1138 bzm_v01.py:1173
+#: bzm_v01.py:1151 bzm_v01.py:1186
 msgid "Car speed"
 msgstr "Autogeschwindigkeit"
 
-#: bzm_v01.py:1140 bzm_v01.py:1141 bzm_v01.py:1142 bzm_v01.py:1143
-#: bzm_v01.py:1144 bzm_v01.py:1145 bzm_v01.py:1146 bzm_v01.py:1175
-#: bzm_v01.py:1176 bzm_v01.py:1177 bzm_v01.py:1178 bzm_v01.py:1179
-#: bzm_v01.py:1180 bzm_v01.py:1181
+#: bzm_v01.py:1153 bzm_v01.py:1154 bzm_v01.py:1155 bzm_v01.py:1156
+#: bzm_v01.py:1157 bzm_v01.py:1158 bzm_v01.py:1159 bzm_v01.py:1188
+#: bzm_v01.py:1189 bzm_v01.py:1190 bzm_v01.py:1191 bzm_v01.py:1192
+#: bzm_v01.py:1193 bzm_v01.py:1194
 msgid "until"
 msgstr "bis"
 
-#: bzm_v01.py:1167
+#: bzm_v01.py:1180
 msgid "Average percentage car speed"
 msgstr "Durchschnittliche prozentuale Autogeschwindigkeit"
 
-#: bzm_v01.py:1198
+#: bzm_v01.py:1211
 msgid "Speed cars v85"
 msgstr "v85 Autogeschwindigkeit"
 
-#: bzm_v01.py:1206
+#: bzm_v01.py:1219
 msgid "v85 in km/h"
 msgstr "v85 in km/h"
 
-#: bzm_v01.py:1228
+#: bzm_v01.py:1241
 msgid "Street (segment id)"
 msgstr "Straße (Segment id)"
 
-#: bzm_v01.py:1238
+#: bzm_v01.py:1251
 msgid "Absolute count"
 msgstr "Gesamtzahl"
 
-#: bzm_v01.py:1284
+#: bzm_v01.py:1297
 msgid "Week day"
 msgstr "Wochentag"
 
-#: bzm_v01.py:1297
+#: bzm_v01.py:1310
 msgid "Period"
 msgstr "Periode"
-
-#~ msgid "Select periods to compare"
-#~ msgstr "Wähle Verkehrsperioden zum vergleichen"
-
-#~ msgid "No data available for selected range!"
-#~ msgstr "Keine Daten für den gewählten Zeitraum!"
-
-#~ msgid "Street Length"
-#~ msgstr "Straßenlänge"
-
-#~ msgid "Max Speed"
-#~ msgstr "Maximale Geschwindigkeit"
-
-#~ msgid "Street"
-#~ msgstr "Straße"
-
-#~ msgid "day"
-#~ msgstr "Tag"
-
-#~ msgid "year"
-#~ msgstr "Jahr"
-
-#~ msgid "Camera v1"
-#~ msgstr "Kamera v1"
-
-#~ msgid "Camera v2"
-#~ msgstr "Kamera v2"
-
-#~ msgid "Start dash..."
-#~ msgstr "Starte Dash..."
 

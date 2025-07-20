@@ -110,15 +110,27 @@ def filter_dt(df, start_date, end_date, hour_range):
     # Get min/max dates to set DatePicker range
     min_date = df['date_local'].min()
     max_date = df['date_local'].max()
+
     # Add one day as filter is in between
     max_date_dt = convert(str(max_date), format_string)
-    max_date_dt = max_date_dt + datetime.timedelta(days=1)
+    max_date_dt = max_date_dt + datetime.timedelta(days=-1)
     # Re-format for DatePicker
     min_date = datetime.datetime.strptime(min_date, format_string).strftime('%Y-%m-%d')
     max_date = max_date_dt.strftime('%Y-%m-%d')
 
+    # Remove today as it has only has hours up to actualization (currently 4:00)
+    today = pd.to_datetime(datetime.datetime.now().date())
+    today = today.strftime('%d/%m/%Y')
+    nan_rows = df[df['date'] == today]
+    df = df.drop(nan_rows.index)
+
+    # Add one day to end time as filter filters until
+    filter_end_date = convert(str(end_date), '%Y-%m-%d')
+    filter_end_date = filter_end_date + datetime.timedelta(days=1)
+    filter_end_date = filter_end_date.strftime('%Y-%m-%d')
+
     # Filter selected dates
-    df_dates = df[df.date_local.between(start_date, end_date)]
+    df_dates = df[df.date_local.between(start_date, filter_end_date)]
 
     # Get min/max street hours, add 1 to max for slider representation
     min_hour = df_dates["hour"].min()
@@ -307,9 +319,10 @@ format_string = '%Y-%m-%d %H:%M:%S'
 # Convert to dt do enable time.delta
 start_date_dt = convert(str(start_date), format_string)
 end_date_dt = convert(str(end_date), format_string)
-# Add one day as filter is "in between"
-end_date_dt = end_date_dt + datetime.timedelta(days=1)
-try_start_date = end_date_dt + datetime.timedelta(days=-13)
+
+# Subtract one day as to not to include today hours until 4:00"
+end_date_dt = end_date_dt + datetime.timedelta(days=-1)
+try_start_date = end_date_dt + datetime.timedelta(days=-14)
 if try_start_date > start_date_dt:
     start_date_dt = try_start_date
     # Convert back to str, format for DatePicker
@@ -761,7 +774,7 @@ def serve_layout():
                         ), #className='my-2'),
             ], className= 'ms-3', sm=4),
             dbc.Col([
-                dbc.Button([_('Contact Us!'), html.Br(), email_icon],
+                dbc.Button([_('Contact Us'), html.Br(), email_icon],
                     id='floating_button',
                     class_name='btn-info rounded-pill',  # rounded-pill
                     href='mailto: kontakt@berlin-zaehlt.de',
@@ -915,7 +928,7 @@ def update_map(clickData, id_street, lang_code_dd, hardware_version):
     street_map.update_traces({'name': _('Over 2x more cars')}, selector={'name': 'Over 2x more cars'})
     street_map.update_traces({'name': _('Over 5x more cars')}, selector={'name': 'Over 5x more cars'})
     street_map.update_traces({'name': _('Over 10x more cars')}, selector={'name': 'Over 10x more cars'})
-    street_map.update_traces({'name': _('Inactive - no data')}, selector={'name': 'Inactive - no data'})
+    street_map.update_traces({'name': _('Inactive - no data')}, selector={'name': 'Inactive - no data'}, visible='legendonly')
     street_map.update_layout(autosize=False)
     street_map.update_layout(margin=dict(l=0, r=0, t=0, b=0))
     street_map.update_layout(legend_title=_('Street color'))

@@ -15,3 +15,5 @@ csv/*.xlsx
 
 # Editor configs
 .vscode/
+
+src/locales/messages.pot

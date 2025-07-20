@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-07-19 15:25+0200\n"
+"POT-Creation-Date: 2025-07-20 10:26+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
@@ -214,11 +214,11 @@ msgstr "Stündlich"
 
 #: bzm_v01.py:563
 msgid "Percentage car speed - by time unit"
-msgstr "Prozentuale Auto Geschwindigkeit - pro Zeiteinheit"
+msgstr "Prozentuale Autogeschwindigkeit - pro Zeiteinheit"
 
 #: bzm_v01.py:570
 msgid "Percentage car speed - average"
-msgstr "Prozentuale Auto Geschwindigkeit - Durchschnitt"
+msgstr "Prozentuale Autogeschwindigkeit - Durchschnitt"
 
 #: bzm_v01.py:578
 msgid "v85 car speed"
@@ -468,7 +468,7 @@ msgstr "Prozentualer Anteil"
 
 #: bzm_v01.py:1138 bzm_v01.py:1173
 msgid "Car speed"
-msgstr "Auto Geschwindigkeit"
+msgstr "Autogeschwindigkeit"
 
 #: bzm_v01.py:1140 bzm_v01.py:1141 bzm_v01.py:1142 bzm_v01.py:1143
 #: bzm_v01.py:1144 bzm_v01.py:1145 bzm_v01.py:1146 bzm_v01.py:1175
@@ -479,11 +479,11 @@ msgstr "bis"
 
 #: bzm_v01.py:1167
 msgid "Average percentage car speed"
-msgstr "Durchschnittliche prozentuale Auto-Geschwindigkeit"
+msgstr "Durchschnittliche prozentuale Autogeschwindigkeit"
 
 #: bzm_v01.py:1198
 msgid "Speed cars v85"
-msgstr "v85 Auto-Geschwindigkeit"
+msgstr "v85 Autogeschwindigkeit"
 
 #: bzm_v01.py:1206
 msgid "v85 in km/h"

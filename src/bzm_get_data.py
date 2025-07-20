@@ -11,10 +11,12 @@
 # It can also be used as a script to just save the data to a file.
 
 import argparse
+import locale
 import os
+from datetime import datetime
 
-from datetime import datetime, timedelta
 import pandas as pd
+import shapely.geometry
 #from sqlalchemy import create_engine
 
 from common import add_month, parse_options
@@ -22,6 +24,8 @@ from common import add_month, parse_options
 
 ASSET_DIR = os.path.join(os.path.dirname(__file__), 'assets')
 CSV_DIR = os.path.join(os.path.dirname(__file__), '..', 'csv')
+OSM_COLUMNS = ['osm.' + x for x in ['osmid', 'name', 'length', 'lanes', 'maxspeed', 'highway',
+                                    'address.city', 'address.suburb', 'address.postcode']]
 
 # Save df files for development/debugging purposes
 def save_df(df:pd.DataFrame, file_name: str, verbose=False) -> None:
@@ -30,6 +34,8 @@ def save_df(df:pd.DataFrame, file_name: str, verbose=False) -> None:
         print('Saving '+ path)
     if file_name.endswith(".xlsx"):
         df.to_excel(path, index=False)
+    elif file_name.endswith(".parquet"):
+        df.to_parquet(path, index=False, compression='zstd')
     else:
         df.to_csv(path, index=False)
 
@@ -57,42 +63,46 @@ def get_locations(filepath="https://berlin-zaehlt.de/csv/bzm_telraam_segments.ge
     df_geojson = pd.read_json(filepath)
 
     # Flatten the json structure
-    df_geojson = pd.json_normalize(df_geojson['features'])
+    normalized = pd.json_normalize(df_geojson['features'])
 
     # Remove 'properties' from column names for ease of use
-    df_geojson.columns = df_geojson.columns.str.replace('properties.', '', regex=True)
+    normalized.columns = normalized.columns.str.replace('properties.', '', regex=True)
 
-    # Drop uptime and v85 to avoid duplicates as these will come from traffic data
-    df_geojson = df_geojson.drop(['uptime', 'v85'], axis=1)
+    # Convert geometry to WKT
+    geometry = df_geojson['features'].apply(lambda x: shapely.geometry.shape(x['geometry']).wkt).rename('geometry')
 
-    # Replace "list" entries (Telraam!) with none
-    for i in range(len(df_geojson)):
-        if isinstance(df_geojson['osm.width'].values[i],list):
-            df_geojson['osm.width'].values[i]=''
-        if isinstance(df_geojson['osm.lanes'].values[i],list):
-            df_geojson['osm.lanes'].values[i]=''
-        if isinstance(df_geojson['osm.maxspeed'].values[i],list):
-            df_geojson['osm.maxspeed'].values[i]=''
-        if isinstance(df_geojson['osm.name'].values[i],list):
-            df_geojson['osm.name'].values[i]=pd.NA
+    def get_hardware(x):
+        if x['properties']['cameras']:
+            return x['properties']['cameras'][0]['hardware_version']
+        return 0
+    hardware = df_geojson['features'].apply(get_hardware).rename('hardware_version')
+    columns = ['segment_id'] + OSM_COLUMNS
+    df_geojson = pd.concat([normalized[columns], geometry, hardware], axis=1)
+    df_geojson['id_street'] = df_geojson['osm.name'].astype(str) + ' (' + df_geojson['segment_id'].astype(str) + ')'
+    for col in OSM_COLUMNS:
+        df_geojson[col] = df_geojson[col].astype(str)
+
+    # Add street column for facet graphs - check efficiency!
+    df_geojson['street_selection'] = df_geojson.loc[:, 'osm.name']
+    df_geojson.loc[df_geojson['street_selection'] != 'does not exist', 'street_selection'] = 'All Streets'
 
     # Remove segments w/o street name
     nan_rows = df_geojson[df_geojson['osm.name'].isnull()]
     return df_geojson.drop(nan_rows.index)
 
 
-def _read_csv(months=8, verbose=False):
-    month, year = datetime.now().month, datetime.now().year
+def _read_csv(start_year=None, start_month=None, end_year=None, end_month=None, verbose=False):
+    year, month = start_year, start_month
     all_files = []
-    for offset in range(months):
-        file = "bzm_telraam_%s_%02i.csv.gz" % add_month(-offset, year, month)
+    while (year, month) != (end_year, end_month):
+        file = "bzm_telraam_%s_%02i.csv.gz" % (year, month)
         path = os.path.join(CSV_DIR, file)
         if not os.path.exists(path):
             if verbose:
                 print(f'No local copy, retrieving {file} from the web.')
             path = 'https://berlin-zaehlt.de/csv/' + file
         all_files.append(path)
-    # Retrieve file links
+        year, month = add_month(1, year, month)
     if verbose:
         print('Getting traffic data files...')
     df = pd.concat((pd.read_csv(f) for f in all_files), ignore_index=True)
@@ -101,7 +111,8 @@ def _read_csv(months=8, verbose=False):
     df['date_local'] = pd.to_datetime(df['date_local'])
 
     # Fill missing dates
-    return fill_missing_dates(df)
+    # return fill_missing_dates(df)
+    return df
 
 # def _read_sql(options):
 #     start = datetime.now() - timedelta(days=30*options.months)
@@ -118,6 +129,26 @@ def _read_csv(months=8, verbose=False):
 #     else:
 #         histogram_df = pd.DataFrame(columns=["car_speed%s" % s for s in range(0, 80, 10)])
 #     return pd.concat((table_df, histogram_df), axis=1)
+
+
+def add_date_columns(traffic_df, verbose):
+    if verbose:
+        print('Break down date_local to new columns...')
+    locale.setlocale(locale.LC_ALL, 'de_DE.UTF-8')
+    traffic_df['year'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%Y')
+    traffic_df['Monat'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%b')
+    traffic_df['jahr_monat'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%b %Y')
+    traffic_df['year_week'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%U/%Y')
+    traffic_df['Wochentag'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%a')
+    traffic_df['date'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%d/%m/%Y')
+    traffic_df['date_hour'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%d/%m/%y - %H')
+    traffic_df['day'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%d')
+    traffic_df.insert(0, 'hour', traffic_df['date_local'].dt.hour)
+
+    locale.setlocale(locale.LC_ALL, 'en_GB.UTF-8')
+    traffic_df['month'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%b')
+    traffic_df['weekday'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%a')
+    traffic_df['year_month'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%b %Y')
 
 
 def merge_data(locations, cache_file=os.path.join(ASSET_DIR, 'traffic_df_2024_Q4_2025_YTD.csv.gz'), traffic_data=None, verbose=False):
@@ -140,19 +171,11 @@ def merge_data(locations, cache_file=os.path.join(ASSET_DIR, 'traffic_df_2024_Q4
 
     if verbose:
         print('Creating df with selected columns')
-    selected_columns = ['date_local','segment_id','uptime','ped_total','bike_total','car_total','heavy_total','v85','car_speed0','car_speed10','car_speed20','car_speed30','car_speed40','car_speed50','car_speed60','car_speed70','osm.name','osm.highway','osm.length','osm.width','osm.lanes','osm.maxspeed']
+    selected_columns = ['date_local','segment_id','uptime','ped_total','bike_total','car_total','heavy_total','v85',
+                        'car_speed0','car_speed10','car_speed20','car_speed30','car_speed40','car_speed50','car_speed60','car_speed70',
+                        'hardware_version', 'id_street', 'geometry', 'street_selection'] + OSM_COLUMNS
     traffic_df = pd.DataFrame(df_comb, columns=selected_columns)
-    if verbose:
-        print('Break down date_local to new columns...')
-    # Below moved to bzm_v01.py
-    # traffic_df.insert(0, 'year', traffic_df['date_local'].dt.year)
-    # traffic_df.insert(0, 'year_month', traffic_df['date_local'].dt.strftime('%Y/%m'))
-    # traffic_df.insert(0, 'month', traffic_df['date_local'].dt.month)
-    # traffic_df.insert(0, 'year_week', traffic_df['date_local'].dt.strftime('%Y/%U'))
-    # traffic_df.insert(0, 'weekday', traffic_df['date_local'].dt.weekday) #dayofweek
-    # traffic_df.insert(0, 'day', traffic_df['date_local'].dt.day)
-    # traffic_df.insert(0, 'hour', traffic_df['date_local'].dt.hour)
-    # traffic_df.insert(0, 'date', traffic_df['date_local'].dt.strftime('%Y/%m/%d'))
+    add_date_columns(traffic_df, verbose)
     return traffic_df.reset_index(drop=True)
 
 
@@ -162,14 +185,16 @@ def get_options(args=None, json_default="sensor.json"):
                         metavar="FILE", help="Read database credentials from FILE")
     parser.add_argument("-j", "--json-file", default=json_default,
                         metavar="FILE", help="Write / read Geo-JSON for segments to / from FILE")
-    parser.add_argument("--excel",
-                        help="Excel output file")
     parser.add_argument("--csv", action="store_true", default=False,
                         help="use CSV input")
     parser.add_argument("-d", "--database",
                         help="Database input file or URL")
+    parser.add_argument("-o", "--output", default="traffic_df_%s.csv.gz",
+                        help="Database input file or URL")
     parser.add_argument("-m", "--months", type=int, default=4,
                         help="number of months to look back")
+    parser.add_argument("-a", "--aggregate", type=int, default=3,
+                        help="number of months to aggregate")
     parser.add_argument("-v", "--verbose", action="count", default=0,
                         help="increase verbosity, twice enables verbose sqlalchemy output")
     raw_options = parser.parse_args(args=args)
@@ -180,13 +205,25 @@ def get_options(args=None, json_default="sensor.json"):
 
 def main(args=None):
     options = get_options(args)
-    traffic_df = _read_csv(options.months, options.verbose) if options.csv else _read_sql(options)
-    merged_df = merge_data(get_locations(), None, traffic_df)
-    if options.excel:
-        save_df(merged_df, options.excel)
-    save_df(merged_df, "traffic_df_2024_Q4_2025_YTD.csv.gz")
-    if options.verbose:
-        print('Finished.')
+    end_year, end_month = add_month(1, datetime.now().year, datetime.now().month)
+    year, month = add_month(-options.months, datetime.now().year, datetime.now().month)
+    month = ((month - 1) // options.aggregate) * options.aggregate + 1
+    locations = get_locations()
+    while (year, month) < (end_year, end_month):
+        yearp, monthp = add_month(options.aggregate, year, month)
+        out_file = options.output % ("%s_%02i-%s_%02i" % ((year, month) + add_month(-1, yearp, monthp)))
+        if add_month(options.aggregate, yearp, monthp) < (end_year, end_month) and os.path.exists(os.path.join(ASSET_DIR, out_file)):
+            year, month = yearp, monthp
+            continue
+        if (yearp, monthp) > (end_year, end_month):
+            yearp, monthp = end_year, end_month
+        traffic_df = _read_csv(year, month, yearp, monthp, options.verbose) if options.csv else _read_sql(options)
+        merged_df = merge_data(locations, None, traffic_df)
+        save_df(merged_df, out_file, options.verbose)
+        if options.verbose:
+            print('Finished.')
+        del merged_df
+        year, month = yearp, monthp
 
 
 if __name__ == "__main__":

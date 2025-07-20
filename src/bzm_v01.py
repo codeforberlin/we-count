@@ -358,7 +358,7 @@ df_map = update_map_data(df_map_base, traffic_df_id_bc)
 
 ### Run Dash app ###
 if not DEPLOYED:
-    print(_('Start dash...'))
+    print('Starting dash ...')
 
 #PythonAnywhere
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP],

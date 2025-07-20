@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-07-20 10:26+0200\n"
+"POT-Creation-Date: 2025-07-20 11:30+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
@@ -39,13 +39,9 @@ msgstr "Startdatum außerhalb des Bereichs"
 msgid "Narrowed down range"
 msgstr "Eingegrenzter Bereich"
 
-#: bzm_v01.py:361
-msgid "Start dash..."
-msgstr "Starte Dash..."
-
 #: bzm_v01.py:378
 msgid "Project partners: "
-msgstr ""
+msgstr "Projektpartner"
 
 #: bzm_v01.py:402
 msgid ""
@@ -531,4 +527,7 @@ msgstr "Periode"
 
 #~ msgid "Camera v2"
 #~ msgstr "Kamera v2"
+
+#~ msgid "Start dash..."
+#~ msgstr "Starte Dash..."
 

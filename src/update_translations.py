@@ -10,6 +10,8 @@ import glob
 import os
 import subprocess
 
-subprocess.check_call(['pybabel', 'extract', '-o', 'locales/messages.pot'] + glob.glob('*.py'), cwd=os.path.dirname(__file__))
-subprocess.check_call(['pybabel', 'update', '-D', 'bzm', '-i', 'locales/messages.pot', '-d', 'locales'], cwd=os.path.dirname(__file__))
-subprocess.check_call(['pybabel', 'compile', '-f', '-D', 'bzm', '-d', 'locales'], cwd=os.path.dirname(__file__))
+dirname = os.path.dirname(__file__)
+files = [os.path.basename(x) for x in glob.glob(os.path.join(dirname, '*.py'))]
+subprocess.check_call(['pybabel', 'extract', '-o', 'locales/messages.pot'] + files, cwd=dirname)
+subprocess.check_call(['pybabel', 'update', '-D', 'bzm', '-i', 'locales/messages.pot', '-d', 'locales'], cwd=dirname)
+subprocess.check_call(['pybabel', 'compile', '-f', '-D', 'bzm', '-d', 'locales'], cwd=dirname)

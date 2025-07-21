@@ -5,7 +5,6 @@ dash_daq
 dash-extensions
 dash-leaflet
 geopandas>=1.0.0
-locale
 mysqlclient
 openpyxl
 osmnx>=1.9.2,<2.0.0

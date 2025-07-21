@@ -15,8 +15,9 @@
 import os
 import gettext
 import datetime
+import glob
+
 import pandas as pd
-import requests
 import geopandas as gpd
 import dash_bootstrap_components as dbc
 from dash import Dash, html, dcc, Output, Input, callback, ctx, no_update
@@ -33,32 +34,14 @@ def output_csv(df, file_name):
     path = os.path.join(ASSET_DIR, file_name + '.csv')
     df.to_csv(path, index=False)
 
-def get_file_size(url):
-    try:
-        response = requests.head(url, allow_redirects=True)
-        if 'Content-Length' in response.headers:
-            size_in_bytes = int(response.headers['Content-Length'])
-            return size_in_bytes
-        else:
-            return "File size not available in headers."
-    except requests.RequestException as e:
-        return f"An error occurred: {e}"
-
 def retrieve_data():
     # Read geojson data file to access geometry coordinates
     if not DEPLOYED:
         print('Reading geojson data...')
 
-    geojson_url = 'https://berlin-zaehlt.de/csv/bzm_telraam_segments.geojson'
-    #TODO: manage if offline, geojson_path = os.path.join(ASSET_DIR, 'bzm_telraam_segments.geojson')
-    geojson_file_size = get_file_size(geojson_url)
     geo_cols = ['segment_id', 'osm', 'cameras', 'geometry']
-    if geojson_file_size > 500:
-        geo_df = gpd.read_file(geojson_url, columns=geo_cols)
-    else:
-        print('Suspected error, geojson_file_size: ' + str(geojson_file_size))
-        geojson_path = os.path.join(ASSET_DIR, 'bzm_telraam_segments.geojson')
-        geo_df = gpd.read_file(geojson_path, columns=geo_cols)
+    geojson_path = os.path.join(ASSET_DIR, 'bzm_telraam_segments.geojson')
+    geo_df = gpd.read_file(geojson_path, columns=geo_cols)
 
     if not DEPLOYED:
         print('Reading json data...')
@@ -68,11 +51,16 @@ def retrieve_data():
     # Read traffic data from file
     if not DEPLOYED:
         print('Reading traffic data...')
-    traffic_file_path = os.path.join(ASSET_DIR, 'traffic_df_2023_2024_2025_YTD.csv.gz')
-    traffic_df = pd.read_csv(traffic_file_path)
+    file_paths = glob.glob(os.path.join(ASSET_DIR, 'traffic_df_*.parquet'))
+    if file_paths:
+        traffic_df = pd.concat([pd.read_parquet(file) for file in sorted(file_paths)], ignore_index=True)
+        traffic_df['date_local'] = traffic_df['date_local'].astype(str)
+    else:
+        traffic_file_path = os.path.join(ASSET_DIR, 'traffic_df_2023_2024_2025_YTD.csv.gz')
+        traffic_df = pd.read_csv(traffic_file_path)
 
     # Set data types for clean representation
-    traffic_df['segment_id']=traffic_df['segment_id'].astype(str)
+    traffic_df['segment_id'] = traffic_df['segment_id'].astype(str)
 
     return geo_df, json_df_features, traffic_df
 

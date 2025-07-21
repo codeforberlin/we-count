@@ -16,6 +16,7 @@ import os
 from datetime import datetime
 
 import pandas as pd
+import requests
 import shapely.geometry
 #from sqlalchemy import create_engine
 
@@ -27,7 +28,18 @@ CSV_DIR = os.path.join(os.path.dirname(__file__), '..', 'csv')
 OSM_COLUMNS = ['osm.' + x for x in ['osmid', 'name', 'length', 'lanes', 'maxspeed', 'highway',
                                     'address.city', 'address.suburb', 'address.postcode']]
 
-# Save df files for development/debugging purposes
+
+def has_min_size(url, min_size=500):
+    try:
+        response = requests.head(url, allow_redirects=True)
+        if 'Content-Length' in response.headers:
+            size_in_bytes = int(response.headers['Content-Length'])
+            return size_in_bytes > min_size
+    except requests.RequestException as e:
+        return False
+    return False
+
+
 def save_df(df:pd.DataFrame, file_name: str, verbose=False) -> None:
     path = os.path.join(ASSET_DIR, file_name)
     if verbose:
@@ -60,7 +72,12 @@ def fill_missing_dates(df):
 
 
 def get_locations(filepath="https://berlin-zaehlt.de/csv/bzm_telraam_segments.geojson"):
-    df_geojson = pd.read_json(filepath)
+    local_file = os.path.join(ASSET_DIR, os.path.basename(filepath))
+    if has_min_size(filepath):
+        response = requests.get(filepath)
+        with open(local_file, 'wb') as f:
+            f.write(response.content)
+    df_geojson = pd.read_json(local_file)
 
     # Flatten the json structure
     normalized = pd.json_normalize(df_geojson['features'])
@@ -190,7 +207,9 @@ def get_options(args=None, json_default="sensor.json"):
     parser.add_argument("-d", "--database",
                         help="Database input file or URL")
     parser.add_argument("-o", "--output", default="traffic_df_%s.csv.gz",
-                        help="Database input file or URL")
+                        help="Traffic data output file (format is derived from file extension)")
+    parser.add_argument("-l", "--location-output", default="df_geojson.csv.gz",
+                        help="Location data file (format is derived from file extension)")
     parser.add_argument("-m", "--months", type=int, default=4,
                         help="number of months to look back")
     parser.add_argument("-a", "--aggregate", type=int, default=3,
@@ -209,6 +228,7 @@ def main(args=None):
     year, month = add_month(-options.months, datetime.now().year, datetime.now().month)
     month = ((month - 1) // options.aggregate) * options.aggregate + 1
     locations = get_locations()
+    save_df(locations, options.location_output, options.verbose)
     while (year, month) < (end_year, end_month):
         yearp, monthp = add_month(options.aggregate, year, month)
         out_file = options.output % ("%s_%02i-%s_%02i" % ((year, month) + add_month(-1, yearp, monthp)))

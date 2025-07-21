@@ -16,7 +16,8 @@ import os
 import gettext
 import datetime
 import glob
-from gettext import gettext as _
+# TODO the following line breaks language choice, we need to check why
+# from gettext import gettext as _
 
 import pandas as pd
 import geopandas as gpd

@@ -456,7 +456,7 @@ msgstr "Alle Straßen"
 
 #: bzm_v01.py:1104 bzm_v01.py:1111
 msgid "Average traffic count"
-msgstr "Durchschnittliche Verkehrszählung"
+msgstr "Durchschnittliche Verkehrsmenge"
 
 #: bzm_v01.py:1145 bzm_v01.py:1161 bzm_v01.py:1196
 msgid "Percentage car speed"

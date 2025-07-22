@@ -209,12 +209,16 @@ msgid "Hourly"
 msgstr "Stündlich"
 
 #: bzm_v01.py:576
-msgid "Percentage car speed - by time unit"
-msgstr "Prozentuale Autogeschwindigkeit - pro Zeiteinheit"
+msgid "Average car speed % - by time unit (grouped bars)"
+msgstr "Durchschnittliche Autogeschwindigkeit % - pro Zeiteinheit (gruppierte Balken)"
 
-#: bzm_v01.py:583
-msgid "Percentage car speed - average"
-msgstr "Prozentuale Autogeschwindigkeit - Durchschnitt"
+#: bzm_v01.py:576
+msgid "Average car speed %"
+msgstr "Durchschnittliche Autogeschwindigkeit %"
+
+#: bzm_v01.py:1180
+msgid "Average car speed % - by time unit (stacked bars)"
+msgstr "Durchschnittliche Autogeschwindigkeit % - pro Zeiteinheit (gestapelte Balken)"
 
 #: bzm_v01.py:591
 msgid "v85 car speed"
@@ -458,10 +462,6 @@ msgstr "Alle Straßen"
 msgid "Average traffic count"
 msgstr "Durchschnittliche Verkehrsmenge"
 
-#: bzm_v01.py:1145 bzm_v01.py:1161 bzm_v01.py:1196
-msgid "Percentage car speed"
-msgstr "Prozentualer Anteil"
-
 #: bzm_v01.py:1151 bzm_v01.py:1186
 msgid "Car speed"
 msgstr "Autogeschwindigkeit"
@@ -472,10 +472,6 @@ msgstr "Autogeschwindigkeit"
 #: bzm_v01.py:1193 bzm_v01.py:1194
 msgid "until"
 msgstr "bis"
-
-#: bzm_v01.py:1180
-msgid "Average percentage car speed"
-msgstr "Durchschnittliche prozentuale Autogeschwindigkeit"
 
 #: bzm_v01.py:1211
 msgid "Speed cars v85"

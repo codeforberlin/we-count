@@ -563,14 +563,14 @@ def serve_layout():
         ], className='g-2 p-1'),
         dbc.Row([
             dbc.Col([
-                html.H4(_('Percentage car speed - by time unit'), className='my-3'),
+                html.H4(_('Average car speed % - by time unit (stacked bars)'), className='my-3'),
                 dcc.Graph(id='bar_perc_speed', figure={}), #style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 30})
             ], sm=12
             ),
         ], className='g-2 p-1'),
         dbc.Row([
             dbc.Col([
-                html.H4(_('Percentage car speed - average'), className='my-3'),
+                html.H4(_('Average car speed % - by time unit (grouped bars)'), className='my-3'),
                 dcc.Graph(id='bar_avg_speed', figure={}),
                           #style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 30})
             ], sm=12
@@ -1132,7 +1132,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, dropdown_year
                              'car_speed40': ADFC_green, 'car_speed50': ADFC_orange,
                              'car_speed60': ADFC_crimson, 'car_speed70': ADFC_pink},
          facet_col_spacing=0.04,
-         title=(_('Percentage car speed') + ' (' + start_date + ' - ' + end_date + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)')
+         title=(_('Average car speed %') + ' (' + start_date + ' - ' + end_date + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)')
     )
 
     bar_perc_speed.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
@@ -1148,7 +1148,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, dropdown_year
     bar_perc_speed.update_traces({'name': _('until') + ' 60 kmh'}, selector={'name': 'car_speed60'})
     bar_perc_speed.update_traces({'name': _('until') + ' 70 kmh'}, selector={'name': 'car_speed70'})
     bar_perc_speed.update_layout({'plot_bgcolor': ADFC_palegrey, 'paper_bgcolor': ADFC_palegrey})
-    bar_perc_speed.update_layout(yaxis_title=_('Percentage car speed'))
+    bar_perc_speed.update_layout(yaxis_title=_('Average car speed %'))
     bar_perc_speed.for_each_yaxis(lambda yaxis: yaxis.update(showticklabels=True))
     for annotation in bar_perc_speed.layout.annotations:
         annotation['font'] = {'size': 14}
@@ -1167,7 +1167,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, dropdown_year
                             'car_speed40': ADFC_green, 'car_speed50': ADFC_orange,
                             'car_speed60': ADFC_crimson, 'car_speed70': ADFC_pink},
         facet_col_spacing=0.04,
-        title=(_('Average percentage car speed') + ' (' + start_date + ' - ' + end_date + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)')
+        title=(_('Average car speed %') + ' (' + start_date + ' - ' + end_date + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)')
     )
 
     bar_avg_speed.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
@@ -1183,7 +1183,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, dropdown_year
     bar_avg_speed.update_traces({'name': _('until') + ' 60 kmh'}, selector={'name': 'car_speed60'})
     bar_avg_speed.update_traces({'name': _('until') + ' 70 kmh'}, selector={'name': 'car_speed70'})
     bar_avg_speed.update_layout({'plot_bgcolor': ADFC_palegrey, 'paper_bgcolor': ADFC_palegrey})
-    bar_avg_speed.update_layout(yaxis_title=_('Percentage car speed'))
+    bar_avg_speed.update_layout(yaxis_title=_('Average car speed %'))
     bar_avg_speed.for_each_yaxis(lambda yaxis: yaxis.update(showticklabels=True))
     for annotation in bar_avg_speed.layout.annotations: annotation['font'] = {'size': 14}
 

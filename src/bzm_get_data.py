@@ -188,9 +188,10 @@ def merge_data(locations, cache_file=os.path.join(ASSET_DIR, 'traffic_df_2024_Q4
 
     if verbose:
         print('Creating df with selected columns')
-    selected_columns = ['date_local','segment_id','uptime','ped_total','bike_total','car_total','heavy_total','v85',
-                        'car_speed0','car_speed10','car_speed20','car_speed30','car_speed40','car_speed50','car_speed60','car_speed70',
-                        'hardware_version', 'id_street', 'geometry', 'street_selection'] + OSM_COLUMNS
+    selected_columns = ['date_local','segment_id','uptime',
+                        'ped_total','bike_total','car_total','heavy_total','v85',
+                        'id_street','street_selection',
+                        'car_speed0','car_speed10','car_speed20','car_speed30','car_speed40','car_speed50','car_speed60','car_speed70']
     traffic_df = pd.DataFrame(df_comb, columns=selected_columns)
     add_date_columns(traffic_df, verbose)
     return traffic_df.reset_index(drop=True)
@@ -214,6 +215,8 @@ def get_options(args=None, json_default="sensor.json"):
                         help="number of months to look back")
     parser.add_argument("-a", "--aggregate", type=int, default=3,
                         help="number of months to aggregate")
+    parser.add_argument("-f", "--force", action="store_true", default=False,
+                        help="create output files even if they exist and are up to date")
     parser.add_argument("-v", "--verbose", action="count", default=0,
                         help="increase verbosity, twice enables verbose sqlalchemy output")
     raw_options = parser.parse_args(args=args)
@@ -232,7 +235,7 @@ def main(args=None):
     while (year, month) < (end_year, end_month):
         yearp, monthp = add_month(options.aggregate, year, month)
         out_file = options.output % ("%s_%02i-%s_%02i" % ((year, month) + add_month(-1, yearp, monthp)))
-        if add_month(options.aggregate, yearp, monthp) < (end_year, end_month) and os.path.exists(os.path.join(ASSET_DIR, out_file)):
+        if add_month(options.aggregate, yearp, monthp) < (end_year, end_month) and os.path.exists(os.path.join(ASSET_DIR, out_file)) and not options.force:
             year, month = yearp, monthp
             continue
         if (yearp, monthp) > (end_year, end_month):

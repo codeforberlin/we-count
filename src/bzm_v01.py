@@ -101,20 +101,7 @@ def filter_dt(df, start_date, end_date, hour_range):
     min_date = df['date_local'].min()
     max_date = df['date_local'].max()
 
-    # Add one day as filter is in between
-    max_date_dt = convert(str(max_date), format_string)
-    max_date_dt = max_date_dt + datetime.timedelta(days=-1)
-    # Re-format for DatePicker
-    min_date = datetime.datetime.strptime(min_date, format_string).strftime('%Y-%m-%d')
-    max_date = max_date_dt.strftime('%Y-%m-%d')
-
-    # Remove today as it has only has hours up to actualization (currently 4:00)
-    today = pd.to_datetime(datetime.datetime.now().date())
-    today = today.strftime('%d/%m/%Y')
-    nan_rows = df[df['date'] == today]
-    df = df.drop(nan_rows.index)
-
-    # Add one day to end time as filter filters until
+    # Add one day to end date as .between function filters until
     filter_end_date = convert(str(end_date), '%Y-%m-%d')
     filter_end_date = filter_end_date + datetime.timedelta(days=1)
     filter_end_date = filter_end_date.strftime('%Y-%m-%d')
@@ -132,7 +119,7 @@ def filter_dt(df, start_date, end_date, hour_range):
     if hour_range[0] == 24:
         hour_range[0] = hour_range[0] - 1
     if hour_range[1] == hour_range[0]:
-        hour_range[1] = hour_range[1]+1
+        hour_range[1] = hour_range[1] + 1
 
     df_dates_hours = df_dates.loc[df_dates['hour'].between(hour_range[0], hour_range[1]-1)]
     traffic_df_upt_dt = df_dates_hours
@@ -310,15 +297,13 @@ format_string = '%Y-%m-%d %H:%M:%S'
 start_date_dt = convert(str(start_date), format_string)
 end_date_dt = convert(str(end_date), format_string)
 
-# Subtract one day as to not to include today hours until 4:00"
-end_date_dt = end_date_dt + datetime.timedelta(days=-1)
+# Initiate start date two weeks before end date
 try_start_date = end_date_dt + datetime.timedelta(days=-14)
 if try_start_date > start_date_dt:
     start_date_dt = try_start_date
-    # Convert back to str, format for DatePicker
-    start_date = start_date_dt.strftime('%Y-%m-%d')
 
-# Convert back to str, format for DatePicker
+# Convert back to str format for DatePicker
+start_date = start_date_dt.strftime('%Y-%m-%d')
 end_date = end_date_dt.strftime('%Y-%m-%d')
 
 hour_range = [traffic_df_upt['hour'].min(), traffic_df_upt['hour'].max()]

@@ -52,25 +52,6 @@ def save_df(df:pd.DataFrame, file_name: str, verbose=False) -> None:
         df.to_csv(path, index=False)
 
 
-# Function to fill missing dates for each segment
-def fill_missing_dates(df):
-    result_df = pd.DataFrame()
-
-    for segment in df['segment_id'].unique():
-        # Remove duplicate date local within segment
-        segment_df = df[df['segment_id'] == segment].drop_duplicates(subset=['date_local'], keep='last').set_index('date_local')
-
-        #segment_df.set_index('date_local', inplace=True)
-        full_date_range = pd.date_range(start=segment_df.index.min(), end=segment_df.index.max(), freq='h')
-        segment_df = segment_df.reindex(full_date_range)
-
-        # Ensure new date entries are populated
-        segment_df['segment_id'] = segment
-        result_df = pd.concat([result_df, segment_df])
-
-    return result_df.reset_index().rename(columns={'index': 'date_local'})
-
-
 def get_locations(filepath="https://berlin-zaehlt.de/csv/bzm_telraam_segments.geojson"):
     local_file = os.path.join(ASSET_DIR, os.path.basename(filepath))
     if has_min_size(filepath):
@@ -126,9 +107,6 @@ def _read_csv(start_year=None, start_month=None, end_year=None, end_month=None, 
 
     # Change date_local to datetime
     df['date_local'] = pd.to_datetime(df['date_local'])
-
-    # Fill missing dates
-    # return fill_missing_dates(df)
     return df
 
 # def _read_sql(options):
@@ -207,7 +185,7 @@ def get_options(args=None, json_default="sensor.json"):
                         help="use CSV input")
     parser.add_argument("-d", "--database",
                         help="Database input file or URL")
-    parser.add_argument("-o", "--output", default="traffic_df_%s.csv.gz",
+    parser.add_argument("-o", "--output", default="traffic_df_%s.parquet",
                         help="Traffic data output file (format is derived from file extension)")
     parser.add_argument("-l", "--location-output", default="df_geojson.csv.gz",
                         help="Location data file (format is derived from file extension)")

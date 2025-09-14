@@ -45,18 +45,11 @@ def get_segments(session, options):
             s = Segment(segment["properties"])
         else:
             s.update(segment["properties"])
+        for camera in segment["properties"].get("cameras", []):
+            if session.get(Camera, camera["instance_id"]) is None:
+                s.add_camera(camera)
         segments[sid] = s
     return segments
-
-
-def get_cameras(session, conns, segments):
-    cameras = conns.request("/v1/cameras", required="cameras")
-    # cameras = json.load(open('cameras.json'))
-    for camera in cameras.get("cameras", []):
-        if camera["segment_id"] in segments:
-            c = session.get(Camera, camera["instance_id"])
-            if c is None:
-                segments[camera["segment_id"]].add_camera(camera)
 
 
 def update_db(segments, session, options, conns):
@@ -187,7 +180,6 @@ def main(args=None):
         filtered = [int(s.strip()) for s in options.segments.split(",")]
         segments = {k:v for k,v in segments.items() if k in filtered}
     if conns:
-        get_cameras(session, conns, segments)
         session.commit()
         newest_data = update_db(segments, session, options, conns)
     else:

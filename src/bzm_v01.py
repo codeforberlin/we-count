@@ -221,7 +221,7 @@ def get_min_max_str(df, id_street, start_date, end_date):
 
     # Add one day from end_time as it was added before as well
     max_date_str_dt = datetime.datetime.strptime(max_date_str, format_string)
-    max_date_str_dt = max_date_str_dt + datetime.timedelta(days=1)
+    max_date_str_dt = max_date_str_dt + datetime.timedelta(days=0)
 
     min_date_str = datetime.datetime.strptime(min_date_str, format_string).strftime('%Y-%m-%d')
     max_date_str = max_date_str_dt.strftime('%Y-%m-%d')
@@ -416,6 +416,7 @@ def serve_layout():
                 ]),
                 # Pie chart
                 dcc.Graph(id='pie_traffic', figure={}),
+                html.H6(_('Street ID:'), id='street_id_text', className='my-2', style={'color': ADFC_darkgrey}),
             ], sm=4),
         ], className= 'g-2 mt-1 mb-3 text-start'), #style= {'margin-right': 40}),
         # Date/Time selection and Uptime filter
@@ -444,7 +445,7 @@ def serve_layout():
                     display_format='DD-MM-YYYY',
                     end_date_placeholder_text='DD-MM-YYYY',
                     number_of_months_shown=2,
-                    minimum_nights=1,
+                    minimum_nights=0,
                     className='align-bottom justify-center ms-2 mb-2',
                 ),
             ], sm=3),
@@ -452,7 +453,7 @@ def serve_layout():
                 html.Span([
                     dbc.Checklist(
                         id='toggle_uptime_filter',
-                        options=[{'label': _(' Filter uptime > 0.7'), 'value': 'filter_uptime_selected'}],
+                        options=[{'label': _(' Filter uptime > 70%'), 'value': 'filter_uptime_selected'}],
                         value= ['filter_uptime_selected'],
                         inline=False,
                         switch=True,
@@ -462,7 +463,7 @@ def serve_layout():
                         id='popover_filter',
                         style={'color': ADFC_lightgrey}),
                     dbc.Popover(
-                        dbc.PopoverBody(_('A high 0.7-0.8 uptime will always mean very good data. The first and last daylight hour of the day will always have lower uptimes. If uptimes during the day are below 0.5, that is usually a clear sign that something is probably wrong with the instance.')),
+                        dbc.PopoverBody(_('A high uptime of >70% will always mean very good data. The first and last daylight hour of the day will always have lower uptimes. If uptimes during the day are below 0.5, that is usually a clear sign that something is probably wrong with the sensor.')),
                         target="popover_filter", trigger="hover"),
                 ]),
                 html.Span([
@@ -931,7 +932,10 @@ def update_map(clickData, id_street, lang_code_dd, hardware_version):
 @callback(
     Output(component_id='selected_street_header', component_property='children'),
     Output(component_id='selected_street_header', component_property='style'),
+    Output(component_id='street_id_text', component_property='children'),
     Output(component_id='date_range_text', component_property='children'),
+    Output(component_id="date_filter", component_property="start_date"),
+    Output(component_id="date_filter", component_property="end_date"),
     Output(component_id='date_range_text', component_property='style'),
     Output(component_id='pie_traffic', component_property='figure'),
     Output(component_id='line_abs_traffic', component_property='figure'),
@@ -974,6 +978,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, dropdown_year
 
     # Get segment_id/street name
     segment_id = id_street[-11:-1]
+    street_id_text = 'Segment ID: ' + str(segment_id)
     street_name = id_street.split(' (')[0]
     selected_street_header = street_name
 
@@ -1298,7 +1303,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, dropdown_year
     line_avg_delta_traffic.update_xaxes(dtick = 1, tickformat=".0f")
     for annotation in line_avg_delta_traffic.layout.annotations: annotation['font'] = {'size': 14}
 
-    return selected_street_header, selected_street_header_color, date_range_text, date_range_color, pie_traffic, line_abs_traffic, bar_avg_traffic, line_avg_delta_traffic, bar_perc_speed, bar_avg_speed, bar_v85, bar_ranking
+    return selected_street_header, selected_street_header_color, street_id_text, date_range_text, start_date, end_date, date_range_color, pie_traffic, line_abs_traffic, bar_avg_traffic, line_avg_delta_traffic, bar_perc_speed, bar_avg_speed, bar_v85, bar_ranking
 
 if __name__ == "__main__":
     app.run(debug=False)

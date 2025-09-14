@@ -94,20 +94,20 @@ msgid "Pick date range:"
 msgstr "Wähle Start- und Enddatum:"
 
 #: bzm_v01.py:480
-msgid " Filter uptime > 0.7"
+msgid " Filter uptime > 70%"
 msgstr " Filtere Verfügbarkeit > 70%"
 
 #: bzm_v01.py:490
 msgid ""
-"A high 0.7-0.8 uptime will always mean very good data. The first and last"
+"A high uptime of >70% will always mean very good data. The first and last"
 " daylight hour of the day will always have lower uptimes. If uptimes "
 "during the day are below 0.5, that is usually a clear sign that something"
-" is probably wrong with the instance."
+" is probably wrong with the sensor."
 msgstr ""
 "Eine Verfügbarkeit von mehr als 70% bedeutet in der Regel sehr gute "
 "Daten. Die erste und die letzte Tagesstunde weisen immer geringere "
 "Verfügbarkeiten auf. Wenn die Verfügbarkeiten während des Tages unter 50%"
-" liegen, ist das normalerweise ein Zeichen dafür, dass mit der Instanz "
+" liegen, ist das normalerweise ein Zeichen dafür, dass mit dem Sensor "
 "etwas nicht stimmt."
 
 #: bzm_v01.py:496

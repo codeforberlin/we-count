@@ -32,5 +32,7 @@ ExecReload=/bin/sh -c '/usr/bin/pkill -HUP -F ${GUNICORN_PID_FILE}'
 
 ExecStop=/bin/sh -c '/usr/bin/pkill -TERM -F ${GUNICORN_PID_FILE}'
 
+Restart=on-failure
+
 [Install]
 WantedBy=multi-user.target

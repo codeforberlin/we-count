@@ -27,6 +27,8 @@ from dash.exceptions import PreventUpdate
 import plotly.express as px
 
 DEPLOYED = __name__ != '__main__'
+ASSET_DIR = os.path.join(os.path.dirname(__file__), 'assets')
+TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), '..', 'assets')
 
 def output_excel(df, file_name):
     path = os.path.join(ASSET_DIR, file_name + '.xlsx')
@@ -41,24 +43,27 @@ def retrieve_data():
     if not DEPLOYED:
         print('Reading geojson data...')
 
+    data_dir = ASSET_DIR
+    if not os.path.exists(os.path.join(data_dir, 'bzm_telraam_segments.geojson')):
+        data_dir = TEST_DATA_DIR
+    geojson_path = os.path.join(data_dir, 'bzm_telraam_segments.geojson')
     geo_cols = ['segment_id', 'osm', 'cameras', 'geometry']
-    geojson_path = os.path.join(ASSET_DIR, 'bzm_telraam_segments.geojson')
     geo_df = gpd.read_file(geojson_path, columns=geo_cols)
 
     if not DEPLOYED:
         print('Reading json data...')
-    geo_file_path = os.path.join(ASSET_DIR, 'df_geojson.csv.gz')
+    geo_file_path = os.path.join(data_dir, 'df_geojson.csv.gz')
     json_df_features = pd.read_csv(geo_file_path)
 
     # Read traffic data from file
     if not DEPLOYED:
         print('Reading traffic data...')
-    file_paths = glob.glob(os.path.join(ASSET_DIR, 'traffic_df_*.parquet'))
+    file_paths = glob.glob(os.path.join(data_dir, 'traffic_df_*.parquet'))
     if file_paths:
         traffic_df = pd.concat([pd.read_parquet(file) for file in sorted(file_paths)], ignore_index=True)
         traffic_df['date_local'] = traffic_df['date_local'].astype(str)
     else:
-        traffic_file_path = os.path.join(ASSET_DIR, 'traffic_df_2023_2024_2025_YTD.csv.gz')
+        traffic_file_path = os.path.join(data_dir, 'traffic_df_2023_2024_2025_YTD.csv.gz')
         traffic_df = pd.read_csv(traffic_file_path)
 
     # Set data types for clean representation
@@ -249,8 +254,6 @@ def get_min_max_str(df, id_street, start_date, end_date):
     del df
 
     return min_date_str, max_date_str, start_date, end_date, message, missing_data
-
-ASSET_DIR = os.path.join(os.path.dirname(__file__), 'assets')
 
 # Initialize constants, variables and get data
 ADFC_green = '#1C9873'

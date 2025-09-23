@@ -1,5 +1,5 @@
 babel
-dash
+dash<3.1.0
 dash_bootstrap_components
 dash_daq
 dash-extensions

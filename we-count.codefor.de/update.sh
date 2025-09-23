@@ -1,13 +1,13 @@
 #!/bin/bash
+HOME=/home/we-count
 ssh radtk.de@ssh.strato.de wecount/cgi-bin/update.py
-cd /home/we-count/we-count
+cd $HOME/we-count
 git fetch -q
 # to make a new release update the tag / commit hash below
-git checkout 7aca2bc40c8a9d5ceabc2dac34fe3a164237bde1
+git checkout 20b8b70cc352ed8ac543bd845cb716d0f3669249
 ../venv_wecount/bin/python src/bzm_get_data.py
 /usr/bin/pkill -HUP -F /run/gunicorn/we-count/pid
 
-cd /home/we-count/we-count-beta
+cd $HOME/we-count-beta
 git pull -q
-cp -a /home/we-count/we-count/src/assets/* /home/we-count/we-count-beta/src/assets/
-/usr/bin/pkill -HUP -F /run/gunicorn/we-count-beta/pid
+rsync -abzL $HOME/we-count-beta/src/ radtk.de@ssh.strato.de:wecount/cgi-bin

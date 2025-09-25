@@ -10,4 +10,5 @@ git checkout 20b8b70cc352ed8ac543bd845cb716d0f3669249
 
 cd $HOME/we-count-beta
 git pull -q
+cp -a $HOME/we-count/src/assets/*.geojson $HOME/we-count/src/assets/*.csv.gz $HOME/we-count/src/assets/*.parquet src/assets/
 rsync -abzL $HOME/we-count-beta/src/ radtk.de@ssh.strato.de:wecount/cgi-bin

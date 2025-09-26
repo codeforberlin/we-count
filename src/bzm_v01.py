@@ -25,6 +25,7 @@ import dash_bootstrap_components as dbc
 from dash import Dash, html, dcc, Output, Input, callback, ctx, no_update
 from dash.exceptions import PreventUpdate
 import plotly.express as px
+from dateutil import parser
 
 DEPLOYED = __name__ != '__main__'
 ASSET_DIR = os.path.join(os.path.dirname(__file__), 'assets')
@@ -230,10 +231,10 @@ def get_min_max_str(df, id_street, start_date, end_date):
     min_date_str = datetime.datetime.strptime(min_date_str, format_string).strftime('%Y-%m-%d')
     max_date_str = max_date_str_dt.strftime('%Y-%m-%d')
 
-    print(start_date)
-    print(end_date)
-    print(min_date_str)
-    print(max_date_str)
+    s_date = parser.parse(start_date)
+    start_date = s_date.strftime("%Y-%m-%d")
+    e_date = parser.parse(end_date)
+    end_date = e_date.strftime("%Y-%m-%d")
 
     if start_date > max_date_str or end_date < min_date_str:
         missing_data = True

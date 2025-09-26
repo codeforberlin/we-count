@@ -22,14 +22,17 @@ import glob
 import pandas as pd
 import geopandas as gpd
 import dash_bootstrap_components as dbc
-from dash import Dash, html, dcc, Output, Input, callback, ctx, no_update
+from dash import Dash, html, dcc, Output, Input, callback, ctx
 from dash.exceptions import PreventUpdate
 import plotly.express as px
 from dateutil import parser
+from urllib.parse import parse_qs, urlparse
+
 
 DEPLOYED = __name__ != '__main__'
 ASSET_DIR = os.path.join(os.path.dirname(__file__), 'assets')
 TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), '..', 'assets')
+# _ = _
 
 def output_excel(df, file_name):
     path = os.path.join(ASSET_DIR, file_name + '.xlsx')
@@ -84,7 +87,6 @@ def update_language(lang_code):
     # Install translation function
     translations.install()
 
-    return
 
 def filter_uptime(df):
     # drop uptime rows < 0.7
@@ -294,6 +296,7 @@ update_language(init_language)
 
 # Format datetime columns to formatted strings
 traffic_df = traffic_df.astype({'year': str}, errors='ignore')
+street_names = {id: name for id, name in zip(traffic_df['segment_id'], traffic_df['id_street'])}
 
 # Start with traffic df with uptime filtered
 traffic_df_upt = filter_uptime(traffic_df)
@@ -811,9 +814,23 @@ def get_language(lang_code_dd):
     update_language(lang_code_dd)
     return '/'
 
+@callback(
+    Output(component_id='street_name_dd', component_property='value'),
+    Output(component_id='date_filter', component_property='start_date'),
+    Output(component_id='date_filter', component_property='end_date'),
+    Input(component_id='url', component_property='search')
+)
+def segment_id_from_url(url):
+    query = parse_qs(urlparse(url).query)
+    segment = query.get('segment_id', [segment_id])[0]
+    start = query.get('start', [start_date])[0]
+    end = query.get('end', [end_date])[0]
+    return street_names.get(segment, init_id_street), start, end
+
+
 ### Map callback ###
 @callback(
-    Output(component_id='street_name_dd',component_property='value', allow_duplicate= True),
+    Output(component_id='street_name_dd',component_property='value', allow_duplicate=True),
     Input(component_id='street_map', component_property='clickData'),
     prevent_initial_call=True
 )
@@ -840,11 +857,12 @@ def get_street_name(clickData):
     Output(component_id='street_map', component_property='figure'),
     Output(component_id='hardware_version', component_property='value'),
     Output(component_id='street_name_dd', component_property='options'),
-    Output(component_id='street_name_dd', component_property='value'),
+    Output(component_id='street_name_dd', component_property='value', allow_duplicate=True),
     Input(component_id='street_map', component_property='clickData'),
     Input(component_id='street_name_dd', component_property='value'),
     Input(component_id='language_selector',component_property= 'value'),
     Input(component_id='hardware_version',component_property= 'value'),
+    prevent_initial_call='initial_duplicate'
 )
 
 def update_map(clickData, id_street, lang_code_dd, hardware_version):
@@ -961,8 +979,8 @@ def update_map(clickData, id_street, lang_code_dd, hardware_version):
     Output(component_id='selected_street_header', component_property='style'),
     Output(component_id='street_id_text', component_property='children'),
     Output(component_id='date_range_text', component_property='children'),
-    Output(component_id="date_filter", component_property="start_date"),
-    Output(component_id="date_filter", component_property="end_date"),
+    Output(component_id="date_filter", component_property="start_date", allow_duplicate=True),
+    Output(component_id="date_filter", component_property="end_date", allow_duplicate=True),
     Output(component_id='date_range_text', component_property='style'),
     Output(component_id='pie_traffic', component_property='figure'),
     Output(component_id='line_abs_traffic', component_property='figure'),
@@ -990,7 +1008,7 @@ def update_map(clickData, id_street, lang_code_dd, hardware_version):
     Input(component_id='radio_y_axis', component_property='value'),
     Input(component_id='floating_button', component_property='n_clicks'),
     Input(component_id='language_selector', component_property='value'),
-#prevent_initial_call='initial_duplicate',
+    prevent_initial_call='initial_duplicate',
 )
 
 def update_graphs(radio_time_division, radio_time_unit, id_street, dropdown_year_A, dropdown_year_month_A, dropdown_year_week_A, dropdown_date_A, dropdown_year_B, dropdown_year_month_B, dropdown_year_week_B, dropdown_date_B, start_date, end_date, hour_range, toggle_uptime_filter, radio_y_axis, floating_button, lang_code_dd):
@@ -1333,4 +1351,4 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, dropdown_year
     return selected_street_header, selected_street_header_color, street_id_text, date_range_text, start_date, end_date, date_range_color, pie_traffic, line_abs_traffic, bar_avg_traffic, line_avg_delta_traffic, bar_perc_speed, bar_v85, bar_ranking
 
 if __name__ == "__main__":
-    app.run(debug=False)
+    app.run(debug=True)

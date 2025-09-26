@@ -227,9 +227,13 @@ def get_min_max_str(df, id_street, start_date, end_date):
     # Add one day from end_time as it was added before as well
     max_date_str_dt = datetime.datetime.strptime(max_date_str, format_string)
     max_date_str_dt = max_date_str_dt + datetime.timedelta(days=0)
-
     min_date_str = datetime.datetime.strptime(min_date_str, format_string).strftime('%Y-%m-%d')
     max_date_str = max_date_str_dt.strftime('%Y-%m-%d')
+
+    print(start_date)
+    print(end_date)
+    print(min_date_str)
+    print(max_date_str)
 
     if start_date > max_date_str or end_date < min_date_str:
         missing_data = True
@@ -257,11 +261,13 @@ def get_min_max_str(df, id_street, start_date, end_date):
 
 # Initialize constants, variables and get data
 ADFC_green = '#1C9873'
+ADFC_green_L = '#25C996'
 ADFC_palegrey = '#F2F2F2'
 ADFC_lightgrey = '#DEDEDE'
 ADFC_darkgrey = '#737373'
 ADFC_cyan = '#61CBF4'
 ADFC_lightblue = '#95CBD8'
+ADFC_lightblue_D = '#6DB7C9'
 ADFC_skyblue = '#D7EDF2'
 ADFC_blue = '#2C4B78'
 ADFC_darkblue = '#331F45'
@@ -367,9 +373,21 @@ def serve_layout():
         dbc.NavbarSimple(
             children=[
                 dbc.NavItem(dbc.NavLink(_("Project partners: "), href="#"), class_name='align-top'),
-                dbc.Col(html.Img(src=app.get_asset_url('DLR_und_adfc_logos-cut.png'), title='Das Deutsche Zentrum für Luft- und Raumfahrt, Allgemeiner Deutscher Fahrrad-Club', height="50px"), className='ms-3'),
-                dbc.Col(html.Img(src=app.get_asset_url('CodeFor-berlin.svg'), title='Code for Berlin', height="50px"), className='ms-3'),
-                dbc.Col(html.Img(src=app.get_asset_url('Telraam.png'), title='Berlin zählt Mobilität, Citizen Science Project: ADFC Berlin, DLR & Telraam', height="50px"), className='ms-3')
+                html.A(href='https://adfc-tk.de/wir-zaehlen/', target='_blank',
+                       children=[
+                           html.Img(src=app.get_asset_url('adfc_DLR_logos.png'), title='Allgemeiner Deutscher Fahrrad-Club, Das Deutsche Zentrum für Luft- und Raumfahrt', height="50px"),
+                       ]),
+                #dbc.Col(html.Img(src=app.get_asset_url('adfc_DLR_logos.png'), title='Allgemeiner Deutscher Fahrrad-Club, Das Deutsche Zentrum für Luft- und Raumfahrt', height="50px"), className='ms-3'),
+                html.A(href='https://telraam.net/en/candidates/berlin-zaehlt-mobilitaet/berlin-zaehlt-mobilitaet', target='_blank',
+                       children=[
+                           html.Img(src=app.get_asset_url('Telraam.png'), title='Berlin zählt Mobilität, Citizen Science Project: ADFC Berlin, DLR & Telraam', height="50px"),
+                       ]),
+                #dbc.Col(html.Img(src=app.get_asset_url('Telraam.png'), title='Berlin zählt Mobilität, Citizen Science Project: ADFC Berlin, DLR & Telraam', height="50px"), className='ms-3'),
+                html.A(href='https://codefor.de/berlin/', target='_blank',
+                       children=[
+                           html.Img(src=app.get_asset_url('CodeFor-berlin.svg'), title='Code for Berlin', height="50px"),
+                       ]),
+                #dbc.Col(html.Img(src=app.get_asset_url('CodeFor-berlin.svg'), title='Code for Berlin', height="50px"), className='ms-3'),
             ],
             brand="Berlin zählt Mobilität",
             brand_style={'font-size': 36,'font-weight': 'bold', 'color': ADFC_darkblue, 'font-style': 'italic', 'text-shadow': '3px 2px lightblue'},
@@ -557,14 +575,14 @@ def serve_layout():
             ], sm=12
             ),
         ], className='g-2 p-1'),
-        dbc.Row([
-            dbc.Col([
-                html.H4(_('Average car speed % - by time unit (grouped bars)'), className='my-3'),
-                dcc.Graph(id='bar_avg_speed', figure={}),
-                          #style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 30})
-            ], sm=12
-            ),
-        ], className='g-2 p-1'),
+        # dbc.Row([
+        #     dbc.Col([
+        #         html.H4(_('Average car speed % - by time unit (grouped bars)'), className='my-3'),
+        #         dcc.Graph(id='bar_avg_speed', figure={}),
+        #                   #style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 30})
+        #     ], sm=12
+        #     ),
+        # ], className='g-2 p-1'),
         dbc.Row([
             dbc.Col([
                 html.Span([html.H4(_('v85 car speed'), className='my-3 me-2', style={'display': 'inline-block'}),
@@ -741,6 +759,11 @@ def serve_layout():
                         ),
                 html.H6([_('Data protection around the '),
                         html.A(_('Telraam camera'), href="https://telraam.net/home/blog/telraam-privacy", target="_blank"),_(' measurements'),],
+                        className='ms-2',
+                        ),
+                html.H6([_('Open data source: '),
+                         html.A('Open Data Berlin', href="https://daten.berlin.de/datensaetze/berlin-zaehlt-mobilitaet",
+                                target="_blank")],
                         className='ms-2',
                         ),
             ], className= 'ms-3', sm=5),
@@ -945,7 +968,7 @@ def update_map(clickData, id_street, lang_code_dd, hardware_version):
     Output(component_id='bar_avg_traffic', component_property='figure'),
     Output(component_id='line_avg_delta_traffic', component_property='figure'),
     Output(component_id='bar_perc_speed', component_property='figure'),
-    Output(component_id='bar_avg_speed', component_property='figure'),
+    #Output(component_id='bar_avg_speed', component_property='figure'),
     Output(component_id='bar_v85', component_property='figure'),
     Output(component_id='bar_ranking', component_property='figure'),
     Input(component_id='radio_time_division', component_property='value'),
@@ -1120,9 +1143,9 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, dropdown_year
          facet_col='street_selection',
          category_orders={'street_selection': [street_name, 'All Streets']},
          labels={'year': _('Year'), 'month': _('Month'), 'weekday': _('Week'), 'day': _('Day'), 'hour': _('Hour')},
-         color_discrete_map={'car_speed0': ADFC_lightgrey, 'car_speed10': ADFC_lightblue,
+         color_discrete_map={'car_speed0': ADFC_lightgrey, 'car_speed10': ADFC_lightblue_D,
                              'car_speed20': ADFC_lightblue, 'car_speed30': ADFC_green,
-                             'car_speed40': ADFC_green, 'car_speed50': ADFC_orange,
+                             'car_speed40': ADFC_green_L, 'car_speed50': ADFC_orange,
                              'car_speed60': ADFC_crimson, 'car_speed70': ADFC_pink},
          facet_col_spacing=0.04,
          title=(_('Average car speed %') + ' (' + start_date + ' - ' + end_date + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)')
@@ -1132,14 +1155,14 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, dropdown_year
     bar_perc_speed.for_each_annotation(lambda a: a.update(text=a.text.replace(street_name, street_name + _(' (segment:') + segment_id + ')')))
     bar_perc_speed.for_each_annotation(lambda a: a.update(text=a.text.replace('All Streets', _('All Streets'))))
     bar_perc_speed.update_layout(legend_title_text=_('Car speed'))
-    bar_perc_speed.update_traces({'name': ' 0 kmh'}, selector={'name': 'car_speed0'})
-    bar_perc_speed.update_traces({'name': _('until') + ' 10 kmh'}, selector={'name': 'car_speed10'})
-    bar_perc_speed.update_traces({'name': _('until') + ' 20 kmh'}, selector={'name': 'car_speed20'})
-    bar_perc_speed.update_traces({'name': _('until') + ' 30 kmh'}, selector={'name': 'car_speed30'})
-    bar_perc_speed.update_traces({'name': _('until') + ' 40 kmh'}, selector={'name': 'car_speed40'})
-    bar_perc_speed.update_traces({'name': _('until') + ' 50 kmh'}, selector={'name': 'car_speed50'})
-    bar_perc_speed.update_traces({'name': _('until') + ' 60 kmh'}, selector={'name': 'car_speed60'})
-    bar_perc_speed.update_traces({'name': _('until') + ' 70 kmh'}, selector={'name': 'car_speed70'})
+    bar_perc_speed.update_traces({'name': '0 - 10 km/h'}, selector={'name': 'car_speed0'})
+    bar_perc_speed.update_traces({'name': '10 - 20 km/h'}, selector={'name': 'car_speed10'})
+    bar_perc_speed.update_traces({'name': '20 - 30 km/h'}, selector={'name': 'car_speed20'})
+    bar_perc_speed.update_traces({'name': '30 - 40 km/h'}, selector={'name': 'car_speed30'})
+    bar_perc_speed.update_traces({'name': '40 - 50 km/h'}, selector={'name': 'car_speed40'})
+    bar_perc_speed.update_traces({'name': '50 - 60 km/h'}, selector={'name': 'car_speed50'})
+    bar_perc_speed.update_traces({'name': '60 - 70 km/h'}, selector={'name': 'car_speed60'})
+    bar_perc_speed.update_traces({'name': '70 - 80 km/h'}, selector={'name': 'car_speed70'})
     bar_perc_speed.update_layout({'plot_bgcolor': ADFC_palegrey, 'paper_bgcolor': ADFC_palegrey})
     bar_perc_speed.update_layout(yaxis_title=_('Average car speed %'))
     bar_perc_speed.for_each_yaxis(lambda yaxis: yaxis.update(showticklabels=True))
@@ -1147,38 +1170,38 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, dropdown_year
         annotation['font'] = {'size': 14}
 
     ### Create percentage speed average bar chart
-    df_bar_avg_speed_traffic = df_bar_speed.groupby(by=[radio_time_unit, 'street_selection'], sort= False, as_index=False).agg({'car_speed0': 'mean', 'car_speed10': 'mean', 'car_speed20': 'mean', 'car_speed30': 'mean', 'car_speed40': 'mean', 'car_speed50': 'mean', 'car_speed60': 'mean', 'car_speed70': 'mean'})
-
-    bar_avg_speed = px.bar(df_bar_avg_speed_traffic,
-        x=radio_time_unit, y=cols,
-        barmode='group',
-        facet_col='street_selection',
-        category_orders={'street_selection': [street_name, 'All Streets']},
-        labels={'year': _('Year'), 'month': _('Month'), 'weekday': _('Week'), 'day': _('Day'), 'hour': _('Hour')},
-        color_discrete_map={'car_speed0': ADFC_lightgrey, 'car_speed10': ADFC_lightblue,
-                            'car_speed20': ADFC_lightblue, 'car_speed30': ADFC_green,
-                            'car_speed40': ADFC_green, 'car_speed50': ADFC_orange,
-                            'car_speed60': ADFC_crimson, 'car_speed70': ADFC_pink},
-        facet_col_spacing=0.04,
-        title=(_('Average car speed %') + ' (' + start_date + ' - ' + end_date + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)')
-    )
-
-    bar_avg_speed.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
-    bar_avg_speed.for_each_annotation(lambda a: a.update(text=a.text.replace(street_name, street_name + _(' (segment:') + segment_id + ')')))
-    bar_avg_speed.for_each_annotation(lambda a: a.update(text=a.text.replace('All Streets', _('All Streets'))))
-    bar_avg_speed.update_layout(legend_title_text=_('Car speed'))
-    bar_avg_speed.update_traces({'name': ' 0 kmh'}, selector={'name': 'car_speed0'})
-    bar_avg_speed.update_traces({'name': _('until') + ' 10 kmh'}, selector={'name': 'car_speed10'})
-    bar_avg_speed.update_traces({'name': _('until') + ' 20 kmh'}, selector={'name': 'car_speed20'})
-    bar_avg_speed.update_traces({'name': _('until') + ' 30 kmh'}, selector={'name': 'car_speed30'})
-    bar_avg_speed.update_traces({'name': _('until') + ' 40 kmh'}, selector={'name': 'car_speed40'})
-    bar_avg_speed.update_traces({'name': _('until') + ' 50 kmh'}, selector={'name': 'car_speed50'})
-    bar_avg_speed.update_traces({'name': _('until') + ' 60 kmh'}, selector={'name': 'car_speed60'})
-    bar_avg_speed.update_traces({'name': _('until') + ' 70 kmh'}, selector={'name': 'car_speed70'})
-    bar_avg_speed.update_layout({'plot_bgcolor': ADFC_palegrey, 'paper_bgcolor': ADFC_palegrey})
-    bar_avg_speed.update_layout(yaxis_title=_('Average car speed %'))
-    bar_avg_speed.for_each_yaxis(lambda yaxis: yaxis.update(showticklabels=True))
-    for annotation in bar_avg_speed.layout.annotations: annotation['font'] = {'size': 14}
+    # df_bar_avg_speed_traffic = df_bar_speed.groupby(by=[radio_time_unit, 'street_selection'], sort= False, as_index=False).agg({'car_speed0': 'mean', 'car_speed10': 'mean', 'car_speed20': 'mean', 'car_speed30': 'mean', 'car_speed40': 'mean', 'car_speed50': 'mean', 'car_speed60': 'mean', 'car_speed70': 'mean'})
+    #
+    # bar_avg_speed = px.bar(df_bar_avg_speed_traffic,
+    #     x=radio_time_unit, y=cols,
+    #     barmode='group',
+    #     facet_col='street_selection',
+    #     category_orders={'street_selection': [street_name, 'All Streets']},
+    #     labels={'year': _('Year'), 'month': _('Month'), 'weekday': _('Week'), 'day': _('Day'), 'hour': _('Hour')},
+    #     color_discrete_map={'car_speed0': ADFC_lightgrey, 'car_speed10': ADFC_lightblue_D,
+    #                         'car_speed20': ADFC_lightblue, 'car_speed30': ADFC_green,
+    #                         'car_speed40': ADFC_green_L, 'car_speed50': ADFC_orange,
+    #                         'car_speed60': ADFC_crimson, 'car_speed70': ADFC_pink},
+    #     facet_col_spacing=0.04,
+    #     title=(_('Average car speed %') + ' (' + start_date + ' - ' + end_date + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)')
+    # )
+    #
+    # bar_avg_speed.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
+    # bar_avg_speed.for_each_annotation(lambda a: a.update(text=a.text.replace(street_name, street_name + _(' (segment:') + segment_id + ')')))
+    # bar_avg_speed.for_each_annotation(lambda a: a.update(text=a.text.replace('All Streets', _('All Streets'))))
+    # bar_avg_speed.update_layout(legend_title_text=_('Car speed'))
+    # bar_avg_speed.update_traces({'name': '0 - 10 km/h'}, selector={'name': 'car_speed0'})
+    # bar_avg_speed.update_traces({'name': '10 - 20 km/h'}, selector={'name': 'car_speed10'})
+    # bar_avg_speed.update_traces({'name': '20 - 30 km/h'}, selector={'name': 'car_speed20'})
+    # bar_avg_speed.update_traces({'name': '30 - 40 km/h'}, selector={'name': 'car_speed30'})
+    # bar_avg_speed.update_traces({'name': '40 - 50 km/h'}, selector={'name': 'car_speed40'})
+    # bar_avg_speed.update_traces({'name': '50 - 60 km/h'}, selector={'name': 'car_speed50'})
+    # bar_avg_speed.update_traces({'name': '60 - 70 km/h'}, selector={'name': 'car_speed60'})
+    # bar_avg_speed.update_traces({'name': '70 - 80 km/h'}, selector={'name': 'car_speed70'})
+    # bar_avg_speed.update_layout({'plot_bgcolor': ADFC_palegrey, 'paper_bgcolor': ADFC_palegrey})
+    # bar_avg_speed.update_layout(yaxis_title=_('Average car speed %'))
+    # bar_avg_speed.for_each_yaxis(lambda yaxis: yaxis.update(showticklabels=True))
+    # for annotation in bar_avg_speed.layout.annotations: annotation['font'] = {'size': 14}
 
     ### Create v85 bar graph
     df_bar_v85 = traffic_df_upt_dt_str.groupby(by=[radio_time_unit, 'street_selection'], sort= False, as_index=False).agg({'v85': 'mean'})
@@ -1306,7 +1329,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, dropdown_year
     line_avg_delta_traffic.update_xaxes(dtick = 1, tickformat=".0f")
     for annotation in line_avg_delta_traffic.layout.annotations: annotation['font'] = {'size': 14}
 
-    return selected_street_header, selected_street_header_color, street_id_text, date_range_text, start_date, end_date, date_range_color, pie_traffic, line_abs_traffic, bar_avg_traffic, line_avg_delta_traffic, bar_perc_speed, bar_avg_speed, bar_v85, bar_ranking
+    return selected_street_header, selected_street_header_color, street_id_text, date_range_text, start_date, end_date, date_range_color, pie_traffic, line_abs_traffic, bar_avg_traffic, line_avg_delta_traffic, bar_perc_speed, bar_v85, bar_ranking
 
 if __name__ == "__main__":
     app.run(debug=False)

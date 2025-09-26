@@ -304,6 +304,9 @@ msgstr "Citizen Science-Projekt"
 msgid "Data protection around the "
 msgstr "Datenschutz rund um die "
 
+msgid "Open data source: "
+msgstr "Offene Datenquelle: "
+
 #: bzm_v01.py:764
 msgid "Telraam camera"
 msgstr "Telraam Kamera"

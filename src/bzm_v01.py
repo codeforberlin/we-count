@@ -1353,4 +1353,4 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, dropdown_year
     return selected_street_header, selected_street_header_color, street_id_text, date_range_text, start_date, end_date, date_range_color, pie_traffic, line_abs_traffic, bar_avg_traffic, line_avg_delta_traffic, bar_perc_speed, bar_v85, bar_ranking
 
 if __name__ == "__main__":
-    app.run(debug=False)
+    app.run(debug=True)

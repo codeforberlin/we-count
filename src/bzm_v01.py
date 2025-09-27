@@ -319,7 +319,9 @@ if try_start_date > start_date_dt:
 start_date = start_date_dt.strftime('%Y-%m-%d')
 end_date = end_date_dt.strftime('%Y-%m-%d')
 
-hour_range = [traffic_df_upt['hour'].min(), traffic_df_upt['hour'].max()]
+#hour_range = [traffic_df_upt['hour'].min(), traffic_df_upt['hour'].max()]
+hour_range = [0,24]
+
 
 traffic_df_upt_dt, min_date, max_date, min_hour, max_hour = filter_dt(traffic_df_upt, start_date, end_date, hour_range)
 
@@ -451,8 +453,8 @@ def serve_layout():
                 # Hour slider
                 dcc.RangeSlider(
                     id='range_slider',
-                    min= min_hour,
-                    max= max_hour,
+                    min=0, #min_hour,
+                    max=24, #max_hour,
                     step=1,
                     value = hour_range,
                     className='align-bottom mb-2',
@@ -1351,4 +1353,4 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, dropdown_year
     return selected_street_header, selected_street_header_color, street_id_text, date_range_text, start_date, end_date, date_range_color, pie_traffic, line_abs_traffic, bar_avg_traffic, line_avg_delta_traffic, bar_perc_speed, bar_v85, bar_ranking
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=False)

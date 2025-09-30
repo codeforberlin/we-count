@@ -16,6 +16,8 @@ import os
 import gettext
 import datetime
 import glob
+from operator import truediv
+
 # TODO the following line breaks language choice, we need to check why
 # from gettext import gettext as _
 
@@ -358,6 +360,8 @@ del json_df_features
 
 # Prepare map data
 df_map = update_map_data(df_map_base, traffic_df_id_bc)
+# TODO: some streets in "bzm_telraam_segments.geojson" have no camera info and so appear as hardware version "0", the below puts these to "1"
+df_map['hardware_version'] = df_map['hardware_version'].replace(0, 1)
 
 ### Run Dash app ###
 if not DEPLOYED:
@@ -407,7 +411,8 @@ def serve_layout():
         dbc.Row([
             # Street map
             dbc.Col([
-                dcc.Graph(id='street_map', figure={}, className='bg-#F2F2F2', style={'height': 500}),
+                dcc.Loading(id="loading-icon_street_map", children=[html.Div(
+                    dcc.Graph(id='street_map', figure={}, className='bg-#F2F2F2', style={'height': 500}))]),
             ],  sm=8),
             # General controls
             dbc.Col([
@@ -442,8 +447,9 @@ def serve_layout():
                     target="popover_traffic_type", trigger="hover")
                 ]),
                 # Pie chart
-                dcc.Graph(id='pie_traffic', figure={}),
-                html.H6(_('Street ID:'), id='street_id_text', className='my-2', style={'color': ADFC_darkgrey}),
+                dcc.Loading(id="loading-icon_pie_traffic", children=[html.Div(
+                    dcc.Graph(id='pie_traffic', figure={}))], type="default"),
+                    html.H6(_('Street ID:'), id='street_id_text', className='my-2', style={'color': ADFC_darkgrey}),
             ], sm=4),
         ], className= 'g-2 mt-1 mb-3 text-start'), #style= {'margin-right': 40}),
         # Date/Time selection and Uptime filter
@@ -453,8 +459,8 @@ def serve_layout():
                 # Hour slider
                 dcc.RangeSlider(
                     id='range_slider',
-                    min=0, #min_hour,
-                    max=24, #max_hour,
+                    min=0,
+                    max=24,
                     step=1,
                     value = hour_range,
                     className='align-bottom mb-2',
@@ -542,7 +548,8 @@ def serve_layout():
         ], className='g-2 p-1'),
         dbc.Row([
             dbc.Col([
-                dcc.Graph(id='line_abs_traffic', figure={}), #style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 30}),
+                dcc.Loading(id="loading-icon_line_abs_traffic", children=[html.Div(
+                    dcc.Graph(id='line_abs_traffic', figure={}, config={'modeBarButtonsToRemove': ['select2d', 'lasso2d', 'zoomIn2d', 'zoomOut2d', 'autoScale2d']}),)])
             ], sm=12
             ),
         ], className='g-2 p-1'),
@@ -550,7 +557,7 @@ def serve_layout():
         dbc.Row([
             dbc.Col([
                 # Radio time unit
-                html.H4(_('Average traffic'), className='my-3'), #style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 30}),
+                html.H4(_('Average traffic'), className='my-3'),
 
                 dcc.RadioItems(
                     id='radio_time_unit',
@@ -570,14 +577,16 @@ def serve_layout():
         ], className='g-2 p-1'),
         dbc.Row([
             dbc.Col([
-                dcc.Graph(id='bar_avg_traffic', figure={}), #style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 30})
+                dcc.Loading(id="loading-icon_bar_avg_traffic", children=[html.Div(
+                    dcc.Graph(id='bar_avg_traffic', figure={}, config={'modeBarButtonsToRemove': ['select2d', 'lasso2d', 'zoomIn2d', 'zoomOut2d', 'autoScale2d']}),)])
             ], sm=12
             ),
         ], className='g-2 p-1'),
         dbc.Row([
             dbc.Col([
                 html.H4(_('Average car speed % - by time unit (stacked bars)'), className='my-3'),
-                dcc.Graph(id='bar_perc_speed', figure={}), #style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 30})
+                dcc.Loading(id="loading-icon_bar_perc_speed", children=[html.Div(
+                    dcc.Graph(id='bar_perc_speed', figure={}, config={'modeBarButtonsToRemove': ['select2d', 'lasso2d', 'zoomIn2d', 'zoomOut2d', 'autoScale2d']}),)])
             ], sm=12
             ),
         ], className='g-2 p-1'),
@@ -600,7 +609,8 @@ def serve_layout():
                     target='popover_v85_speed',
                     trigger='hover'
                 ),
-                dcc.Graph(id='bar_v85', figure={}),
+                dcc.Loading(id="loading-icon_map_bar_v85", children=[html.Div(
+                    dcc.Graph(id='bar_v85', figure={}, config={'modeBarButtonsToRemove': ['select2d', 'lasso2d', 'zoomIn2d', 'zoomOut2d', 'autoScale2d']}),)])
             ], sm=12
             ),
         ], className='g-2 p-1'),
@@ -630,7 +640,8 @@ def serve_layout():
         ], className='g-2 p-1'),
         dbc.Row([
             dbc.Col([
-                dcc.Graph(id='bar_ranking', figure={})
+                dcc.Loading(id="loading-icon_bar_ranking", children=[html.Div(
+                    dcc.Graph(id='bar_ranking', figure={},config={'modeBarButtonsToRemove': ['select2d', 'lasso2d', 'zoomIn2d', 'zoomOut2d', 'autoScale2d']}),)], type="default"),
             ], sm=12
             ),
         ], className='g-2 p-1 mb-3'),
@@ -744,7 +755,8 @@ def serve_layout():
         ], className='g-2 p-1 mb-3'),
         dbc.Row([
             dbc.Col([
-                dcc.Graph(id='line_avg_delta_traffic', figure={})
+                dcc.Loading(id="loading-icon_line_avg_delta_traffic", children=[html.Div(
+                    dcc.Graph(id='line_avg_delta_traffic', figure={}, config={'modeBarButtonsToRemove': ['zoomIn2d', 'zoomOut2d', 'autoScale2d']}))])
             ], sm=12),
         ], className='g-2 p-1 mb-3'),
 
@@ -816,64 +828,39 @@ def get_language(lang_code_dd):
     update_language(lang_code_dd)
     return '/'
 
-@callback(
-    Output(component_id='street_name_dd', component_property='value'),
-    Output(component_id='date_filter', component_property='start_date'),
-    Output(component_id='date_filter', component_property='end_date'),
-    Input(component_id='url', component_property='search')
-)
-def segment_id_from_url(url):
-    query = parse_qs(urlparse(url).query)
-    segment = query.get('segment_id', [segment_id])[0]
-    start = query.get('start', [start_date])[0]
-    end = query.get('end', [end_date])[0]
-    return street_names.get(segment, init_id_street), start, end
+# @callback(
+#     Output(component_id='street_name_dd', component_property='value'),
+#     Output(component_id='date_filter', component_property='start_date'),
+#     Output(component_id='date_filter', component_property='end_date'),
+#     Input(component_id='url', component_property='search'),
+# )
+#
+# def segment_id_from_url(url):
+#     query = parse_qs(urlparse(url).query)
+#     segment = query.get('segment_id', [segment_id])[0]
+#     start = query.get('start', [start_date])[0]
+#     end = query.get('end', [end_date])[0]
+#     return street_names.get(segment, init_id_street), start, end
 
-
-### Map callback ###
-@callback(
-    Output(component_id='street_name_dd',component_property='value', allow_duplicate=True),
-    Input(component_id='street_map', component_property='clickData'),
-    prevent_initial_call=True
-)
-
-def get_street_name(clickData):
-
-    if clickData:
-        # Get street name and segment id from map click
-        street_name = clickData['points'][0]['hovertext']
-        segment_id = str(clickData['points'][0]['customdata'][0])
-
-        # Check if street inactive, if so, prevent update
-        idx = df_map.loc[df_map['segment_id'] == segment_id]
-        map_color_status = idx['map_line_color'].values[0]
-        if map_color_status == 'Inactive - no data':
-            raise PreventUpdate
-
-        # Otherwise, change to selected street
-        id_street = street_name + ' (' + segment_id + ')'
-
-    return id_street
-
+### Update Map ###
 @callback(
     Output(component_id='street_map', component_property='figure'),
     Output(component_id='hardware_version', component_property='value'),
     Output(component_id='street_name_dd', component_property='options'),
-    Output(component_id='street_name_dd', component_property='value', allow_duplicate=True),
+    Output(component_id='street_name_dd', component_property='value'),
     Input(component_id='street_map', component_property='clickData'),
     Input(component_id='street_name_dd', component_property='value'),
-    Input(component_id='language_selector',component_property= 'value'),
     Input(component_id='hardware_version',component_property= 'value'),
-    prevent_initial_call='initial_duplicate'
+    #prevent_initial_call= True #'initial_duplicate',
 )
 
-def update_map(clickData, id_street, lang_code_dd, hardware_version):
+def update_map(clickData, id_street, hardware_version):
     callback_trigger = ctx.triggered_id
 
     # Get hardware version of currently selected street
     current_hw = int(df_map.loc[df_map['id_street'] == id_street, 'hardware_version'].iloc[0])
 
-    # Camera hardware version change
+    # Set df_map based on camera hardware version
     if callback_trigger == 'hardware_version':
         if hardware_version == [1]:
             df_map_hw = df_map[df_map['hardware_version'] == 1]
@@ -889,6 +876,7 @@ def update_map(clickData, id_street, lang_code_dd, hardware_version):
             # Set both camera hardware versions if both or none are selected
             hardware_version = [1, 2]
             df_map_hw = df_map
+    # Init df_map_hw
     else:
         df_map_hw = df_map
 
@@ -898,6 +886,7 @@ def update_map(clickData, id_street, lang_code_dd, hardware_version):
     # Free up memory
     del df_map_hw_options
 
+    # Update map
     if callback_trigger == 'street_map':
         street_name = clickData['points'][0]['hovertext']
         segment_id = clickData['points'][0]['customdata'][0]
@@ -907,23 +896,15 @@ def update_map(clickData, id_street, lang_code_dd, hardware_version):
         if map_color_status == 'Inactive - no data':
             raise PreventUpdate
         else:
-            if hardware_version == [1] or hardware_version == [2]:
-                # Provide overview after camera hardware version change
-                zoom_factor = 11
-            else:
-                zoom_factor = 13
-    elif callback_trigger == 'street_name_dd' or hardware_version == [1] or hardware_version == [2]:
-        street_name = id_street.split(' (')[0]
+            zoom_factor = 13
+            id_street = street_name + ' (' + segment_id + ')'
+    elif callback_trigger == 'street_name_dd':
         segment_id = id_street[-11:-1]
         idx = df_map_hw.loc[df_map_hw['segment_id'] == segment_id]
-        if hardware_version == [1] or hardware_version == [2]:
-            # Provide overview after camera hardware version change
-            zoom_factor = 11
-        else:
-            zoom_factor = 13
+        zoom_factor = 13
     else:
-        # Initial view
-        street_name = id_street.split(' (')[0]
+        # Zoom out upon initial load or hardware change
+        #street_name = id_street.split(' (')[0]
         segment_id = id_street[-11:-1]
         idx = df_map_hw.loc[df_map_hw['segment_id'] == segment_id]
         zoom_factor = 11
@@ -1028,14 +1009,6 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, dropdown_year
     street_id_text = 'Segment ID: ' + str(segment_id)
     street_name = id_street.split(' (')[0]
     selected_street_header = street_name
-
-    #map_color_status = df_map.loc[df_map['segment_id'] == segment_id, 'map_line_color'].iloc[0]
-    #print(map_color_status)
-    #if map_color_status == 'Inactive - no data':
-    #    selected_street_header = 'Select active street'
-    #    selected_street_header_color = {'color': ADFC_lightgrey}
-    #else:
-    #    selected_street_header = street_name
 
     # Check if selected street has data for selected data range
     min_date_str, max_date_str, start_date, end_date, message, missing_data = get_min_max_str(traffic_df_upt, id_street, start_date, end_date)

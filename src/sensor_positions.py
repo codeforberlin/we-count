@@ -16,13 +16,6 @@ import osm
 from common import ConnectionProvider, get_options
 
 
-def add_camera(conns, res):
-    for segment in res["features"]:
-        segment_id = segment["properties"]["segment_id"]
-        cameras = conns.request("/v1/instances/segment/%s" % segment_id)
-        segment["properties"]["cameras"] = cameras.get("camera", [])
-
-
 def add_osm(res, old_data):
     lookup = {s["properties"]["segment_id"] : s for s in old_data["features"]}
     now = datetime.datetime.now(datetime.UTC)
@@ -60,12 +53,12 @@ def main(args=None):
         with open(options.json_file, encoding="utf8") as of:
             old_data = json.load(of)
 
-    res = conns.request("/v1/segments/area", "POST", str({"area": options.bbox}), required="features")
+    res = conns.request("/v1/segments/area", "POST", str({"area": options.bbox}), retries=options.retry, required="features")
     bbox_segments = set(f["properties"]["segment_id"] for f in res.get("features", []))
     if options.verbose:
         print(f"{len(bbox_segments)} total sensor positions in the bounding box.")
 
-    res = conns.request("/v1/reports/traffic_snapshot_live", required="features")
+    res = conns.request("/v1/reports/traffic_snapshot_live", retries=options.retry, required="features")
     features = res.get("features")
     if not features:
         return
@@ -79,7 +72,7 @@ def main(args=None):
             bbox_segments.remove(segment_id)
     tf = timezonefinder.TimezoneFinder()
     for segment_id in bbox_segments:
-        segment_data = conns.request("/v1/segments/id/%s" % segment_id, required="features")
+        segment_data = conns.request("/v1/segments/id/%s" % segment_id, retries=options.retry, required="features")
         if not segment_data.get('features'):
             continue
         segment = segment_data["features"][0]
@@ -93,7 +86,10 @@ def main(args=None):
         combined_segments.append(segment)
     res["features"] = combined_segments
     add_osm(res, no_data if options.osm else old_data)
-    add_camera(conns, res)
+    for segment in res["features"]:
+        segment_id = segment["properties"]["segment_id"]
+        cameras = conns.request("/v1/instances/segment/%s" % segment_id, retries=options.retry)
+        segment["properties"]["cameras"] = cameras.get("camera", [])
     with open(options.json_file, "w", encoding="utf8") as segment_json:
         json.dump(res, segment_json, indent=2)
     with open(options.js_file, "w", encoding="utf8") as sensor_js:

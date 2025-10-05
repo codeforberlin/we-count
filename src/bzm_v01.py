@@ -58,8 +58,8 @@ def retrieve_data():
 
     if not DEPLOYED:
         print('Reading json data...')
-    geo_file_path = os.path.join(data_dir, 'df_geojson.csv.gz')
-    json_df_features = pd.read_csv(geo_file_path)
+    geo_file_path = os.path.join(data_dir, 'df_geojson.parquet')
+    json_df_features = pd.read_parquet(geo_file_path)
 
     # Read traffic data from file
     if not DEPLOYED:

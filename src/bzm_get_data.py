@@ -74,7 +74,7 @@ def get_locations(filepath="https://berlin-zaehlt.de/csv/bzm_telraam_segments.ge
             return x['properties']['cameras'][0]['hardware_version']
         return 0
     hardware = df_geojson['features'].apply(get_hardware).rename('hardware_version')
-    columns = ['segment_id'] + OSM_COLUMNS
+    columns = ['segment_id', 'last_data_package'] + OSM_COLUMNS
     df_geojson = pd.concat([normalized[columns], geometry, hardware], axis=1)
     df_geojson['id_street'] = df_geojson['osm.name'].astype(str) + ' (' + df_geojson['segment_id'].astype(str) + ')'
     for col in OSM_COLUMNS:
@@ -187,7 +187,7 @@ def get_options(args=None, json_default="sensor.json"):
                         help="Database input file or URL")
     parser.add_argument("-o", "--output", default="traffic_df_%s.parquet",
                         help="Traffic data output file (format is derived from file extension)")
-    parser.add_argument("-l", "--location-output", default="df_geojson.csv.gz",
+    parser.add_argument("-l", "--location-output", default="df_geojson.parquet",
                         help="Location data file (format is derived from file extension)")
     parser.add_argument("-m", "--months", type=int, default=4,
                         help="number of months to look back")

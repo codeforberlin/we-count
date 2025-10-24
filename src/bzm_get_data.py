@@ -166,7 +166,7 @@ def merge_data(locations, cache_file=os.path.join(ASSET_DIR, 'traffic_df_2024_Q4
 
     if verbose:
         print('Creating df with selected columns')
-    selected_columns = ['date_local','segment_id','uptime',
+    selected_columns = ['date_local','segment_id','uptime', 'hardware_version', 'last_data_package',
                         'ped_total','bike_total','car_total','heavy_total','v85',
                         'id_street','street_selection',
                         'car_speed0','car_speed10','car_speed20','car_speed30','car_speed40','car_speed50','car_speed60','car_speed70']

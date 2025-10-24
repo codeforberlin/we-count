@@ -110,6 +110,16 @@ msgstr ""
 " liegen, ist das normalerweise ein Zeichen dafür, dass mit dem Sensor "
 "etwas nicht stimmt."
 
+msgid ""
+" Active only"
+msgstr ""
+" Nur aktiv"
+
+msgid ""
+"Active only means that only cameras that are or have been active during the last 14 days are included. Switching off this feature will include all cameras with data."
+msgstr ""
+"Nur aktiv bedeutet, dass nur Kameras berücksichtigt werden, die in den letzten 14 Tagen aktiv waren oder sind. Wenn Sie diese Funktion deaktivieren, werden alle Kameras mit Daten berücksichtigt."
+
 #: bzm_v01.py:496
 msgid "V1 Sensor"
 msgstr ""

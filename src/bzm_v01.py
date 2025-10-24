@@ -14,7 +14,8 @@
 
 import os
 import gettext
-import datetime
+#import datetime
+from datetime import datetime, timedelta
 import glob
 from operator import truediv
 
@@ -74,6 +75,7 @@ def retrieve_data():
 
     # Set data types for clean representation
     traffic_df['segment_id'] = traffic_df['segment_id'].astype(str)
+    traffic_df = traffic_df.astype({'year': str}, errors='ignore')
 
     return geo_df, json_df_features, traffic_df
 
@@ -89,31 +91,83 @@ def update_language(lang_code):
     # Install translation function
     translations.install()
 
+def filter_uptime(df, toggle_uptime_filter):
 
-def filter_uptime(df):
-    # drop uptime rows < 0.7
-    nan_rows = df[df['uptime'] < 0.7]
-    traffic_df_upt = df.drop(nan_rows.index)
+    # Filter uptime
+    if toggle_uptime_filter == ['filter_uptime_selected']:
+        # Drop uptime rows < 0.7
+        nan_rows = df[df['uptime'] < 0.7]
+        traffic_df_upt = df.drop(nan_rows.index)
+    else:
+        traffic_df_upt = traffic_df
+
     return traffic_df_upt
 
+def filter_active(df, toggle_active_filter):
+
+    # Filter active cameras
+    if toggle_active_filter == ['filter_active_selected']:
+        # Drop last_data_package more two weeks ago
+        two_weeks_ago_dt = datetime.now() - timedelta(weeks=2)
+        two_weeks_ago = two_weeks_ago_dt.strftime('%Y-%m-%d')
+        traffic_df_act = df[df['last_data_package'] >= two_weeks_ago]
+    else:
+        traffic_df_act = df
+
+    return traffic_df_act
+
+def filter_traffic_df(df, toggle_uptime_filter, toggle_active_filter):
+
+    two_weeks_ago_dt = datetime.now() - timedelta(weeks=2)
+    two_weeks_ago = two_weeks_ago_dt.strftime('%Y-%m-%d')
+
+    # Filter
+    if toggle_uptime_filter == ['filter_uptime_selected'] and toggle_active_filter == ['filter_active_selected']:
+        traffic_df_filtered = df.loc[(df['uptime'] > 0.7) & (df['last_data_package'] >= two_weeks_ago)]
+    elif toggle_uptime_filter == ['filter_uptime_selected'] and toggle_active_filter == []:
+        traffic_df_filtered = df[(df['uptime'] > 0.7)]
+    elif toggle_uptime_filter == [] and toggle_active_filter == ['filter_active_selected']:
+        traffic_df_filtered = df[(df['last_data_package'] >= two_weeks_ago)]
+    else:
+        traffic_df_filtered = df
+
+    return traffic_df_filtered
+
+def filter_hardware_version(df, hardware_version, current_hw):
+
+    # Filter camera hardware version and switch street to fit selected hardware category if needed
+
+    if hardware_version == [1]:
+        traffic_df_use = df[df['hardware_version'] == 1]
+        if current_hw == 2:
+            id_street = 'Alte Jakobstraße (9000002582)'
+    elif hardware_version == [2]:
+        traffic_df_use = df[df['hardware_version'] == 2]
+        if current_hw == 1:
+            id_street = 'Dresdener Straße (9000006667)'
+    else:
+        id_street = 'Dresdener Straße (9000006667)'
+        traffic_df_use = df
+
+    return traffic_df_use
+
 def convert(date_time, format_string):
-    datetime_obj = datetime.datetime.strptime(date_time, format_string)
+    datetime_obj = datetime.strptime(date_time, format_string)
     return datetime_obj
 
 def format_str_date(str_date, from_date_format, to_date_format):
-    timestamp_date = datetime.datetime.strptime(str_date, from_date_format)
+    timestamp_date = datetime.strptime(str_date, from_date_format)
     formatted_str_date = timestamp_date.strftime(to_date_format)
     return formatted_str_date
 
 def filter_dt(df, start_date, end_date, hour_range):
-
     # Get min/max dates to set DatePicker range
     min_date = df['date_local'].min()
     max_date = df['date_local'].max()
 
     # Add one day to end date as .between function filters until
     filter_end_date = convert(str(end_date), '%Y-%m-%d')
-    filter_end_date = filter_end_date + datetime.timedelta(days=1)
+    filter_end_date = filter_end_date + timedelta(days=1)
     filter_end_date = filter_end_date.strftime('%Y-%m-%d')
 
     # Filter selected dates
@@ -132,12 +186,12 @@ def filter_dt(df, start_date, end_date, hour_range):
         hour_range[1] = hour_range[1] + 1
 
     df_dates_hours = df_dates.loc[df_dates['hour'].between(hour_range[0], hour_range[1]-1)]
-    traffic_df_upt_dt = df_dates_hours
+    traffic_df_use_dt = df_dates_hours
 
     # Free memory
     del df, df_dates, df_dates_hours
 
-    return traffic_df_upt_dt, min_date, max_date, min_hour, max_hour
+    return traffic_df_use_dt, min_date, max_date, min_hour, max_hour
 
 def get_comparison_data(df, radio_time_division, group_by, selected_value_A, selected_value_B):
     df_period_A = df[df[radio_time_division]==selected_value_A]
@@ -186,6 +240,7 @@ def get_bike_car_ratios(df):
     bins = [0, 0.1, 0.2, 0.5, 1, 500]
     speed_labels = ['Over 10x more cars', 'Over 5x more cars', 'Over 2x more cars', 'More cars than bikes', 'More bikes than cars']
     traffic_df_id_bc['map_line_color'] = pd.cut(traffic_df_id_bc['bike_car_ratio'], bins=bins, labels=speed_labels)
+
     # Prepare traffic_df_id_bc for join operation
     traffic_df_id_bc['segment_id'] = traffic_df_id_bc['segment_id'].astype(int)
     traffic_df_id_bc.set_index('segment_id', inplace=True)
@@ -195,14 +250,31 @@ def get_bike_car_ratios(df):
 
     return traffic_df_id_bc
 
-def update_map_data(df_map_base, df):
-    # Create map info by joining geo_df_map_info with map_line_color from traffic_df_id_bc (based on bike/car ratios)
-    df_map = df_map_base.join(df)
+def update_map_data(df_map_base, df, active_selected, hardware_version):
 
+    # Prepare map info by joining geo_df_map_info with map_line_color from traffic_df_id_bc (based on bike/car ratios)
+    df_map = df_map_base.join(df)
+    # Remove rows w/o segment_id
     nan_rows = df_map[df_map['segment_id'].isnull()]
     df_map = df_map.drop(nan_rows.index)
+    # TODO: some streets in "bzm_telraam_segments.geojson" have no camera info and so appear as hardware version "0", the below puts these to "1"
+    df_map['hardware_version'] = df_map['hardware_version'].replace(0,1)
 
-    # Add map_line_color category and add column information to cover inactive traffic counters
+    # TODO: Fiter uptime althought at the moment it looks like there are no streets with < 0.7 uptime only
+
+    # Filter on active cameras (data available later than two weeks ago)
+    if active_selected == ['filter_active_selected']:
+        two_weeks_ago_dt = datetime.now() - timedelta(weeks=2)
+        two_weeks_ago = two_weeks_ago_dt.strftime('%Y-%m-%d')
+        df_map = df_map[df_map['last_data_package'] >= two_weeks_ago]
+
+    # Filter on camera hardware version
+    if hardware_version == [1]:
+        df_map = df_map[df_map['hardware_version'] == 1]
+    elif hardware_version == [2]:
+        df_map = df_map[df_map['hardware_version'] == 2]
+
+    # Add map_line_color category and add column information to cover inactive cameras
     df_map['map_line_color'] = df_map['map_line_color'].cat.add_categories([('Inactive - no data')])
     df_map.fillna({'map_line_color': ('Inactive - no data')}, inplace=True)
     # Sort data to get desired legend order
@@ -230,9 +302,9 @@ def get_min_max_str(df, id_street, start_date, end_date):
     max_date_str = df_str['date_local'].max()
 
     # Add one day from end_time as it was added before as well
-    max_date_str_dt = datetime.datetime.strptime(max_date_str, format_string)
-    max_date_str_dt = max_date_str_dt + datetime.timedelta(days=0)
-    min_date_str = datetime.datetime.strptime(min_date_str, format_string).strftime('%Y-%m-%d')
+    max_date_str_dt = datetime.strptime(max_date_str, format_string)
+    max_date_str_dt = max_date_str_dt + timedelta(days=0)
+    min_date_str = datetime.strptime(min_date_str, format_string).strftime('%Y-%m-%d')
     max_date_str = max_date_str_dt.strftime('%Y-%m-%d')
 
     s_date = parser.parse(start_date)
@@ -296,24 +368,36 @@ geo_df, json_df_features, traffic_df = retrieve_data()
 init_language = 'de'
 update_language(init_language)
 
-# Format datetime columns to formatted strings
-traffic_df = traffic_df.astype({'year': str}, errors='ignore')
+# Michael for def segment_id_from_url?
 street_names = {id: name for id, name in zip(traffic_df['segment_id'], traffic_df['id_street'])}
 
-# Start with traffic df with uptime filtered
-traffic_df_upt = filter_uptime(traffic_df)
+# Start traffic df with uptime filtered and active streets
+# traffic_df_upt = filter_uptime(traffic_df, 'filter_uptime_selected')
+# traffic_df_act = filter_active(traffic_df_upt, 'filter_active_selected')
+# traffic_df_use = filter_hardware_version(traffic_df_act, [1,2], 2)
+
+traffic_df_filtered = filter_traffic_df(traffic_df, ['filter_uptime_selected'], ['filter_active_selected'])
+traffic_df_use = filter_hardware_version(traffic_df_filtered, [1,2], 2)
+
+#traffic df - all data, no filters
+#traffic_df_no_uptime_active_cams = filter_active(traffic_df, 'filter_active_selected')
+#traffic_df_uptime_all_cams = filter_uptime(traffic_df, 'filter_uptime_selected')
+#traffic_df_use = filter_active(traffic_df_uptime_all_cams, 'filter_active_selected')
+
+# Free memory
+del traffic_df_filtered
 
 # Get start date, end date and hour range (str)
-start_date = traffic_df_upt['date_local'].min()
-end_date = traffic_df_upt['date_local'].max()
+start_date = traffic_df_use['date_local'].min()
+end_date = traffic_df_use['date_local'].max()
 
-format_string = '%Y-%m-%d %H:%M:%S'
 # Convert to dt do enable time.delta
+format_string = '%Y-%m-%d %H:%M:%S'
 start_date_dt = convert(str(start_date), format_string)
 end_date_dt = convert(str(end_date), format_string)
 
 # Initiate start date two weeks before end date
-try_start_date = end_date_dt + datetime.timedelta(days=-14)
+try_start_date = end_date_dt + timedelta(days=-14)
 if try_start_date > start_date_dt:
     start_date_dt = try_start_date
 
@@ -321,11 +405,12 @@ if try_start_date > start_date_dt:
 start_date = start_date_dt.strftime('%Y-%m-%d')
 end_date = end_date_dt.strftime('%Y-%m-%d')
 
+# Force initial setting to 0 - 24 hour
 #hour_range = [traffic_df_upt['hour'].min(), traffic_df_upt['hour'].max()]
 hour_range = [0,24]
 
-
-traffic_df_upt_dt, min_date, max_date, min_hour, max_hour = filter_dt(traffic_df_upt, start_date, end_date, hour_range)
+# Initiate traffic_df based on initial settings
+traffic_df_use_dt, min_date, max_date, min_hour, max_hour = filter_dt(traffic_df_use, start_date, end_date, hour_range)
 
 ### Prepare map data ###
 if not DEPLOYED:
@@ -335,8 +420,6 @@ if not DEPLOYED:
 if not DEPLOYED:
     print('Add bike/car ratio column...')
 
-# Prepare consolidated bike/car ratios by segment_id
-traffic_df_id_bc = get_bike_car_ratios(traffic_df_upt)
 # Extract x y coordinates from geo_df (geopandas file)
 geo_df_coords = geo_df.get_coordinates()
 # Get ids to join with x y coordinates
@@ -345,7 +428,7 @@ geo_df_ids = geo_df[['segment_id']]
 geo_df_map_info = geo_df_coords.join(geo_df_ids)
 
 # Free memory
-del geo_df_coords,geo_df_ids
+del geo_df_coords, geo_df_ids
 
 # Prepare geo_df_map_info and json_df_features and join
 geo_df_map_info['segment_id'] = geo_df_map_info['segment_id'].astype(int)
@@ -358,10 +441,11 @@ df_map_base = geo_df_map_info.join(json_df_features)
 # Free memory
 del json_df_features
 
-# Prepare map data
-df_map = update_map_data(df_map_base, traffic_df_id_bc)
-# TODO: some streets in "bzm_telraam_segments.geojson" have no camera info and so appear as hardware version "0", the below puts these to "1"
-df_map['hardware_version'] = df_map['hardware_version'].replace(0, 1)
+# Get consolidated bike/car ratios by segment_id
+traffic_df_id_bc = get_bike_car_ratios(traffic_df_use)
+
+# Join map data and bike/car ratio data to df_map
+df_map = update_map_data(df_map_base, traffic_df_id_bc, None, None)
 
 ### Run Dash app ###
 if not DEPLOYED:
@@ -371,7 +455,6 @@ if not DEPLOYED:
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP],
            meta_tags=[{'name': 'viewport', 'content': 'width=device-width, initial-scale=1'}]
            )
-
 
 app.title = "Berlin-zaehlt"
 
@@ -393,7 +476,7 @@ def serve_layout():
                            html.Img(src=app.get_asset_url('Telraam.png'), title='Berlin zählt Mobilität, Citizen Science Project: ADFC Berlin, DLR & Telraam', height="50px"),
                        ]),
                 #dbc.Col(html.Img(src=app.get_asset_url('Telraam.png'), title='Berlin zählt Mobilität, Citizen Science Project: ADFC Berlin, DLR & Telraam', height="50px"), className='ms-3'),
-                html.A(href='https://codefor.de/berlin/', target='_blank',
+                html.A(href='https://codefor.de/projekte/wecount/', target='_blank',
                        children=[
                            html.Img(src=app.get_asset_url('CodeFor-berlin.svg'), title='Code for Berlin', height="50px"),
                        ]),
@@ -407,12 +490,13 @@ def serve_layout():
         dbc.Row([
             # Anchor for language swithch
             dcc.Location(id='url', refresh=True),
+            #dcc.Store(id='store_traffic_data', data=[], storage_type='session'), - storage on client side
         ]),
         dbc.Row([
             # Street map
             dbc.Col([
                 dcc.Loading(id="loading-icon_street_map", children=[html.Div(
-                    dcc.Graph(id='street_map', figure={}, className='bg-#F2F2F2', style={'height': 500}))]),
+                    dcc.Graph(id='street_map', figure={}, className='bg-#F2F2F2', style={'height': 520}))]),
             ],  sm=8),
             # General controls
             dbc.Col([
@@ -438,7 +522,6 @@ def serve_layout():
                     options=[{'label': i, 'value': i} for i in sorted(traffic_df['id_street'].unique())],
                     value= init_id_street
                 ),
-                #dcc.Store(id='store_segment_id_value', storage_type='memory'),
                 html.Span([
                     html.H4(_('Traffic type - selected street'), id='selected_street_header', style={'color': 'black'}, className='my-2 d-inline-block'),
                     html.I(className='bi bi-info-circle-fill h6 ms-1', id='popover_traffic_type', style={'align': 'top', 'color': ADFC_lightgrey}),
@@ -449,7 +532,8 @@ def serve_layout():
                 # Pie chart
                 dcc.Loading(id="loading-icon_pie_traffic", children=[html.Div(
                     dcc.Graph(id='pie_traffic', figure={}))], type="default"),
-                    html.H6(_('Street ID:'), id='street_id_text', className='my-2', style={'color': ADFC_darkgrey}),
+                    html.H6(_('Selected segment ID:'), id='street_id_text', className='my-2', style={'color': ADFC_darkgrey}),
+                    html.H6(_('Number of selected segments:'), id='nof_selected_segments', className='my-2', style={'color': ADFC_darkgrey}),
             ], sm=4),
         ], className= 'g-2 mt-1 mb-3 text-start'), #style= {'margin-right': 40}),
         # Date/Time selection and Uptime filter
@@ -486,18 +570,35 @@ def serve_layout():
                 html.Span([
                     dbc.Checklist(
                         id='toggle_uptime_filter',
-                        options=[{'label': _(' Filter uptime > 70%'), 'value': 'filter_uptime_selected'}],
+                        options=[{'label': _(' Uptime > 70%'), 'value': 'filter_uptime_selected'}],
                         value= ['filter_uptime_selected'],
                         inline=False,
                         switch=True,
                         className='d-inline-block ms-2 mt-4'
                     ),
                     html.I(className='bi bi-info-circle-fill h6 ms-2',
-                        id='popover_filter',
+                        id='popover_filter_uptime',
                         style={'color': ADFC_lightgrey}),
                     dbc.Popover(
                         dbc.PopoverBody(_('A high uptime of >70% will always mean very good data. The first and last daylight hour of the day will always have lower uptimes. If uptimes during the day are below 0.5, that is usually a clear sign that something is probably wrong with the sensor.')),
-                        target="popover_filter", trigger="hover"),
+                        target='popover_filter_uptime', trigger="hover"),
+                ]),
+                html.Span([
+                    dbc.Checklist(
+                        id='toggle_active_filter',
+                        options=[{'label': _(' Active only'), 'value': 'filter_active_selected'}],
+                        value=['filter_active_selected'],
+                        inline=False,
+                        switch=True,
+                        className='d-inline-block ms-2 mt-4'
+                    ),
+                    html.I(className='bi bi-info-circle-fill h6 ms-2',
+                           id='popover_filter_active',
+                           style={'color': ADFC_lightgrey}),
+                    dbc.Popover(
+                        dbc.PopoverBody(
+                            _('Active only means that only cameras that are or have been active during the last 14 days are included. Switching off this feature will include all cameras with data.')),
+                        target='popover_filter_active', trigger="hover"),
                 ]),
                 html.Span([
                         dbc.Checklist(
@@ -590,14 +691,6 @@ def serve_layout():
             ], sm=12
             ),
         ], className='g-2 p-1'),
-        # dbc.Row([
-        #     dbc.Col([
-        #         html.H4(_('Average car speed % - by time unit (grouped bars)'), className='my-3'),
-        #         dcc.Graph(id='bar_avg_speed', figure={}),
-        #                   #style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 30})
-        #     ], sm=12
-        #     ),
-        # ], className='g-2 p-1'),
         dbc.Row([
             dbc.Col([
                 html.Span([html.H4(_('v85 car speed'), className='my-3 me-2', style={'display': 'inline-block'}),
@@ -828,6 +921,20 @@ def get_language(lang_code_dd):
     update_language(lang_code_dd)
     return '/'
 
+# TODO: Store file for multiple use
+# Storing traffic_df on client side does not work because this requires 600+ MB memory...
+# @app.callback(
+#     Output('store_traffic_data', 'data'),
+#     Input('hardware_version', 'value')
+# )
+#
+# def store_traffic_data(value):
+#     print('init_id_street')
+#     traffic_df_use = filter_traffic_data(traffic_df, 'filter_uptime_selected', 'filter_active_selected', [1, 2], init_id_street, 2)
+#     print(traffic_df_use.info())
+#     dataset = traffic_df_use
+#     return dataset.to_dict('records')
+
 # @callback(
 #     Output(component_id='street_name_dd', component_property='value'),
 #     Output(component_id='date_filter', component_property='start_date'),
@@ -848,49 +955,70 @@ def get_language(lang_code_dd):
     Output(component_id='hardware_version', component_property='value'),
     Output(component_id='street_name_dd', component_property='options'),
     Output(component_id='street_name_dd', component_property='value'),
+    Output(component_id='nof_selected_segments', component_property='children'),
     Input(component_id='street_map', component_property='clickData'),
     Input(component_id='street_name_dd', component_property='value'),
     Input(component_id='hardware_version',component_property= 'value'),
+    Input(component_id='toggle_active_filter',component_property= 'value'),
     #prevent_initial_call= True #'initial_duplicate',
 )
 
-def update_map(clickData, id_street, hardware_version):
+def update_map(clickData, id_street, hardware_version, toggle_active_filter):
+
     callback_trigger = ctx.triggered_id
 
     # Get hardware version of currently selected street
-    current_hw = int(df_map.loc[df_map['id_street'] == id_street, 'hardware_version'].iloc[0])
+    current_hw = int(df_map_base.loc[df_map_base['id_street'] == id_street, 'hardware_version'].iloc[0])
+    # Update df-map data in case of uptime change, active filter change or hardware change
+    if callback_trigger == 'toggle_active_filter' or 'hardware_version':
+        df_map = update_map_data(df_map_base, traffic_df_id_bc, toggle_active_filter, hardware_version)
+
+    # Switch selected street if camera hardware version does not fit selection
+    if hardware_version == [1] and current_hw == 2:
+        id_street = 'Alte Jakobstraße (9000002582)'
+    elif hardware_version == [2] and current_hw == 1:
+        id_street = 'Dresdener Straße (9000006667)'
+    elif hardware_version == [1, 2] or hardware_version == []:
+        hardware_version = [1, 2]
+
+    # Get number of selected segments
+    nof_selected_segments = 'Number of selected segments: ' + str(len(df_map['segment_id'].unique()))
 
     # Set df_map based on camera hardware version
-    if callback_trigger == 'hardware_version':
-        if hardware_version == [1]:
-            df_map_hw = df_map[df_map['hardware_version'] == 1]
-            # Switch selected street if camera hardware version does not fit selection
-            if current_hw == 2:
-                id_street = 'Alte Jakobstraße (9000002582)'
-        elif hardware_version == [2]:
-            df_map_hw = df_map[df_map['hardware_version'] == 2]
-            # Switch selected street if camera hardware version does not fit selection
-            if current_hw == 1:
-                id_street = 'Dresdener Straße (9000006667)'
-        else:
-            # Set both camera hardware versions if both or none are selected
-            hardware_version = [1, 2]
-            df_map_hw = df_map
-    # Init df_map_hw
-    else:
-        df_map_hw = df_map
+    # if callback_trigger == 'hardware_version':
+    #     if hardware_version == [1]:
+    #         df_map_hw = df_map[df_map['hardware_version'] == 1]
+    #         nof_selected_segments = 'Number of selected segments: ' + str(len(df_map_hw['segment_id'].unique()))
+    #         # Switch selected street if camera hardware version does not fit selection
+    #         if current_hw == 2:
+    #             id_street = 'Alte Jakobstraße (9000002582)'
+    #     elif hardware_version == [2]:
+    #         df_map_hw = df_map[df_map['hardware_version'] == 2]
+    #         nof_selected_segments = 'Number of selected segments: ' + str(len(df_map_hw['segment_id'].unique()))
+    #         # Switch selected street if camera hardware version does not fit selection
+    #         if current_hw == 1:
+    #             id_street = 'Dresdener Straße (9000006667)'
+    #     else:
+    #         # Set both camera hardware versions if both or none are selected
+    #         hardware_version = [1, 2]
+    #         df_map_hw = df_map
+    #         nof_selected_segments = 'Number of selected segments: ' + str(len(df_map_hw['segment_id'].unique()))
+    # # Init df_map_hw
+    # else:
+    #     df_map_hw = df_map
+    #     nof_selected_segments = 'Number of selected segments: ' + str(len(df_map_hw['segment_id'].unique()))
 
-    # Update options for street_name_dd, remove inactive
-    df_map_hw_options = df_map_hw[df_map_hw['map_line_color']!='Inactive - no data']
-    street_name_dd_options = [{'label': i, 'value': i} for i in sorted(df_map_hw_options['id_street'].unique())]
+    # Update options for street_name_dd, without inactive
+    df_map_options = df_map[df_map['map_line_color']!='Inactive - no data']
+    street_name_dd_options = [{'label': i, 'value': i} for i in sorted(df_map_options['id_street'].unique())]
     # Free up memory
-    del df_map_hw_options
+    del df_map_options
 
-    # Update map
+    # Update map in case of selected street change
     if callback_trigger == 'street_map':
         street_name = clickData['points'][0]['hovertext']
         segment_id = clickData['points'][0]['customdata'][0]
-        idx = df_map_hw.loc[df_map_hw['segment_id'] == segment_id]
+        idx = df_map.loc[df_map['segment_id'] == segment_id]
         # Check if street inactive, if so, prevent update
         map_color_status = idx['map_line_color'].values[0]
         if map_color_status == 'Inactive - no data':
@@ -900,13 +1028,12 @@ def update_map(clickData, id_street, hardware_version):
             id_street = street_name + ' (' + segment_id + ')'
     elif callback_trigger == 'street_name_dd':
         segment_id = id_street[-11:-1]
-        idx = df_map_hw.loc[df_map_hw['segment_id'] == segment_id]
+        idx = df_map.loc[df_map['segment_id'] == segment_id]
         zoom_factor = 13
     else:
         # Zoom out upon initial load or hardware change
-        #street_name = id_street.split(' (')[0]
         segment_id = id_street[-11:-1]
-        idx = df_map_hw.loc[df_map_hw['segment_id'] == segment_id]
+        idx = df_map.loc[df_map['segment_id'] == segment_id]
         zoom_factor = 11
 
     # TODO: improve efficiency by managing translation w/o recalculating bc ratios
@@ -914,7 +1041,7 @@ def update_map(clickData, id_street, hardware_version):
     lat_str = idx['y'].values[0]
 
     sep = '&nbsp;|&nbsp;'
-    street_map = px.line_map(df_map_hw, lat='y', lon='x', custom_data=['segment_id', 'hardware_version'],line_group='segment_id', hover_name = 'osm.name', color= 'map_line_color',
+    street_map = px.line_map(df_map, lat='y', lon='x', custom_data=['segment_id', 'hardware_version'],line_group='segment_id', hover_name = 'osm.name', color= 'map_line_color',
         color_discrete_map= {
         'More bikes than cars': ADFC_green,
         'More cars than bikes': ADFC_blue,
@@ -953,7 +1080,7 @@ def update_map(clickData, id_street, hardware_version):
         )
     ])
 
-    return street_map, hardware_version, street_name_dd_options, id_street
+    return street_map, hardware_version, street_name_dd_options, id_street, nof_selected_segments
 
 
 ### General traffic callback ###
@@ -961,6 +1088,7 @@ def update_map(clickData, id_street, hardware_version):
     Output(component_id='selected_street_header', component_property='children'),
     Output(component_id='selected_street_header', component_property='style'),
     Output(component_id='street_id_text', component_property='children'),
+    Output(component_id='street_name_dd', component_property='options', allow_duplicate=True),
     Output(component_id='date_range_text', component_property='children'),
     Output(component_id="date_filter", component_property="start_date", allow_duplicate=True),
     Output(component_id="date_filter", component_property="end_date", allow_duplicate=True),
@@ -970,7 +1098,6 @@ def update_map(clickData, id_street, hardware_version):
     Output(component_id='bar_avg_traffic', component_property='figure'),
     Output(component_id='line_avg_delta_traffic', component_property='figure'),
     Output(component_id='bar_perc_speed', component_property='figure'),
-    #Output(component_id='bar_avg_speed', component_property='figure'),
     Output(component_id='bar_v85', component_property='figure'),
     Output(component_id='bar_ranking', component_property='figure'),
     Input(component_id='radio_time_division', component_property='value'),
@@ -988,38 +1115,44 @@ def update_map(clickData, id_street, hardware_version):
     Input(component_id="date_filter", component_property="end_date"),
     Input(component_id='range_slider', component_property='value'),
     Input(component_id='toggle_uptime_filter', component_property='value'),
+    Input(component_id='toggle_active_filter', component_property='value'),
+    Input(component_id='hardware_version', component_property='value'),
     Input(component_id='radio_y_axis', component_property='value'),
     Input(component_id='floating_button', component_property='n_clicks'),
     Input(component_id='language_selector', component_property='value'),
     prevent_initial_call='initial_duplicate',
 )
 
-def update_graphs(radio_time_division, radio_time_unit, id_street, dropdown_year_A, dropdown_year_month_A, dropdown_year_week_A, dropdown_date_A, dropdown_year_B, dropdown_year_month_B, dropdown_year_week_B, dropdown_date_B, start_date, end_date, hour_range, toggle_uptime_filter, radio_y_axis, floating_button, lang_code_dd):
+def update_graphs(radio_time_division, radio_time_unit, id_street, dropdown_year_A, dropdown_year_month_A, dropdown_year_week_A, dropdown_date_A, dropdown_year_B, dropdown_year_month_B, dropdown_year_week_B, dropdown_date_B, start_date, end_date, hour_range, toggle_uptime_filter, toggle_active_filter, hardware_version, radio_y_axis, floating_button, lang_code_dd):
 
+    global traffic_df_use_global
     callback_trigger = ctx.triggered_id
 
-    # If uptime filter changed, reload traffic_df_upt
-    if 'filter_uptime_selected' in toggle_uptime_filter:
-        traffic_df_upt = filter_uptime(traffic_df)
-    else:
-        traffic_df_upt = traffic_df
+    # Filter traffic data based on user selections
+    current_hw = int(df_map_base.loc[df_map_base['id_street'] == id_street, 'hardware_version'].iloc[0])
+
+    if callback_trigger in ['toggle_uptime_filter', 'toggle_active_filter', 'hardware_version']:
+        traffic_df_filtered = filter_traffic_df(traffic_df, toggle_uptime_filter, toggle_active_filter)
+        traffic_df_use_global = filter_hardware_version(traffic_df_filtered,hardware_version, current_hw)
+
+    street_name_dd_options = [{'label': i, 'value': i} for i in sorted(traffic_df_use_global['id_street'].unique())]
 
     # Get segment_id/street name
     segment_id = id_street[-11:-1]
-    street_id_text = 'Segment ID: ' + str(segment_id)
+    street_id_text = 'Selected segment ID: ' + str(segment_id)
     street_name = id_street.split(' (')[0]
     selected_street_header = street_name
 
     # Check if selected street has data for selected data range
-    min_date_str, max_date_str, start_date, end_date, message, missing_data = get_min_max_str(traffic_df_upt, id_street, start_date, end_date)
-    traffic_df_upt_dt, min_date, max_date, min_hour, max_hour = filter_dt(traffic_df_upt, start_date, end_date, hour_range)
-    traffic_df_upt_dt_str = update_selected_street(traffic_df_upt_dt, segment_id, street_name)
+    min_date_str, max_date_str, start_date, end_date, message, missing_data = get_min_max_str(traffic_df_use_global, id_street, start_date, end_date)
+    traffic_df_use_dt, min_date, max_date, min_hour, max_hour = filter_dt(traffic_df_use_global, start_date, end_date, hour_range)
+    traffic_df_use_dt_str = update_selected_street(traffic_df_use_dt, segment_id, street_name)
 
     # Format min_max output
-    start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d').strftime('%d %b %Y')
-    end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d').strftime('%d %b %Y')
-    min_date_str = datetime.datetime.strptime(min_date_str, '%Y-%m-%d').strftime('%d-%m-%Y')
-    max_date_str = datetime.datetime.strptime(max_date_str, '%Y-%m-%d').strftime('%d-%m-%Y')
+    start_date = datetime.strptime(start_date, '%Y-%m-%d').strftime('%d %b %Y')
+    end_date = datetime.strptime(end_date, '%Y-%m-%d').strftime('%d %b %Y')
+    min_date_str = datetime.strptime(min_date_str, '%Y-%m-%d').strftime('%d-%m-%Y')
+    max_date_str = datetime.strptime(max_date_str, '%Y-%m-%d').strftime('%d-%m-%Y')
 
     # Provide warnings in case of missing data
     if missing_data:
@@ -1038,7 +1171,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, dropdown_year
         date_range_color = {'color': 'black'}
 
     # Create pie chart
-    df_pie = traffic_df_upt_dt_str[traffic_df_upt_dt_str['street_selection'] == street_name]
+    df_pie = traffic_df_use_dt_str[traffic_df_use_dt_str['street_selection'] == street_name]
     df_pie_traffic = df_pie[['ped_total', 'bike_total', 'car_total', 'heavy_total']]
     df_pie_traffic_ren = df_pie_traffic.rename(columns={'ped_total': _('Pedestrians'), 'bike_total': _('Bikes'), 'car_total': _('Cars'), 'heavy_total': _('Heavy')})
     df_pie_traffic_sum = df_pie_traffic_ren.aggregate(['sum'])
@@ -1053,10 +1186,10 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, dropdown_year
 
     ### Create absolute line chart
     if radio_time_division == 'date_hour':
-        df_line_abs_traffic = traffic_df_upt_dt_str.groupby(by=['street_selection', 'date_local', radio_time_division], sort=False, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
+        df_line_abs_traffic = traffic_df_use_dt_str.groupby(by=['street_selection', 'date_local', radio_time_division], sort=False, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
         df_line_abs_traffic = df_line_abs_traffic.sort_values(by=['date_local'], ascending=True)
     else:
-        df_line_abs_traffic = traffic_df_upt_dt_str.groupby(by=[radio_time_division, 'street_selection'], sort=False, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
+        df_line_abs_traffic = traffic_df_use_dt_str.groupby(by=[radio_time_division, 'street_selection'], sort=False, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
 
     line_abs_traffic = px.scatter(df_line_abs_traffic,
         x=radio_time_division, y=['ped_total', 'bike_total', 'car_total', 'heavy_total'],
@@ -1089,9 +1222,9 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, dropdown_year
     # Sort on hour to avoid line graph jumps around hour gaps
     if radio_time_unit == 'hour' or radio_time_unit == 'day':
         #df_avg_traffic = df_avg_traffic.sort_values(by=[radio_time_unit], ascending=True)
-        df_avg_traffic = traffic_df_upt_dt_str.groupby(by=[radio_time_unit, 'street_selection'], as_index=False).agg({'ped_total': 'mean', 'bike_total': 'mean', 'car_total': 'mean', 'heavy_total': 'mean'})
+        df_avg_traffic = traffic_df_use_dt_str.groupby(by=[radio_time_unit, 'street_selection'], as_index=False).agg({'ped_total': 'mean', 'bike_total': 'mean', 'car_total': 'mean', 'heavy_total': 'mean'})
     else:
-        df_avg_traffic = traffic_df_upt_dt_str.groupby(by=[radio_time_unit, 'street_selection'], sort=False, as_index=False).agg({'ped_total': 'mean', 'bike_total': 'mean', 'car_total': 'mean', 'heavy_total': 'mean'})
+        df_avg_traffic = traffic_df_use_dt_str.groupby(by=[radio_time_unit, 'street_selection'], sort=False, as_index=False).agg({'ped_total': 'mean', 'bike_total': 'mean', 'car_total': 'mean', 'heavy_total': 'mean'})
 
     bar_avg_traffic = px.bar(df_avg_traffic,
         x=radio_time_unit, y=['ped_total', 'bike_total', 'car_total', 'heavy_total'],
@@ -1122,7 +1255,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, dropdown_year
     ### Create percentage speed bar chart
 
     # Add column with all car speed %
-    df_bar_speed = traffic_df_upt_dt_str
+    df_bar_speed = traffic_df_use_dt_str
     cols = ['car_speed0', 'car_speed10', 'car_speed20', 'car_speed30', 'car_speed40', 'car_speed50', 'car_speed60', 'car_speed70']
     df_bar_speed['sum_speed_perc'] = df_bar_speed[cols].sum(axis=1)
 
@@ -1163,42 +1296,8 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, dropdown_year
     for annotation in bar_perc_speed.layout.annotations:
         annotation['font'] = {'size': 14}
 
-    ### Create percentage speed average bar chart
-    # df_bar_avg_speed_traffic = df_bar_speed.groupby(by=[radio_time_unit, 'street_selection'], sort= False, as_index=False).agg({'car_speed0': 'mean', 'car_speed10': 'mean', 'car_speed20': 'mean', 'car_speed30': 'mean', 'car_speed40': 'mean', 'car_speed50': 'mean', 'car_speed60': 'mean', 'car_speed70': 'mean'})
-    #
-    # bar_avg_speed = px.bar(df_bar_avg_speed_traffic,
-    #     x=radio_time_unit, y=cols,
-    #     barmode='group',
-    #     facet_col='street_selection',
-    #     category_orders={'street_selection': [street_name, 'All Streets']},
-    #     labels={'year': _('Year'), 'month': _('Month'), 'weekday': _('Week'), 'day': _('Day'), 'hour': _('Hour')},
-    #     color_discrete_map={'car_speed0': ADFC_lightgrey, 'car_speed10': ADFC_lightblue_D,
-    #                         'car_speed20': ADFC_lightblue, 'car_speed30': ADFC_green,
-    #                         'car_speed40': ADFC_green_L, 'car_speed50': ADFC_orange,
-    #                         'car_speed60': ADFC_crimson, 'car_speed70': ADFC_pink},
-    #     facet_col_spacing=0.04,
-    #     title=(_('Average car speed %') + ' (' + start_date + ' - ' + end_date + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)')
-    # )
-    #
-    # bar_avg_speed.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
-    # bar_avg_speed.for_each_annotation(lambda a: a.update(text=a.text.replace(street_name, street_name + _(' (segment:') + segment_id + ')')))
-    # bar_avg_speed.for_each_annotation(lambda a: a.update(text=a.text.replace('All Streets', _('All Streets'))))
-    # bar_avg_speed.update_layout(legend_title_text=_('Car speed'))
-    # bar_avg_speed.update_traces({'name': '0 - 10 km/h'}, selector={'name': 'car_speed0'})
-    # bar_avg_speed.update_traces({'name': '10 - 20 km/h'}, selector={'name': 'car_speed10'})
-    # bar_avg_speed.update_traces({'name': '20 - 30 km/h'}, selector={'name': 'car_speed20'})
-    # bar_avg_speed.update_traces({'name': '30 - 40 km/h'}, selector={'name': 'car_speed30'})
-    # bar_avg_speed.update_traces({'name': '40 - 50 km/h'}, selector={'name': 'car_speed40'})
-    # bar_avg_speed.update_traces({'name': '50 - 60 km/h'}, selector={'name': 'car_speed50'})
-    # bar_avg_speed.update_traces({'name': '60 - 70 km/h'}, selector={'name': 'car_speed60'})
-    # bar_avg_speed.update_traces({'name': '70 - 80 km/h'}, selector={'name': 'car_speed70'})
-    # bar_avg_speed.update_layout({'plot_bgcolor': ADFC_palegrey, 'paper_bgcolor': ADFC_palegrey})
-    # bar_avg_speed.update_layout(yaxis_title=_('Average car speed %'))
-    # bar_avg_speed.for_each_yaxis(lambda yaxis: yaxis.update(showticklabels=True))
-    # for annotation in bar_avg_speed.layout.annotations: annotation['font'] = {'size': 14}
-
     ### Create v85 bar graph
-    df_bar_v85 = traffic_df_upt_dt_str.groupby(by=[radio_time_unit, 'street_selection'], sort= False, as_index=False).agg({'v85': 'mean'})
+    df_bar_v85 = traffic_df_use_dt_str.groupby(by=[radio_time_unit, 'street_selection'], sort= False, as_index=False).agg({'v85': 'mean'})
 
     bar_v85 = px.bar(df_bar_v85,
         x=radio_time_unit, y='v85',
@@ -1224,7 +1323,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, dropdown_year
         annotation['font'] = {'size': 14}
 
     ### Create ranking chart
-    df_bar_ranking = traffic_df_upt_dt.groupby(by=['id_street', 'street_selection'], sort=False, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
+    df_bar_ranking = traffic_df_use_dt.groupby(by=['id_street', 'street_selection'], sort=False, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
     df_bar_ranking = df_bar_ranking.sort_values(by=[radio_y_axis], ascending=False)
     df_bar_ranking.reset_index(inplace=True)
 
@@ -1286,8 +1385,8 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, dropdown_year
         label = 'Date'
 
     # Prepare traffic_df_upt by selected street
-    traffic_df_upt_str = update_selected_street(traffic_df_upt, segment_id, street_name)
-    df_avg_traffic_delta_concat = get_comparison_data(traffic_df_upt_str, time_division, group_by, selected_value_A, selected_value_B)
+    traffic_df_use_str = update_selected_street(traffic_df_use, segment_id, street_name)
+    df_avg_traffic_delta_concat = get_comparison_data(traffic_df_use_str, time_division, group_by, selected_value_A, selected_value_B)
 
     line_avg_delta_traffic = px.line(df_avg_traffic_delta_concat,
         x=group_by, y=['ped_total', 'bike_total', 'car_total', 'heavy_total', 'ped_total_d', 'bike_total_d', 'car_total_d', 'heavy_total_d'],
@@ -1323,7 +1422,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, dropdown_year
     line_avg_delta_traffic.update_xaxes(dtick = 1, tickformat=".0f")
     for annotation in line_avg_delta_traffic.layout.annotations: annotation['font'] = {'size': 14}
 
-    return selected_street_header, selected_street_header_color, street_id_text, date_range_text, start_date, end_date, date_range_color, pie_traffic, line_abs_traffic, bar_avg_traffic, line_avg_delta_traffic, bar_perc_speed, bar_v85, bar_ranking
+    return selected_street_header, selected_street_header_color, street_id_text, street_name_dd_options, date_range_text, start_date, end_date, date_range_color, pie_traffic, line_abs_traffic, bar_avg_traffic, line_avg_delta_traffic, bar_perc_speed, bar_v85, bar_ranking
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=False)

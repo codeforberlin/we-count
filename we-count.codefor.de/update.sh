@@ -4,7 +4,7 @@ ssh radtk.de@ssh.strato.de wecount/cgi-bin/update.py
 cd $HOME/we-count
 git fetch -q
 # to make a new release update the tag / commit hash below
-git checkout 5f8d331f97a4bcc9dfe09a01da7993ca4544c759
+git checkout 96aa8edc8ba9b5e9cf3dcb42132a1d638b1a8b75
 ../venv_wecount/bin/python src/bzm_get_data.py
 /usr/bin/pkill -HUP -F /run/gunicorn/we-count/pid
 

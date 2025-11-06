@@ -414,9 +414,7 @@ traffic_df_id_bc = get_bike_car_ratios(traffic_df)
 
 # Join map data and bike/car ratio data to df_map
 df_map = update_map_data(df_map_base, traffic_df_id_bc, '[]', [1,2])
-output_excel(df_map, 'df_map_org')
 df_map = update_map_data(df_map_base, traffic_df_id_bc, None, None)
-output_excel(df_map,'df_map_active')
 
 ### Run Dash app ###
 if not DEPLOYED:
@@ -1334,8 +1332,8 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, dropdown_year
 
     # Prepare traffic_df_upt by selected street
     traffic_df_use_str = update_selected_street(traffic_df_use, segment_id, street_name)
-    df_avg_traffic_delta_concat = get_comparison_data(traffic_df_use_str, time_division, group_by, selected_value_A, selected_value_B)
 
+    df_avg_traffic_delta_concat = get_comparison_data(traffic_df_use_str, time_division, group_by, selected_value_A, selected_value_B)
     line_avg_delta_traffic = px.line(df_avg_traffic_delta_concat,
         x=group_by, y=['ped_total', 'bike_total', 'car_total', 'heavy_total', 'ped_total_d', 'bike_total_d', 'car_total_d', 'heavy_total_d'],
         facet_col='street_selection',

@@ -169,24 +169,95 @@ def filter_dt(df, start_date, end_date, hour_range):
     return traffic_df_use_dt, min_date, max_date, min_hour, max_hour
 
 def get_comparison_data(df, radio_time_division, group_by, selected_value_A, selected_value_B):
+
+    # Mapping dictionaries
+    month_to_num_map_EN = {
+        'Jan': 1, 'Feb': 2, 'Mar': 3, 'Apr': 4, 'May': 5, 'Jun': 6, 'Jul': 7, 'Aug': 8, 'Sep': 9, 'Oct': 10, 'Nov': 11, 'Dec': 12
+    }
+    num_to_month_map_EN = {
+        1: 'Jan', 2: 'Feb', 3: 'Mar', 4: 'Apr', 5: 'May', 6: 'Jun', 7: 'Jul', 8: 'Aug', 9: 'Sep', 10: 'Oct', 11: 'Nov', 12: 'Dec'
+    }
+    weekday_to_num_map_EN = {
+        'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5, 'Sat': 6, 'Sun': 7
+    }
+    num_to_weekday_map_EN = {
+        1: 'Mon', 2: 'Tue', 3: 'Wed', 4: 'Thu', 5: 'Fri', 6: 'Sat', 7: 'Sun'
+    }
+    month_to_num_map_DE = {
+        'Jan': 1, 'Feb': 2, 'Mär': 3, 'Mar': 3, 'Apr': 4, 'Mai': 5, 'May': 5, 'Jun': 6, 'Jul': 7, 'Aug': 8, 'Sep': 9, 'Okt': 10, 'Oct': 10, 'Nov': 11, 'Dez': 12, 'Dec': 12
+    }
+    num_to_month_map_DE = {
+        1: 'Jan', 2: 'Feb', 3: 'Mär', 4: 'Apr', 5: 'Mai', 6: 'Jun', 7: 'Jul', 8: 'Aug', 9: 'Sep', 10: 'Okt', 11: 'Nov', 12: 'Dez'
+    }
+    weekday_to_num_map_DE = {
+        'Mo.': 1, 'Mon': 1, 'Di.': 2, 'Tue': 2, 'Mi.': 3, 'Wed': 3, 'Do.': 4, 'Thu': 4, 'Fr.': 5, 'Fri': 5, 'Sa.': 6, 'Sat': 6, 'So.': 7, 'Sun': 7
+    }
+    num_to_weekday_map_DE = {
+        1: 'Mo.', 2: 'Di.', 3: 'Mi.', 4: 'Do.', 5: 'Fr.', 6: 'Sa.', 7: 'So.'
+    }
+
+    pd.set_option("future.no_silent_downcasting", True)
+
     df_period_A = df[df[radio_time_division]==selected_value_A]
-    df_period_grp_A = df_period_A.groupby(by=[group_by, 'street_selection'], sort=False, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
-    if radio_time_division == 'year_month' or radio_time_division == 'date':
-        df_period_grp_A = df_period_grp_A.sort_values(by=['street_selection', group_by], ascending=True)
+    df_period_grp_A = df_period_A.groupby(by=['street_selection', group_by], sort=False, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
+
+    if radio_time_division == 'year':
+        # Replace month abbreviations with numbers
+        if language == 'de':
+            df_period_grp_A['month'] = df_period_grp_A['month'].replace(month_to_num_map_DE)
+        else:
+            df_period_grp_A['month'] = df_period_grp_A['month'].replace(month_to_num_map_EN)
+
+    if radio_time_division == 'year_week':
+        # Replace weekday abbreviations with numbers
+        if language == 'de':
+            df_period_grp_A['weekday'] = df_period_grp_A['weekday'].replace(weekday_to_num_map_DE)
+        else:
+            df_period_grp_A['weekday'] = df_period_grp_A['weekday'].replace(weekday_to_num_map_EN)
+
     df_avg_traffic_delta_A = df_period_grp_A
 
     df_period_B = df[df[radio_time_division]==selected_value_B]
-    df_period_grp_B = df_period_B.groupby(by=[group_by, 'street_selection'], sort=False, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
-    if radio_time_division == 'date':
-        df_period_grp_B = df_period_grp_B.sort_values(by=['street_selection', group_by], ascending=True)
+    df_period_grp_B = df_period_B.groupby(by=['street_selection', group_by], sort=False, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
+
+    # Replace numbers with abbreviations
+    if radio_time_division == 'year':# or radio_time_division == 'date':
+        # Replace month abbreviations with numbers
+        if language == 'de':
+            df_period_grp_B['month'] = df_period_grp_B['month'].replace(month_to_num_map_DE)
+        else:
+            df_period_grp_B['month'] = df_period_grp_B['month'].replace(month_to_num_map_EN)
+
+    if radio_time_division == 'year_week':
+        # Replace weekday abbreviations with numbers
+        if language == 'de':
+            df_period_grp_B['weekday'] = df_period_grp_B['weekday'].replace(weekday_to_num_map_DE)
+        else:
+            df_period_grp_B['weekday'] = df_period_grp_B['weekday'].replace(weekday_to_num_map_EN)
+
     # Rename period B columns to new series
     df_period_grp_B_ren = df_period_grp_B.rename(columns={'ped_total': 'ped_total_d', 'bike_total': 'bike_total_d', 'car_total': 'car_total_d', 'heavy_total': 'heavy_total_d'})
     df_avg_traffic_delta_B = df_period_grp_B_ren
 
-    df_avg_traffic_delta_concat = pd.concat([df_avg_traffic_delta_A, df_avg_traffic_delta_B])
+    # Merge the two tables A and B
+    df_avg_traffic_delta_concat = pd.merge(df_avg_traffic_delta_A, df_avg_traffic_delta_B, on=[group_by,'street_selection'], how='outer')
+
+    if radio_time_division == 'year':
+        # Replace month abbreviations with numbers
+        if language == 'de':
+            df_avg_traffic_delta_concat['month'] = df_avg_traffic_delta_concat['month'].replace(num_to_month_map_DE)
+        else:
+            df_avg_traffic_delta_concat['month'] = df_avg_traffic_delta_concat['month'].replace(num_to_month_map_EN)
+
+    if radio_time_division == 'year_week':
+        # Replace weekday abbreviations with numbers
+        if language == 'de':
+            df_avg_traffic_delta_concat['weekday'] = df_avg_traffic_delta_concat['weekday'].replace(num_to_weekday_map_DE)
+        else:
+            df_avg_traffic_delta_concat['weekday'] = df_avg_traffic_delta_concat['weekday'].replace(num_to_weekday_map_EN)
 
     # Free memory
-    del df, df_period_A, df_period_B, df_period_grp_A, df_period_grp_B, df_avg_traffic_delta_A, df_avg_traffic_delta_B
+    del df, df_period_A, df_period_B, df_period_grp_A, df_period_grp_B, df_avg_traffic_delta_A, df_avg_traffic_delta_B, df_period_grp_B_ren
 
     return df_avg_traffic_delta_concat
 
@@ -1332,14 +1403,14 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, dropdown_year
 
     # Prepare traffic_df_upt by selected street
     traffic_df_use_str = update_selected_street(traffic_df_use, segment_id, street_name)
-
     df_avg_traffic_delta_concat = get_comparison_data(traffic_df_use_str, time_division, group_by, selected_value_A, selected_value_B)
+
     line_avg_delta_traffic = px.line(df_avg_traffic_delta_concat,
         x=group_by, y=['ped_total', 'bike_total', 'car_total', 'heavy_total', 'ped_total_d', 'bike_total_d', 'car_total_d', 'heavy_total_d'],
         facet_col='street_selection',
         facet_col_spacing=0.04,
         category_orders={'street_selection': [street_name, 'All Streets']},
-        labels={'year': _('Year'), 'month': _('Month'), 'weekday': _('Week day'), 'day': _('Day')},
+        labels={'year': _('Year'), 'month': _('Month'), 'weekday': _('Week day'), 'day': _('Day'), 1: _('Mon')},
         color_discrete_map={'ped_total': ADFC_lightblue, 'bike_total': ADFC_green, 'car_total': ADFC_orange, 'heavy_total': ADFC_crimson, 'ped_total_d': ADFC_lightblue, 'bike_total_d': ADFC_green, 'car_total_d': ADFC_orange, 'heavy_total_d': ADFC_crimson},
     )
 

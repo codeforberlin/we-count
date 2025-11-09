@@ -2,9 +2,9 @@
 # Copyright (c) 2024-2025 Berlin zählt Mobilität
 # SPDX-License-Identifier: MIT
 
-# @file    bzm_performance.py
+# @file    bzm_v01.py
 # @author  Egbert Klaassen
-# @date    2025-07-21
+# @date    2025-11-09
 
 """"
 # traffic_df        - dataframe with measured traffic data file
@@ -76,6 +76,8 @@ def retrieve_data():
     # Set data types for clean representation
     traffic_df['segment_id'] = traffic_df['segment_id'].astype(str)
     traffic_df = traffic_df.astype({'year': str}, errors='ignore')
+    # Set dtype to maintain plotly x-axis sort order
+    traffic_df = traffic_df.astype({'day': int}, errors='ignore')
 
     return geo_df, json_df_features, traffic_df
 
@@ -221,7 +223,7 @@ def get_comparison_data(df, radio_time_division, group_by, selected_value_A, sel
     df_period_grp_B = df_period_B.groupby(by=['street_selection', group_by], sort=False, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
 
     # Replace numbers with abbreviations
-    if radio_time_division == 'year':# or radio_time_division == 'date':
+    if radio_time_division == 'year':
         # Replace month abbreviations with numbers
         if language == 'de':
             df_period_grp_B['month'] = df_period_grp_B['month'].replace(month_to_num_map_DE)
@@ -240,26 +242,26 @@ def get_comparison_data(df, radio_time_division, group_by, selected_value_A, sel
     df_avg_traffic_delta_B = df_period_grp_B_ren
 
     # Merge the two tables A and B
-    df_avg_traffic_delta_concat = pd.merge(df_avg_traffic_delta_A, df_avg_traffic_delta_B, on=[group_by,'street_selection'], how='outer')
+    df_avg_traffic_delta_AB = pd.merge(df_avg_traffic_delta_A, df_avg_traffic_delta_B, on=[group_by,'street_selection'], how='outer')
 
     if radio_time_division == 'year':
-        # Replace month abbreviations with numbers
+        # Replace numbers with month abbreviations
         if language == 'de':
-            df_avg_traffic_delta_concat['month'] = df_avg_traffic_delta_concat['month'].replace(num_to_month_map_DE)
+            df_avg_traffic_delta_AB['month'] = df_avg_traffic_delta_AB['month'].replace(num_to_month_map_DE)
         else:
-            df_avg_traffic_delta_concat['month'] = df_avg_traffic_delta_concat['month'].replace(num_to_month_map_EN)
+            df_avg_traffic_delta_AB['month'] = df_avg_traffic_delta_AB['month'].replace(num_to_month_map_EN)
 
     if radio_time_division == 'year_week':
-        # Replace weekday abbreviations with numbers
+        # Replace numbers with weekday abbreviations
         if language == 'de':
-            df_avg_traffic_delta_concat['weekday'] = df_avg_traffic_delta_concat['weekday'].replace(num_to_weekday_map_DE)
+            df_avg_traffic_delta_AB['weekday'] = df_avg_traffic_delta_AB['weekday'].replace(num_to_weekday_map_DE)
         else:
-            df_avg_traffic_delta_concat['weekday'] = df_avg_traffic_delta_concat['weekday'].replace(num_to_weekday_map_EN)
+            df_avg_traffic_delta_AB['weekday'] = df_avg_traffic_delta_AB['weekday'].replace(num_to_weekday_map_EN)
 
     # Free memory
     del df, df_period_A, df_period_B, df_period_grp_A, df_period_grp_B, df_avg_traffic_delta_A, df_avg_traffic_delta_B, df_period_grp_B_ren
 
-    return df_avg_traffic_delta_concat
+    return df_avg_traffic_delta_AB
 
 def update_selected_street(df, segment_id, street_name):
 
@@ -873,7 +875,7 @@ def serve_layout():
                     ], className='d-inline-block'),
                 ], className='d-inline-block'),
             ]),
-        ], className='sticky-top rounded g-2 p-1 d-flex flex-wrap', style={'background-color': ADFC_skyblue, 'opacity': 1.0}),
+        ], className='sticky-top rounded g-2 p-1 d-flex flex-wrap', style={'background-color': ADFC_lightblue, 'opacity': 1.0}),
         dbc.Row([
             html.Span(
                 [html.H4(_('Compare traffic periods'), className='my-3 me-2', style={'display': 'inline-block'}),
@@ -1112,21 +1114,12 @@ def update_map(clickData, id_street, hardware_version, toggle_active_filter):
     Output(component_id='pie_traffic', component_property='figure'),
     Output(component_id='line_abs_traffic', component_property='figure'),
     Output(component_id='bar_avg_traffic', component_property='figure'),
-    Output(component_id='line_avg_delta_traffic', component_property='figure'),
     Output(component_id='bar_perc_speed', component_property='figure'),
     Output(component_id='bar_v85', component_property='figure'),
     Output(component_id='bar_ranking', component_property='figure'),
     Input(component_id='radio_time_division', component_property='value'),
     Input(component_id='radio_time_unit', component_property='value'),
     Input(component_id='street_name_dd', component_property='value'),
-    Input(component_id='dropdown_year_A', component_property='value'),
-    Input(component_id='dropdown_year_month_A', component_property='value'),
-    Input(component_id='dropdown_year_week_A', component_property='value'),
-    Input(component_id='dropdown_date_A', component_property='value'),
-    Input(component_id='dropdown_year_B', component_property='value'),
-    Input(component_id='dropdown_year_month_B', component_property='value'),
-    Input(component_id='dropdown_year_week_B', component_property='value'),
-    Input(component_id='dropdown_date_B', component_property='value'),
     Input(component_id="date_filter", component_property="start_date"),
     Input(component_id="date_filter", component_property="end_date"),
     Input(component_id='range_slider', component_property='value'),
@@ -1139,7 +1132,7 @@ def update_map(clickData, id_street, hardware_version, toggle_active_filter):
     prevent_initial_call='initial_duplicate',
 )
 
-def update_graphs(radio_time_division, radio_time_unit, id_street, dropdown_year_A, dropdown_year_month_A, dropdown_year_week_A, dropdown_date_A, dropdown_year_B, dropdown_year_month_B, dropdown_year_week_B, dropdown_date_B, start_date, end_date, hour_range, toggle_uptime_filter, toggle_active_filter, hardware_version, radio_y_axis, floating_button, lang_code_dd):
+def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, end_date, hour_range, toggle_uptime_filter, toggle_active_filter, hardware_version, radio_y_axis, floating_button, lang_code_dd):
 
     global traffic_df_use_global
     callback_trigger = ctx.triggered_id
@@ -1367,8 +1360,24 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, dropdown_year
     bar_ranking.update_layout(yaxis_title= _('Absolute count'))
     for annotation in bar_ranking.layout.annotations: annotation['font'] = {'size': 14}
 
-    ### Create comparison Graph
-    #TODO: bug dec 2023-2024 on day sort order
+    return selected_street_header, selected_street_header_color, street_id_text, date_range_text, start_date, end_date, date_range_color, pie_traffic, line_abs_traffic, bar_avg_traffic, bar_perc_speed, bar_v85, bar_ranking
+
+### Comparison Graph
+@callback(
+    Output(component_id='line_avg_delta_traffic', component_property='figure'),
+    Input(component_id='street_name_dd', component_property='value'),
+    Input(component_id='dropdown_year_A', component_property='value'),
+    Input(component_id='dropdown_year_month_A', component_property='value'),
+    Input(component_id='dropdown_year_week_A', component_property='value'),
+    Input(component_id='dropdown_date_A', component_property='value'),
+    Input(component_id='dropdown_year_B', component_property='value'),
+    Input(component_id='dropdown_year_month_B', component_property='value'),
+    Input(component_id='dropdown_year_week_B', component_property='value'),
+    Input(component_id='dropdown_date_B', component_property='value'),
+)
+def comparison_graph(id_street, dropdown_year_A, dropdown_year_month_A, dropdown_year_week_A, dropdown_date_A, dropdown_year_B,
+                  dropdown_year_month_B, dropdown_year_week_B, dropdown_date_B):
+
     callback_trigger = ctx.triggered_id
     if callback_trigger == 'dropdown_year_A' or callback_trigger == 'dropdown_year_B':
         time_division = 'year'
@@ -1395,17 +1404,19 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, dropdown_year
         group_by = 'hour'
         label = 'Date'
     else:
-        time_division = radio_time_division
+        time_division = 'date'
         selected_value_A = dropdown_date_A
         selected_value_B = dropdown_date_B
         group_by = 'hour'
         label = 'Date'
 
     # Prepare traffic_df_upt by selected street
+    street_name = id_street.split(' (')[0]
+    segment_id = id_street[-11:-1]
     traffic_df_use_str = update_selected_street(traffic_df_use, segment_id, street_name)
-    df_avg_traffic_delta_concat = get_comparison_data(traffic_df_use_str, time_division, group_by, selected_value_A, selected_value_B)
+    df_avg_traffic_delta_AB = get_comparison_data(traffic_df_use_str, time_division, group_by, selected_value_A, selected_value_B)
 
-    line_avg_delta_traffic = px.line(df_avg_traffic_delta_concat,
+    line_avg_delta_traffic = px.line(df_avg_traffic_delta_AB,
         x=group_by, y=['ped_total', 'bike_total', 'car_total', 'heavy_total', 'ped_total_d', 'bike_total_d', 'car_total_d', 'heavy_total_d'],
         facet_col='street_selection',
         facet_col_spacing=0.04,
@@ -1439,7 +1450,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, dropdown_year
     line_avg_delta_traffic.update_xaxes(dtick = 1, tickformat=".0f")
     for annotation in line_avg_delta_traffic.layout.annotations: annotation['font'] = {'size': 14}
 
-    return selected_street_header, selected_street_header_color, street_id_text, date_range_text, start_date, end_date, date_range_color, pie_traffic, line_abs_traffic, bar_avg_traffic, line_avg_delta_traffic, bar_perc_speed, bar_v85, bar_ranking
+    return line_avg_delta_traffic
 
 if __name__ == "__main__":
     app.run(debug=False)

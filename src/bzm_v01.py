@@ -425,8 +425,7 @@ update_language(init_language)
 street_names = {id: name for id, name in zip(traffic_df['segment_id'], traffic_df['id_street'])}
 
 traffic_df_filtered = filter_traffic_df(traffic_df, ['filter_uptime_selected'], ['filter_active_selected'])
-#traffic_df_comp = filter_traffic_df(traffic_df, ['filter_uptime_selected'], [])
-traffic_df_use = filter_hardware_version(traffic_df_filtered, [1,2], 2)
+traffic_df_use = filter_hardware_version(traffic_df_filtered, [1, 2], 2)
 
 # Free memory
 del traffic_df_filtered
@@ -489,8 +488,8 @@ del json_df_features
 traffic_df_id_bc = get_bike_car_ratios(traffic_df)
 
 # Join map data and bike/car ratio data to df_map
-df_map = update_map_data(df_map_base, traffic_df_id_bc, '[]', [1,2])
-df_map = update_map_data(df_map_base, traffic_df_id_bc, None, None)
+df_map = update_map_data(df_map_base, traffic_df_id_bc, 'toggle_active_filter', [1,2])
+#df_map = update_map_data(df_map_base, traffic_df_id_bc, None, None)
 
 ### Run Dash app ###
 if not DEPLOYED:
@@ -1021,7 +1020,7 @@ def update_map(clickData, id_street, hardware_version, toggle_active_filter):
         id_street = 'Alte Jakobstraße (9000002582)'
     elif hardware_version == [2] and current_hw == 1:
         id_street = 'Dresdener Straße (9000006667)'
-    elif hardware_version == [1, 2] or hardware_version == []:
+    elif hardware_version == [1, 2] or hardware_version == [] or hardware_version == [2, 1]:
         hardware_version = [1, 2]
 
     # Get number of selected segments
@@ -1033,7 +1032,12 @@ def update_map(clickData, id_street, hardware_version, toggle_active_filter):
 
     # Switch selected street if not in options
     if not id_street in street_name_dd_options:
-        id_street = street_name_dd_options[0]
+        if current_hw == 1:
+            id_street = 'Alte Jakobstraße (9000002582)'
+        elif current_hw == 2:
+           id_street = 'Dresdener Straße (9000006667)'
+        else:
+            id_street = street_name_dd_options[0]
 
     # Free up memory
     del df_map_options
@@ -1386,6 +1390,7 @@ def comparison_graph(id_street, dropdown_year_A, dropdown_year_month_A, dropdown
                   dropdown_year_month_B, dropdown_year_week_B, dropdown_date_B, toggle_uptime_filter, toggle_active_filter, hardware_version):
 
     callback_trigger = ctx.triggered_id
+
     if callback_trigger == 'dropdown_year_A' or callback_trigger == 'dropdown_year_B':
         time_division = 'year'
         selected_value_A = dropdown_year_A
@@ -1424,15 +1429,12 @@ def comparison_graph(id_street, dropdown_year_A, dropdown_year_month_A, dropdown
     segment_id = id_street[-11:-1]
 
     # Filter traffic data based on user selections
-    current_hw = int(df_map_base.loc[df_map_base['id_street'] == id_street, 'hardware_version'].iloc[0])
-
-    if callback_trigger in ['toggle_uptime_filter', 'toggle_active_filter']:
+    if callback_trigger in ['toggle_uptime_filter', 'toggle_active_filter', 'hardware_version']:
         traffic_df_filtered = filter_traffic_df(traffic_df, toggle_uptime_filter, toggle_active_filter)
-        traffic_df_use = filter_hardware_version(traffic_df_filtered,hardware_version, current_hw)
+        traffic_df_use = filter_hardware_version(traffic_df_filtered,hardware_version, hardware_version)
 
     traffic_df_use_str = update_selected_street(traffic_df_use, segment_id, street_name)
     df_avg_traffic_delta_AB = get_comparison_data(traffic_df_use_str, time_division, group_by, selected_value_A, selected_value_B)
-    output_excel(df_avg_traffic_delta_AB,'df_avg_traffic_delta_AB')
 
     line_avg_delta_traffic = px.line(df_avg_traffic_delta_AB,
         x=group_by, y=['ped_total', 'bike_total', 'car_total', 'heavy_total', 'ped_total_d', 'bike_total_d', 'car_total_d', 'heavy_total_d'],

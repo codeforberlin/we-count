@@ -19,6 +19,7 @@ from datetime import datetime, timedelta
 import glob
 from operator import truediv
 
+import json
 # TODO the following line breaks language choice, we need to check why
 # from gettext import gettext as _
 
@@ -107,8 +108,6 @@ def filter_traffic_df(df, toggle_uptime_filter, toggle_active_filter):
         traffic_df_filtered = df[(df['last_data_package'] >= two_weeks_ago)]
     else:
         traffic_df_filtered = df
-
-    #if traffic_df_filtered['id_street'].
 
     return traffic_df_filtered
 
@@ -490,7 +489,6 @@ traffic_df_id_bc = get_bike_car_ratios(traffic_df)
 
 # Join map data and bike/car ratio data to df_map
 df_map = update_map_data(df_map_base, traffic_df_id_bc, 'toggle_active_filter', [1,2])
-#df_map = update_map_data(df_map_base, traffic_df_id_bc, None, None)
 
 ### Run Dash app ###
 if not DEPLOYED:
@@ -510,22 +508,23 @@ def serve_layout():
         [
         dbc.NavbarSimple(
             children=[
-                dbc.NavItem(dbc.NavLink(_("Project partners: "), href="#"), class_name='align-top'),
+                dbc.NavItem(dbc.NavLink(_("Project partners: "), href="#"), class_name='align-center'),
                 html.A(href='https://adfc-tk.de/wir-zaehlen/', target='_blank',
                        children=[
-                           html.Img(src=app.get_asset_url('adfc_DLR_logos.png'), title='Allgemeiner Deutscher Fahrrad-Club, Das Deutsche Zentrum für Luft- und Raumfahrt', height="50px"),
-                       ]),
-                #dbc.Col(html.Img(src=app.get_asset_url('adfc_DLR_logos.png'), title='Allgemeiner Deutscher Fahrrad-Club, Das Deutsche Zentrum für Luft- und Raumfahrt', height="50px"), className='ms-3'),
+                           html.Img(src=app.get_asset_url('ADFC logo.png'), title='Allgemeiner Deutscher Fahrrad-Club', height="45px"),
+                       ], style={'align-items': 'center', "border-right": "1px solid #ccc", "padding": "0 10px"}),
+                html.A(href='https://adfc-tk.de/wir-zaehlen/', target='_blank',
+                       children=[
+                           html.Img(src=app.get_asset_url('DLR logo.png'), title='Das Deutsche Zentrum für Luft- und Raumfahrt', height="50px"),
+                       ], style={"border-right": "1px solid #ccc", "padding": "0 10px"}),
                 html.A(href='https://telraam.net/en/candidates/berlin-zaehlt-mobilitaet/berlin-zaehlt-mobilitaet', target='_blank',
                        children=[
-                           html.Img(src=app.get_asset_url('Telraam.png'), title='Berlin zählt Mobilität, Citizen Science Project: ADFC Berlin, DLR & Telraam', height="50px"),
-                       ]),
-                #dbc.Col(html.Img(src=app.get_asset_url('Telraam.png'), title='Berlin zählt Mobilität, Citizen Science Project: ADFC Berlin, DLR & Telraam', height="50px"), className='ms-3'),
+                           html.Img(src=app.get_asset_url('Telraam.png'), title='Telraam - Citizen Science Project', height="40px"),
+                       ], style={"border-right": "1px solid #ccc", "padding": "0 10px"}),
                 html.A(href='https://codefor.de/projekte/wecount/', target='_blank',
                        children=[
                            html.Img(src=app.get_asset_url('CodeFor-berlin.svg'), title='Code for Berlin', height="50px"),
-                       ]),
-                #dbc.Col(html.Img(src=app.get_asset_url('CodeFor-berlin.svg'), title='Code for Berlin', height="50px"), className='ms-3'),
+                       ], style={"padding": "0 15px"}),
             ],
             brand="Berlin zählt Mobilität",
             brand_style={'font-size': 36,'font-weight': 'bold', 'color': ADFC_darkblue, 'font-style': 'italic', 'text-shadow': '3px 2px lightblue'},
@@ -897,6 +896,8 @@ def serve_layout():
             ], sm=12),
         ], className='g-2 p-1 mb-3'),
 
+        dcc.Store(id='intermediate-value'),
+
         ### Feedback and contact
         dbc.Row([
             dbc.Col([
@@ -1004,12 +1005,13 @@ def get_language(lang_code_dd):
     Input(component_id='street_name_dd', component_property='value'),
     Input(component_id='hardware_version',component_property= 'value'),
     Input(component_id='toggle_active_filter',component_property= 'value'),
-    #prevent_initial_call= True #'initial_duplicate',
+#prevent_initial_call= True #'initial_duplicate',
 )
 
 def update_map(clickData, id_street, hardware_version, toggle_active_filter):
 
     callback_trigger = ctx.triggered_id
+
     # Get hardware version of currently selected street
     current_hw = int(df_map_base.loc[df_map_base['id_street'] == id_street, 'hardware_version'].iloc[0])
     # Update df-map data in case of uptime change, active filter change or hardware change
@@ -1145,6 +1147,7 @@ def update_map(clickData, id_street, hardware_version, toggle_active_filter):
 
 def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, end_date, hour_range, toggle_uptime_filter, toggle_active_filter, hardware_version, radio_y_axis, floating_button, lang_code_dd):
 
+    # TODO: check global use
     global traffic_df_use_global
     callback_trigger = ctx.triggered_id
 
@@ -1392,7 +1395,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     Input(component_id='dropdown_date_B', component_property='value'),
     Input(component_id='toggle_uptime_filter', component_property='value'),
     Input(component_id='toggle_active_filter', component_property='value'),
-    Input(component_id='hardware_version', component_property='value')
+    Input(component_id='hardware_version', component_property='value'),
 )
 def comparison_graph(id_street, dropdown_year_A, dropdown_year_month_A, dropdown_year_week_A, dropdown_date_A, dropdown_year_B,
                   dropdown_year_month_B, dropdown_year_week_B, dropdown_date_B, toggle_uptime_filter, toggle_active_filter, hardware_version):

@@ -115,7 +115,6 @@ def filter_traffic_df(df, toggle_uptime_filter, toggle_active_filter):
 def filter_hardware_version(df, hardware_version, current_hw):
 
     # Filter camera hardware version and switch street to fit selected hardware category if needed
-
     if hardware_version == [1]:
         traffic_df_use = df[df['hardware_version'] == 1]
         #if current_hw == 2:
@@ -354,11 +353,13 @@ def get_min_max_str(df, id_street, start_date, end_date):
     min_date_str = df_str['date_local'].min()
     max_date_str = df_str['date_local'].max()
 
+    # TODO: fix date formatting
     # Add one day from end_time as it was added before as well
-    max_date_str_dt = datetime.strptime(max_date_str, format_string)
-    max_date_str_dt = max_date_str_dt + timedelta(days=0)
+    #max_date_str_dt = datetime.strptime(max_date_str, format_string)
+    #max_date_str_dt = max_date_str_dt + timedelta(days=0)
+    #max_date_str = max_date_str_dt.strftime('%Y-%m-%d')
     min_date_str = datetime.strptime(min_date_str, format_string).strftime('%Y-%m-%d')
-    max_date_str = max_date_str_dt.strftime('%Y-%m-%d')
+    max_date_str = datetime.strptime(max_date_str, format_string).strftime('%Y-%m-%d')
 
     s_date = parser.parse(start_date)
     start_date = s_date.strftime("%Y-%m-%d")
@@ -671,7 +672,7 @@ def serve_layout():
                     id='radio_time_division',
                     options=[
                         {'label': _('Year'), 'value': 'year'},
-                        {'label': _('Month'), 'value': _('year_month')},
+                        {'label': _('Month'), 'value': 'year_month'},
                         {'label': _('Week'), 'value': 'year_week'},
                         {'label': _('Day'), 'value': 'date'},
                         {'label': _('Hour'), 'value': 'date_hour'}
@@ -793,15 +794,15 @@ def serve_layout():
                     dbc.Col([
                         dcc.Dropdown(
                             id='dropdown_year_A',
-                            options=[{'label': i, 'value': i} for i in traffic_df['year'].unique()],
-                            value=traffic_df['year'][len(traffic_df['year']) - 1],
+                            options=traffic_df['year'].unique(),
+                            value=traffic_df['year'].iloc[0],
                             clearable=False,
                             style={'min-width': '180px'}
                         ),
                         dcc.Dropdown(
                             id='dropdown_year_B',
-                            options=[{'label': i, 'value': i} for i in traffic_df['year'].unique()],
-                            value=traffic_df['year'][1],
+                            options=traffic_df['year'].unique(),
+                            value=traffic_df['year'].iloc[-1],
                             clearable=False,
                             style={'min-width': '180px'}
                         ),
@@ -815,15 +816,15 @@ def serve_layout():
                     dbc.Col([
                         dcc.Dropdown(
                             id='dropdown_year_month_A',
-                            options=[{'label': i, 'value': i} for i in traffic_df['year_month'].unique()],
-                            value=traffic_df['year_month'][len(traffic_df['year_month']) - 1],
+                            options=traffic_df['year_month'].unique(),
+                            value=traffic_df['year_month'].iloc[0],
                             clearable=False,
                             style={'min-width': '180px'}
                         ),
                         dcc.Dropdown(
                             id='dropdown_year_month_B',
-                            options=[{'label': i, 'value': i} for i in traffic_df['year_month'].unique()],
-                            value=traffic_df['year_month'][1],
+                            options=traffic_df['year_month'].unique(),
+                            value=traffic_df['year_month'].iloc[-1],
                             clearable=False,
                             style={'min-width': '180px'}
                         ),
@@ -839,15 +840,15 @@ def serve_layout():
                     dbc.Col([
                         dcc.Dropdown(
                             id='dropdown_year_week_A',
-                            options=[{'label': i, 'value': i} for i in traffic_df['year_week'].unique()],
-                            value=traffic_df['year_week'][len(traffic_df['year_week']) - 1],
+                            options=traffic_df['year_week'].unique(),
+                            value=traffic_df['year_week'].iloc[0],
                             clearable=False,
                             style={'min-width': '180px'}
                         ),
                         dcc.Dropdown(
                             id='dropdown_year_week_B',
-                            options=[{'label': i, 'value': i} for i in traffic_df['year_week'].unique()],
-                            value=traffic_df['year_week'][1],
+                            options=traffic_df['year_week'].unique(),
+                            value=traffic_df['year_week'].iloc[-1],
                             clearable=False,
                             style={'min-width': '180px'}
                         ),
@@ -861,15 +862,15 @@ def serve_layout():
                     dbc.Col([
                         dcc.Dropdown(
                             id='dropdown_date_A',
-                            options=[{'label': i, 'value': i} for i in traffic_df['date'].unique()],
-                            value=traffic_df['date'][len(traffic_df['date']) - 1],
+                            options=traffic_df['date'].unique(),
+                            value=traffic_df['date'].iloc[0],
                             clearable=False,
                             style={'min-width': '180px'}
                         ),
                         dcc.Dropdown(
                             id='dropdown_date_B',
-                            options=[{'label': i, 'value': i} for i in traffic_df['date'].unique()],
-                            value=traffic_df['date'][1],
+                            options=traffic_df['date'].unique(),
+                            value=traffic_df['date'].iloc[-1],
                             clearable=False,
                             style={'min-width': '180px'}
                         ),
@@ -1147,18 +1148,18 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     global traffic_df_use_global
     callback_trigger = ctx.triggered_id
 
+    # Get segment_id/street name
+    segment_id = id_street[-11:-1]
+    street_id_text = 'Selected segment ID: ' + str(segment_id)
+    street_name = id_street.split(' (')[0]
+    selected_street_header = street_name
+
     # Filter traffic data based on user selections
     current_hw = int(df_map_base.loc[df_map_base['id_street'] == id_street, 'hardware_version'].iloc[0])
 
     if callback_trigger in ['toggle_uptime_filter', 'toggle_active_filter', 'hardware_version']:
         traffic_df_filtered = filter_traffic_df(traffic_df, toggle_uptime_filter, toggle_active_filter)
         traffic_df_use_global = filter_hardware_version(traffic_df_filtered,hardware_version, current_hw)
-
-    # Get segment_id/street name
-    segment_id = id_street[-11:-1]
-    street_id_text = 'Selected segment ID: ' + str(segment_id)
-    street_name = id_street.split(' (')[0]
-    selected_street_header = street_name
 
     # Check if selected street has data for selected data range
     min_date_str, max_date_str, start_date, end_date, message, missing_data = get_min_max_str(traffic_df_use_global, id_street, start_date, end_date)
@@ -1345,6 +1346,11 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     df_bar_ranking = df_bar_ranking.sort_values(by=[radio_y_axis], ascending=False)
     df_bar_ranking.reset_index(inplace=True)
 
+    # Remove '90000' from the labels to reduce x-labels space required
+    df_bar_ranking['x-labels'] = df_bar_ranking['id_street'].copy()
+    df_bar_ranking['x-labels'] = df_bar_ranking['x-labels'].astype('string')
+    df_bar_ranking['x-labels'] = df_bar_ranking['x-labels'].str.replace('900000', '')
+
     # Assess x and y for annotation
     #if not missing_data:
     annotation_index = df_bar_ranking[df_bar_ranking['id_street'] == id_street].index[0]
@@ -1352,7 +1358,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     annotation_y = df_bar_ranking[radio_y_axis].values[annotation_x]
 
     bar_ranking = px.bar(df_bar_ranking,
-        x='id_street', y=radio_y_axis,
+        x='x-labels', y=radio_y_axis,
         color=radio_y_axis,
         color_continuous_scale='temps',
         labels={'ped_total': _('Pedestrians'), 'bike_total': _('Bikes'), 'car_total': _('Cars'), 'heavy_total': _('Heavy'), 'id_street': _('Street (segment id)')},
@@ -1373,6 +1379,8 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
 ### Comparison Graph
 @callback(
     Output(component_id='line_avg_delta_traffic', component_property='figure'),
+    Output(component_id='dropdown_date_A', component_property='value'),
+    Output(component_id='dropdown_date_B', component_property='value'),
     Input(component_id='street_name_dd', component_property='value'),
     Input(component_id='dropdown_year_A', component_property='value'),
     Input(component_id='dropdown_year_month_A', component_property='value'),
@@ -1429,9 +1437,13 @@ def comparison_graph(id_street, dropdown_year_A, dropdown_year_month_A, dropdown
     segment_id = id_street[-11:-1]
 
     # Filter traffic data based on user selections
-    if callback_trigger in ['toggle_uptime_filter', 'toggle_active_filter', 'hardware_version']:
+    if callback_trigger in ['street_name_dd', 'toggle_uptime_filter', 'toggle_active_filter', 'hardware_version']:
         traffic_df_filtered = filter_traffic_df(traffic_df, toggle_uptime_filter, toggle_active_filter)
         traffic_df_use = filter_hardware_version(traffic_df_filtered,hardware_version, hardware_version)
+        selected_value_A = traffic_df_use.loc[traffic_df_use['id_street']==id_street,'date'].iloc[0]
+        selected_value_B = traffic_df_use.loc[traffic_df_use['id_street']==id_street,'date'].iloc[-1]
+        dropdown_date_A = selected_value_A
+        dropdown_date_B = selected_value_B
 
     traffic_df_use_str = update_selected_street(traffic_df_use, segment_id, street_name)
     df_avg_traffic_delta_AB = get_comparison_data(traffic_df_use_str, time_division, group_by, selected_value_A, selected_value_B)
@@ -1470,7 +1482,7 @@ def comparison_graph(id_street, dropdown_year_A, dropdown_year_month_A, dropdown
     line_avg_delta_traffic.update_xaxes(dtick = 1, tickformat=".0f")
     for annotation in line_avg_delta_traffic.layout.annotations: annotation['font'] = {'size': 14}
 
-    return line_avg_delta_traffic
+    return line_avg_delta_traffic, dropdown_date_A, dropdown_date_B
 
 if __name__ == "__main__":
     app.run(debug=False)

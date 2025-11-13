@@ -513,7 +513,7 @@ def serve_layout():
                        children=[
                            html.Img(src=app.get_asset_url('ADFC_logo.png'), title='Allgemeiner Deutscher Fahrrad-Club', height="45px"),
                        ], style={'align-items': 'center', "border-right": "1px solid #ccc", "padding": "0 10px"}),
-                html.A(href='https://adfc-tk.de/wir-zaehlen/', target='_blank',
+                html.A(href='https://dlr.de/ts/', target='_blank',
                        children=[
                            html.Img(src=app.get_asset_url('DLR_logo.png'), title='Das Deutsche Zentrum für Luft- und Raumfahrt', height="50px"),
                        ], style={"border-right": "1px solid #ccc", "padding": "0 10px"}),

@@ -510,3 +510,35 @@ msgstr "Wochentag"
 msgid "Period"
 msgstr "Periode"
 
+msgid "Sun"
+msgstr "So"
+
+msgid "Mon"
+msgstr "Mo"
+
+msgid "Tue"
+msgstr "Di"
+
+msgid "Wed"
+msgstr "Mi"
+
+msgid "Thu"
+msgstr "Do"
+
+msgid "Fri"
+msgstr "Fr"
+
+msgid "Sat"
+msgstr "Sa"
+
+msgid "Mar"
+msgstr "Mrz"
+
+msgid "May"
+msgstr "Mai"
+
+msgid "Oct"
+msgstr "Okt"
+
+msgid "Dec"
+msgstr "Dez"

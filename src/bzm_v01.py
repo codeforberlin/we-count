@@ -140,17 +140,20 @@ def format_str_date(str_date, from_date_format, to_date_format):
     return formatted_str_date
 
 def filter_dt(df, start_date, end_date, hour_range):
+
     # Get min/max dates to set DatePicker range
     min_date = df['date_local'].min()
     max_date = df['date_local'].max()
 
+    start_date = convert(str(start_date), '%Y-%m-%d')
+
     # Add one day to end date as .between function filters until
     filter_end_date = convert(str(end_date), '%Y-%m-%d')
     filter_end_date = filter_end_date + timedelta(days=1)
-    filter_end_date = filter_end_date.strftime('%Y-%m-%d')
 
     # Filter selected dates
-    df_dates = df[df.date_local.between(start_date, filter_end_date)]
+    mask = (df['date_local'] >= start_date) & (df['date_local'] < filter_end_date)
+    df_dates = df.loc[mask]
 
     # Get min/max street hours, add 1 to max for slider representation
     min_hour = df_dates["hour"].min()
@@ -304,18 +307,12 @@ def get_min_max_str(df, id_street, start_date, end_date):
 
     # Get min/max dates for the current street
     df_str = df[df['segment_id'] == segment_id]
-    min_date_str = df_str['date_local'].min()
-    max_date_str = df_str['date_local'].max()
+    min_date = df_str['date_local'].min()
+    max_date = df_str['date_local'].max()
 
-    # TODO: fix date formatting
-    # Add one day from end_time as it was added before as well
-    #max_date_str_dt = datetime.strptime(max_date_str, format_string)
-    #max_date_str_dt = max_date_str_dt + timedelta(days=0)
-    #max_date_str = max_date_str_dt.strftime('%Y-%m-%d')
-    #min_date_str = datetime.strptime(min_date_str, format_string).strftime('%Y-%m-%d')
-    min_date_str = min_date_str.strftime('%Y-%m-%d')
-    #max_date_str = datetime.strptime(max_date_str, format_string).strftime('%Y-%m-%d')
-    max_date_str = max_date_str.strftime('%Y-%m-%d')
+    # Convert date to str format
+    min_date_str = min_date.strftime('%Y-%m-%d')
+    max_date_str = max_date.strftime('%Y-%m-%d')
 
     s_date = parser.parse(start_date)
     start_date = s_date.strftime("%Y-%m-%d")
@@ -1353,6 +1350,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     Input(component_id='toggle_active_filter', component_property='value'),
     Input(component_id='hardware_version', component_property='value'),
 )
+
 def comparison_graph(id_street, dropdown_year_A, dropdown_year_month_A, dropdown_year_week_A, dropdown_date_A, dropdown_year_B,
                   dropdown_year_month_B, dropdown_year_week_B, dropdown_date_B, toggle_uptime_filter, toggle_active_filter, hardware_version):
 

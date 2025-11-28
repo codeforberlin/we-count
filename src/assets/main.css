@@ -1,17 +1,19 @@
 /*General layout*/
 body {
   margin: 0;
- font-family: 'Calibri', 'Arial', sans-serif;
+  font-family: 'Calibri', 'Arial', sans-serif;
 }
-/*Actually either class is good, use both just to be sure*/
-.DateInput_input, .DateInput_input_1 {
-  font-size: 14px;
-  font-family: inherit;
-  font-weight: 400;
-  font-style: inherit;
-  Padding: 1px;
-  Height: 20px;
+
+/* Make both date fields smaller and inline */
+#date_filter input {
+    width: 100px !important;   /* Narrower fields */
+    font-size: 14px;           /* Smaller text */
+    font-style: inherit;
+    font-weight: 400;
+    height: 20px;
+    padding: 4px 6px;          /* Compact padding */
 }
+
 /* change the background color */
 .navbar-custom {
     background-color: #4433cc;
@@ -19,4 +21,12 @@ body {
 /* Change the track's color */
 .rc-slider-rail {
     background-color: lightgrey;
+}
+
+/* border on focus - default is blue
+ * shadow box around input box.  default is blue
+ */
+.dbc .is-focused:not(.is-open) > .Select-control {
+  border-color: var(--bs-primary) !important;
+  box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.3);
 }

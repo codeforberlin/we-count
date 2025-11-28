@@ -14,15 +14,8 @@
 
 import os
 import gettext
-#import datetime
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import glob
-from operator import truediv
-
-import json
-# TODO the following line breaks language choice, we need to check why
-# from gettext import gettext as _
-
 import pandas as pd
 import geopandas as gpd
 import dash_bootstrap_components as dbc
@@ -30,13 +23,16 @@ from dash import Dash, html, dcc, Output, Input, callback, ctx
 from dash.exceptions import PreventUpdate
 import plotly.express as px
 from dateutil import parser
-from urllib.parse import parse_qs, urlparse
 
+# from operator import truediv
+# import json
+# from urllib.parse import parse_qs, urlparse
+# TODO the following line breaks language choice, we need to check why
+# from gettext import gettext as _
 
 DEPLOYED = __name__ != '__main__'
 ASSET_DIR = os.path.join(os.path.dirname(__file__), 'assets')
 TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), '..', 'assets')
-# _ = _
 
 def output_excel(df, file_name):
     path = os.path.join(ASSET_DIR, file_name + '.xlsx')
@@ -45,6 +41,12 @@ def output_excel(df, file_name):
 def output_csv(df, file_name):
     path = os.path.join(ASSET_DIR, file_name + '.csv')
     df.to_csv(path, index=False)
+
+# Function to remove timezone, timezone
+def remove_timezone(dt):
+    # HERE `dt` is a python datetime
+    # object that used .replace() method
+    return dt.replace(tzinfo=None)
 
 def retrieve_data():
     # Read geojson data file to access geometry coordinates
@@ -81,6 +83,10 @@ def retrieve_data():
     traffic_df = traffic_df.astype({'day': int}, errors='ignore')
     traffic_df['date_local'] = pd.to_datetime(traffic_df['date_local'])
 
+    # Set date to datetime and remove time zone
+    traffic_df['date'] = pd.to_datetime(traffic_df['date'], format= '%d/%m/%Y')
+    traffic_df['date'].dt.tz_localize(None)
+    traffic_df['date'] = traffic_df['date'].apply(remove_timezone).dt.strftime('%d-%m-%Y')
 
     return geo_df, json_df_features, traffic_df
 
@@ -367,6 +373,8 @@ init_id_street = 'Dresdener Straße (9000006667)'
 info_icon = html.I(className='bi bi-info-circle-fill me-2')
 email_icon = html.I(className='bi bi-envelope-at-fill me-2')
 camera_icon = html.I(className='bi bi-camera-fill me-2')
+arrow_right_icon = html.I(className='bi bi-arrow-bar-right')
+
 zoom_factor = 11
 
 geo_df, json_df_features, traffic_df = retrieve_data()
@@ -448,7 +456,6 @@ df_map = update_map_data(df_map_base, traffic_df_id_bc, 'toggle_active_filter', 
 if not DEPLOYED:
     print('Starting dash ...')
 
-#PythonAnywhere
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP],
            meta_tags=[{'name': 'viewport', 'content': 'width=device-width, initial-scale=1'}]
            )
@@ -516,7 +523,7 @@ def serve_layout():
                 ], justify='end'),
                 html.H4(_('Select street:'), className='my-2'),
                 dcc.Dropdown(id='street_name_dd',
-                    options=[{'label': i, 'value': i} for i in sorted(traffic_df['id_street'].unique())],
+                    options= sorted(traffic_df['id_street'].unique()),
                     value= init_id_street
                 ),
                 html.Span([
@@ -546,7 +553,7 @@ def serve_layout():
                     value = hour_range,
                     className='align-bottom mb-2',
                     tooltip={'always_visible': False, 'placement' : 'bottom', 'template': '{value}' + _(" Hour")}),
-            ], sm=6),
+            ], sm=5),
             dbc.Col([
                 html.H6(_('Pick date range:'), className='ms-2 mt-2 text-nowrap', id='date_range_text'),
                 # Date picker
@@ -560,6 +567,7 @@ def serve_layout():
                     end_date_placeholder_text='DD-MM-YYYY',
                     number_of_months_shown=2,
                     minimum_nights=0,
+                    updatemode='bothdates',
                     className='align-bottom justify-center ms-2 mb-2',
                 ),
             ], sm=3),
@@ -613,7 +621,7 @@ def serve_layout():
                         dbc.PopoverBody(_("Click to show/hide cameras with hardware versions 1 and or 2. Switching off both, will re-enable both automatically. Note: the 'All streets' graphs below are based on all streets, regardless which camera hardware version is selected")),
                         target="popover_hardware_version", trigger="hover"),
                 ]),
-            ], sm=3),
+            ], sm=4),
         ], className='g-2 sticky-top rounded', style={'background-color': ADFC_skyblue}),
         #Absolute traffic
         dbc.Row([
@@ -740,94 +748,90 @@ def serve_layout():
         dbc.Row([
             dbc.Col([
                 dbc.Col([
-                    dbc.Col([
-                        html.H6(_('Year') +' A:', className='fw-bold text-end'),
-                        html.H6(_('Year') +' B:', className='fw-bold text-end'),
-                        ], className='d-inline-block align-top me-3 my-3', style={'min-width': '90px'}),
-                    dbc.Col([
-                        dcc.Dropdown(
-                            id='dropdown_year_A',
-                            options=traffic_df['year'].unique(),
-                            value=traffic_df['year'].iloc[0],
-                            clearable=False,
-                            style={'min-width': '180px'}
-                        ),
-                        dcc.Dropdown(
-                            id='dropdown_year_B',
-                            options=traffic_df['year'].unique(),
-                            value=traffic_df['year'].iloc[-1],
-                            clearable=False,
-                            style={'min-width': '180px'}
-                        ),
-                    ], className='d-inline-block'),
-                ], className='d-inline-block'),
+                    html.H6(_('Year') +' A:', className='fw-bold text-end'),
+                    html.H6(_('Year') +' B:', className='fw-bold text-end'),
+                ], className='d-inline-block align-top me-3 my-3', style={'min-width': '90px'}),
                 dbc.Col([
-                    dbc.Col([
-                        html.H6(_('Month')+' A:', className='fw-bold text-end'),
-                        html.H6(_('Month')+' B:', className='fw-bold text-end'),
-                    ], className='d-inline-block align-top me-3 my-3', style={'min-width': '90px'}),
-                    dbc.Col([
-                        dcc.Dropdown(
-                            id='dropdown_year_month_A',
-                            options=traffic_df[_('year_month')].unique(),
-                            value=traffic_df[_('year_month')].iloc[0],
-                            clearable=False,
-                            style={'min-width': '180px'}
-                        ),
-                        dcc.Dropdown(
-                            id='dropdown_year_month_B',
-                            options=traffic_df[_('year_month')].unique(),
-                            value=traffic_df[_('year_month')].iloc[-1],
-                            clearable=False,
-                            style={'min-width': '180px'}
-                        ),
-                    ], className='d-inline-block'),
+                    dcc.Dropdown(
+                        id='dropdown_year_A',
+                        options=traffic_df['year'].unique(),
+                        value= traffic_df['year'].iloc[0],
+                        clearable=True,
+                        style={'min-width': '120px', 'margin-bottom' : 5}
+                    ),
+                    dcc.Dropdown(
+                        id='dropdown_year_B',
+                        options=traffic_df['year'].unique(),
+                        value= traffic_df['year'].iloc[-1],
+                        clearable=True,
+                        style={'min-width': '120px'}
+                    ),
+                ], className='d-inline-block'),
+            ], className='d-inline-block'),
+            dbc.Col([
+                dbc.Col([
+                    html.H6(_('Month')+' A:', className='fw-bold text-end'),
+                    html.H6(_('Month')+' B:', className='fw-bold text-end'),
+                ], className='d-inline-block align-top me-3 my-3', style={'min-width': '90px'}),
+                dbc.Col([
+                    dcc.Dropdown(
+                        id='dropdown_year_month_A',
+                        options=traffic_df[_('year_month')].unique(),
+                        value=traffic_df[_('year_month')].iloc[0],
+                        clearable=False,
+                        style={'min-width': '120px', 'margin-bottom' : 5}
+                    ),
+                    dcc.Dropdown(
+                        id='dropdown_year_month_B',
+                        options=traffic_df[_('year_month')].unique(),
+                        value=traffic_df[_('year_month')].iloc[-1],
+                        clearable=False,
+                        style={'min-width': '120px'}
+                    ),
                 ], className='d-inline-block'),
             ]),
             dbc.Col([
                 dbc.Col([
-                    dbc.Col([
-                        html.H6(_('Week') + ' A:', className='fw-bold text-end'),
-                        html.H6(_('Week') + ' B:', className='fw-bold text-end'),
-                    ], className='d-inline-block align-top me-3 my-3', style={'min-width': '90px'}),
-                    dbc.Col([
-                        dcc.Dropdown(
-                            id='dropdown_year_week_A',
-                            options=traffic_df[_('year_week')].unique(),
-                            value=traffic_df[_('year_week')].iloc[0],
-                            clearable=False,
-                            style={'min-width': '180px'}
-                        ),
-                        dcc.Dropdown(
-                            id='dropdown_year_week_B',
-                            options=traffic_df[_('year_week')].unique(),
-                            value=traffic_df[_('year_week')].iloc[-1],
-                            clearable=False,
-                            style={'min-width': '180px'}
-                        ),
-                    ], className='d-inline-block'),
-                ], className='d-inline-block'),
+                    html.H6(_('Week') + ' A:', className='fw-bold text-end'),
+                    html.H6(_('Week') + ' B:', className='fw-bold text-end'),
+                ], className='d-inline-block align-top me-3 my-3', style={'min-width': '90px'}),
                 dbc.Col([
-                    dbc.Col([
-                        html.H6(_('Day') + ' A:', className='fw-bold text-end'),
-                        html.H6(_('Day') + ' B:', className='fw-bold text-end'),
-                    ], className='d-inline-block align-top me-3 my-3', style={'min-width': '90px'}),
-                    dbc.Col([
-                        dcc.Dropdown(
-                            id='dropdown_date_A',
-                            options=traffic_df['date'].unique(),
-                            value=traffic_df['date'].iloc[0],
-                            clearable=False,
-                            style={'min-width': '180px'}
-                        ),
-                        dcc.Dropdown(
-                            id='dropdown_date_B',
-                            options=traffic_df['date'].unique(),
-                            value=traffic_df['date'].iloc[-1],
-                            clearable=False,
-                            style={'min-width': '180px'}
-                        ),
-                    ], className='d-inline-block'),
+                    dcc.Dropdown(
+                        id='dropdown_year_week_A',
+                        options=traffic_df[_('year_week')].unique(),
+                        value=traffic_df[_('year_week')].iloc[0],
+                        clearable=False,
+                        style={'min-width': '120px', 'margin-bottom' : 5}
+                    ),
+                    dcc.Dropdown(
+                        id='dropdown_year_week_B',
+                        options=traffic_df[_('year_week')].unique(),
+                        value=traffic_df[_('year_week')].iloc[-1],
+                        clearable=False,
+                        style={'min-width': '120px'}
+                    ),
+                ], className='d-inline-block'),
+            ], className='d-inline-block'),
+            dbc.Col([
+                dbc.Col([
+                    html.H6(_('Day') + ' A:', className='fw-bold text-end'),
+                    html.H6(_('Day') + ' B:', className='fw-bold text-end'),
+                ], className='d-inline-block align-top me-3 my-3', style={'min-width': '90px'}),
+                dbc.Col([
+                    dcc.Dropdown(
+                        id='dropdown_date_A',
+                        options=traffic_df['date'].unique(),
+                        value=traffic_df['date'].iloc[0],
+                        clearable=False,
+                        style={'min-width': '120px', 'margin-bottom' : 5}
+                    ),
+                    dcc.Dropdown(
+                        id='dropdown_date_B',
+                        options=traffic_df['date'].unique(),
+                        value=traffic_df['date'].iloc[-1],
+                        clearable=False,
+                        style={'min-width': '120px'}
+                    ),
                 ], className='d-inline-block'),
             ]),
         ], className='sticky-top rounded g-2 p-1 d-flex flex-wrap', style={'background-color': ADFC_lightblue, 'opacity': 1.0}),
@@ -838,7 +842,7 @@ def serve_layout():
                         style={'display': 'inline-block', 'color': ADFC_lightgrey})]),
             dbc.Popover(
                 dbc.PopoverBody(
-                    _('This chart allows four period-lengths to be compared: day, week, month or year. For each of these, two periods can be compared, period A and period B (e.g. week A vs. week B or day A vs. day B). Solid lines represent period A and dashed lines represent period B. The date and hour filters in the upper menu bar have no effect, however \'filter uptime\' does!')),
+                    _('This chart allows four period-lengths to be compared: day, week, month or year. For each of these, two periods can be compared, period A and period B (e.g. week A vs. week B or day A vs. day B). Solid lines represent period A and dashed lines represent period B. The selection can be narrowed down from year to month to week etc. To restart, select another year or clear the year value (x) and select the year of interest. The filters in the upper menu bar can be applied but will reset the A and B settings to min/max of the newly selected data.')),
                 target='compare_traffic_periods',
                 trigger='hover'
             ),
@@ -1163,6 +1167,8 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     if radio_time_division == 'date_hour':
         df_line_abs_traffic = traffic_df_use_dt_str.groupby(by=['street_selection', 'date_local', radio_time_division], sort=False, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
         df_line_abs_traffic = df_line_abs_traffic.sort_values(by=['date_local'], ascending=True)
+    elif radio_time_division == 'date':
+        df_line_abs_traffic = traffic_df_use_dt_str.groupby(by=[radio_time_division, 'street_selection'], sort=True, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
     else:
         df_line_abs_traffic = traffic_df_use_dt_str.groupby(by=[radio_time_division, 'street_selection'], sort=False, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
 
@@ -1192,6 +1198,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     line_abs_traffic.update_traces({'name': _('Heavy')}, selector={'name': 'heavy_total'})
     line_abs_traffic.for_each_annotation(lambda a: a.update(text=a.text.replace(street_name, street_name + _(' (segment:') + segment_id + ')')))
     line_abs_traffic.for_each_annotation(lambda a: a.update(text=a.text.replace('All Streets', _('All Streets'))))
+    #line_abs_traffic.update_xaxes(rangeslider_visible=True)
 
     ### Create average traffic bar chart
     # Sort on hour to avoid line graph jumps around hour gaps
@@ -1335,73 +1342,138 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
 ### Comparison Graph
 @callback(
     Output(component_id='line_avg_delta_traffic', component_property='figure'),
+    Output(component_id='dropdown_year_A', component_property='value'),
+    Output(component_id='dropdown_year_B', component_property='value'),
+    Output(component_id='dropdown_year_month_A', component_property='value'),
+    Output(component_id='dropdown_year_month_B', component_property='value'),
+    Output(component_id='dropdown_year_month_A', component_property='options'),
+    Output(component_id='dropdown_year_month_B', component_property='options'),
+    Output(component_id='dropdown_year_week_A', component_property='value'),
+    Output(component_id='dropdown_year_week_B', component_property='value'),
+    Output(component_id='dropdown_year_week_A', component_property='options'),
+    Output(component_id='dropdown_year_week_B', component_property='options'),
     Output(component_id='dropdown_date_A', component_property='value'),
     Output(component_id='dropdown_date_B', component_property='value'),
+    Output(component_id='dropdown_date_A', component_property='options'),
+    Output(component_id='dropdown_date_B', component_property='options'),
     Input(component_id='street_name_dd', component_property='value'),
     Input(component_id='dropdown_year_A', component_property='value'),
     Input(component_id='dropdown_year_month_A', component_property='value'),
+    Input(component_id='dropdown_year_month_A', component_property='options'),
     Input(component_id='dropdown_year_week_A', component_property='value'),
+    Input(component_id='dropdown_year_week_A', component_property='options'),
     Input(component_id='dropdown_date_A', component_property='value'),
+    Input(component_id='dropdown_date_A', component_property='options'),
     Input(component_id='dropdown_year_B', component_property='value'),
     Input(component_id='dropdown_year_month_B', component_property='value'),
+    Input(component_id='dropdown_year_month_B', component_property='options'),
     Input(component_id='dropdown_year_week_B', component_property='value'),
+    Input(component_id='dropdown_year_week_B', component_property='options'),
     Input(component_id='dropdown_date_B', component_property='value'),
+    Input(component_id='dropdown_date_B', component_property='options'),
     Input(component_id='toggle_uptime_filter', component_property='value'),
     Input(component_id='toggle_active_filter', component_property='value'),
     Input(component_id='hardware_version', component_property='value'),
+    prevent_initial_callback = True
 )
 
-def comparison_graph(id_street, dropdown_year_A, dropdown_year_month_A, dropdown_year_week_A, dropdown_date_A, dropdown_year_B,
-                  dropdown_year_month_B, dropdown_year_week_B, dropdown_date_B, toggle_uptime_filter, toggle_active_filter, hardware_version):
+def comparison_graph(id_street, dropdown_year_A, dropdown_year_month_A, dropdown_year_month_A_options,
+                                dropdown_year_week_A, dropdown_year_week_A_options,
+                                dropdown_date_A, dropdown_date_A_options,
+                                dropdown_year_B, dropdown_year_month_B, dropdown_year_month_B_options,
+                                dropdown_year_week_B, dropdown_year_week_B_options,
+                                dropdown_date_B, dropdown_date_B_options,
+                                toggle_uptime_filter, toggle_active_filter, hardware_version):
 
     callback_trigger = ctx.triggered_id
-
-    if callback_trigger == 'dropdown_year_A' or callback_trigger == 'dropdown_year_B':
-        time_division = 'year'
-        selected_value_A = dropdown_year_A
-        selected_value_B = dropdown_year_B
-        group_by = _('month')
-        label = _('Year')
-    elif callback_trigger == 'dropdown_year_month_A' or callback_trigger == 'dropdown_year_month_B':
-        time_division = _('year_month')
-        selected_value_A = dropdown_year_month_A
-        selected_value_B = dropdown_year_month_B
-        group_by = 'day'
-        label = _('Month')
-    elif callback_trigger == 'dropdown_year_week_A' or callback_trigger == 'dropdown_year_week_B':
-        time_division = _('year_week')
-        selected_value_A = dropdown_year_week_A
-        selected_value_B = dropdown_year_week_B
-        group_by = _('weekday')
-        label = _('Week')
-    elif callback_trigger == 'dropdown_date_A' or callback_trigger == 'dropdown_date_B':
-        time_division = 'date'
-        selected_value_A = dropdown_date_A
-        selected_value_B = dropdown_date_B
-        group_by = 'hour'
-        label = _('Date')
-    else:
-        time_division = 'date'
-        selected_value_A = dropdown_date_A
-        selected_value_B = dropdown_date_B
-        group_by = 'hour'
-        label = _('Date')
-
     global traffic_df_use
-
-    # Prepare traffic_df_upt by selected street
-    street_name = id_street.split(' (')[0]
-    segment_id = id_street[-11:-1]
 
     # Filter traffic data based on user selections
     if callback_trigger in ['street_name_dd', 'toggle_uptime_filter', 'toggle_active_filter', 'hardware_version']:
         traffic_df_filtered = filter_traffic_df(traffic_df, toggle_uptime_filter, toggle_active_filter)
-        traffic_df_use = filter_hardware_version(traffic_df_filtered,hardware_version, hardware_version)
-        selected_value_A = traffic_df_use.loc[traffic_df_use['id_street']==id_street,'date'].iloc[0]
-        selected_value_B = traffic_df_use.loc[traffic_df_use['id_street']==id_street,'date'].iloc[-1]
-        dropdown_date_A = selected_value_A
-        dropdown_date_B = selected_value_B
+        traffic_df_use = filter_hardware_version(traffic_df_filtered, hardware_version, hardware_version)
+        selected_value_A = traffic_df_use[_('year')].unique()[0]
+        dropdown_year_A = selected_value_A
+        selected_value_B = traffic_df_use[_('year')].unique()[-1]
+        dropdown_year_B = selected_value_B
 
+    # Prepare inputs for the comparison graph
+    if callback_trigger == 'dropdown_year_month_A':
+        time_division = _('year_month')
+        selected_value_A = dropdown_year_month_A if dropdown_year_month_A else traffic_df_use[_('year_month')].unique()[0]
+        selected_value_B = dropdown_year_month_B
+        group_by = 'day'
+        label = _('Month')
+    elif callback_trigger == 'dropdown_year_month_B':
+        time_division = _('year_month')
+        selected_value_B = dropdown_year_month_B if dropdown_year_month_B else traffic_df_use[_('year_month')].unique()[0]
+        selected_value_A = dropdown_year_month_A
+        group_by = 'day'
+        label = _('Month')
+    elif callback_trigger == 'dropdown_year_week_A':
+        time_division = _('year_week')
+        selected_value_A = dropdown_year_week_A if dropdown_year_week_A else traffic_df_use[_('year_month')].unique()[0]
+        selected_value_B = dropdown_year_week_B
+        group_by = _('weekday')
+        label = _('Week')
+    elif callback_trigger == 'dropdown_year_week_B':
+        time_division = _('year_week')
+        selected_value_B = dropdown_year_week_B if dropdown_year_week_B else traffic_df_use[_('year_month')].unique()[0]
+        selected_value_A = dropdown_year_week_A
+        group_by = _('weekday')
+        label = _('Week')
+    elif callback_trigger == 'dropdown_date_A':
+        time_division = 'date'
+        selected_value_A = dropdown_date_A if dropdown_date_A else traffic_df_use[_('date')].unique()[0]
+        selected_value_B = dropdown_date_B
+        group_by = 'hour'
+        label = _('Year')
+    elif callback_trigger == 'dropdown_date_B':
+        time_division = 'date'
+        selected_value_B = dropdown_date_B if dropdown_date_B else traffic_df_use[_('date')].unique()[0]
+        selected_value_A = dropdown_date_A
+        group_by = 'hour'
+        label = _('Year')
+    elif callback_trigger == 'dropdown_year_A':
+        time_division = 'year'
+        selected_value_A = dropdown_year_A if dropdown_year_A else traffic_df_use[_('year')].unique()[0]
+        selected_value_B = dropdown_year_B
+        group_by = _('month')
+        label = _('Year')
+    elif callback_trigger == 'dropdown_year_B':
+        time_division = 'year'
+        selected_value_B = dropdown_year_B if dropdown_year_B else traffic_df_use[_('year')].unique()[-1]
+        selected_value_A = dropdown_year_A
+        group_by = _('month')
+        label = _('Year')
+    else:
+        time_division = 'year'
+        selected_value_A = dropdown_year_A if dropdown_year_A else traffic_df_use[_('year')].unique()[0]
+        selected_value_B = dropdown_year_B if dropdown_year_B else traffic_df_use[_('year')].unique()[-1]
+        group_by = _('month')
+        label = _('Year')
+
+    # Update periods menu
+    if callback_trigger in ['dropdown_year_A', 'dropdown_year_month_A', 'dropdown_year_week_A', 'dropdown_date_A']:
+        traffic_df_A = traffic_df_use[traffic_df_use[time_division] == selected_value_A]
+        dropdown_year_month_A_options = traffic_df_A[_('year_month')].unique()
+        dropdown_year_month_A = dropdown_year_month_A_options[0]
+        dropdown_year_week_A_options = traffic_df_A[_('year_week')].unique()
+        dropdown_year_week_A = dropdown_year_week_A_options[0]
+        dropdown_date_A_options = traffic_df_A[_('date')].unique()
+        dropdown_date_A = dropdown_date_A_options[0]
+    elif callback_trigger in ['dropdown_year_B', 'dropdown_year_month_B', 'dropdown_year_week_B', 'dropdown_date_B']:
+        traffic_df_B = traffic_df_use[traffic_df_use[time_division] == selected_value_B]
+        dropdown_year_month_B_options = traffic_df_B[_('year_month')].unique()
+        dropdown_year_month_B = dropdown_year_month_B_options[0]
+        dropdown_year_week_B_options = traffic_df_B[_('year_week')].unique()
+        dropdown_year_week_B = dropdown_year_week_B_options[0]
+        dropdown_date_B_options = traffic_df_B[_('date')].unique()
+        dropdown_date_B = dropdown_date_B_options[0]
+
+    # Prepare dataframe for selected street
+    street_name = id_street.split(' (')[0]
+    segment_id = id_street[-11:-1]
     traffic_df_use_str = update_selected_street(traffic_df_use, segment_id, street_name)
     df_avg_traffic_delta_AB = get_comparison_data(traffic_df_use_str, time_division, group_by, selected_value_A, selected_value_B)
 
@@ -1440,7 +1512,14 @@ def comparison_graph(id_street, dropdown_year_A, dropdown_year_month_A, dropdown
     line_avg_delta_traffic.update_xaxes(dtick = 1, tickformat=".0f")
     for annotation in line_avg_delta_traffic.layout.annotations: annotation['font'] = {'size': 14}
 
-    return line_avg_delta_traffic, dropdown_date_A, dropdown_date_B
+    return (line_avg_delta_traffic,
+            dropdown_year_A, dropdown_year_B,
+            dropdown_year_month_A, dropdown_year_month_B,
+            dropdown_year_month_A_options, dropdown_year_month_B_options,
+            dropdown_year_week_A, dropdown_year_week_B,
+            dropdown_year_week_A_options, dropdown_year_week_B_options,
+            dropdown_date_A, dropdown_date_B,
+            dropdown_date_A_options, dropdown_date_B_options)
 
 if __name__ == "__main__":
     app.run(debug=False)

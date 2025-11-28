@@ -275,20 +275,10 @@ msgstr "Vergleiche Verkehrszeiträume"
 
 #: bzm_v01.py:737
 msgid ""
-"This chart allows four period-lengths to be compared: day, week, month or"
-" year. For each of these, two periods can be compared, period A and "
-"period B (e.g. week A vs. week B or day A vs. day B). Solid lines "
-"represent period A and dashed lines represent period B. The date and hour"
-" filters in the upper menu bar have no effect, however 'filter uptime' "
-"does!"
+"This chart allows four period-lengths to be compared: day, week, month or year. For each of these, two periods can be compared, period A and period B (e.g. week A vs. week B or day A vs. day B). Solid lines represent period A and dashed lines represent period B. The selection can be narrowed down from year to month to week etc. To restart, select another year or clear the year value (x) and select the year of interest. The filters in the upper menu bar can be applied but will reset the A and B settings to min/max of the newly selected data."
+
 msgstr ""
-"Dieses Diagramm ermöglicht den Vergleich von vier Zeiträumen: Tag, Woche,"
-" Monat oder Jahr. Für jeden dieser Zeiträume können zwei Zeiträume "
-"verglichen werden: Zeitraum A und Zeitraum B (z. B. Woche A vs. Woche B "
-"oder Tag A vs. Tag B). Durchgezogene Linien repräsentieren Zeitraum A, "
-"gestrichelte Linien Zeitraum B. Die Datums- und Stundenfilter in der "
-"oberen Menüleiste haben keine Wirkung, der Filter 'Filter Uptime' "
-"hingegen schon!"
+"Dieses Diagramm ermöglicht den Vergleich von vier Zeiträumen: Tag, Woche, Monat oder Jahr. Für jeden dieser Zeiträume können zwei verglichen werden: Zeitraum A und Zeitraum B (z. B. Woche A vs. Woche B oder Tag A vs. Tag B). Durchgezogene Linien repräsentieren Zeitraum A, gestrichelte Linien Zeitraum B. Die Auswahl kann von Jahr über Monat bis Woche usw. verfeinert werden. Um von vorne zu beginnen, wählen Sie ein anderes Jahr aus oder löschen Sie den Jahreswert (x) und wählen Sie das gewünschte Jahr aus. Die Filter in der oberen Menüleiste können angewendet werden, setzen die Einstellungen für A und B jedoch auf die Minimal-/Maximalwerte der neu ausgewählten Daten zurück."
 
 #: bzm_v01.py:751
 msgid "Feedback and contact"

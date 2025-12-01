@@ -4,7 +4,7 @@
 
 # @file    bzm_v01.py
 # @author  Egbert Klaassen
-# @date    2025-11-09
+# @date    2025-12-01
 
 """"
 # traffic_df        - dataframe with measured traffic data file
@@ -14,7 +14,7 @@
 
 import os
 import gettext
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 import glob
 import pandas as pd
 import geopandas as gpd
@@ -42,10 +42,8 @@ def output_csv(df, file_name):
     path = os.path.join(ASSET_DIR, file_name + '.csv')
     df.to_csv(path, index=False)
 
-# Function to remove timezone, timezone
 def remove_timezone(dt):
-    # HERE `dt` is a python datetime
-    # object that used .replace() method
+    # Function to remove timezone, `dt` is a python datetime object that used .replace() method
     return dt.replace(tzinfo=None)
 
 def retrieve_data():
@@ -71,7 +69,7 @@ def retrieve_data():
     file_paths = glob.glob(os.path.join(data_dir, 'traffic_df_*.parquet'))
     if file_paths:
         traffic_df = pd.concat([pd.read_parquet(file) for file in sorted(file_paths)], ignore_index=True)
-        traffic_df['date_local'] = traffic_df['date_local'].astype(str)
+        #traffic_df['date_local'] = traffic_df['date_local'].astype(str)
     else:
         traffic_file_path = os.path.join(data_dir, 'traffic_df_2023_2024_2025_YTD.csv.gz')
         traffic_df = pd.read_csv(traffic_file_path)
@@ -84,7 +82,7 @@ def retrieve_data():
     traffic_df['date_local'] = pd.to_datetime(traffic_df['date_local'])
 
     # Set date to datetime and remove time zone
-    traffic_df['date'] = pd.to_datetime(traffic_df['date'], format= '%d/%m/%Y')
+    traffic_df['date'] = pd.to_datetime(traffic_df['date'], format= '%d-%m-%Y')
     traffic_df['date'].dt.tz_localize(None)
     traffic_df['date'] = traffic_df['date'].apply(remove_timezone).dt.strftime('%d-%m-%Y')
 
@@ -1105,9 +1103,8 @@ def update_map(clickData, id_street, hardware_version, toggle_active_filter):
 
 def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, end_date, hour_range, toggle_uptime_filter, toggle_active_filter, hardware_version, radio_y_axis, floating_button, lang_code_dd):
 
-    # TODO: check global use
-    global traffic_df_use_global
     callback_trigger = ctx.triggered_id
+    traffic_df_use_graphs = traffic_df_use
 
     # Get segment_id/street name
     segment_id = id_street[-11:-1]
@@ -1120,11 +1117,11 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
 
     if callback_trigger in ['toggle_uptime_filter', 'toggle_active_filter', 'hardware_version']:
         traffic_df_filtered = filter_traffic_df(traffic_df, toggle_uptime_filter, toggle_active_filter)
-        traffic_df_use_global = filter_hardware_version(traffic_df_filtered,hardware_version, current_hw)
+        traffic_df_use_graphs = filter_hardware_version(traffic_df_filtered,hardware_version, current_hw)
 
     # Check if selected street has data for selected data range
-    min_date_str, max_date_str, start_date, end_date, message, missing_data = get_min_max_str(traffic_df_use_global, id_street, start_date, end_date)
-    traffic_df_use_dt, min_date, max_date, min_hour, max_hour = filter_dt(traffic_df_use_global, start_date, end_date, hour_range)
+    min_date_str, max_date_str, start_date, end_date, message, missing_data = get_min_max_str(traffic_df_use_graphs, id_street, start_date, end_date)
+    traffic_df_use_dt, min_date, max_date, min_hour, max_hour = filter_dt(traffic_df_use_graphs, start_date, end_date, hour_range)
     traffic_df_use_dt_str = update_selected_street(traffic_df_use_dt, segment_id, street_name)
 
     # Format min_max output
@@ -1386,12 +1383,11 @@ def comparison_graph(id_street, dropdown_year_A, dropdown_year_month_A, dropdown
                                 toggle_uptime_filter, toggle_active_filter, hardware_version):
 
     callback_trigger = ctx.triggered_id
-    global traffic_df_use
+    traffic_df_filtered = filter_traffic_df(traffic_df, toggle_uptime_filter, toggle_active_filter)
+    traffic_df_use = filter_hardware_version(traffic_df_filtered, hardware_version, hardware_version)
 
     # Filter traffic data based on user selections
     if callback_trigger in ['street_name_dd', 'toggle_uptime_filter', 'toggle_active_filter', 'hardware_version']:
-        traffic_df_filtered = filter_traffic_df(traffic_df, toggle_uptime_filter, toggle_active_filter)
-        traffic_df_use = filter_hardware_version(traffic_df_filtered, hardware_version, hardware_version)
         selected_value_A = traffic_df_use[_('year')].unique()[0]
         dropdown_year_A = selected_value_A
         selected_value_B = traffic_df_use[_('year')].unique()[-1]

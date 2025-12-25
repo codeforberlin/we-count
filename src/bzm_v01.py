@@ -74,6 +74,11 @@ def retrieve_data():
         traffic_file_path = os.path.join(data_dir, 'traffic_df_2023_2024_2025_YTD.csv.gz')
         traffic_df = pd.read_csv(traffic_file_path)
 
+    # This is a workaround because the last_data_package column may be outdated in traffic_df
+    # but is up to date in json_df_features. We should proably drop the column entirely
+    # from the traffic_df unless there is a severe performance penalty.
+    traffic_df = traffic_df.merge(json_df_features[["segment_id", "last_data_package"]], on="segment_id", suffixes=("_old", "")).drop(columns="last_data_package_old")
+
     # Set data types for clean representation
     traffic_df['segment_id'] = traffic_df['segment_id'].astype(str)
     traffic_df = traffic_df.astype({'year': str}, errors='ignore')
@@ -1518,4 +1523,4 @@ def comparison_graph(id_street, dropdown_year_A, dropdown_year_month_A, dropdown
             dropdown_date_A_options, dropdown_date_B_options)
 
 if __name__ == "__main__":
-    app.run(debug=False)
+    app.run(debug=True)

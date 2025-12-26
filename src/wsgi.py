@@ -1,1 +1,0 @@
-from bzm_v01 import server as application

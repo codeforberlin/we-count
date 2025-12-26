@@ -32,14 +32,14 @@ from dateutil import parser
 
 DEPLOYED = __name__ != '__main__'
 ASSET_DIR = os.path.join(os.path.dirname(__file__), 'assets')
-TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), '..', 'assets')
+DATA_DIR = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'data')
 
 def output_excel(df, file_name):
-    path = os.path.join(ASSET_DIR, file_name + '.xlsx')
+    path = os.path.join(DATA_DIR, file_name + '.xlsx')
     df.to_excel(path, index=False)
 
 def output_csv(df, file_name):
-    path = os.path.join(ASSET_DIR, file_name + '.csv')
+    path = os.path.join(DATA_DIR, file_name + '.csv')
     df.to_csv(path, index=False)
 
 def remove_timezone(dt):
@@ -51,9 +51,9 @@ def retrieve_data():
     if not DEPLOYED:
         print('Reading geojson data...')
 
-    data_dir = ASSET_DIR
+    data_dir = DATA_DIR
     if not os.path.exists(os.path.join(data_dir, 'bzm_telraam_segments.geojson')):
-        data_dir = TEST_DATA_DIR
+        data_dir = ASSET_DIR
     geojson_path = os.path.join(data_dir, 'bzm_telraam_segments.geojson')
     geo_cols = ['segment_id', 'osm', 'cameras', 'geometry']
     geo_df = gpd.read_file(geojson_path, columns=geo_cols)

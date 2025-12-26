@@ -13,4 +13,4 @@ csv/*.xlsx
 # Editor configs
 .vscode/
 
-src/locales/messages.pot
+src/we_count/frontend/locales/messages.pot

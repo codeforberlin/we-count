@@ -23,8 +23,8 @@ import shapely.geometry
 from common import add_month, parse_options
 #from datamodel import TrafficCount
 
-ASSET_DIR = os.path.join(os.path.dirname(__file__), 'assets')
-CSV_DIR = os.path.join(os.path.dirname(__file__), '..', 'csv')
+DATA_DIR = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'data')
+CSV_DIR = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'csv')
 OSM_COLUMNS = ['osm.' + x for x in ['osmid', 'name', 'length', 'lanes', 'maxspeed', 'highway',
                                     'address.city', 'address.suburb', 'address.postcode']]
 
@@ -41,7 +41,7 @@ def has_min_size(url, min_size=500):
 
 
 def save_df(df:pd.DataFrame, file_name: str, verbose=False) -> None:
-    path = os.path.join(ASSET_DIR, file_name)
+    path = os.path.join(DATA_DIR, file_name)
     if verbose:
         print('Saving '+ path)
     if file_name.endswith(".xlsx"):
@@ -53,7 +53,7 @@ def save_df(df:pd.DataFrame, file_name: str, verbose=False) -> None:
 
 
 def get_locations(filepath="https://berlin-zaehlt.de/csv/bzm_telraam_segments.geojson"):
-    local_file = os.path.join(ASSET_DIR, os.path.basename(filepath))
+    local_file = os.path.join(DATA_DIR, os.path.basename(filepath))
     if has_min_size(filepath):
         response = requests.get(filepath)
         with open(local_file, 'wb') as f:
@@ -146,7 +146,7 @@ def add_date_columns(traffic_df, verbose):
     traffic_df['year_month'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%b %Y')
 
 
-def merge_data(locations, cache_file=os.path.join(ASSET_DIR, 'traffic_df_2024_Q4_2025_YTD.csv.gz'), traffic_data=None, verbose=False):
+def merge_data(locations, cache_file=os.path.join(DATA_DIR, 'traffic_df_2024_Q4_2025_YTD.csv.gz'), traffic_data=None, verbose=False):
     if cache_file and os.path.exists(cache_file):
         return pd.read_csv(cache_file)
     if traffic_data is None:
@@ -213,7 +213,7 @@ def main(args=None):
     while (year, month) < (end_year, end_month):
         yearp, monthp = add_month(options.aggregate, year, month)
         out_file = options.output % ("%s_%02i-%s_%02i" % ((year, month) + add_month(-1, yearp, monthp)))
-        if add_month(options.aggregate, yearp, monthp) < (end_year, end_month) and os.path.exists(os.path.join(ASSET_DIR, out_file)) and not options.force:
+        if add_month(options.aggregate, yearp, monthp) < (end_year, end_month) and os.path.exists(os.path.join(DATA_DIR, out_file)) and not options.force:
             year, month = yearp, monthp
             continue
         if (yearp, monthp) > (end_year, end_month):

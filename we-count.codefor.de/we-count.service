@@ -26,7 +26,7 @@ ExecStart=/bin/sh -c '${GUNICORN_BIN} \
   --timeout ${GUNICORN_TIMEOUT} \
   --access-logfile ${GUNICORN_ACCESS_LOG_FILE} \
   --error-logfile ${GUNICORN_ERROR_LOG_FILE} \
-  "wsgi:application"'
+  "we_count.frontend.wsgi:application"'
 
 ExecReload=/bin/sh -c '/usr/bin/pkill -HUP -F ${GUNICORN_PID_FILE}'
 

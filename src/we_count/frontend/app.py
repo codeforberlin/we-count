@@ -30,9 +30,9 @@ from dateutil import parser
 from typing import Callable
 _: Callable[[str], str]
 
-from layout import serve_layout, INITIAL_STREET_ID, INITIAL_LANGUAGE, INITIAL_HOUR_RANGE
-from layout import ADFC_blue, ADFC_crimson, ADFC_darkgrey, ADFC_green, ADFC_green_L
-from layout import ADFC_lightblue, ADFC_lightblue_D, ADFC_lightgrey, ADFC_orange, ADFC_palegrey, ADFC_pink
+from .layout import serve_layout, INITIAL_STREET_ID, INITIAL_LANGUAGE, INITIAL_HOUR_RANGE
+from .layout import ADFC_blue, ADFC_crimson, ADFC_darkgrey, ADFC_green, ADFC_green_L
+from .layout import ADFC_lightblue, ADFC_lightblue_D, ADFC_lightgrey, ADFC_orange, ADFC_palegrey, ADFC_pink
 
 DEPLOYED = __name__ != '__main__'
 ASSET_DIR = os.path.join(os.path.dirname(__file__), 'assets')
@@ -443,8 +443,6 @@ app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.BOOTS
            )
 
 app.title = "Berlin-zaehlt"
-
-server = app.server
 
 app.layout = lambda: serve_layout(app, traffic_df, start_date, end_date, min_date, max_date)
 

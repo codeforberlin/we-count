@@ -10,6 +10,7 @@ import dash_bootstrap_components as dbc
 from dash import Dash, html, dcc
 # suppress warnings, see app.py
 from typing import Callable
+
 _: Callable[[str], str]
 
 
@@ -93,7 +94,10 @@ def serve_layout(app: Dash, traffic_df, start_date, end_date, min_date, max_date
                                 {'label': '🇬🇧' + ' ' + _('English'), 'value': 'en'},
                                 {'label': '🇩🇪' + ' ' + _('Deutsch'), 'value': 'de'},
                             ],
-                            value=INITIAL_LANGUAGE
+                            value=INITIAL_LANGUAGE,
+                            clearable = False,
+                            persistence = True,
+                            persistence_type = 'local'
                         ),
                     ], sm=7),
                 ], justify='end'),
@@ -321,97 +325,46 @@ def serve_layout(app: Dash, traffic_df, start_date, end_date, min_date, max_date
         ], className='g-2 p-1 mb-3'),
 
         ## Compare traffic graph
-        dbc.Row([
-            dbc.Col([
+            dbc.Row([
                 dbc.Col([
-                    html.H6(_('Year') +' A:', className='fw-bold text-end'),
-                    html.H6(_('Year') +' B:', className='fw-bold text-end'),
-                ], className='d-inline-block align-top me-3 my-3', style={'min-width': '90px'}),
+                    dbc.Col([
+                        html.H6(_('Select year scope:'), className='ms-2 fw-bold text-start'),
+                        dcc.Dropdown(
+                            id='period_values_year',
+                            multi=True,
+                            options=['2025', '2026'],
+                            className='ms-2 mb-2'
+                        ),
+                    ], className='d-inline-block')
+                ], sm=6),
                 dbc.Col([
-                    dcc.Dropdown(
-                        id='dropdown_year_A',
-                        options=traffic_df['year'].unique(),
-                        value= traffic_df['year'].iloc[0],
-                        clearable=True,
-                        style={'min-width': '120px', 'margin-bottom' : 5}
-                    ),
-                    dcc.Dropdown(
-                        id='dropdown_year_B',
-                        options=traffic_df['year'].unique(),
-                        value= traffic_df['year'].iloc[-1],
-                        clearable=True,
-                        style={'min-width': '120px'}
-                    ),
-                ], className='d-inline-block'),
-            ], className='d-inline-block'),
-            dbc.Col([
-                dbc.Col([
-                    html.H6(_('Month')+' A:', className='fw-bold text-end'),
-                    html.H6(_('Month')+' B:', className='fw-bold text-end'),
-                ], className='d-inline-block align-top me-3 my-3', style={'min-width': '90px'}),
-                dbc.Col([
-                    dcc.Dropdown(
-                        id='dropdown_year_month_A',
-                        options=traffic_df[_('year_month')].unique(),
-                        value=traffic_df[_('year_month')].iloc[0],
-                        clearable=False,
-                        style={'min-width': '120px', 'margin-bottom' : 5}
-                    ),
-                    dcc.Dropdown(
-                        id='dropdown_year_month_B',
-                        options=traffic_df[_('year_month')].unique(),
-                        value=traffic_df[_('year_month')].iloc[-1],
-                        clearable=False,
-                        style={'min-width': '120px'}
-                    ),
-                ], className='d-inline-block'),
-            ]),
-            dbc.Col([
-                dbc.Col([
-                    html.H6(_('Week') + ' A:', className='fw-bold text-end'),
-                    html.H6(_('Week') + ' B:', className='fw-bold text-end'),
-                ], className='d-inline-block align-top me-3 my-3', style={'min-width': '90px'}),
-                dbc.Col([
-                    dcc.Dropdown(
-                        id='dropdown_year_week_A',
-                        options=traffic_df[_('year_week')].unique(),
-                        value=traffic_df[_('year_week')].iloc[0],
-                        clearable=False,
-                        style={'min-width': '120px', 'margin-bottom' : 5}
-                    ),
-                    dcc.Dropdown(
-                        id='dropdown_year_week_B',
-                        options=traffic_df[_('year_week')].unique(),
-                        value=traffic_df[_('year_week')].iloc[-1],
-                        clearable=False,
-                        style={'min-width': '120px'}
-                    ),
-                ], className='d-inline-block'),
-            ], className='d-inline-block'),
-            dbc.Col([
-                dbc.Col([
-                    html.H6(_('Day') + ' A:', className='fw-bold text-end'),
-                    html.H6(_('Day') + ' B:', className='fw-bold text-end'),
-                ], className='d-inline-block align-top me-3 my-3', style={'min-width': '90px'}),
-                dbc.Col([
-                    dcc.Dropdown(
-                        id='dropdown_date_A',
-                        options=traffic_df['date'].unique(),
-                        value=traffic_df['date'].iloc[0],
-                        clearable=False,
-                        style={'min-width': '120px', 'margin-bottom' : 5}
-                    ),
-                    dcc.Dropdown(
-                        id='dropdown_date_B',
-                        options=traffic_df['date'].unique(),
-                        value=traffic_df['date'].iloc[-1],
-                        clearable=False,
-                        style={'min-width': '120px'}
-                    ),
-                ], className='d-inline-block'),
-            ]),
-        ], className='sticky-top rounded g-2 p-1 d-flex flex-wrap', style={'background-color': ADFC_lightblue, 'opacity': 1.0}),
-        dbc.Row([
+                    dbc.Col([
+                        html.H6(_('Select period type:'), className='ms-2 fw-bold text-start'),
+                        dcc.Dropdown(
+                            id='period_type_others',
+                            options=[
+                                {'label': _('Year'), 'value': 'year'},
+                                {'label': _('Month'), 'value': _('year_month')},
+                                {'label': _('Week'), 'value': 'year_week'},
+                                {'label': _('Day'), 'value': 'date'}
+                            ],
+                            value='year',
+                            className='ms-2 mb-2'
+                        ),
+                    ], sm=4, className='d-inline-block'),
+                    dbc.Col([
+                        html.H6(_('Select (exactly) two periods to compare:'), className='ms-5 fw-bold text-start'),
+                        dcc.Dropdown(
+                            id='period_values_others',
+                            value=['2025', '2026'],
+                            multi=True,
+                            className='ms-5 mb-2'
+                        ),
+                    ], sm=8, className='d-inline-block')
+                ], sm=6),
+            ], className='sticky-top rounded g-2 p-1 d-flex flex-wrap',
+                style={'background-color': ADFC_lightblue, 'opacity': 1.0}),
+            dbc.Row([
             html.Span(
                 [html.H4(_('Compare traffic periods'), className='my-3 me-2', style={'display': 'inline-block'}),
                  html.I(className='bi bi-info-circle-fill h6', id='compare_traffic_periods',

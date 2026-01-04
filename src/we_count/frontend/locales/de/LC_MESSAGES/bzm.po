@@ -155,9 +155,15 @@ msgstr "Jahr"
 msgid "Month"
 msgstr "Monat"
 
+msgid "Year_Week"
+msgstr "Jahr-Woche"
+
 #: bzm_v01.py:521 bzm_v01.py:1066
 msgid "year_month"
 msgstr "jahr_monat"
+
+msgid "Year_Month"
+msgstr "Jahr-Monat"
 
 #: bzm_v01.py:522 bzm_v01.py:686 bzm_v01.py:687 bzm_v01.py:1066 bzm_v01.py:1102
 #: bzm_v01.py:1139 bzm_v01.py:1174 bzm_v01.py:1210
@@ -168,6 +174,9 @@ msgstr "Woche"
 #: bzm_v01.py:1139 bzm_v01.py:1174 bzm_v01.py:1210 bzm_v01.py:1297
 msgid "Day"
 msgstr "Tag"
+
+msgid "Date"
+msgstr "Datum"
 
 #: bzm_v01.py:524 bzm_v01.py:1066 bzm_v01.py:1102 bzm_v01.py:1139
 #: bzm_v01.py:1174 bzm_v01.py:1210
@@ -272,6 +281,15 @@ msgstr "LKWs"
 #: bzm_v01.py:732
 msgid "Compare traffic periods"
 msgstr "Vergleiche Verkehrszeiträume"
+
+msgid "Select year scope:"
+msgstr "Jahresbereich auswählen:"
+
+msgid "Select period type:"
+msgstr "Periodentyp auswählen:"
+
+msgid "Select (exactly) two periods to compare:"
+msgstr "Wähle (genau) zwei Zeiträume zum Vergleich aus:"
 
 #: bzm_v01.py:737
 msgid ""

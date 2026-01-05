@@ -4,6 +4,7 @@ dash_bootstrap_components
 dash_daq
 dash-extensions
 dash-leaflet
+duckdb
 geopandas>=1.0.0
 mysqlclient
 openpyxl

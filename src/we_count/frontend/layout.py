@@ -353,7 +353,7 @@ def serve_layout(app: Dash, traffic_df, start_date, end_date, min_date, max_date
                         ),
                     ], sm=4, className='d-inline-block'),
                     dbc.Col([
-                        html.H6(_('Select (exactly) two periods to compare:'), className='ms-5 fw-bold text-start'),
+                        html.H6(_('Select (exactly) two periods to compare:'), id= 'select_two', className='ms-5 fw-bold text-start'),
                         dcc.Dropdown(
                             id='period_values_others',
                             value=['2025', '2026'],
@@ -371,7 +371,7 @@ def serve_layout(app: Dash, traffic_df, start_date, end_date, min_date, max_date
                         style={'display': 'inline-block', 'color': ADFC_lightgrey})]),
             dbc.Popover(
                 dbc.PopoverBody(
-                    _('This chart allows four period-lengths to be compared: day, week, month or year. For each of these, two periods can be compared, period A and period B (e.g. week A vs. week B or day A vs. day B). Solid lines represent period A and dashed lines represent period B. The selection can be narrowed down from year to month to week etc. To restart, select another year or clear the year value (x) and select the year of interest. The filters in the upper menu bar can be applied but will reset the A and B settings to min/max of the newly selected data.')),
+                    _('This chart allows four period-types to be compared: day, week, month or year. For each of these, two periods can be compared (e.g. month vs. month or day vs. day, etc.). Solid lines represent the first period, dashed lines represent the second selected period. You can select the year range on the left to narrow down the available periods shown on the right. You can select a period type from the dropdown menu in the center. You can choose which periods to compare using the dropdown menu located on the right side. If you select anything other than exactly two periods, the graph will automatically use the year period type and display data for 2025 and 2026.')),
                 target='compare_traffic_periods',
                 trigger='hover'
             ),
@@ -379,7 +379,8 @@ def serve_layout(app: Dash, traffic_df, start_date, end_date, min_date, max_date
         dbc.Row([
             dbc.Col([
                 dcc.Loading(id="loading-icon_line_avg_delta_traffic", children=[html.Div(
-                    dcc.Graph(id='line_avg_delta_traffic', figure={}, config={'modeBarButtonsToRemove': ['zoomIn2d', 'zoomOut2d', 'autoScale2d']}))])
+                    dcc.Graph(id='line_avg_delta_traffic', figure={},
+                              config={'modeBarButtonsToRemove': ['zoomIn2d', 'zoomOut2d', 'autoScale2d']}))])
             ], sm=12),
         ], className='g-2 p-1 mb-3'),
 

@@ -291,12 +291,15 @@ msgstr "Periodentyp auswählen:"
 msgid "Select (exactly) two periods to compare:"
 msgstr "Wähle (genau) zwei Zeiträume zum Vergleich aus:"
 
+msgid "Select two periods to compare:"
+msgstr "Wähle zwei Zeiträume zum Vergleich aus:"
+
 #: bzm_v01.py:737
 msgid ""
-"This chart allows four period-lengths to be compared: day, week, month or year. For each of these, two periods can be compared, period A and period B (e.g. week A vs. week B or day A vs. day B). Solid lines represent period A and dashed lines represent period B. The selection can be narrowed down from year to month to week etc. To restart, select another year or clear the year value (x) and select the year of interest. The filters in the upper menu bar can be applied but will reset the A and B settings to min/max of the newly selected data."
+"This chart allows four period-types to be compared: day, week, month or year. For each of these, two periods can be compared (e.g. month vs. month or day vs. day, etc.). Solid lines represent the first period, dashed lines represent the second selected period. You can select the year range on the left to narrow down the available periods shown on the right. You can select a period type from the dropdown menu in the center. You can choose which periods to compare using the dropdown menu located on the right side. If you select anything other than exactly two periods, the graph will automatically use the year period type and display data for 2025 and 2026."
 
 msgstr ""
-"Dieses Diagramm ermöglicht den Vergleich von vier Zeiträumen: Tag, Woche, Monat oder Jahr. Für jeden dieser Zeiträume können zwei verglichen werden: Zeitraum A und Zeitraum B (z. B. Woche A vs. Woche B oder Tag A vs. Tag B). Durchgezogene Linien repräsentieren Zeitraum A, gestrichelte Linien Zeitraum B. Die Auswahl kann von Jahr über Monat bis Woche usw. verfeinert werden. Um von vorne zu beginnen, wählen Sie ein anderes Jahr aus oder löschen Sie den Jahreswert (x) und wählen Sie das gewünschte Jahr aus. Die Filter in der oberen Menüleiste können angewendet werden, setzen die Einstellungen für A und B jedoch auf die Minimal-/Maximalwerte der neu ausgewählten Daten zurück."
+"Dieses Diagramm ermöglicht den Vergleich von vier Periodentypen: Tag, Woche, Monat oder Jahr. Für jede dieser Perioden können zwei Perioden verglichen werden (z. B. Monat vs. Monat oder Tag vs. Tag usw.). Durchgezogene Linien stehen für die erste Periode, gestrichelte Linien für die zweite ausgewählte Periode. Sie können links den Jahresbereich auswählen, um die verfügbaren Zeiträume rechts einzugrenzen. Du kannst einen Periodentyp im Dropdown-Menü in der Mitte auswählen. Sie können im Dropdown-Menü auf der rechten Seite auswählen, welche Perioden Sie vergleichen möchten. Wenn Sie etwas anderes als genau zwei Perioden auswählen, verwendet das Diagramm automatisch den Periodentyp Jahr und zeigt die Daten für 2025 und 2026 an."
 
 #: bzm_v01.py:751
 msgid "Feedback and contact"

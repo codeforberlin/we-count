@@ -20,7 +20,7 @@ import glob
 import pandas as pd
 import geopandas as gpd
 import dash_bootstrap_components as dbc
-from dash import Dash, Output, Input, callback, ctx
+from dash import Dash, Output, Input, callback, ctx, no_update
 from dash.exceptions import PreventUpdate
 import plotly.express as px
 from dateutil import parser
@@ -31,6 +31,7 @@ from threading import Lock
 # the following is basically to suppress warnings about "_" being undefined
 # "from gettext import gettext as _" does not work because we use gettext.install later on, which installs "_"
 from typing import Callable
+
 _: Callable[[str], str]
 
 from layout import serve_layout, INITIAL_STREET_ID, INITIAL_LANGUAGE, INITIAL_HOUR_RANGE
@@ -41,8 +42,6 @@ DEPLOYED = __name__ != '__main__'
 ASSET_DIR = os.path.join(os.path.dirname(__file__), 'assets')
 DATA_DIR = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'data')
 
-
-# Move to retrieve data?
 
 db_lock = Lock()
 
@@ -509,6 +508,8 @@ def update_map(clickData, id_street, hardware_version, toggle_active_filter):
     Output(component_id='date_range_text', component_property='children'),
     Output(component_id="date_filter", component_property="start_date", allow_duplicate=True),
     Output(component_id="date_filter", component_property="end_date", allow_duplicate=True),
+    Output(component_id="date_filter", component_property="min_date_allowed"),
+    Output(component_id="date_filter", component_property="max_date_allowed"),
     Output(component_id='date_range_text', component_property='style'),
     Output(component_id='pie_traffic', component_property='figure'),
     Output(component_id='line_abs_traffic', component_property='figure'),
@@ -521,8 +522,6 @@ def update_map(clickData, id_street, hardware_version, toggle_active_filter):
     Input(component_id='street_name_dd', component_property='value'),
     Input(component_id="date_filter", component_property="start_date"),
     Input(component_id="date_filter", component_property="end_date"),
-    #Input(component_id="date_filter", component_property="min_date_allowed"),
-    #Input(component_id="date_filter", component_property="max_date_allowed"),
     Input(component_id='range_slider', component_property='value'),
     Input(component_id='toggle_uptime_filter', component_property='value'),
     Input(component_id='toggle_active_filter', component_property='value'),
@@ -836,7 +835,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     bar_ranking.update_layout(yaxis_title= _('Absolute count'))
     for annotation in bar_ranking.layout.annotations: annotation['font'] = {'size': 14}
 
-    return selected_street_header, selected_street_header_color, street_id_text, date_range_text, start_date, end_date, date_range_color, pie_traffic, line_abs_traffic, bar_avg_traffic, bar_perc_speed, bar_v85, bar_ranking
+    return selected_street_header, selected_street_header_color, street_id_text, date_range_text, start_date, end_date, min_date, max_date, date_range_color, pie_traffic, line_abs_traffic, bar_avg_traffic, bar_perc_speed, bar_v85, bar_ranking
 
 ### Comparison Graph
 @app.callback(
@@ -886,13 +885,15 @@ def update_period_other_values(period_values_year, period_type_others, street_id
     return period_values_others #[{'label': str(val), 'value': str(val)} for val in unique_values]
 
 @app.callback(
-    Output('line_avg_delta_traffic', 'figure'),
-    Input('period_values_year', 'value'),
-    Input('period_values_year', 'options'),
-    Input('period_type_others', 'value'),
-    Input('period_values_others', 'value'),
-    Input('period_values_others', 'options'),
-    Input('street_name_dd', 'value')
+    Output(component_id='line_avg_delta_traffic', component_property= 'figure'),
+    Output(component_id='select_two', component_property= 'children'),
+    Output(component_id='select_two', component_property= 'style'),
+    Input(component_id='period_values_year', component_property='value'),
+    Input(component_id='period_values_year', component_property='options'),
+    Input(component_id='period_type_others', component_property='value'),
+    Input(component_id='period_values_others', component_property='value'),
+    Input(component_id='period_values_others', component_property='options'),
+    Input(component_id='street_name_dd', component_property='value')
 )
 
 def comparison_chart(period_values_year, period_options_year,
@@ -902,11 +903,15 @@ def comparison_chart(period_values_year, period_options_year,
 
     segment_id = id_street[-11:-1]
     street_name = id_street.split(' (')[0]
-    display_graph = True
 
     if not period_values_others or len(period_values_others) != 2:
-        display_graph = False
-        return []
+        select_two_color = {'color': ADFC_orange}
+        select_two_text = ['Select (exactly) two periods to compare:']
+        period_type_others = 'year'
+        period_values_others = ['2025', '2026']
+    else:
+        select_two_text = ['Select two periods to compare:']
+        select_two_color = {'color': 'black'}
 
     query = ('SELECT * '
              'FROM filtered_traffic_min_max ')
@@ -997,7 +1002,7 @@ def comparison_chart(period_values_year, period_options_year,
     line_avg_delta_traffic.update_xaxes(dtick = 1, tickformat=".0f")
     for annotation in line_avg_delta_traffic.layout.annotations: annotation['font'] = {'size': 14}
 
-    return line_avg_delta_traffic
+    return line_avg_delta_traffic, select_two_text, select_two_color
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=False)

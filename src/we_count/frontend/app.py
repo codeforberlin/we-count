@@ -46,11 +46,11 @@ DATA_DIR = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'data')
 db_lock = Lock()
 
 def output_excel(df, file_name):
-    path = os.path.join(DATA_DIR, file_name + '.xlsx')
+    path = os.path.join(ASSET_DIR, file_name + '.xlsx')
     df.to_excel(path, index=False)
 
 def output_csv(df, file_name):
-    path = os.path.join(DATA_DIR, file_name + '.csv')
+    path = os.path.join(ASSET_DIR, file_name + '.csv')
     df.to_csv(path, index=False)
 
 def remove_timezone(dt):
@@ -594,6 +594,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
              'WHERE date_local >= ? AND date_local <= ?')
     params = [start_date]
     params.append(end_date)
+    #TODO: Select one date
 
     query += (' AND hour >= ? AND hour <= ?')
     params.append(hour_range[0])
@@ -602,7 +603,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     with db_lock:  # Ensure thread safety for writes
         conn.execute(query, params)
         # No street selection for ranking chart
-        traffic_df_use_dt = conn.execute('SELECT * FROM filtered_traffic_dt').df()
+        traffic_df_dt = conn.execute('SELECT * FROM filtered_traffic_dt').df()
 
     # Create selected street table
     query = ('CREATE OR REPLACE TEMP TABLE selected_street AS '
@@ -619,19 +620,23 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     conn.execute(query, params)
 
     # Add selected street to filtered_traffic_dt
-    query = ('SELECT * FROM filtered_traffic_dt '
+    query = ('CREATE OR REPLACE TEMP TABLE traffic_df_dt_str AS '
+             'SELECT * FROM filtered_traffic_dt '
              'UNION ALL '
              'SELECT * FROM selected_street')
 
     with db_lock:  # Ensure thread safety for writes
-        traffic_df_use_dt_str = conn.execute(query).fetchdf()
+        conn.execute(query)
+        traffic_df_dt_str = conn.execute('SELECT * FROM traffic_df_dt_str').fetchdf()
         # Delete (drop) the street_selection table
         conn.execute("DROP TABLE IF EXISTS selected_street")
 
     # Format date output for chart representation
-    format_string = '%d-%m-%Y'
+    format_string = '%d %b %Y'
     min_date_str = format_str_date(min_date, '%Y-%m-%dT%H:%M:%S', format_string)
     max_date_str = format_str_date(max_date, '%Y-%m-%dT%H:%M:%S', format_string)
+    start_date_str = format_str_date(start_date, '%Y-%m-%dT%H:%M:%S', format_string)
+    end_date_str = format_str_date(end_date, '%Y-%m-%dT%H:%M:%S', format_string)
 
     # Provide warnings in case of missing data
     if missing_data:
@@ -650,7 +655,19 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
         date_range_color = {'color': 'black'}
 
     # Create pie chart
-    df_pie = traffic_df_use_dt_str[traffic_df_use_dt_str['street_selection'] == street_name]
+    query = ('SELECT street_selection, '
+             'SUM(ped_total) AS ped_total, '
+             'SUM(bike_total) AS bike_total, '
+             'SUM(car_total) AS car_total, '
+             'SUM(heavy_total) AS heavy_total '
+             'FROM traffic_df_dt_str '
+             'WHERE street_selection = ? '
+             'GROUP BY street_selection')
+    params = [street_name]
+
+    with db_lock:  # Ensure thread safety for writes
+        df_pie = conn.execute(query, params).fetchdf()
+
     df_pie_traffic = df_pie[['ped_total', 'bike_total', 'car_total', 'heavy_total']]
     df_pie_traffic_ren = df_pie_traffic.rename(columns={'ped_total': _('Pedestrians'), 'bike_total': _('Bikes'), 'car_total': _('Cars'), 'heavy_total': _('Heavy')})
     df_pie_traffic_sum = df_pie_traffic_ren.aggregate(['sum'])
@@ -664,23 +681,33 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     pie_traffic.update_traces(textposition='inside', textinfo='percent+label')
 
     ### Create absolute line chart
-    if radio_time_division == 'date_hour':
-        df_line_abs_traffic = traffic_df_use_dt_str.groupby(by=['street_selection', 'date_local', radio_time_division], sort=False, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
-        df_line_abs_traffic = df_line_abs_traffic.sort_values(by=['date_local'], ascending=True)
-    elif radio_time_division == 'date':
-        df_line_abs_traffic = traffic_df_use_dt_str.groupby(by=[radio_time_division, 'street_selection'], sort=True, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
-    else:
-        df_line_abs_traffic = traffic_df_use_dt_str.groupby(by=[radio_time_division, 'street_selection'], sort=False, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
+    group_cols = [radio_time_division, 'street_selection']
+    group_clause = ", ".join(group_cols)
+    query = f"""
+    SELECT 
+        {group_clause},
+        SUM(ped_total) AS ped_total,
+        SUM(bike_total) AS bike_total,
+        SUM(car_total) AS car_total,
+        SUM(heavy_total) AS heavy_total,
+    MIN(date_local) AS first_seen
+    FROM traffic_df_dt_str
+    GROUP BY {group_clause}
+    ORDER BY first_seen
+    """
+
+    with db_lock:  # Ensure thread safety for writes
+        df_line_abs_traffic = conn.execute(query).fetchdf()
 
     line_abs_traffic = px.scatter(df_line_abs_traffic,
         x=radio_time_division, y=['ped_total', 'bike_total', 'car_total', 'heavy_total'],
-        #markers=True, # In case of line graph
         facet_col='street_selection',
         category_orders={'street_selection': [street_name, 'All Streets']},
         labels={'year': _('Year'), _('year_month'): _('Month'), 'year_week': _('Week'), 'date': _('Day'), 'date_hour': _('Hour')},
         color_discrete_map={'ped_total': ADFC_lightblue, 'bike_total': ADFC_green, 'car_total': ADFC_orange, 'heavy_total': ADFC_crimson},
         facet_col_spacing=0.04,
-        title=_('Absolute traffic count')
+        #title=_('Absolute traffic count')
+        title = (_('Absolute traffic count') + ' (' + start_date_str + ' - ' + end_date_str + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)')
     ).update_traces(mode="lines+markers", connectgaps=False)
 
     line_abs_traffic.update_layout({'plot_bgcolor': ADFC_palegrey, 'paper_bgcolor': ADFC_palegrey})
@@ -697,14 +724,25 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     line_abs_traffic.update_traces({'name': _('Heavy')}, selector={'name': 'heavy_total'})
     line_abs_traffic.for_each_annotation(lambda a: a.update(text=a.text.replace(street_name, street_name + _(' (segment:') + segment_id + ')')))
     line_abs_traffic.for_each_annotation(lambda a: a.update(text=a.text.replace('All Streets', _('All Streets'))))
-    #line_abs_traffic.update_xaxes(rangeslider_visible=True)
+    #Range Slider: line_abs_traffic.update_xaxes(rangeslider_visible=True)
 
     ### Create average traffic bar chart
-    if radio_time_unit == 'hour' or radio_time_unit == 'day':
-        #df_avg_traffic = df_avg_traffic.sort_values(by=[radio_time_unit], ascending=True)
-        df_avg_traffic = traffic_df_use_dt_str.groupby(by=[radio_time_unit, 'street_selection'], as_index=False).agg({'ped_total': 'mean', 'bike_total': 'mean', 'car_total': 'mean', 'heavy_total': 'mean'})
-    else:
-        df_avg_traffic = traffic_df_use_dt_str.groupby(by=[radio_time_unit, 'street_selection'], sort=False, as_index=False).agg({'ped_total': 'mean', 'bike_total': 'mean', 'car_total': 'mean', 'heavy_total': 'mean'})
+    group_cols = [radio_time_unit, 'street_selection']
+    group_clause = ", ".join(group_cols)
+    query = f"""
+    SELECT 
+        {group_clause},
+        MEAN(ped_total) AS ped_total,
+        MEAN(bike_total) AS bike_total,
+        MEAN(car_total) AS car_total,
+        MEAN(heavy_total) AS heavy_total,
+    MIN(date_local) AS first_seen
+    FROM traffic_df_dt_str
+    GROUP BY {group_clause}
+    ORDER BY first_seen
+    """
+    with db_lock:  # Ensure thread safety for writes
+        df_avg_traffic = conn.execute(query).fetchdf()
 
     bar_avg_traffic = px.bar(df_avg_traffic,
         x=radio_time_unit, y=['ped_total', 'bike_total', 'car_total', 'heavy_total'],
@@ -714,7 +752,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
         category_orders={'street_selection': [street_name, 'All Streets']},
         labels={'year': _('Year'), 'month': _('Month'), 'weekday': _('Week'), 'day': _('Day'), 'hour': _('Hour')},
         color_discrete_map={'ped_total': ADFC_lightblue, 'bike_total': ADFC_green, 'car_total': ADFC_orange, 'heavy_total': ADFC_crimson},
-        title=(_('Average traffic count')  + ' (' + start_date + ' - ' + end_date + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)')
+        title=(_('Average traffic count')  + ' (' + start_date_str + ' - ' + end_date_str + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)')
     )
 
     bar_avg_traffic.for_each_annotation(lambda a: a.update(text=a.text.replace(street_name, street_name + _(' (segment:') + segment_id + ')')))
@@ -735,7 +773,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     ### Create percentage speed bar chart
 
     # Add column with all car speed %
-    df_bar_speed = traffic_df_use_dt_str
+    df_bar_speed = traffic_df_dt_str
     cols = ['car_speed0', 'car_speed10', 'car_speed20', 'car_speed30', 'car_speed40', 'car_speed50', 'car_speed60', 'car_speed70']
     df_bar_speed['sum_speed_perc'] = df_bar_speed[cols].sum(axis=1)
 
@@ -755,7 +793,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
                              'car_speed40': ADFC_green_L, 'car_speed50': ADFC_orange,
                              'car_speed60': ADFC_crimson, 'car_speed70': ADFC_pink},
          facet_col_spacing=0.04,
-         title=(_('Average car speed %') + ' (' + start_date + ' - ' + end_date + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)')
+         title=(_('Average car speed %') + ' (' + start_date_str + ' - ' + end_date_str + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)')
     )
 
     bar_perc_speed.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
@@ -777,7 +815,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
         annotation['font'] = {'size': 14}
 
     ### Create v85 bar graph
-    df_bar_v85 = traffic_df_use_dt_str.groupby(by=[radio_time_unit, 'street_selection'], sort= False, as_index=False).agg({'v85': 'mean'})
+    df_bar_v85 = traffic_df_dt_str.groupby(by=[radio_time_unit, 'street_selection'], sort= False, as_index=False).agg({'v85': 'mean'})
 
     bar_v85 = px.bar(df_bar_v85,
         x=radio_time_unit, y='v85',
@@ -787,7 +825,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
         category_orders={'street_selection': [street_name, 'All Streets']},
         facet_col_spacing=0.04,
         labels={'year': _('Year'), 'month': _('Month'), 'weekday': _('Week'), 'day': _('Day'), 'hour': _('Hour')},
-        title=(_('Speed cars v85') + ' (' + start_date + ' - ' + end_date + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)')
+        title=(_('Speed cars v85') + ' (' + start_date_str + ' - ' + end_date_str + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)')
     )
 
     bar_v85.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
@@ -803,7 +841,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
         annotation['font'] = {'size': 14}
 
     ### Create ranking chart
-    df_bar_ranking = traffic_df_use_dt.groupby(by=['id_street', 'street_selection'], sort=False, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
+    df_bar_ranking = traffic_df_dt.groupby(by=['id_street', 'street_selection'], sort=False, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
     df_bar_ranking = df_bar_ranking.sort_values(by=[radio_y_axis], ascending=False)
     df_bar_ranking.reset_index(inplace=True)
 
@@ -823,7 +861,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
         color=radio_y_axis,
         color_continuous_scale='temps',
         labels={'ped_total': _('Pedestrians'), 'bike_total': _('Bikes'), 'car_total': _('Cars'), 'heavy_total': _('Heavy'), 'id_street': _('Street (segment id)')},
-        title=(_('Absolute traffic') + ' (' + start_date + ' - ' + end_date + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)'),
+        title=(_('Absolute traffic') + ' (' + start_date_str + ' - ' + end_date_str + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)'),
         height=600,
     )
 

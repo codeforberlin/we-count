@@ -20,10 +20,9 @@ import glob
 import pandas as pd
 import geopandas as gpd
 import dash_bootstrap_components as dbc
-from dash import Dash, Output, Input, callback, ctx, no_update
+from dash import Dash, Output, Input, callback, ctx
 from dash.exceptions import PreventUpdate
 import plotly.express as px
-from dateutil import parser
 import duckdb
 from threading import Lock
 
@@ -140,19 +139,48 @@ def format_str_date(str_date, from_date_format, to_date_format):
     formatted_str_date = timestamp_date.strftime(to_date_format)
     return formatted_str_date
 
-def update_selected_street(df, segment_id, street_name):
+# def update_selected_street(df, segment_id, street_name):
+#
+#     # Generate "selected street only" df and populate "street_selection"
+#     df_str = df[df['segment_id'] == segment_id]
+#     df_str.loc[df_str['street_selection'] == 'All Streets', 'street_selection'] = street_name
+#
+#     # Add selected street to all streets
+#     traffic_df_upt_dt_str = df._append(df_str, ignore_index=True)
+#
+#     # Free memory
+#     del df, df_str
+#
+#     return traffic_df_upt_dt_str
 
-    # Generate "selected street only" df and populate "street_selection"
-    df_str = df[df['segment_id'] == segment_id]
-    df_str.loc[df_str['street_selection'] == 'All Streets', 'street_selection'] = street_name
+def add_selected_street(from_table_name, id_street, street_name):
 
-    # Add selected street to all streets
-    traffic_df_upt_dt_str = df._append(df_str, ignore_index=True)
+    # Add or update table with selected street
+    query = (f'CREATE OR REPLACE TEMP TABLE selected_street AS '
+             f'SELECT * FROM {from_table_name} '
+             f'WHERE id_street = ?')
+    params = [id_street]
+    conn.execute(query, params)
 
-    # Free memory
-    del df, df_str
+    # Replace "All streets" with selected street name
+    query = ('UPDATE selected_street '
+             'SET street_selection = ?')
+    params = [street_name]
+    conn.execute(query, params)
 
-    return traffic_df_upt_dt_str
+    # Add selected street to filtered_traffic_dt
+    query = (f'CREATE OR REPLACE TEMP TABLE traffic_df_dt_str AS '
+             f'SELECT * FROM {from_table_name} '
+             f'UNION ALL '
+             f'SELECT * FROM selected_street')
+    conn.execute(query)
+
+    #traffic_df_dt_str = conn.execute('SELECT * FROM traffic_df_dt_str').fetchdf()
+
+    # Delete (drop) the street_selection table
+    conn.execute('DROP TABLE IF EXISTS selected_street')
+
+    return #traffic_df_dt_str
 
 def get_bike_car_ratios(df):
     traffic_df_id_bc = df.groupby(by=['segment_id'], as_index=False).agg(bike_total=('bike_total', 'sum'), car_total=('car_total', 'sum'))
@@ -401,6 +429,7 @@ def update_map(clickData, id_street, hardware_version, toggle_active_filter):
 
     # Get hardware version of currently selected street
     current_hw = int(df_map_base.loc[df_map_base['id_street'] == id_street, 'hardware_version'].iloc[0])
+
     # Update df-map data in case of uptime change, active filter change or hardware change
     if callback_trigger == 'toggle_active_filter' or 'hardware_version':
         df_map = update_map_data(df_map_base, traffic_df_id_bc, toggle_active_filter, hardware_version)
@@ -571,6 +600,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
             elif hardware_version == [2]:
                 query += ' AND hardware_version = 2'
 
+        # Add or update table filtered_traffic
         with db_lock:  # Ensure thread safety for writes
             conn.execute(query, params)
 
@@ -585,6 +615,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     params = [min_date]
     params.append(max_date)
 
+    # Add or update table filtered_traffic_min_max (for comparison graph)
     with db_lock:  # Ensure thread safety for writes
         conn.execute(query, params).fetchdf()
 
@@ -600,43 +631,28 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     params.append(hour_range[0])
     params.append(hour_range[1])
 
+    # Add or update table filtered_traffic_dt (for ranking chart)
     with db_lock:  # Ensure thread safety for writes
         conn.execute(query, params)
-        # No street selection for ranking chart
-        traffic_df_dt = conn.execute('SELECT * FROM filtered_traffic_dt').df()
+        traffic_df_dt = conn.execute('SELECT * FROM filtered_traffic_dt').fetchdf()
 
-    # Create selected street table
-    query = ('CREATE OR REPLACE TEMP TABLE selected_street AS '
-             'SELECT * '
-             'FROM filtered_traffic_dt '
-             'WHERE id_street = ?')
-    params = [id_street]
-    conn.execute(query, params)
-
-    # Replace "All streets" with selected street name
-    query = ('UPDATE selected_street '
-             'SET street_selection = ?')
-    params = [street_name]
-    conn.execute(query, params)
-
-    # Add selected street to filtered_traffic_dt
-    query = ('CREATE OR REPLACE TEMP TABLE traffic_df_dt_str AS '
-             'SELECT * FROM filtered_traffic_dt '
-             'UNION ALL '
-             'SELECT * FROM selected_street')
-
-    with db_lock:  # Ensure thread safety for writes
-        conn.execute(query)
+    # # Add or update table with selected street
+    add_selected_street('filtered_traffic_dt', id_street, street_name)
+    with db_lock:
         traffic_df_dt_str = conn.execute('SELECT * FROM traffic_df_dt_str').fetchdf()
-        # Delete (drop) the street_selection table
-        conn.execute("DROP TABLE IF EXISTS selected_street")
 
-    # Format date output for chart representation
-    format_string = '%d %b %Y'
-    min_date_str = format_str_date(min_date, '%Y-%m-%dT%H:%M:%S', format_string)
-    max_date_str = format_str_date(max_date, '%Y-%m-%dT%H:%M:%S', format_string)
-    start_date_str = format_str_date(start_date, '%Y-%m-%dT%H:%M:%S', format_string)
-    end_date_str = format_str_date(end_date, '%Y-%m-%dT%H:%M:%S', format_string)
+    # Format date output for chart representation (catch change format from date_filter callback!)
+    if callback_trigger in ['date_filter', 'radio_time_division']:
+        from_date_format = '%Y-%m-%d'
+    else:
+        from_date_format = '%Y-%m-%dT%H:%M:%S'
+
+    to_format_string = '%d %b %Y'
+
+    min_date_str = format_str_date(min_date, '%Y-%m-%dT%H:%M:%S', to_format_string)
+    max_date_str = format_str_date(max_date, '%Y-%m-%dT%H:%M:%S', to_format_string)
+    start_date_str = format_str_date(start_date, from_date_format, to_format_string)
+    end_date_str = format_str_date(end_date, from_date_format, to_format_string)
 
     # Provide warnings in case of missing data
     if missing_data:
@@ -920,7 +936,7 @@ def update_period_other_values(period_values_year, period_type_others, street_id
     # Get other options
     period_values_others = traffic_df_use[period_type_others].unique()
 
-    return period_values_others #[{'label': str(val), 'value': str(val)} for val in unique_values]
+    return period_values_others
 
 @app.callback(
     Output(component_id='line_avg_delta_traffic', component_property= 'figure'),
@@ -951,58 +967,96 @@ def comparison_chart(period_values_year, period_options_year,
         select_two_text = ['Select two periods to compare:']
         select_two_color = {'color': 'black'}
 
-    query = ('SELECT * '
-             'FROM filtered_traffic_min_max ')
+    # Add selected street to min_max
+    add_selected_street('filtered_traffic_min_max', id_street, street_name)
+
+    # Create period A and B, based on period_type and values
+    query_A = (f'CREATE OR REPLACE TEMP TABLE df_period_A AS '
+               f'SELECT * '
+               f'FROM traffic_df_dt_str '
+               f'WHERE {period_type_others} = ?')
+
+    params_A = [period_values_others[0]]
+
+    query_B = (f'CREATE OR REPLACE TEMP TABLE df_period_B AS '
+               f'SELECT * '
+               f'FROM traffic_df_dt_str '
+               f'WHERE {period_type_others} = ?')
+    params_B = [period_values_others[1]]
 
     with db_lock:
-        traffic_df_use = conn.execute(query).fetchdf()
+        conn.execute(query_A, params_A)
+        conn.execute(query_B, params_B)
 
-    traffic_df_use_str = update_selected_street(traffic_df_use, segment_id, street_name)
-
-    period_type = period_type_others
-    period_value_A = period_values_others[0]
-    period_value_B = period_values_others[1]
-
-    df_period_A = traffic_df_use_str[traffic_df_use_str[period_type] == period_value_A]
-    df_period_B = traffic_df_use_str[traffic_df_use_str[period_type] == period_value_B]
-
-    if period_type == _('year_month'):
+    # Prepare grouping and graph labels
+    if period_type_others == _('year_month'):
         group_by = 'day'
         label = _('Month')
-    elif period_type == 'year_week':
+    elif period_type_others == 'year_week':
         group_by = _('weekday')
         label = _('Week')
-    elif period_type == 'date':
+    elif period_type_others == 'date':
         group_by = 'hour'
         label = _('Day')
-    elif period_type == 'year':
+    elif period_type_others == 'year':
         group_by = _('month')
         label = _('Year')
 
-    df_period_grp_A = df_period_A.groupby(by=['street_selection', group_by], sort=False, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
-    df_period_grp_B = df_period_B.groupby(by=['street_selection', group_by], sort=False, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
+    # Prepare comparison graph data for periods A and B
+    group_cols = ['street_selection', group_by]
+    group_clause = ", ".join(group_cols)
+    query_A = f"""
+    CREATE OR REPLACE TEMP TABLE df_period_grp_A AS 
+    SELECT 
+        {group_clause},
+        SUM(ped_total) AS ped_total,
+        SUM(bike_total) AS bike_total,
+        SUM(car_total) AS car_total,
+        SUM(heavy_total) AS heavy_total,
+    MIN(date_local) AS first_seen
+    FROM df_period_A
+    GROUP BY {group_clause}
+    ORDER BY first_seen
+    """
 
-    # Categorical sorting
-    month_order = [_('Jan'), _('Feb'), _('Mar'), _('Apr'), _('May'), _('Jun'),
-                   _('Jul'), _('Aug'), _('Sep'), _('Oct'), _('Nov'), _('Dec')]
+    query_B = f"""
+    CREATE OR REPLACE TEMP TABLE df_period_grp_B AS 
+    SELECT 
+        {group_clause},
+        SUM(ped_total) AS ped_total_d,
+        SUM(bike_total) AS bike_total_d,
+        SUM(car_total) AS car_total_d,
+        SUM(heavy_total) AS heavy_total_d,
+    MIN(date_local) AS first_seen
+    FROM df_period_B
+    GROUP BY {group_clause}
+    ORDER BY first_seen
+    """
 
-    week_order = [_('Sun'), _('Mon'), _('Tue'), _('Wed'), _('Thu'), _('Fri'), _('Sat')]
-
-    if period_type == _('year'):
-        # Categorize to manage sort order upon merge
-        df_period_grp_A[_('month')] = pd.Categorical(df_period_grp_A[_('month')], categories=month_order, ordered=True)
-        df_period_grp_B[_('month')] = pd.Categorical(df_period_grp_B[_('month')], categories=month_order, ordered=True)
-    if period_type == _('year_week'):
-        # Categorize to manage sort order upon merge
-        df_period_grp_A[_('weekday')] = pd.Categorical(df_period_grp_A[_('weekday')], categories=week_order, ordered=True)
-        df_period_grp_B[_('weekday')] = pd.Categorical(df_period_grp_B[_('weekday')], categories=week_order, ordered=True)
-
-    # Rename B-series
-    df_period_grp_B_ren = df_period_grp_B.rename(columns={'ped_total': 'ped_total_d', 'bike_total': 'bike_total_d', 'car_total': 'car_total_d', 'heavy_total': 'heavy_total_d'})
-    df_period_grp_B = df_period_grp_B_ren
+    with db_lock:  # Ensure thread safety for writes
+        #df_period_grp_B = conn.execute(query_B).fetchdf()
+        conn.execute(query_A).fetchdf()
+        conn.execute(query_B).fetchdf()
 
     # Merge period A and period B
-    df_avg_traffic_delta_AB = pd.merge(df_period_grp_B, df_period_grp_A, on=[group_by,'street_selection'], how='outer')
+
+    if period_type_others == _('date'):
+        query = f"""
+        SELECT *
+        FROM df_period_grp_B
+        FULL OUTER JOIN df_period_grp_A
+        USING ({group_by}, street_selection)
+        ORDER BY {group_by}
+        """
+    else:
+        query = f"""
+        SELECT *
+        FROM df_period_grp_B
+        FULL OUTER JOIN df_period_grp_A
+        USING ({group_by}, street_selection)
+        """
+
+    df_avg_traffic_delta_AB = conn.execute(query).fetchdf()
 
     # Draw graph
     line_avg_delta_traffic = px.line(df_avg_traffic_delta_AB,
@@ -1023,7 +1077,7 @@ def comparison_chart(period_values_year, period_options_year,
     line_avg_delta_traffic.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
     line_avg_delta_traffic.for_each_annotation(lambda a: a.update(text=a.text.replace('All Streets', _('All Streets'))))
     line_avg_delta_traffic.update_layout({'plot_bgcolor': ADFC_palegrey,'paper_bgcolor': ADFC_palegrey})
-    line_avg_delta_traffic.update_layout(title_text=_('Period') + ' A : ' + label + ' - ' + period_value_A + ' , ' + _('Period') + ' B (----): ' + label + ' - ' + period_value_B)
+    line_avg_delta_traffic.update_layout(title_text=_('Period') + ' A : ' + label + ' - ' + period_values_others[0] + ' , ' + _('Period') + ' B (----): ' + label + ' - ' + period_values_others[1])
     line_avg_delta_traffic.update_layout(yaxis_title=_('Absolute traffic count'))
     line_avg_delta_traffic.update_layout(legend_title_text=_('Traffic Type'))
     line_avg_delta_traffic.update_traces({'name': _('Pedestrians') + ' A'}, selector={'name': 'ped_total'})
@@ -1043,4 +1097,4 @@ def comparison_chart(period_values_year, period_options_year,
     return line_avg_delta_traffic, select_two_text, select_two_color
 
 if __name__ == "__main__":
-    app.run(debug=False)
+    app.run(debug=True)

@@ -5,7 +5,7 @@
 # @file    app.py
 # @author  Egbert Klaassen
 # @author  Michael Behrisch
-# @date    2026-01-04
+# @date    2026-01-08
 
 """"
 # traffic_df        - dataframe with measured traffic data file
@@ -17,6 +17,8 @@ import os
 import gettext
 from datetime import datetime, timedelta
 import glob
+from time import strftime
+
 import pandas as pd
 import geopandas as gpd
 import dash_bootstrap_components as dbc
@@ -25,6 +27,7 @@ from dash.exceptions import PreventUpdate
 import plotly.express as px
 import duckdb
 from threading import Lock
+from dateutil import parser
 
 
 # the following is basically to suppress warnings about "_" being undefined
@@ -41,7 +44,6 @@ DEPLOYED = __name__ != '__main__'
 ASSET_DIR = os.path.join(os.path.dirname(__file__), 'assets')
 DATA_DIR = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'data')
 
-
 db_lock = Lock()
 
 def output_excel(df, file_name):
@@ -51,10 +53,6 @@ def output_excel(df, file_name):
 def output_csv(df, file_name):
     path = os.path.join(ASSET_DIR, file_name + '.csv')
     df.to_csv(path, index=False)
-
-def remove_timezone(dt):
-    # Function to remove timezone, `dt` is a python datetime object that used .replace() method
-    return dt.replace(tzinfo=None)
 
 def retrieve_data():
     # Read geojson data file to access geometry coordinates
@@ -81,7 +79,14 @@ def retrieve_data():
     file_paths = glob.glob(os.path.join(data_dir, 'traffic_df_*.parquet'))
 
     # Initialize Duckdb
-    conn = duckdb.connect(database=':memory:')
+    db_file = 'traffic.db'
+    print(data_dir)
+    if os.path.exists(os.path.join(data_dir, db_file)):
+        print('Remove existing database file')
+        os.remove(os.path.join(data_dir, db_file))
+    # conn = duckdb.connect(database=':memory:')
+    conn = duckdb.connect(database=os.path.join(data_dir, db_file))
+    conn.execute('SET threads = 4;')
 
     if file_paths:
         # Old: traffic_df = pd.concat([pd.read_parquet(file) for file in sorted(file_paths)], ignore_index=True)
@@ -89,10 +94,8 @@ def retrieve_data():
         traffic_relation.to_table('all_traffic')
     else:
         #TODO: Add updated file to assets folder
-        traffic_relation = conn.read_parquet(ASSET_DIR + '/traffic_df_2025_01-2026_12.parquet', union_by_name=True)
+        traffic_relation = conn.read_parquet(ASSET_DIR + '/traffic_df*.parquet', union_by_name=True)
         traffic_relation.to_table('all_traffic')
-        # Old: traffic_file_path = os.path.join(data_dir, 'traffic_df_2023_2024_2025_YTD.csv.gz')
-        # Old: traffic_df = pd.read_csv(traffic_file_path)
 
     # Alter dtypes for data processing and to enable sort order
     conn.execute('ALTER TABLE all_traffic ALTER COLUMN segment_id SET DATA TYPE VARCHAR')
@@ -138,20 +141,6 @@ def format_str_date(str_date, from_date_format, to_date_format):
     timestamp_date = datetime.strptime(str_date, from_date_format)
     formatted_str_date = timestamp_date.strftime(to_date_format)
     return formatted_str_date
-
-# def update_selected_street(df, segment_id, street_name):
-#
-#     # Generate "selected street only" df and populate "street_selection"
-#     df_str = df[df['segment_id'] == segment_id]
-#     df_str.loc[df_str['street_selection'] == 'All Streets', 'street_selection'] = street_name
-#
-#     # Add selected street to all streets
-#     traffic_df_upt_dt_str = df._append(df_str, ignore_index=True)
-#
-#     # Free memory
-#     del df, df_str
-#
-#     return traffic_df_upt_dt_str
 
 def add_selected_street(from_table_name, id_street, street_name):
 
@@ -284,6 +273,7 @@ def get_min_max_dates(id_street):
     query = ('SELECT max(date_local) '
              'FROM all_traffic '
              'WHERE id_street = ?')
+    params = [id_street]
 
     with db_lock:
         max_date = conn.execute(query, params).fetchone()
@@ -305,25 +295,45 @@ update_language(INITIAL_LANGUAGE)
 # Michael for def segment_id_from_url?
 street_names = {id: name for id, name in zip(traffic_df['segment_id'], traffic_df['id_street'])}
 
-start_date = conn.execute('SELECT min(date_local) FROM all_traffic').fetchone()
-start_date = start_date[0]
-two_weeks_ago_dt = datetime.now() - timedelta(weeks=2)
-two_weeks_ago = two_weeks_ago_dt.strftime('%Y-%m-%d')
+# Get min max dates from complete data set
+query = """
+SELECT 
+    MIN(STRPTIME(date, '%d-%m-%Y')) AS start_date,
+    MAX(STRPTIME(date, '%d-%m-%Y')) AS end_date
+FROM all_traffic
+"""
 
-end_date = conn.execute('SELECT max(date_local) FROM all_traffic').fetchone()
-end_date = end_date[0]
+min_max = conn.execute(query).fetchdf()
+
+start_date = min_max.loc[0, 'start_date']   # Access by label + row index
+end_date = min_max.loc[0, 'end_date']
+
+#start_date = conn.execute('SELECT min(date_local) FROM all_traffic').fetchone()
+#start_date = start_date[0]
+
+#end_date = conn.execute('SELECT max(date_local) FROM all_traffic').fetchone()
+#end_date = end_date[0]
 
 min_date_allowed = start_date
 max_date_allowed = end_date
 
+#TODO: capture if date not available
 try_start_date = end_date + timedelta(days=-14)
 if try_start_date > start_date:
     start_date = try_start_date
 
+to_date_format = '%Y-%m-%d'
+start_date = datetime.strftime(start_date, to_date_format)
+end_date = datetime.strftime(end_date, to_date_format)
+
 min_date, max_date = get_min_max_dates(INITIAL_STREET_ID)
 
 # Force initial setting to 0 - 24 hour
-hour_range = INITIAL_HOUR_RANGE
+#hour_range = INITIAL_HOUR_RANGE
+
+two_weeks_ago_dt = datetime.now() - timedelta(weeks=2)
+two_weeks_ago = two_weeks_ago_dt.strftime('%Y-%m-%d')
+
 
 ### Prepare map data ###
 if not DEPLOYED:
@@ -612,22 +622,23 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
              'SELECT * EXCLUDE (uptime, car_speed0, car_speed10, car_speed20, car_speed30, car_speed40, car_speed50, car_speed60, car_speed70, last_data_package) '
              'FROM filtered_traffic '
              'WHERE date_local >= ? AND date_local <= ?')
-    params = [min_date]
-    params.append(max_date)
+    params = [min_date, max_date]
 
     # Add or update table filtered_traffic_min_max (for comparison graph)
     with db_lock:  # Ensure thread safety for writes
         conn.execute(query, params).fetchdf()
 
-    query = ('CREATE OR REPLACE TEMP TABLE filtered_traffic_dt AS '
-             'SELECT * '
-             'FROM filtered_traffic '
-             'WHERE date_local >= ? AND date_local <= ?')
-    params = [start_date]
-    params.append(end_date)
-    #TODO: Select one date
+    #if callback_trigger in ['date_filter', 'hardware_version', 'range_slider', 'radio_time_division']:
 
-    query += (' AND hour >= ? AND hour <= ?')
+    query = """
+    CREATE OR REPLACE TEMP TABLE filtered_traffic_dt AS
+    SELECT *
+    FROM filtered_traffic
+    WHERE STRPTIME(date, '%d-%m-%Y') >= ? AND STRPTIME(date, '%d-%m-%Y') <= ?
+    """
+    params = [start_date, end_date]
+
+    query += 'AND hour >= ? AND hour <= ?'
     params.append(hour_range[0])
     params.append(hour_range[1])
 
@@ -641,18 +652,22 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     with db_lock:
         traffic_df_dt_str = conn.execute('SELECT * FROM traffic_df_dt_str').fetchdf()
 
-    # Format date output for chart representation (catch change format from date_filter callback!)
-    if callback_trigger in ['date_filter', 'radio_time_division']:
-        from_date_format = '%Y-%m-%d'
-    else:
+    # Format dates for chart representation / processing
+    if callback_trigger in ['date_filter']:
         from_date_format = '%Y-%m-%dT%H:%M:%S'
+    else:
+        from_date_format = '%Y-%m-%d'
 
-    to_format_string = '%d %b %Y'
+    to_date_format = '%d %b %Y'
 
-    min_date_str = format_str_date(min_date, '%Y-%m-%dT%H:%M:%S', to_format_string)
-    max_date_str = format_str_date(max_date, '%Y-%m-%dT%H:%M:%S', to_format_string)
-    start_date_str = format_str_date(start_date, from_date_format, to_format_string)
-    end_date_str = format_str_date(end_date, from_date_format, to_format_string)
+    # Align date formats
+    start_date = parser.parse(start_date)
+    end_date = parser.parse(end_date)
+    start_date_str = datetime.strftime(start_date, to_date_format)
+    end_date_str = datetime.strftime(end_date, to_date_format)
+
+    min_date_str = format_str_date(min_date, '%Y-%m-%dT%H:%M:%S', to_date_format)
+    max_date_str = format_str_date(max_date, '%Y-%m-%dT%H:%M:%S', to_date_format)
 
     # Provide warnings in case of missing data
     if missing_data:
@@ -695,6 +710,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     pie_traffic.update_layout(margin=dict(l=00, r=00, t=00, b=00))
     pie_traffic.update_layout(showlegend=False)
     pie_traffic.update_traces(textposition='inside', textinfo='percent+label')
+
 
     ### Create absolute line chart
     group_cols = [radio_time_division, 'street_selection']
@@ -742,6 +758,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     line_abs_traffic.for_each_annotation(lambda a: a.update(text=a.text.replace('All Streets', _('All Streets'))))
     #Range Slider: line_abs_traffic.update_xaxes(rangeslider_visible=True)
 
+
     ### Create average traffic bar chart
     group_cols = [radio_time_unit, 'street_selection']
     group_clause = ", ".join(group_cols)
@@ -784,7 +801,6 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     bar_avg_traffic.update_xaxes(dtick = 1, tickformat=".0f")
     bar_avg_traffic.for_each_yaxis(lambda yaxis: yaxis.update(showticklabels=True))
     for annotation in bar_avg_traffic.layout.annotations: annotation['font'] = {'size': 14}
-
 
     ### Create percentage speed bar chart
 
@@ -855,6 +871,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     bar_v85.for_each_yaxis(lambda yaxis: yaxis.update(showticklabels=True))
     for annotation in bar_v85.layout.annotations:
         annotation['font'] = {'size': 14}
+
 
     ### Create ranking chart
     df_bar_ranking = traffic_df_dt.groupby(by=['id_street', 'street_selection'], sort=False, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
@@ -1097,4 +1114,4 @@ def comparison_chart(period_values_year, period_options_year,
     return line_avg_delta_traffic, select_two_text, select_two_color
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=False)

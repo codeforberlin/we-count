@@ -80,20 +80,19 @@ def retrieve_data():
 
     # Initialize Duckdb
     db_file = 'traffic.db'
-    print(data_dir)
     if os.path.exists(os.path.join(data_dir, db_file)):
-        print('Remove existing database file')
+        if not DEPLOYED:
+            print('Replace existing database file')
         os.remove(os.path.join(data_dir, db_file))
-    # conn = duckdb.connect(database=':memory:')
+
     conn = duckdb.connect(database=os.path.join(data_dir, db_file))
     conn.execute('SET threads = 4;')
 
     if file_paths:
-        # Old: traffic_df = pd.concat([pd.read_parquet(file) for file in sorted(file_paths)], ignore_index=True)
         traffic_relation = conn.read_parquet(ASSET_DIR + '/traffic_df*.parquet', union_by_name=True)
         traffic_relation.to_table('all_traffic')
     else:
-        #TODO: Add updated file to assets folder
+        #TODO: Add updated backup file to assets folder and adjust below path
         traffic_relation = conn.read_parquet(ASSET_DIR + '/traffic_df*.parquet', union_by_name=True)
         traffic_relation.to_table('all_traffic')
 

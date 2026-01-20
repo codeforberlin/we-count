@@ -17,8 +17,6 @@ import os
 import gettext
 from datetime import datetime, timedelta
 import glob
-from time import strftime
-
 import pandas as pd
 import geopandas as gpd
 import dash_bootstrap_components as dbc
@@ -36,7 +34,7 @@ from typing import Callable
 
 _: Callable[[str], str]
 
-from layout import serve_layout, INITIAL_STREET_ID, INITIAL_LANGUAGE, INITIAL_HOUR_RANGE
+from layout import serve_layout, INITIAL_STREET_ID, INITIAL_LANGUAGE
 from layout import ADFC_blue, ADFC_crimson, ADFC_darkgrey, ADFC_green, ADFC_green_L
 from layout import ADFC_lightblue, ADFC_lightblue_D, ADFC_lightgrey, ADFC_orange, ADFC_palegrey, ADFC_pink
 
@@ -197,12 +195,10 @@ def update_map_data(df_map_base, df, active_selected, hardware_version):
     # TODO: some streets in "bzm_telraam_segments.geojson" have no camera info and so appear as hardware version "0", the below puts these to "1"
     df_map['hardware_version'] = df_map['hardware_version'].replace(0,1)
 
-    # TODO: Fiter uptime althought at the moment it looks like there are no streets with < 0.7 uptime only
+    # TODO: Filter uptime although at the moment it looks like there are no streets with < 0.7 uptime only
 
     # Filter on active cameras (data available later than two weeks ago)
     if active_selected == ['filter_active_selected']:
-        two_weeks_ago_dt = datetime.now() - timedelta(weeks=2)
-        two_weeks_ago = two_weeks_ago_dt.strftime('%Y-%m-%d')
         # get segment_id's with data >= two weeks ago
         df_map_active = df_map[df_map['last_data_package'] >= two_weeks_ago]
         active_segment_ids = df_map_active['segment_id'].unique()
@@ -302,16 +298,11 @@ SELECT
 FROM all_traffic
 """
 
-min_max = conn.execute(query).fetchdf()
+with db_lock:
+    min_max = conn.execute(query).fetchdf()
 
 start_date = min_max.loc[0, 'start_date']   # Access by label + row index
 end_date = min_max.loc[0, 'end_date']
-
-#start_date = conn.execute('SELECT min(date_local) FROM all_traffic').fetchone()
-#start_date = start_date[0]
-
-#end_date = conn.execute('SELECT max(date_local) FROM all_traffic').fetchone()
-#end_date = end_date[0]
 
 min_date_allowed = start_date
 max_date_allowed = end_date
@@ -327,12 +318,11 @@ end_date = datetime.strftime(end_date, to_date_format)
 
 min_date, max_date = get_min_max_dates(INITIAL_STREET_ID)
 
-# Force initial setting to 0 - 24 hour
-#hour_range = INITIAL_HOUR_RANGE
-
-two_weeks_ago_dt = datetime.now() - timedelta(weeks=2)
+from_date_format = '%Y-%m-%dT%H:%M:%S'
+max_date_dt = convert(max_date, from_date_format)
+two_weeks_ago_dt = max_date_dt - timedelta(weeks=2)
+#two_weeks_ago_dt = datetime.now() - timedelta(weeks=2)
 two_weeks_ago = two_weeks_ago_dt.strftime('%Y-%m-%d')
-
 
 ### Prepare map data ###
 if not DEPLOYED:
@@ -580,6 +570,8 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     street_name = id_street.split(' (')[0]
     selected_street_header = street_name
 
+    #TODO: First callback triggers "hardware version", why?
+
     ### Filter all traffic
     if callback_trigger in ['toggle_uptime_filter', 'toggle_active_filter', 'hardware_version']:
 
@@ -590,24 +582,29 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
 
         if toggle_uptime_filter == ['filter_uptime_selected']:
             # Filter uptime
-            query += 'WHERE uptime > 0.7'
+            query += 'WHERE uptime > 0.7 '
             if toggle_active_filter == ['filter_active_selected']:
                 # Filter active cameras
-                query += ' AND CAST(last_data_package AS DATE) >= ?'
+                query += 'AND CAST(last_data_package AS DATE) >= ? '
                 params = [two_weeks_ago]
             if hardware_version == [1]:
-                query += ' AND hardware_version = 1'
+                query += 'AND hardware_version = 1 '
             elif hardware_version == [2]:
-                query += ' AND hardware_version = 2'
+                query += 'AND hardware_version = 2 '
         else:
             # Filter active selected
             if toggle_active_filter == ['filter_active_selected']:
-                query += 'WHERE CAST(last_data_package AS DATE) >= ?'
+                query += 'WHERE CAST(last_data_package AS DATE) >= ? '
                 params = [two_weeks_ago]
-            if hardware_version == [1]:
-                query += ' AND hardware_version = 1'
-            elif hardware_version == [2]:
-                query += ' AND hardware_version = 2'
+                if hardware_version == [1]:
+                    query += 'AND hardware_version = 1 '
+                elif hardware_version == [2]:
+                    query += 'AND hardware_version = 2 '
+            else:
+                if hardware_version == [1]:
+                    query += 'WHERE hardware_version = 1 '
+                elif hardware_version == [2]:
+                    query += 'WHERE hardware_version = 2 '
 
         # Add or update table filtered_traffic
         with db_lock:  # Ensure thread safety for writes
@@ -737,7 +734,6 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
         labels={'year': _('Year'), _('year_month'): _('Month'), 'year_week': _('Week'), 'date': _('Day'), 'date_hour': _('Hour')},
         color_discrete_map={'ped_total': ADFC_lightblue, 'bike_total': ADFC_green, 'car_total': ADFC_orange, 'heavy_total': ADFC_crimson},
         facet_col_spacing=0.04,
-        #title=_('Absolute traffic count')
         title = (_('Absolute traffic count') + ' (' + start_date_str + ' - ' + end_date_str + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)')
     ).update_traces(mode="lines+markers", connectgaps=False)
 
@@ -976,11 +972,11 @@ def comparison_chart(period_values_year, period_options_year,
 
     if not period_values_others or len(period_values_others) != 2:
         select_two_color = {'color': ADFC_orange}
-        select_two_text = ['Select (exactly) two periods to compare:']
+        select_two_text = _('Select (exactly) two periods to compare:')
         period_type_others = 'year'
         period_values_others = ['2025', '2026']
     else:
-        select_two_text = ['Select two periods to compare:']
+        select_two_text = _('Select two periods to compare:')
         select_two_color = {'color': 'black'}
 
     # Add selected street to min_max

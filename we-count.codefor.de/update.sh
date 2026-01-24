@@ -5,8 +5,7 @@ cd $HOME/we-count
 git fetch -q
 # to make a new release update the tag / commit hash below
 git checkout d5ae3f7bd9332752656acb0816e11517c1dc644b
-../venv_wecount/bin/python src/bzm_get_data.py
-#../venv_wecount/bin/python src/we_count/backend/bzm_get_data.py
+../venv_wecount/bin/python src/we_count/backend/bzm_get_data.py
 /usr/bin/pkill -HUP -F /run/gunicorn/we-count/pid
 
 cd $HOME/we-count-beta

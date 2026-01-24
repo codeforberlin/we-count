@@ -56,6 +56,8 @@ def get_locations(filepath="https://berlin-zaehlt.de/csv/bzm_telraam_segments.ge
     local_file = os.path.join(DATA_DIR, os.path.basename(filepath))
     if has_min_size(filepath):
         response = requests.get(filepath)
+        if not os.path.exists(DATA_DIR):
+            os.makedirs(DATA_DIR)
         with open(local_file, 'wb') as f:
             f.write(response.content)
     df_geojson = pd.read_json(local_file)

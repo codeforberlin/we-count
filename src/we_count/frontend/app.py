@@ -74,8 +74,6 @@ def retrieve_data():
     if not DEPLOYED:
         print('Reading traffic data...')
 
-    file_paths = glob.glob(os.path.join(data_dir, 'traffic_df_*.parquet'))
-
     # Initialize Duckdb
     db_file = 'traffic.db'
     if os.path.exists(os.path.join(data_dir, db_file)):
@@ -84,15 +82,10 @@ def retrieve_data():
         os.remove(os.path.join(data_dir, db_file))
 
     conn = duckdb.connect(database=os.path.join(data_dir, db_file))
-    conn.execute('SET threads = 4;')
+    conn.execute('SET threads = 4;')  # limit the number of parallel threads
 
-    if file_paths:
-        traffic_relation = conn.read_parquet(ASSET_DIR + '/traffic_df*.parquet', union_by_name=True)
-        traffic_relation.to_table('all_traffic')
-    else:
-        #TODO: Add updated backup file to assets folder and adjust below path
-        traffic_relation = conn.read_parquet(ASSET_DIR + '/traffic_df*.parquet', union_by_name=True)
-        traffic_relation.to_table('all_traffic')
+    traffic_relation = conn.read_parquet(os.path.join(data_dir, 'traffic_df_*.parquet'), union_by_name=True)
+    traffic_relation.to_table('all_traffic')
 
     # Alter dtypes for data processing and to enable sort order
     conn.execute('ALTER TABLE all_traffic ALTER COLUMN segment_id SET DATA TYPE VARCHAR')

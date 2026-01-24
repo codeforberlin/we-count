@@ -251,7 +251,7 @@ def get_min_max_str(start_date, end_date, min_date, max_date):
 
     return min_date, max_date, start_date, end_date, message, missing_data
 
-def get_min_max_dates(id_street):
+def get_min_max_dates(id_street: str):
 
     query = ('SELECT min(date_local) '
              'FROM all_traffic '
@@ -301,27 +301,30 @@ FROM all_traffic
 with db_lock:
     min_max = conn.execute(query).fetchdf()
 
+# Define date filter min/max
 start_date = min_max.loc[0, 'start_date']   # Access by label + row index
 end_date = min_max.loc[0, 'end_date']
 
-min_date_allowed = start_date
-max_date_allowed = end_date
+#Free memory
+del min_max
 
 #TODO: capture if date not available
-try_start_date = end_date + timedelta(days=-14)
+try_start_date = end_date - timedelta(days=14)
 if try_start_date > start_date:
     start_date = try_start_date
 
+# Put dates to required dropdown format
 to_date_format = '%Y-%m-%d'
 start_date = datetime.strftime(start_date, to_date_format)
 end_date = datetime.strftime(end_date, to_date_format)
 
+# Get min/max selectable dates, based on selected street
 min_date, max_date = get_min_max_dates(INITIAL_STREET_ID)
 
-from_date_format = '%Y-%m-%dT%H:%M:%S'
-max_date_dt = convert(max_date, from_date_format)
-two_weeks_ago_dt = max_date_dt - timedelta(weeks=2)
-#two_weeks_ago_dt = datetime.now() - timedelta(weeks=2)
+# Get active filter date (two weeks ago from the last date in the dataset)
+from_date_format = '%Y-%m-%d'
+end_date_dt = convert(end_date, from_date_format)
+two_weeks_ago_dt = end_date_dt - timedelta(weeks=2)
 two_weeks_ago = two_weeks_ago_dt.strftime('%Y-%m-%d')
 
 ### Prepare map data ###

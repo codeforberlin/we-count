@@ -336,7 +336,7 @@ def serve_layout(app: Dash, traffic_df, start_date, end_date, min_date, max_date
                             className='ms-2 mb-2'
                         ),
                     ], className='d-inline-block')
-                ], sm=6),
+                ], sm=5),
                 dbc.Col([
                     dbc.Col([
                         html.H6(_('Select period type:'), className='ms-2 fw-bold text-start'),
@@ -353,7 +353,7 @@ def serve_layout(app: Dash, traffic_df, start_date, end_date, min_date, max_date
                         ),
                     ], sm=4, className='d-inline-block'),
                     dbc.Col([
-                        html.H6(_('Select (exactly) two periods to compare:'), id= 'select_two', className='ms-5 fw-bold text-start'),
+                        html.H6(_('Select two periods to compare:'), id= 'select_two', className='ms-5 fw-bold text-start'),
                         dcc.Dropdown(
                             id='period_values_others',
                             value=['2025', '2026'],
@@ -361,7 +361,7 @@ def serve_layout(app: Dash, traffic_df, start_date, end_date, min_date, max_date
                             className='ms-5 mb-2'
                         ),
                     ], sm=8, className='d-inline-block')
-                ], sm=6),
+                ], sm=7),
             ], className='sticky-top rounded g-2 p-1 d-flex flex-wrap',
                 style={'background-color': ADFC_lightblue, 'opacity': 1.0}),
             dbc.Row([

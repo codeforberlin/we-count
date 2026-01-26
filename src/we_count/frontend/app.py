@@ -5,7 +5,7 @@
 # @file    app.py
 # @author  Egbert Klaassen
 # @author  Michael Behrisch
-# @date    2026-01-08
+# @date    2026-01-26
 
 """"
 # traffic_df        - dataframe with measured traffic data file
@@ -16,17 +16,15 @@
 import os
 import gettext
 from datetime import datetime, timedelta
-import glob
 import pandas as pd
 import geopandas as gpd
-import dash_bootstrap_components as dbc
+import duckdb
 from dash import Dash, Output, Input, callback, ctx
+import dash_bootstrap_components as dbc
 from dash.exceptions import PreventUpdate
 import plotly.express as px
-import duckdb
 from threading import Lock
 from dateutil import parser
-
 
 # the following is basically to suppress warnings about "_" being undefined
 # "from gettext import gettext as _" does not work because we use gettext.install later on, which installs "_"
@@ -81,8 +79,9 @@ def retrieve_data():
             print('Replace existing database file')
         os.remove(os.path.join(data_dir, db_file))
 
-    conn = duckdb.connect(database=os.path.join(data_dir, db_file))
-    conn.execute('SET threads = 4;')  # limit the number of parallel threads
+    #conn = duckdb.connect(database=os.path.join(data_dir, db_file))
+    conn = duckdb.connect(database=':memory:')
+    # conn.execute('SET threads = 4;')  # limit the number of parallel threads
 
     traffic_relation = conn.read_parquet(os.path.join(data_dir, 'traffic_df_*.parquet'), union_by_name=True)
     traffic_relation.to_table('all_traffic')

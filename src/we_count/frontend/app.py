@@ -79,15 +79,14 @@ def retrieve_data():
             print('Replace existing database file')
         os.remove(os.path.join(data_dir, db_file))
 
-    #conn = duckdb.connect(database=os.path.join(data_dir, db_file))
-    conn = duckdb.connect(database=':memory:')
-    # conn.execute('SET threads = 4;')  # limit the number of parallel threads
+    conn = duckdb.connect(database=os.path.join(data_dir, db_file))
+    conn.execute('SET threads = 4;')  # limit the number of parallel threads
 
     traffic_relation = conn.read_parquet(os.path.join(data_dir, 'traffic_df_*.parquet'), union_by_name=True)
     traffic_relation.to_table('all_traffic')
 
     # Alter dtypes for data processing and to enable sort order
-    conn.execute('ALTER TABLE all_traffic ALTER COLUMN segment_id SET DATA TYPE VARCHAR')
+    conn.execute('ALTER TABLE all_traffic ALTER COLUMN segment_id SET DATA TYPE INT64')
     conn.execute('ALTER TABLE all_traffic ALTER COLUMN year SET DATA TYPE VARCHAR')
     conn.execute('ALTER TABLE all_traffic ALTER COLUMN day SET DATA TYPE INTEGER')
     conn.execute('ALTER TABLE all_traffic ALTER COLUMN date_local SET DATA TYPE TIMESTAMP')
@@ -99,6 +98,7 @@ def retrieve_data():
     conn.execute('ALTER TABLE all_traffic RENAME COLUMN ts_temp TO last_data_package')
 
     # Create main table all_traffic
+    #TODO: avoid traffic_df dataframe
     traffic_df = conn.execute('SELECT * FROM all_traffic').fetchdf()
 
     #TODO: retrieve from json_df_features
@@ -106,7 +106,7 @@ def retrieve_data():
     # but is up to date in json_df_features. We should proably drop the column entirely
     # from the traffic_df unless there is a severe performance penalty.
 
-    # traffic_df = traffic_df.merge(json_df_features[["segment_id", "last_data_package"]], on="segment_id", suffixes=("_old", "")).drop(columns="last_data_package_old")
+    traffic_df = traffic_df.merge(json_df_features[["segment_id", "last_data_package"]], on="segment_id", suffixes=("_old", "")).drop(columns="last_data_package_old")
 
     return geo_df, json_df_features, traffic_df, conn
 
@@ -363,7 +363,6 @@ app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.BOOTS
            )
 
 app.title = "Berlin-zaehlt"
-
 app.layout = lambda: serve_layout(app, traffic_df, start_date, end_date, min_date, max_date)
 
 

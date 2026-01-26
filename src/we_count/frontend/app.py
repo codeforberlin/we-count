@@ -97,18 +97,42 @@ def retrieve_data():
     conn.execute('ALTER TABLE all_traffic DROP COLUMN last_data_package')
     conn.execute('ALTER TABLE all_traffic RENAME COLUMN ts_temp TO last_data_package')
 
+    query = f"""
+    SELECT 
+        segment_id,
+        SUM(bike_total) AS bike_total,
+        SUM(car_total) AS car_total,
+        CASE 
+            WHEN SUM(car_total) = 0 THEN NULL  -- Avoid division by zero
+            ELSE CAST(SUM(bike_total) AS DOUBLE) / SUM(car_total)
+        END AS bike_car_ratio
+    FROM all_traffic
+    GROUP BY segment_id
+    """
+
+    traffic_df_id_bc = conn.execute(query).fetch_df()
+
+    id_street_options_df = conn.execute("SELECT DISTINCT id_street "
+                                     "FROM all_traffic "
+                                     "ORDER BY id_street").fetch_df()
+    # Convert df to list
+    id_street_options = id_street_options_df['id_street'].tolist()
+
+    #traffic_df_id_bc = traffic_df.groupby(by=['segment_id'], as_index=False).agg(bike_total=('bike_total', 'sum'), car_total=('car_total', 'sum'))
+    #traffic_df_id_bc['bike_car_ratio'] = traffic_df_id_bc['bike_total'] / traffic_df_id_bc['car_total']
+
     # Create main table all_traffic
     #TODO: avoid traffic_df dataframe
-    traffic_df = conn.execute('SELECT * FROM all_traffic').fetchdf()
+    #traffic_df = conn.execute('SELECT * FROM all_traffic').fetchdf()
 
     #TODO: retrieve from json_df_features
     # This is a workaround because the last_data_package column may be outdated in traffic_df
     # but is up to date in json_df_features. We should proably drop the column entirely
     # from the traffic_df unless there is a severe performance penalty.
 
-    traffic_df = traffic_df.merge(json_df_features[["segment_id", "last_data_package"]], on="segment_id", suffixes=("_old", "")).drop(columns="last_data_package_old")
+    #traffic_df = traffic_df.merge(json_df_features[["segment_id", "last_data_package"]], on="segment_id", suffixes=("_old", "")).drop(columns="last_data_package_old")
 
-    return geo_df, json_df_features, traffic_df, conn
+    return geo_df, json_df_features, id_street_options, traffic_df_id_bc, conn
 
 def update_language(lang_code):
     global language
@@ -161,8 +185,8 @@ def add_selected_street(from_table_name, id_street, street_name):
     return #traffic_df_dt_str
 
 def get_bike_car_ratios(df):
-    traffic_df_id_bc = df.groupby(by=['segment_id'], as_index=False).agg(bike_total=('bike_total', 'sum'), car_total=('car_total', 'sum'))
-    traffic_df_id_bc['bike_car_ratio'] = traffic_df_id_bc['bike_total'] / traffic_df_id_bc['car_total']
+    #traffic_df_id_bc = df.groupby(by=['segment_id'], as_index=False).agg(bike_total=('bike_total', 'sum'), car_total=('car_total', 'sum'))
+    #traffic_df_id_bc['bike_car_ratio'] = traffic_df_id_bc['bike_total'] / traffic_df_id_bc['car_total']
 
     bins = [0, 0.1, 0.2, 0.5, 1, 500]
     speed_labels = ['Over 10x more cars', 'Over 5x more cars', 'Over 2x more cars', 'More cars than bikes', 'More bikes than cars']
@@ -275,12 +299,13 @@ street_name, segment_id = INITIAL_STREET_ID[:-1].split(" (")
 
 zoom_factor = 11
 
-geo_df, json_df_features, traffic_df, conn = retrieve_data()
+geo_df, json_df_features, id_street_options, traffic_df_id_bc, conn = retrieve_data()
 
 update_language(INITIAL_LANGUAGE)
 
 # Michael for def segment_id_from_url?
-street_names = {id: name for id, name in zip(traffic_df['segment_id'], traffic_df['id_street'])}
+# EK: commented out as not used (yet) and to avoid traffic_df
+# street_names = {id: name for id, name in zip(traffic_df['segment_id'], traffic_df['id_street'])}
 
 # Get min max dates from complete data set
 query = """
@@ -349,7 +374,7 @@ df_map_base = geo_df_map_info.join(json_df_features)
 del json_df_features
 
 # Get consolidated bike/car ratios by segment_id
-traffic_df_id_bc = get_bike_car_ratios(traffic_df)
+traffic_df_id_bc = get_bike_car_ratios(traffic_df_id_bc)
 
 # Join map data and bike/car ratio data to df_map
 df_map = update_map_data(df_map_base, traffic_df_id_bc, 'toggle_active_filter', [1,2])
@@ -363,7 +388,7 @@ app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.BOOTS
            )
 
 app.title = "Berlin-zaehlt"
-app.layout = lambda: serve_layout(app, traffic_df, start_date, end_date, min_date, max_date)
+app.layout = lambda: serve_layout(app, id_street_options, start_date, end_date, min_date, max_date)
 
 
 @app.callback(

@@ -41,7 +41,7 @@ INITIAL_LANGUAGE = 'de'
 INITIAL_HOUR_RANGE = [0, 24]
 
 
-def serve_layout(app: Dash, traffic_df, start_date, end_date, min_date, max_date):
+def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, max_date):
     return dbc.Container(
         [
         dbc.NavbarSimple(
@@ -103,7 +103,7 @@ def serve_layout(app: Dash, traffic_df, start_date, end_date, min_date, max_date
                 ], justify='end'),
                 html.H4(_('Select street:'), className='my-2'),
                 dcc.Dropdown(id='street_name_dd',
-                    options= sorted(traffic_df['id_street'].unique()),
+                    options= id_street_options, #sorted(traffic_df['id_street'].unique()),
                     value= INITIAL_STREET_ID
                 ),
                 html.Span([

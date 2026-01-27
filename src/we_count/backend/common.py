@@ -78,14 +78,12 @@ def get_options(args=None, json_default="sensor.json"):
                         help="Download from the given Telraam server")
     parser.add_argument("-s", "--secrets-file", default="secrets.json",
                         metavar="FILE", help="Read Telraam API and database credentials from FILE")
-    parser.add_argument("--js-file", default="sensor-geojson.js",
-                        metavar="FILE", help="Write Geo-JSON as javascript to FILE")
     parser.add_argument("-j", "--json-file", default=json_default,
                         metavar="FILE", help="Write / read Geo-JSON for segments to / from FILE")
     parser.add_argument("--excel",
                         help="Excel input file")
-    parser.add_argument("--osm", action="store_true", default=False,
-                        help="recreate OpenStreetMap data even if it is present")
+    parser.add_argument("--clear", action="store_true", default=False,
+                        help="recreate data even if it is present")
     parser.add_argument("-d", "--database",
                         help="Database output file or URL")
     parser.add_argument("--csv",

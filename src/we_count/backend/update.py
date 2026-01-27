@@ -31,7 +31,6 @@ secrets = os.path.join(BASE, "secrets.json")
 csv_base = os.path.join(BASE, "..", "csv")
 json_path = os.path.join(csv_base, GEO_JSON_NAME)
 if sensor_positions.main(["-j", json_path,
-                          "--js-file", os.path.join(BASE, "..", "sensor-geojson.js"),
                           "-s", secrets, "-v"]):
     backup_data.main(["-j", json_path,
                       "--csv", os.path.join(csv_base, "bzm_telraam"),

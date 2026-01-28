@@ -78,8 +78,8 @@ def retrieve_data():
             print('Replace existing database file')
         os.remove(os.path.join(data_dir, db_file))
 
-    #conn = duckdb.connect(database=os.path.join(data_dir, db_file))
-    conn = duckdb.connect(':memory:')
+    conn = duckdb.connect(database=os.path.join(data_dir, db_file))
+    #conn = duckdb.connect(':memory:')
     # conn.execute('SET threads = 4;')  # limit the number of parallel threads
 
     traffic_relation = conn.read_parquet(os.path.join(data_dir, 'traffic_df_*.parquet'), union_by_name=True)
@@ -645,7 +645,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
             WHERE table_name = '{table_name}'
         """).fetchone()[0] > 0
 
-        # Read all_traffic of not exists
+        # Read all_traffic if not exists
         if not exists:
             data_dir = DATA_DIR
             if not os.path.exists(os.path.join(data_dir, 'all_traffic.parquet')):
@@ -703,7 +703,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
 
     # Add or update table filtered_traffic_min_max (for comparison graph)
     with db_lock:  # Ensure thread safety for writes
-        conn.execute(query, params).fetchdf()
+        conn.execute(query, params)
 
     #if callback_trigger in ['date_filter', 'hardware_version', 'range_slider', 'radio_time_division']:
 
@@ -719,10 +719,8 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     params.append(hour_range[0])
     params.append(hour_range[1])
 
-    # Add or update table filtered_traffic_dt (for ranking chart)
     with db_lock:  # Ensure thread safety for writes
         conn.execute(query, params)
-        traffic_df_dt = conn.execute('SELECT * FROM filtered_traffic_dt').fetchdf()
 
     # # Add or update table with selected street
     add_selected_street('filtered_traffic_dt', id_street, street_name)
@@ -949,9 +947,30 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
         annotation['font'] = {'size': 14}
 
     ### Create ranking chart
-    df_bar_ranking = traffic_df_dt.groupby(by=['id_street', 'street_selection'], sort=False, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
-    df_bar_ranking = df_bar_ranking.sort_values(by=[radio_y_axis], ascending=False)
-    df_bar_ranking.reset_index(inplace=True)
+    group_cols = ['id_street', 'street_selection']
+    group_clause = ", ".join(group_cols)
+    query = f"""
+    SELECT 
+        {group_clause},
+        SUM(ped_total) AS ped_total,
+        SUM(bike_total) AS bike_total,
+        SUM(car_total) AS car_total,
+        SUM(heavy_total) AS heavy_total,
+    MIN(date_local) AS first_seen
+    FROM filtered_traffic_dt
+    GROUP BY {group_clause}
+    ORDER BY {radio_y_axis} DESC
+    """
+
+    # Add or update table filtered_traffic_dt (for ranking chart)
+    with db_lock:  # Ensure thread safety for writes
+        df_bar_ranking = conn.execute(query).fetch_df()
+        #traffic_df_dt = conn.execute('SELECT * FROM filtered_traffic_dt').fetchdf()
+        output_excel(df_bar_ranking,'df_bar_ranking')
+
+    #df_bar_ranking = traffic_df_dt.groupby(by=['id_street', 'street_selection'], sort=False, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
+    #df_bar_ranking = df_bar_ranking.sort_values(by=[radio_y_axis], ascending=False)
+    #df_bar_ranking.reset_index(inplace=True)
 
     # Remove '90000' from the labels to reduce x-labels space required
     df_bar_ranking['x-labels'] = df_bar_ranking['id_street'].copy()

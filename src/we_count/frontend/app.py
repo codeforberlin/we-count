@@ -29,7 +29,6 @@ from dateutil import parser
 # the following is basically to suppress warnings about "_" being undefined
 # "from gettext import gettext as _" does not work because we use gettext.install later on, which installs "_"
 from typing import Callable
-
 _: Callable[[str], str]
 
 from .layout import serve_layout, INITIAL_STREET_ID, INITIAL_LANGUAGE
@@ -67,6 +66,7 @@ def retrieve_data():
 
     geo_file_path = os.path.join(data_dir, 'df_geojson.parquet')
     json_df_features = pd.read_parquet(geo_file_path)
+    #output_excel(json_df_features, 'json_df_features')
 
     # Read traffic data from file
     if not DEPLOYED:
@@ -80,23 +80,27 @@ def retrieve_data():
         os.remove(os.path.join(data_dir, db_file))
 
     conn = duckdb.connect(database=os.path.join(data_dir, db_file))
-    conn.execute('SET threads = 4;')  # limit the number of parallel threads
+    # conn.execute('SET threads = 4;')  # limit the number of parallel threads
 
     traffic_relation = conn.read_parquet(os.path.join(data_dir, 'traffic_df_*.parquet'), union_by_name=True)
     traffic_relation.to_table('all_traffic')
 
-    # Alter dtypes for data processing and to enable sort order
-    conn.execute('ALTER TABLE all_traffic ALTER COLUMN segment_id SET DATA TYPE INT64')
-    conn.execute('ALTER TABLE all_traffic ALTER COLUMN year SET DATA TYPE VARCHAR')
-    conn.execute('ALTER TABLE all_traffic ALTER COLUMN day SET DATA TYPE INTEGER')
-    conn.execute('ALTER TABLE all_traffic ALTER COLUMN date_local SET DATA TYPE TIMESTAMP')
+    with db_lock:
+        # Alter dtypes for data processing and to enable sort order
+        #conn.execute('ALTER TABLE all_traffic ALTER COLUMN segment_id SET DATA TYPE INT64')
+        #conn.execute('ALTER TABLE all_traffic ALTER COLUMN year SET DATA TYPE VARCHAR')
+        conn.execute('ALTER TABLE all_traffic ALTER COLUMN day SET DATA TYPE INTEGER')
+        #conn.execute('ALTER TABLE all_traffic ALTER COLUMN date_local SET DATA TYPE TIMESTAMP')
 
-    # Convert last_data_package to TIMESTAMP
-    conn.execute('ALTER TABLE all_traffic ADD COLUMN ts_temp TIMESTAMP')
-    conn.execute('UPDATE all_traffic SET ts_temp = TRY_CAST(last_data_package AS TIMESTAMP)')
-    conn.execute('ALTER TABLE all_traffic DROP COLUMN last_data_package')
-    conn.execute('ALTER TABLE all_traffic RENAME COLUMN ts_temp TO last_data_package')
+        # Convert last_data_package to TIMESTAMP
+        # conn.execute('ALTER TABLE all_traffic ADD COLUMN ts_temp TIMESTAMP')
+        # conn.execute('UPDATE all_traffic SET ts_temp = TRY_CAST(last_data_package AS TIMESTAMP)')
+        # conn.execute('ALTER TABLE all_traffic DROP COLUMN last_data_package')
+        # conn.execute('ALTER TABLE all_traffic RENAME COLUMN ts_temp TO last_data_package')
 
+        conn.execute('ALTER TABLE all_traffic DROP COLUMN last_data_package')
+
+    # Prepare bike/care ratios
     query = f"""
     SELECT 
         segment_id,
@@ -110,29 +114,34 @@ def retrieve_data():
     GROUP BY segment_id
     """
 
-    traffic_df_id_bc = conn.execute(query).fetch_df()
-
-    id_street_options_df = conn.execute("SELECT DISTINCT id_street "
-                                     "FROM all_traffic "
-                                     "ORDER BY id_street").fetch_df()
-    # Convert df to list
-    id_street_options = id_street_options_df['id_street'].tolist()
-
-    #traffic_df_id_bc = traffic_df.groupby(by=['segment_id'], as_index=False).agg(bike_total=('bike_total', 'sum'), car_total=('car_total', 'sum'))
-    #traffic_df_id_bc['bike_car_ratio'] = traffic_df_id_bc['bike_total'] / traffic_df_id_bc['car_total']
-
-    # Create main table all_traffic
-    #TODO: avoid traffic_df dataframe
-    #traffic_df = conn.execute('SELECT * FROM all_traffic').fetchdf()
+    with db_lock:
+        traffic_df_id_bc = conn.execute(query).fetch_df()
 
     #TODO: retrieve from json_df_features
     # This is a workaround because the last_data_package column may be outdated in traffic_df
-    # but is up to date in json_df_features. We should proably drop the column entirely
+    # but is up to date in json_df_features. We should probably drop the column entirely
     # from the traffic_df unless there is a severe performance penalty.
 
-    #traffic_df = traffic_df.merge(json_df_features[["segment_id", "last_data_package"]], on="segment_id", suffixes=("_old", "")).drop(columns="last_data_package_old")
+    # Add last_data_package from json_df_features to all_gtraffic
+    # With dataframes: traffic_df = traffic_df.merge(json_df_features[["segment_id", "last_data_package"]], on="segment_id", suffixes=("_old", "")).drop(columns="last_data_package_old")
 
-    return geo_df, json_df_features, id_street_options, traffic_df_id_bc, conn
+    last_data_package_df = pd.DataFrame(json_df_features[['segment_id', 'last_data_package']])
+    last_data_package_df['last_data_package'] = pd.to_datetime(last_data_package_df['last_data_package'], format='mixed')
+
+    conn.register('last_data_package_df', last_data_package_df)
+
+    query = """
+    CREATE OR REPLACE TABLE all_traffic AS
+    SELECT a.*,
+        j.last_data_package AT TIME ZONE 'UTC' AS last_data_package_naive
+    FROM all_traffic AS a
+    LEFT JOIN last_data_package_df AS j ON a.segment_id = j.segment_id
+    """
+
+    with db_lock:
+        conn.execute(query)
+
+    return geo_df, json_df_features, traffic_df_id_bc, conn
 
 def update_language(lang_code):
     global language
@@ -193,11 +202,12 @@ def get_bike_car_ratios(df):
     traffic_df_id_bc['map_line_color'] = pd.cut(traffic_df_id_bc['bike_car_ratio'], bins=bins, labels=speed_labels)
 
     # Prepare traffic_df_id_bc for join operation
-    traffic_df_id_bc['segment_id'] = traffic_df_id_bc['segment_id'].astype(int)
+    # TODO: is already INT?
+    #traffic_df_id_bc['segment_id'] = traffic_df_id_bc['segment_id'].astype(int)
     traffic_df_id_bc.set_index('segment_id', inplace=True)
 
     # Free memory
-    del df
+    #del df
 
     return traffic_df_id_bc
 
@@ -212,7 +222,6 @@ def update_map_data(df_map_base, df, active_selected, hardware_version):
     df_map['hardware_version'] = df_map['hardware_version'].replace(0,1)
 
     # TODO: Filter uptime although at the moment it looks like there are no streets with < 0.7 uptime only
-
     # Filter on active cameras (data available later than two weeks ago)
     if active_selected == ['filter_active_selected']:
         # get segment_id's with data >= two weeks ago
@@ -242,9 +251,33 @@ def update_map_data(df_map_base, df, active_selected, hardware_version):
 
     return df_map
 
-def get_min_max_str(start_date, end_date, min_date, max_date):
+def get_min_max_str(start_date, end_date, id_street, table):
     missing_data = False
     message = 'none'
+
+    query = f"""
+    SELECT min(date_local)
+    FROM {table}
+    WHERE id_street = ?
+    """
+    params = [id_street]
+
+    with db_lock:
+        min_date = conn.execute(query, params).fetchone()
+    min_date = min_date[0]
+    min_date = min_date.strftime('%Y-%m-%dT%H:%M:%S')
+
+    query = f"""
+    SELECT max(date_local)
+    FROM {table}
+    WHERE id_street = ?
+    """
+    params = [id_street]
+
+    with db_lock:
+        max_date = conn.execute(query, params).fetchone()
+    max_date = max_date[0]
+    max_date = max_date.strftime('%Y-%m-%dT%H:%M:%S')
 
     if start_date > max_date or end_date < min_date:
         missing_data = True
@@ -277,7 +310,6 @@ def get_min_max_dates(id_street: str):
 
     with db_lock:
         min_date = conn.execute(query, params).fetchone()
-
     min_date = min_date[0]
     min_date = min_date.strftime('%Y-%m-%dT%H:%M:%S')
 
@@ -299,7 +331,7 @@ street_name, segment_id = INITIAL_STREET_ID[:-1].split(" (")
 
 zoom_factor = 11
 
-geo_df, json_df_features, id_street_options, traffic_df_id_bc, conn = retrieve_data()
+geo_df, json_df_features, traffic_df_id_bc, conn = retrieve_data()
 
 update_language(INITIAL_LANGUAGE)
 
@@ -336,13 +368,29 @@ start_date = datetime.strftime(start_date, to_date_format)
 end_date = datetime.strftime(end_date, to_date_format)
 
 # Get min/max selectable dates, based on selected street
-min_date, max_date = get_min_max_dates(INITIAL_STREET_ID)
+# TODO: ensure initial street has data in the last two weeks
+min_date, max_date, start_date, end_date, message, missing_data = get_min_max_str(start_date, end_date, INITIAL_STREET_ID, 'all_traffic')
 
 # Get active filter date (two weeks ago from the last date in the dataset)
 from_date_format = '%Y-%m-%d'
 end_date_dt = convert(end_date, from_date_format)
 two_weeks_ago_dt = end_date_dt - timedelta(weeks=2)
 two_weeks_ago = two_weeks_ago_dt.strftime('%Y-%m-%d')
+
+# Prepare street options for menu
+query = f"""
+SELECT DISTINCT id_street, last_data_package_naive
+FROM all_traffic
+WHERE CAST(last_data_package_naive AS DATE) >= ?
+ORDER BY id_street
+"""
+params = [two_weeks_ago]
+
+with db_lock:
+    id_street_options_df = conn.execute(query, params).fetch_df()
+    output_excel(id_street_options_df,'id_street_options')
+    # Convert df to list
+    id_street_options = id_street_options_df['id_street'].tolist()
 
 ### Prepare map data ###
 if not DEPLOYED:
@@ -604,7 +652,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
             query += 'WHERE uptime > 0.7 '
             if toggle_active_filter == ['filter_active_selected']:
                 # Filter active cameras
-                query += 'AND CAST(last_data_package AS DATE) >= ? '
+                query += 'AND CAST(last_data_package_naive AS DATE) >= ? '
                 params = [two_weeks_ago]
             if hardware_version == [1]:
                 query += 'AND hardware_version = 1 '
@@ -613,7 +661,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
         else:
             # Filter active selected
             if toggle_active_filter == ['filter_active_selected']:
-                query += 'WHERE CAST(last_data_package AS DATE) >= ? '
+                query += 'WHERE CAST(last_data_package_naive AS DATE) >= ? '
                 params = [two_weeks_ago]
                 if hardware_version == [1]:
                     query += 'AND hardware_version = 1 '
@@ -630,11 +678,10 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
             conn.execute(query, params)
 
     # Check if selected street has data for selected data range
-    min_date, max_date = get_min_max_dates(id_street)
-    min_date, max_date, start_date, end_date, message, missing_data = get_min_max_str(start_date, end_date, min_date, max_date)
+    min_date, max_date, start_date, end_date, message, missing_data = get_min_max_str(start_date, end_date, id_street, 'filtered_traffic')
 
     query = ('CREATE OR REPLACE TEMP TABLE filtered_traffic_min_max AS '
-             'SELECT * EXCLUDE (uptime, car_speed0, car_speed10, car_speed20, car_speed30, car_speed40, car_speed50, car_speed60, car_speed70, last_data_package) '
+             'SELECT * EXCLUDE (uptime, car_speed0, car_speed10, car_speed20, car_speed30, car_speed40, car_speed50, car_speed60, car_speed70, last_data_package_naive) '
              'FROM filtered_traffic '
              'WHERE date_local >= ? AND date_local <= ?')
     params = [min_date, max_date]
@@ -885,7 +932,6 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     bar_v85.for_each_yaxis(lambda yaxis: yaxis.update(showticklabels=True))
     for annotation in bar_v85.layout.annotations:
         annotation['font'] = {'size': 14}
-
 
     ### Create ranking chart
     df_bar_ranking = traffic_df_dt.groupby(by=['id_street', 'street_selection'], sort=False, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})

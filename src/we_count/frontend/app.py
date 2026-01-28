@@ -78,7 +78,8 @@ def retrieve_data():
             print('Replace existing database file')
         os.remove(os.path.join(data_dir, db_file))
 
-    conn = duckdb.connect(database=os.path.join(data_dir, db_file))
+    #conn = duckdb.connect(database=os.path.join(data_dir, db_file))
+    conn = duckdb.connect(':memory:')
     # conn.execute('SET threads = 4;')  # limit the number of parallel threads
 
     traffic_relation = conn.read_parquet(os.path.join(data_dir, 'traffic_df_*.parquet'), union_by_name=True)
@@ -86,17 +87,9 @@ def retrieve_data():
 
     with db_lock:
         # Alter dtypes for data processing and to enable sort order
-        #conn.execute('ALTER TABLE all_traffic ALTER COLUMN segment_id SET DATA TYPE INT64')
-        #conn.execute('ALTER TABLE all_traffic ALTER COLUMN year SET DATA TYPE VARCHAR')
         conn.execute('ALTER TABLE all_traffic ALTER COLUMN day SET DATA TYPE INTEGER')
-        #conn.execute('ALTER TABLE all_traffic ALTER COLUMN date_local SET DATA TYPE TIMESTAMP')
 
-        # Convert last_data_package to TIMESTAMP
-        # conn.execute('ALTER TABLE all_traffic ADD COLUMN ts_temp TIMESTAMP')
-        # conn.execute('UPDATE all_traffic SET ts_temp = TRY_CAST(last_data_package AS TIMESTAMP)')
-        # conn.execute('ALTER TABLE all_traffic DROP COLUMN last_data_package')
-        # conn.execute('ALTER TABLE all_traffic RENAME COLUMN ts_temp TO last_data_package')
-
+        # TODO: remove from parquet files
         conn.execute('ALTER TABLE all_traffic DROP COLUMN last_data_package')
 
     # Prepare bike/care ratios
@@ -120,7 +113,7 @@ def retrieve_data():
     # but is up to date in json_df_features. We should probably drop the column entirely
     # from the traffic_df unless there is a severe performance penalty.
 
-    # Add last_data_package from json_df_features to all_gtraffic
+    # Add last_data_package from json_df_features to all_traffic
     # With dataframes: traffic_df = traffic_df.merge(json_df_features[["segment_id", "last_data_package"]], on="segment_id", suffixes=("_old", "")).drop(columns="last_data_package_old")
 
     last_data_package_df = pd.DataFrame(json_df_features[['segment_id', 'last_data_package']])
@@ -143,7 +136,7 @@ def retrieve_data():
         output_file = 'all_traffic.parquet'
         if os.path.exists(os.path.join(data_dir, output_file)):
             if not DEPLOYED:
-                print('Replace existing database file')
+                print('Save all_traffic table')
             os.remove(os.path.join(data_dir, output_file))
         output_file = os.path.join(data_dir, output_file)
         conn.execute(f"""
@@ -202,21 +195,14 @@ def add_selected_street(from_table_name, id_street, street_name):
 
     return #traffic_df_dt_str
 
-def get_bike_car_ratios(df):
-    #traffic_df_id_bc = df.groupby(by=['segment_id'], as_index=False).agg(bike_total=('bike_total', 'sum'), car_total=('car_total', 'sum'))
-    #traffic_df_id_bc['bike_car_ratio'] = traffic_df_id_bc['bike_total'] / traffic_df_id_bc['car_total']
+def get_bike_car_ratios(traffic_df_id_bc):
 
     bins = [0, 0.1, 0.2, 0.5, 1, 500]
     speed_labels = ['Over 10x more cars', 'Over 5x more cars', 'Over 2x more cars', 'More cars than bikes', 'More bikes than cars']
     traffic_df_id_bc['map_line_color'] = pd.cut(traffic_df_id_bc['bike_car_ratio'], bins=bins, labels=speed_labels)
 
     # Prepare traffic_df_id_bc for join operation
-    # TODO: is already INT?
-    #traffic_df_id_bc['segment_id'] = traffic_df_id_bc['segment_id'].astype(int)
     traffic_df_id_bc.set_index('segment_id', inplace=True)
-
-    # Free memory
-    #del df
 
     return traffic_df_id_bc
 
@@ -345,7 +331,7 @@ geo_df, json_df_features, traffic_df_id_bc, conn = retrieve_data()
 update_language(INITIAL_LANGUAGE)
 
 # Michael for def segment_id_from_url?
-# EK: commented out as not used (yet) and to avoid traffic_df
+# EK: commented out as not used (yet)
 # street_names = {id: name for id, name in zip(traffic_df['segment_id'], traffic_df['id_street'])}
 
 # Get min max dates from complete data set
@@ -386,18 +372,18 @@ end_date_dt = convert(end_date, from_date_format)
 two_weeks_ago_dt = end_date_dt - timedelta(weeks=2)
 two_weeks_ago = two_weeks_ago_dt.strftime('%Y-%m-%d')
 
-# Prepare street options for menu
+# Prepare street options for dropdown menu
 query = f"""
 SELECT DISTINCT id_street, last_data_package_naive
 FROM all_traffic
-WHERE CAST(last_data_package_naive AS DATE) >= ?
+WHERE uptime > 0.7
+AND CAST(last_data_package_naive AS DATE) >= ?
 ORDER BY id_street
 """
 params = [two_weeks_ago]
 
 with db_lock:
     id_street_options_df = conn.execute(query, params).fetch_df()
-    output_excel(id_street_options_df,'id_street_options')
     # Convert df to list
     id_street_options = id_street_options_df['id_street'].tolist()
 
@@ -646,7 +632,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     street_name = id_street.split(' (')[0]
     selected_street_header = street_name
 
-    #TODO: First callback triggers "hardware version", why?
+    #TODO: First callback triggers "hardware version"?
 
     ### Filter all traffic
     if callback_trigger in ['toggle_uptime_filter', 'toggle_active_filter', 'hardware_version']:
@@ -659,6 +645,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
             WHERE table_name = '{table_name}'
         """).fetchone()[0] > 0
 
+        # Read all_traffic of not exists
         if not exists:
             data_dir = DATA_DIR
             if not os.path.exists(os.path.join(data_dir, 'all_traffic.parquet')):
@@ -671,6 +658,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
                  'FROM all_traffic ')
         params = []
 
+        # Filter all_traffic
         if toggle_uptime_filter == ['filter_uptime_selected']:
             # Filter uptime
             query += 'WHERE uptime > 0.7 '
@@ -700,8 +688,9 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
         # Add or update table filtered_traffic
         with db_lock:  # Ensure thread safety for writes
             conn.execute(query, params)
-            # Delete all_traffic for memory usage reasons
-            conn.execute('DROP TABLE IF EXISTS all_traffic')
+
+        # Delete all_traffic for memory usage reasons
+        conn.execute('DROP TABLE IF EXISTS all_traffic')
 
     # Check if selected street has data for selected data range
     min_date, max_date, start_date, end_date, message, missing_data = get_min_max_str(start_date, end_date, id_street, 'filtered_traffic')

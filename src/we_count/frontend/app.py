@@ -966,7 +966,6 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     with db_lock:  # Ensure thread safety for writes
         df_bar_ranking = conn.execute(query).fetch_df()
         #traffic_df_dt = conn.execute('SELECT * FROM filtered_traffic_dt').fetchdf()
-        output_excel(df_bar_ranking,'df_bar_ranking')
 
     #df_bar_ranking = traffic_df_dt.groupby(by=['id_street', 'street_selection'], sort=False, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
     #df_bar_ranking = df_bar_ranking.sort_values(by=[radio_y_axis], ascending=False)

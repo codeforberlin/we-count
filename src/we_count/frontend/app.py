@@ -66,7 +66,6 @@ def retrieve_data():
 
     geo_file_path = os.path.join(data_dir, 'df_geojson.parquet')
     json_df_features = pd.read_parquet(geo_file_path)
-    #output_excel(json_df_features, 'json_df_features')
 
     # Read traffic data from file
     if not DEPLOYED:
@@ -117,7 +116,6 @@ def retrieve_data():
     with db_lock:
         traffic_df_id_bc = conn.execute(query).fetch_df()
 
-    #TODO: retrieve from json_df_features
     # This is a workaround because the last_data_package column may be outdated in traffic_df
     # but is up to date in json_df_features. We should probably drop the column entirely
     # from the traffic_df unless there is a severe performance penalty.
@@ -140,6 +138,17 @@ def retrieve_data():
 
     with db_lock:
         conn.execute(query)
+
+        # Save all traffic for potential later use
+        output_file = 'all_traffic.parquet'
+        if os.path.exists(os.path.join(data_dir, output_file)):
+            if not DEPLOYED:
+                print('Replace existing database file')
+            os.remove(os.path.join(data_dir, output_file))
+        output_file = os.path.join(data_dir, output_file)
+        conn.execute(f"""
+            COPY all_traffic TO '{output_file}' (FORMAT 'parquet')
+        """)
 
     return geo_df, json_df_features, traffic_df_id_bc, conn
 
@@ -642,6 +651,21 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     ### Filter all traffic
     if callback_trigger in ['toggle_uptime_filter', 'toggle_active_filter', 'hardware_version']:
 
+        # Check if unfiltered table all_traffic exists
+        table_name = "all_traffic"
+        exists = conn.execute(f"""
+            SELECT COUNT(*)
+            FROM information_schema.tables
+            WHERE table_name = '{table_name}'
+        """).fetchone()[0] > 0
+
+        if not exists:
+            data_dir = DATA_DIR
+            if not os.path.exists(os.path.join(data_dir, 'all_traffic.parquet')):
+                data_dir = ASSET_DIR
+            traffic_relation = conn.read_parquet(os.path.join(data_dir, 'all_traffic.parquet'), union_by_name=True)
+            traffic_relation.to_table('all_traffic')
+
         query = ('CREATE OR REPLACE TEMP TABLE filtered_traffic AS '
                  'SELECT * '
                  'FROM all_traffic ')
@@ -676,6 +700,8 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
         # Add or update table filtered_traffic
         with db_lock:  # Ensure thread safety for writes
             conn.execute(query, params)
+            # Delete all_traffic for memory usage reasons
+            conn.execute('DROP TABLE IF EXISTS all_traffic')
 
     # Check if selected street has data for selected data range
     min_date, max_date, start_date, end_date, message, missing_data = get_min_max_str(start_date, end_date, id_street, 'filtered_traffic')

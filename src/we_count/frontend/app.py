@@ -149,7 +149,6 @@ def retrieve_data():
     with db_lock:
         conn.execute(query)
         conn.unregister('last_data_package_table')
-        duckdb_info(conn)
 
     # Free memory
     del last_data_package_df
@@ -193,18 +192,16 @@ def add_selected_street(from_table_name, id_street, street_name):
     conn.execute(query, params)
 
     # Add selected street to filtered_traffic_dt
-    query = (f'CREATE OR REPLACE TEMP TABLE traffic_df_dt_str AS '
+    query = (f'CREATE OR REPLACE TEMP TABLE {from_table_name + '_str'} AS '
              f'SELECT * FROM {from_table_name} '
              f'UNION ALL '
              f'SELECT * FROM selected_street')
     conn.execute(query)
 
-    #traffic_df_dt_str = conn.execute('SELECT * FROM traffic_df_dt_str').fetchdf()
-
     # Delete (drop) the street_selection table
     conn.execute('DROP TABLE IF EXISTS selected_street')
 
-    return #traffic_df_dt_str
+    return
 
 def get_bike_car_ratios(traffic_df_id_bc):
 
@@ -689,7 +686,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     min_date, max_date, start_date, end_date, message, missing_data = get_min_max_str(start_date, end_date, id_street, 'filtered_traffic')
 
     query = ('CREATE OR REPLACE TEMP TABLE filtered_traffic_min_max AS '
-             'SELECT * EXCLUDE (car_speed0, car_speed10, car_speed20, car_speed30, car_speed40, car_speed50, car_speed60, car_speed70) '
+             'SELECT * EXCLUDE (car_speed0, car_speed10, car_speed20, car_speed30, car_speed40, car_speed50, car_speed60, car_speed70, v85) '
              'FROM filtered_traffic '
              'WHERE date_local >= ? AND date_local <= ?')
     params = [min_date, max_date]
@@ -698,8 +695,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     with db_lock:  # Ensure thread safety for writes
         conn.execute(query, params)
 
-    #if callback_trigger in ['date_filter', 'hardware_version', 'range_slider', 'radio_time_division']:
-
+    # Create filtered traffic by start/end date
     query = """
     CREATE OR REPLACE TEMP TABLE filtered_traffic_dt AS
     SELECT *
@@ -715,10 +711,8 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     with db_lock:  # Ensure thread safety for writes
         conn.execute(query, params)
 
-    # # Add or update table with selected street
+    # Add selected street to filtered_traffic_dt table
     add_selected_street('filtered_traffic_dt', id_street, street_name)
-    with db_lock:
-        traffic_df_dt_str = conn.execute('SELECT * FROM traffic_df_dt_str').fetchdf()
 
     # Format dates for chart representation / processing
     if callback_trigger in ['date_filter']:
@@ -759,7 +753,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
              'SUM(bike_total) AS bike_total, '
              'SUM(car_total) AS car_total, '
              'SUM(heavy_total) AS heavy_total '
-             'FROM traffic_df_dt_str '
+             'FROM filtered_traffic_dt_str '
              'WHERE street_selection = ? '
              'GROUP BY street_selection')
     params = [street_name]
@@ -791,7 +785,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
         SUM(car_total) AS car_total,
         SUM(heavy_total) AS heavy_total,
     MIN(date_local) AS first_seen
-    FROM traffic_df_dt_str
+    FROM filtered_traffic_dt_str
     GROUP BY {group_clause}
     ORDER BY first_seen
     """
@@ -837,10 +831,11 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
         MEAN(car_total) AS car_total,
         MEAN(heavy_total) AS heavy_total,
     MIN(date_local) AS first_seen
-    FROM traffic_df_dt_str
+    FROM filtered_traffic_dt_str
     GROUP BY {group_clause}
     ORDER BY first_seen
     """
+
     with db_lock:  # Ensure thread safety for writes
         df_avg_traffic = conn.execute(query).fetchdf()
 
@@ -870,17 +865,53 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     for annotation in bar_avg_traffic.layout.annotations: annotation['font'] = {'size': 14}
 
     ### Create percentage speed bar chart
-
-    # Add column with all car speed %
-    df_bar_speed = traffic_df_dt_str
     cols = ['car_speed0', 'car_speed10', 'car_speed20', 'car_speed30', 'car_speed40', 'car_speed50', 'car_speed60', 'car_speed70']
-    df_bar_speed['sum_speed_perc'] = df_bar_speed[cols].sum(axis=1)
+    sum_expr = " + ".join(cols)
 
-    # Drop empty rows
-    nan_rows = df_bar_speed[df_bar_speed['sum_speed_perc']==0]
-    df_bar_speed = df_bar_speed.drop(nan_rows.index)
+    query = f"""
+    WITH grouped AS (
+        SELECT
+            {radio_time_unit},
+            street_selection,
+            AVG(car_speed0)  AS car_speed0,
+            AVG(car_speed10) AS car_speed10,
+            AVG(car_speed20) AS car_speed20,
+            AVG(car_speed30) AS car_speed30,
+            AVG(car_speed40) AS car_speed40,
+            AVG(car_speed50) AS car_speed50,
+            AVG(car_speed60) AS car_speed60,
+            AVG(car_speed70) AS car_speed70,
+        MIN(date_local) AS first_seen
+        FROM filtered_traffic_dt_str
+        GROUP BY {radio_time_unit}, street_selection
+        ORDER BY first_seen
+    ),
+    totals AS (
+        SELECT
+            *,
+            car_speed0 + car_speed10 + car_speed20 + car_speed30 +
+            car_speed40 + car_speed50 + car_speed60 + car_speed70
+            AS total_speed
+        FROM grouped
+        WHERE ({sum_expr}) > 0 
+    )
+    SELECT
+        {radio_time_unit},
+        street_selection,
+        car_speed0  / total_speed * 100 AS car_speed0,
+        car_speed10 / total_speed * 100 AS car_speed10,
+        car_speed20 / total_speed * 100 AS car_speed20,
+        car_speed30 / total_speed * 100 AS car_speed30,
+        car_speed40 / total_speed * 100 AS car_speed40,
+        car_speed50 / total_speed * 100 AS car_speed50,
+        car_speed60 / total_speed * 100 AS car_speed60,
+        car_speed70 / total_speed * 100 AS car_speed70
+    FROM totals
+    """
 
-    df_bar_speed_traffic = df_bar_speed.groupby(by=[radio_time_unit, 'street_selection'], sort= False, as_index=False).agg({'car_speed0': 'mean', 'car_speed10': 'mean', 'car_speed20': 'mean', 'car_speed30': 'mean', 'car_speed40': 'mean', 'car_speed50': 'mean', 'car_speed60': 'mean', 'car_speed70': 'mean'})
+    with db_lock:  # Ensure thread safety for writes
+        df_bar_speed_traffic = conn.execute(query).fetchdf()
+
     bar_perc_speed = px.bar(df_bar_speed_traffic,
          x=radio_time_unit, y=cols,
          barmode='stack',
@@ -914,7 +945,23 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
         annotation['font'] = {'size': 14}
 
     ### Create v85 bar graph
-    df_bar_v85 = traffic_df_dt_str.groupby(by=[radio_time_unit, 'street_selection'], sort= False, as_index=False).agg({'v85': 'mean'})
+
+    group_cols = [radio_time_unit, 'street_selection']
+    group_clause = ", ".join(group_cols)
+    query = f"""
+    SELECT 
+        {group_clause},
+        MEAN(v85) AS v85,
+    MIN(date_local) AS first_seen
+    FROM filtered_traffic_dt_str
+    GROUP BY {group_clause}
+    ORDER BY first_seen
+    """
+
+    with db_lock:  # Ensure thread safety for writes
+        df_bar_v85_traffic = conn.execute(query).fetchdf()
+
+    df_bar_v85 = df_bar_v85_traffic.groupby(by=[radio_time_unit, 'street_selection'], sort= False, as_index=False).agg({'v85': 'mean'})
 
     bar_v85 = px.bar(df_bar_v85,
         x=radio_time_unit, y='v85',
@@ -958,6 +1005,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     # Add or update table filtered_traffic_dt (for ranking chart)
     with db_lock:  # Ensure thread safety for writes
         df_bar_ranking = conn.execute(query).fetch_df()
+        output_excel(df_bar_ranking, 'df_bar_ranking')
 
     # Remove '90000' from the labels to reduce x-labels space required
     df_bar_ranking['x-labels'] = df_bar_ranking['id_street'].copy()
@@ -1075,20 +1123,21 @@ def comparison_chart(period_values_year, period_options_year,
     # Create period A and B, based on period_type and values
     query_A = (f'CREATE OR REPLACE TEMP TABLE df_period_A AS '
                f'SELECT * '
-               f'FROM traffic_df_dt_str '
+               f'FROM filtered_traffic_min_max_str '
                f'WHERE {period_type_others} = ?')
 
     params_A = [period_values_others[0]]
 
     query_B = (f'CREATE OR REPLACE TEMP TABLE df_period_B AS '
                f'SELECT * '
-               f'FROM traffic_df_dt_str '
+               f'FROM filtered_traffic_min_max_str '
                f'WHERE {period_type_others} = ?')
     params_B = [period_values_others[1]]
 
     with db_lock:
         conn.execute(query_A, params_A)
         conn.execute(query_B, params_B)
+        # duckdb_info(conn)
 
     # Prepare grouping and graph labels
     if period_type_others == _('year_month'):
@@ -1140,15 +1189,14 @@ def comparison_chart(period_values_year, period_options_year,
         conn.execute(query_A).fetchdf()
         conn.execute(query_B).fetchdf()
 
+    # TODO: check if you need ORDER BY {group_by}
     # Merge period A and period B
-
     if period_type_others == _('date'):
         query = f"""
         SELECT *
         FROM df_period_grp_B
         FULL OUTER JOIN df_period_grp_A
         USING ({group_by}, street_selection)
-        ORDER BY {group_by}
         """
     else:
         query = f"""

@@ -49,6 +49,28 @@ def output_csv(df, file_name):
     path = os.path.join(ASSET_DIR, file_name + '.csv')
     df.to_csv(path, index=False)
 
+def duckdb_info(con):
+    query = """
+    SELECT table_name, column_name, data_type
+    FROM information_schema.columns
+    WHERE table_schema = 'main'
+    ORDER BY table_name, ordinal_position;
+    """
+
+    # Fetch results
+    tables_and_columns = con.execute(query).fetchall()
+
+    # Print results in a readable format
+    current_table = None
+    for table, column, dtype in tables_and_columns:
+        if table != current_table:
+            print(f"\nTable: {table}")
+            current_table = table
+        print(f"  - {column} ({dtype})")
+
+    mem_usage = con.execute("SELECT * FROM duckdb_memory()").fetchdf()
+    print(mem_usage)
+
 def retrieve_data():
     # Read geojson data file to access geometry coordinates
     if not DEPLOYED:
@@ -109,39 +131,28 @@ def retrieve_data():
     with db_lock:
         traffic_df_id_bc = conn.execute(query).fetch_df()
 
-    # This is a workaround because the last_data_package column may be outdated in traffic_df
-    # but is up to date in json_df_features. We should probably drop the column entirely
-    # from the traffic_df unless there is a severe performance penalty.
-
     # Add last_data_package from json_df_features to all_traffic
-    # With dataframes: traffic_df = traffic_df.merge(json_df_features[["segment_id", "last_data_package"]], on="segment_id", suffixes=("_old", "")).drop(columns="last_data_package_old")
-
     last_data_package_df = pd.DataFrame(json_df_features[['segment_id', 'last_data_package']])
     last_data_package_df['last_data_package'] = pd.to_datetime(last_data_package_df['last_data_package'], format='mixed')
 
-    conn.register('last_data_package_df', last_data_package_df)
+    with db_lock:
+        conn.register('last_data_package_table', last_data_package_df)
 
     query = """
     CREATE OR REPLACE TABLE all_traffic AS
     SELECT a.*,
         j.last_data_package AT TIME ZONE 'UTC' AS last_data_package_naive
     FROM all_traffic AS a
-    LEFT JOIN last_data_package_df AS j ON a.segment_id = j.segment_id
+    LEFT JOIN last_data_package_table AS j ON a.segment_id = j.segment_id
     """
 
     with db_lock:
         conn.execute(query)
+        conn.unregister('last_data_package_table')
+        duckdb_info(conn)
 
-        # Save all traffic for potential later use
-        output_file = 'all_traffic.parquet'
-        if os.path.exists(os.path.join(data_dir, output_file)):
-            if not DEPLOYED:
-                print('Save all_traffic table')
-            os.remove(os.path.join(data_dir, output_file))
-        output_file = os.path.join(data_dir, output_file)
-        conn.execute(f"""
-            COPY all_traffic TO '{output_file}' (FORMAT 'parquet')
-        """)
+    # Free memory
+    del last_data_package_df
 
     return geo_df, json_df_features, traffic_df_id_bc, conn
 
@@ -637,22 +648,6 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     ### Filter all traffic
     if callback_trigger in ['toggle_uptime_filter', 'toggle_active_filter', 'hardware_version']:
 
-        # Check if unfiltered table all_traffic exists
-        table_name = "all_traffic"
-        exists = conn.execute(f"""
-            SELECT COUNT(*)
-            FROM information_schema.tables
-            WHERE table_name = '{table_name}'
-        """).fetchone()[0] > 0
-
-        # Read all_traffic if not exists
-        if not exists:
-            data_dir = DATA_DIR
-            if not os.path.exists(os.path.join(data_dir, 'all_traffic.parquet')):
-                data_dir = ASSET_DIR
-            traffic_relation = conn.read_parquet(os.path.join(data_dir, 'all_traffic.parquet'), union_by_name=True)
-            traffic_relation.to_table('all_traffic')
-
         query = ('CREATE OR REPLACE TEMP TABLE filtered_traffic AS '
                  'SELECT * '
                  'FROM all_traffic ')
@@ -688,15 +683,13 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
         # Add or update table filtered_traffic
         with db_lock:  # Ensure thread safety for writes
             conn.execute(query, params)
-
-        # Delete all_traffic for memory usage reasons
-        conn.execute('DROP TABLE IF EXISTS all_traffic')
+            conn.execute('CREATE OR REPLACE TEMP TABLE filtered_traffic AS SELECT * EXCLUDE (uptime, hardware_version, last_data_package_naive) FROM filtered_traffic')
 
     # Check if selected street has data for selected data range
     min_date, max_date, start_date, end_date, message, missing_data = get_min_max_str(start_date, end_date, id_street, 'filtered_traffic')
 
     query = ('CREATE OR REPLACE TEMP TABLE filtered_traffic_min_max AS '
-             'SELECT * EXCLUDE (uptime, car_speed0, car_speed10, car_speed20, car_speed30, car_speed40, car_speed50, car_speed60, car_speed70, last_data_package_naive) '
+             'SELECT * EXCLUDE (car_speed0, car_speed10, car_speed20, car_speed30, car_speed40, car_speed50, car_speed60, car_speed70) '
              'FROM filtered_traffic '
              'WHERE date_local >= ? AND date_local <= ?')
     params = [min_date, max_date]

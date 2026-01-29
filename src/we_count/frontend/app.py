@@ -192,7 +192,8 @@ def add_selected_street(from_table_name, id_street, street_name):
     conn.execute(query, params)
 
     # Add selected street to filtered_traffic_dt
-    query = (f'CREATE OR REPLACE TEMP TABLE {from_table_name + '_str'} AS '
+    to_table_name = from_table_name + '_str'
+    query = (f'CREATE OR REPLACE TEMP TABLE {to_table_name} AS '
              f'SELECT * FROM {from_table_name} '
              f'UNION ALL '
              f'SELECT * FROM selected_street')

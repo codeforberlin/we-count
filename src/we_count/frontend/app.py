@@ -965,11 +965,6 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     # Add or update table filtered_traffic_dt (for ranking chart)
     with db_lock:  # Ensure thread safety for writes
         df_bar_ranking = conn.execute(query).fetch_df()
-        #traffic_df_dt = conn.execute('SELECT * FROM filtered_traffic_dt').fetchdf()
-
-    #df_bar_ranking = traffic_df_dt.groupby(by=['id_street', 'street_selection'], sort=False, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
-    #df_bar_ranking = df_bar_ranking.sort_values(by=[radio_y_axis], ascending=False)
-    #df_bar_ranking.reset_index(inplace=True)
 
     # Remove '90000' from the labels to reduce x-labels space required
     df_bar_ranking['x-labels'] = df_bar_ranking['id_street'].copy()
@@ -1011,17 +1006,18 @@ def update_period_year_values(street_id_text):
 
     segment_id = street_id_text[-10:]
 
-    query = ('SELECT * '
+    query = ('SELECT DISTINCT segment_id, year '
              'FROM filtered_traffic_min_max '
-             'WHERE segment_id = ?')
+             'WHERE segment_id = ? '
+             'ORDER BY year')
     params = [segment_id]
 
     with db_lock:
-        traffic_df_use = conn.execute(query, params).fetchdf()
+        period_values_year_df = conn.execute(query, params).fetch_df()
+        # Convert df to list
+        period_values_year = period_values_year_df['year'].tolist()
 
-    period_values_year = traffic_df_use['year'].unique()
-
-    return period_values_year, period_values_year #[{'label': str(val), 'value': str(val)} for val in unique_values]
+    return period_values_year, period_values_year
 
 @app.callback(
     Output('period_values_others', 'options'),
@@ -1032,19 +1028,22 @@ def update_period_year_values(street_id_text):
 def update_period_other_values(period_values_year, period_type_others, street_id_text):
 
     segment_id = street_id_text[-10:]
-    query = ('SELECT * '
-             'FROM filtered_traffic_min_max '
-             'WHERE segment_id = ?')
-    params = [segment_id]
+
+    placeholders = ','.join(['?'] * len(period_values_year))
+    query = (f'SELECT DISTINCT segment_id, year, {_(period_type_others)}, '
+             f'MIN(date_local) AS first_seen '
+             f'FROM filtered_traffic_min_max '
+             f'WHERE year IN ({placeholders}) '
+             f'AND segment_id = ? '
+             f'GROUP BY segment_id, year, {_(period_type_others)} '
+             f'ORDER BY first_seen')
+    params = period_values_year
+    params.append(segment_id)
 
     with db_lock:
-        traffic_df_use = conn.execute(query, params).fetchdf()
-
-    # Filter on selected year(s)
-    traffic_df_use = traffic_df_use[traffic_df_use['year'].isin(period_values_year)]
-
-    # Get other options
-    period_values_others = traffic_df_use[period_type_others].unique()
+        period_values_others_df = conn.execute(query, params).fetch_df()
+        # Convert df to list
+        period_values_others = period_values_others_df[period_type_others].tolist()
 
     return period_values_others
 

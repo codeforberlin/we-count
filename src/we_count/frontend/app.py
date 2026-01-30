@@ -634,6 +634,7 @@ def update_map(clickData, id_street, hardware_version, toggle_active_filter):
 def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, end_date, hour_range, toggle_uptime_filter, toggle_active_filter, hardware_version, radio_y_axis, floating_button, lang_code_dd):
 
     callback_trigger = ctx.triggered_id
+    print(callback_trigger)
 
     # Get segment_id/street name
     segment_id = id_street[-11:-1]
@@ -686,34 +687,28 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     # Check if selected street has data for selected data range
     min_date, max_date, start_date, end_date, message, missing_data = get_min_max_str(start_date, end_date, id_street, 'filtered_traffic')
 
-    query = ('CREATE OR REPLACE TEMP TABLE filtered_traffic_min_max AS '
-             'SELECT * EXCLUDE (car_speed0, car_speed10, car_speed20, car_speed30, car_speed40, car_speed50, car_speed60, car_speed70, v85) '
-             'FROM filtered_traffic '
-             'WHERE date_local >= ? AND date_local <= ?')
-    params = [min_date, max_date]
+    if callback_trigger in ['toggle_uptime_filter', 'toggle_active_filter', 'hardware_version', 'date_filter', 'range_slider']:
 
-    # Add or update table filtered_traffic_min_max (for comparison graph)
-    with db_lock:  # Ensure thread safety for writes
-        conn.execute(query, params)
+        # Create/update filtered traffic by start/end date
+        query = """
+        CREATE OR REPLACE TEMP TABLE filtered_traffic_dt AS
+        SELECT *
+        FROM filtered_traffic
+        WHERE STRPTIME(date, '%d-%m-%Y') >= ? AND STRPTIME(date, '%d-%m-%Y') <= ?
+        """
+        params = [start_date, end_date]
 
-    # Create filtered traffic by start/end date
-    query = """
-    CREATE OR REPLACE TEMP TABLE filtered_traffic_dt AS
-    SELECT *
-    FROM filtered_traffic
-    WHERE STRPTIME(date, '%d-%m-%Y') >= ? AND STRPTIME(date, '%d-%m-%Y') <= ?
-    """
-    params = [start_date, end_date]
+        query += 'AND hour >= ? AND hour <= ?'
+        params.append(hour_range[0])
+        params.append(hour_range[1])
 
-    query += 'AND hour >= ? AND hour <= ?'
-    params.append(hour_range[0])
-    params.append(hour_range[1])
+        with db_lock:  # Ensure thread safety for writes
+            conn.execute(query, params)
 
-    with db_lock:  # Ensure thread safety for writes
-        conn.execute(query, params)
+    if callback_trigger in ['toggle_uptime_filter', 'toggle_active_filter', 'hardware_version', 'date_filter', 'range_slider', 'street_name_dd']:
 
-    # Add selected street to filtered_traffic_dt table
-    add_selected_street('filtered_traffic_dt', id_street, street_name)
+        # Add selected street to filtered_traffic_dt table
+        add_selected_street('filtered_traffic_dt', id_street, street_name)
 
     # Format dates for chart representation / processing
     if callback_trigger in ['date_filter']:
@@ -1006,7 +1001,6 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     # Add or update table filtered_traffic_dt (for ranking chart)
     with db_lock:  # Ensure thread safety for writes
         df_bar_ranking = conn.execute(query).fetch_df()
-        output_excel(df_bar_ranking, 'df_bar_ranking')
 
     # Remove '90000' from the labels to reduce x-labels space required
     df_bar_ranking['x-labels'] = df_bar_ranking['id_street'].copy()
@@ -1042,17 +1036,20 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
 @app.callback(
     Output('period_values_year', 'options'),
     Output('period_values_year', 'value'),
-    Input('street_id_text', 'children')
+    Input('street_id_text', 'children'),
+    Input(component_id="date_filter", component_property="min_date_allowed"),
+    Input(component_id="date_filter", component_property="max_date_allowed")
 )
-def update_period_year_values(street_id_text):
+def update_period_year_values(street_id_text, min_date, max_date):
 
     segment_id = street_id_text[-10:]
 
     query = ('SELECT DISTINCT segment_id, year '
-             'FROM filtered_traffic_min_max '
+             'FROM filtered_traffic '
              'WHERE segment_id = ? '
+             'AND date_local >= ? AND date_local <= ? '
              'ORDER BY year')
-    params = [segment_id]
+    params = [segment_id, min_date, max_date]
 
     with db_lock:
         period_values_year_df = conn.execute(query, params).fetch_df()
@@ -1065,22 +1062,27 @@ def update_period_year_values(street_id_text):
     Output('period_values_others', 'options'),
     Input('period_values_year', 'value'),
     Input('period_type_others', 'value'),
-    Input('street_id_text', 'children')
+    Input('street_id_text', 'children'),
+    Input(component_id="date_filter", component_property="min_date_allowed"),
+    Input(component_id="date_filter", component_property="max_date_allowed")
 )
-def update_period_other_values(period_values_year, period_type_others, street_id_text):
+def update_period_other_values(period_values_year, period_type_others, street_id_text, min_date, max_date):
 
     segment_id = street_id_text[-10:]
 
     placeholders = ','.join(['?'] * len(period_values_year))
     query = (f'SELECT DISTINCT segment_id, year, {_(period_type_others)}, '
              f'MIN(date_local) AS first_seen '
-             f'FROM filtered_traffic_min_max '
+             f'FROM filtered_traffic '
              f'WHERE year IN ({placeholders}) '
              f'AND segment_id = ? '
+             f'AND date_local >= ? AND date_local <= ? '
              f'GROUP BY segment_id, year, {_(period_type_others)} '
              f'ORDER BY first_seen')
     params = period_values_year
     params.append(segment_id)
+    params.append(min_date)
+    params.append(max_date)
 
     with db_lock:
         period_values_others_df = conn.execute(query, params).fetch_df()
@@ -1098,11 +1100,13 @@ def update_period_other_values(period_values_year, period_type_others, street_id
     Input(component_id='period_type_others', component_property='value'),
     Input(component_id='period_values_others', component_property='value'),
     Input(component_id='period_values_others', component_property='options'),
-    Input(component_id='street_name_dd', component_property='value')
+    Input(component_id='street_name_dd', component_property='value'),
+    Input(component_id="date_filter", component_property="min_date_allowed"),
+    Input(component_id="date_filter", component_property="max_date_allowed")
 )
 
 def comparison_chart(period_values_year, period_options_year,
-                     period_type_others, period_values_others, period_options_others, id_street):
+                     period_type_others, period_values_others, period_options_others, id_street, min_date, max_date):
 
     callback_trigger = ctx.triggered_id
 
@@ -1118,22 +1122,28 @@ def comparison_chart(period_values_year, period_options_year,
         select_two_text = _('Select two periods to compare:')
         select_two_color = {'color': 'black'}
 
-    # Add selected street to min_max
-    add_selected_street('filtered_traffic_min_max', id_street, street_name)
+    # Add selected street to filtered_traffic
+    add_selected_street('filtered_traffic', id_street, street_name)
+    # Exclude speed columns to reduce size
+    conn.execute('CREATE OR REPLACE TEMP TABLE filtered_traffic_str AS '
+                 'SELECT * EXCLUDE (car_speed0, car_speed10, car_speed20, car_speed30, car_speed40, car_speed50, car_speed60, car_speed70, v85) '
+                 'FROM filtered_traffic_str')
 
     # Create period A and B, based on period_type and values
     query_A = (f'CREATE OR REPLACE TEMP TABLE df_period_A AS '
                f'SELECT * '
-               f'FROM filtered_traffic_min_max_str '
-               f'WHERE {period_type_others} = ?')
+               f'FROM filtered_traffic_str '
+               f'WHERE {period_type_others} = ? '
+               f'AND date_local >= ? AND date_local <= ?')
 
-    params_A = [period_values_others[0]]
+    params_A = [period_values_others[0], min_date, max_date]
 
     query_B = (f'CREATE OR REPLACE TEMP TABLE df_period_B AS '
                f'SELECT * '
-               f'FROM filtered_traffic_min_max_str '
-               f'WHERE {period_type_others} = ?')
-    params_B = [period_values_others[1]]
+               f'FROM filtered_traffic_str '
+               f'WHERE {period_type_others} = ? '
+               f'AND date_local >= ? AND date_local <= ?')
+    params_B = [period_values_others[1], min_date, max_date]
 
     with db_lock:
         conn.execute(query_A, params_A)
@@ -1208,6 +1218,8 @@ def comparison_chart(period_values_year, period_options_year,
         """
 
     df_avg_traffic_delta_AB = conn.execute(query).fetchdf()
+
+    duckdb_info(conn)
 
     # Draw graph
     line_avg_delta_traffic = px.line(df_avg_traffic_delta_AB,

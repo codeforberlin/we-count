@@ -25,6 +25,7 @@ from dash.exceptions import PreventUpdate
 import plotly.express as px
 from threading import Lock
 from dateutil import parser
+import polars as pl
 
 # the following is basically to suppress warnings about "_" being undefined
 # "from gettext import gettext as _" does not work because we use gettext.install later on, which installs "_"
@@ -392,9 +393,9 @@ ORDER BY id_street
 params = [two_weeks_ago]
 
 with db_lock:
-    id_street_options_df = conn.execute(query, params).fetch_df()
+    id_street_options_df = conn.execute(query, params).pl()
     # Convert df to list
-    id_street_options = id_street_options_df['id_street'].tolist()
+    id_street_options = id_street_options_df['id_street'].to_list()
 
 ### Prepare map data ###
 if not DEPLOYED:
@@ -634,7 +635,6 @@ def update_map(clickData, id_street, hardware_version, toggle_active_filter):
 def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, end_date, hour_range, toggle_uptime_filter, toggle_active_filter, hardware_version, radio_y_axis, floating_button, lang_code_dd):
 
     callback_trigger = ctx.triggered_id
-    print(callback_trigger)
 
     # Get segment_id/street name
     segment_id = id_street[-11:-1]
@@ -687,7 +687,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     # Check if selected street has data for selected data range
     min_date, max_date, start_date, end_date, message, missing_data = get_min_max_str(start_date, end_date, id_street, 'filtered_traffic')
 
-    if callback_trigger in ['toggle_uptime_filter', 'toggle_active_filter', 'hardware_version', 'date_filter', 'range_slider']:
+    if callback_trigger in ['toggle_uptime_filter', 'toggle_active_filter', 'hardware_version', 'date_filter', 'range_slider', 'street_name_dd']:
 
         # Create/update filtered traffic by start/end date
         query = """
@@ -787,7 +787,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     """
 
     with db_lock:  # Ensure thread safety for writes
-        df_line_abs_traffic = conn.execute(query).fetchdf()
+        df_line_abs_traffic = conn.execute(query).pl()
 
     line_abs_traffic = px.scatter(df_line_abs_traffic,
         x=radio_time_division, y=['ped_total', 'bike_total', 'car_total', 'heavy_total'],
@@ -833,7 +833,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     """
 
     with db_lock:  # Ensure thread safety for writes
-        df_avg_traffic = conn.execute(query).fetchdf()
+        df_avg_traffic = conn.execute(query).pl()
 
     bar_avg_traffic = px.bar(df_avg_traffic,
         x=radio_time_unit, y=['ped_total', 'bike_total', 'car_total', 'heavy_total'],
@@ -906,7 +906,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     """
 
     with db_lock:  # Ensure thread safety for writes
-        df_bar_speed_traffic = conn.execute(query).fetchdf()
+        df_bar_speed_traffic = conn.execute(query).pl()
 
     bar_perc_speed = px.bar(df_bar_speed_traffic,
          x=radio_time_unit, y=cols,
@@ -955,9 +955,16 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     """
 
     with db_lock:  # Ensure thread safety for writes
-        df_bar_v85_traffic = conn.execute(query).fetchdf()
+        df_bar_v85 = conn.execute(query).pl()
 
-    df_bar_v85 = df_bar_v85_traffic.groupby(by=[radio_time_unit, 'street_selection'], sort= False, as_index=False).agg({'v85': 'mean'})
+    #df_bar_v85 = df_bar_v85_traffic.groupby(by=[radio_time_unit, 'street_selection'], sort= False, as_index=False).agg({'v85': 'mean'})
+
+    # df_bar_v85 = (
+    #     df_bar_v85_traffic
+    #     .group_by([radio_time_unit, "street_selection"],
+    #               maintain_order=True)  # maintain_order=True ≈ sort=False in Pandas
+    #     .agg(pl.col("v85").mean().alias("v85"))
+    # )
 
     bar_v85 = px.bar(df_bar_v85,
         x=radio_time_unit, y='v85',
@@ -1219,7 +1226,7 @@ def comparison_chart(period_values_year, period_options_year,
 
     df_avg_traffic_delta_AB = conn.execute(query).fetchdf()
 
-    duckdb_info(conn)
+    #duckdb_info(conn)
 
     # Draw graph
     line_avg_delta_traffic = px.line(df_avg_traffic_delta_AB,

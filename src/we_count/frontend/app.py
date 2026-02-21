@@ -613,6 +613,7 @@ def update_map(clickData, id_street, hardware_version, toggle_active_filter):
     Output(component_id='date_range_text', component_property='style'),
     Output(component_id='pie_traffic', component_property='figure'),
     Output(component_id='line_abs_traffic', component_property='figure'),
+    Output(component_id='bar_avg_traffic_hr', component_property='figure'),
     Output(component_id='bar_avg_traffic', component_property='figure'),
     Output(component_id='bar_perc_speed', component_property='figure'),
     Output(component_id='bar_v85', component_property='figure'),
@@ -682,6 +683,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
         # Add or update table filtered_traffic
         with db_lock:  # Ensure thread safety for writes
             conn.execute(query, params)
+            # Remove unnecessary columns
             conn.execute('CREATE OR REPLACE TEMP TABLE filtered_traffic AS SELECT * EXCLUDE (uptime, hardware_version, last_data_package_naive) FROM filtered_traffic')
 
     # Check if selected street has data for selected data range
@@ -793,7 +795,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
         x=radio_time_division, y=['ped_total', 'bike_total', 'car_total', 'heavy_total'],
         facet_col='street_selection',
         category_orders={'street_selection': [street_name, 'All Streets']},
-        labels={'year': _('Year'), _('year_month'): _('Month'), 'year_week': _('Week'), 'date': _('Day'), 'date_hour': _('Hour')},
+        labels={'year': _('Year'), 'year_month': _('Month'), 'year_week': _('Week'), 'date': _('Day'), 'date_hour': _('Hour')},
         color_discrete_map={'ped_total': ADFC_lightblue, 'bike_total': ADFC_green, 'car_total': ADFC_orange, 'heavy_total': ADFC_crimson},
         facet_col_spacing=0.04,
         title = (_('Absolute traffic count') + ' (' + start_date_str + ' - ' + end_date_str + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)')
@@ -816,26 +818,35 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     #Range Slider: line_abs_traffic.update_xaxes(rangeslider_visible=True)
 
 
-    ### Create average traffic bar chart
+    ### Create average traffic bar chart by hour
     group_cols = [radio_time_unit, 'street_selection']
     group_clause = ", ".join(group_cols)
+
     query = f"""
-    SELECT 
+    SELECT
         {group_clause},
-        MEAN(ped_total) AS ped_total,
-        MEAN(bike_total) AS bike_total,
-        MEAN(car_total) AS car_total,
-        MEAN(heavy_total) AS heavy_total,
+        ROUND(AVG(ped_total), 1) AS ped_total,
+        ROUND(AVG(bike_total), 1) AS bike_total,
+        ROUND(AVG(car_total), 1) AS car_total,
+        ROUND(AVG(heavy_total), 1) AS heavy_total,
     MIN(date_local) AS first_seen
     FROM filtered_traffic_dt_str
     GROUP BY {group_clause}
     ORDER BY first_seen
     """
 
-    with db_lock:  # Ensure thread safety for writes
-        df_avg_traffic = conn.execute(query).pl()
+    # TODO: Check EXTRACT to avoid additional date columns e.g.:
+    # strftime(date_local, '%m') AS month_num,       -- month number as string
+    # strftime(date_local, '%b') AS month_name,      -- full month name
+    # GROUP BY month_num, month_name, street_selection
+    # ORDER BY month_num::INT
+    # or:
+    # EXTRACT(MONTH FROM date_local) AS unit
 
-    bar_avg_traffic = px.bar(df_avg_traffic,
+    with db_lock:  # Ensure thread safety for writes
+        pl_avg_traffic_hr = conn.execute(query).pl()
+
+    bar_avg_traffic_hr = px.bar(pl_avg_traffic_hr,
         x=radio_time_unit, y=['ped_total', 'bike_total', 'car_total', 'heavy_total'],
         barmode='stack',
         facet_col='street_selection',
@@ -843,14 +854,95 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
         category_orders={'street_selection': [street_name, 'All Streets']},
         labels={'year': _('Year'), 'month': _('Month'), 'weekday': _('Week'), 'day': _('Day'), 'hour': _('Hour')},
         color_discrete_map={'ped_total': ADFC_lightblue, 'bike_total': ADFC_green, 'car_total': ADFC_orange, 'heavy_total': ADFC_crimson},
-        title=(_('Average traffic count')  + ' (' + start_date_str + ' - ' + end_date_str + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)')
+        title=(_('Average traffic count per hour')  + ' (' + start_date_str + ' - ' + end_date_str + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)')
+    )
+
+    bar_avg_traffic_hr.for_each_annotation(lambda a: a.update(text=a.text.replace(street_name, street_name + _(' (segment:') + segment_id + ')')))
+    bar_avg_traffic_hr.for_each_annotation(lambda a: a.update(text=a.text.replace('All Streets', _('All Streets'))))
+    bar_avg_traffic_hr.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
+    bar_avg_traffic_hr.update_layout({'plot_bgcolor': ADFC_palegrey,'paper_bgcolor': ADFC_palegrey})
+    bar_avg_traffic_hr.update_layout(yaxis_title=_('Average traffic count per hour'))
+    bar_avg_traffic_hr.update_yaxes(matches=None)
+    bar_avg_traffic_hr.update_layout(legend_title_text=_('Traffic Type'))
+    bar_avg_traffic_hr.update_traces({'name': _('Pedestrians')}, selector={'name': 'ped_total'})
+    bar_avg_traffic_hr.update_traces({'name': _('Bikes')}, selector={'name': 'bike_total'})
+    bar_avg_traffic_hr.update_traces({'name': _('Cars')}, selector={'name': 'car_total'})
+    bar_avg_traffic_hr.update_traces({'name': _('Heavy')}, selector={'name': 'heavy_total'})
+    bar_avg_traffic_hr.update_xaxes(dtick = 1, tickformat=".0f")
+    bar_avg_traffic_hr.for_each_yaxis(lambda yaxis: yaxis.update(showticklabels=True))
+    for annotation in bar_avg_traffic_hr.layout.annotations: annotation['font'] = {'size': 14}
+
+    ### Create average traffic bar chart by time_div
+    radio_time_unit_to_time_div = {
+        'month':'year_month',
+        'Monat':'year_month',
+        'weekday': 'year_week',
+        'Wochentag': 'year_week',
+        'year': 'year',
+        'day': 'date',
+        'hour': 'date_hour',
+    }
+
+    time_div = radio_time_unit_to_time_div.get(radio_time_unit)
+
+    # Step 1: create temp table with sums and time_div
+    query = f"""
+    CREATE OR REPLACE TEMP TABLE step_1 AS
+    SELECT
+        {time_div},
+        {radio_time_unit},
+        street_selection,
+        SUM(ped_total) AS ped_total,
+        SUM(bike_total) AS bike_total,
+        SUM(car_total) AS car_total,
+        SUM(heavy_total) AS heavy_total,
+    MIN(date_local) AS first_seen
+    FROM filtered_traffic_dt_str
+    GROUP BY {time_div}, {radio_time_unit}, street_selection
+    ORDER BY first_seen
+    """
+
+    with db_lock:  # Ensure thread safety for writes
+        conn.execute(query)
+
+    # Step 2: generate averages by time_div
+    query = f"""
+    SELECT
+        {radio_time_unit},
+        street_selection,
+        ROUND(AVG(ped_total), 1) AS ped_total,
+        ROUND(AVG(bike_total), 1) AS bike_total,
+        ROUND(AVG(car_total), 1) AS car_total,
+        ROUND(AVG(heavy_total), 1) AS heavy_total,
+    MIN(first_seen) AS first_seen
+    FROM step_1
+    GROUP BY {radio_time_unit}, street_selection
+    ORDER BY first_seen
+    """
+
+    with db_lock:  # Ensure thread safety for writes
+        pl_avg_traffic = conn.execute(query).pl()
+
+        # Delete (drop) the street_selection table
+        conn.execute('DROP TABLE IF EXISTS step_1')
+
+    bar_avg_traffic = px.bar(pl_avg_traffic,
+        x=radio_time_unit, y=['ped_total', 'bike_total', 'car_total', 'heavy_total'],
+        barmode='stack',
+        facet_col='street_selection',
+        facet_col_spacing=0.04,
+        category_orders={'street_selection': [street_name, 'All Streets']},
+        labels={'year': _('Year'), 'month': _('Month'), 'weekday': _('Week'), 'day': _('Day'), 'hour': _('Hour')},
+        color_discrete_map={'ped_total': ADFC_lightblue, 'bike_total': ADFC_green, 'car_total': ADFC_orange, 'heavy_total': ADFC_crimson},
+        title=(_('Average traffic count per ') + _(radio_time_unit) + ' (' + start_date_str + ' - ' + end_date_str + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)')
     )
 
     bar_avg_traffic.for_each_annotation(lambda a: a.update(text=a.text.replace(street_name, street_name + _(' (segment:') + segment_id + ')')))
     bar_avg_traffic.for_each_annotation(lambda a: a.update(text=a.text.replace('All Streets', _('All Streets'))))
     bar_avg_traffic.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
     bar_avg_traffic.update_layout({'plot_bgcolor': ADFC_palegrey,'paper_bgcolor': ADFC_palegrey})
-    bar_avg_traffic.update_layout(yaxis_title=_('Average traffic count'))
+    bar_avg_traffic.update_layout(yaxis_title=_('Average traffic count per ') + _(radio_time_unit))
+    bar_avg_traffic.update_yaxes(matches=None)
     bar_avg_traffic.update_layout(legend_title_text=_('Traffic Type'))
     bar_avg_traffic.update_traces({'name': _('Pedestrians')}, selector={'name': 'ped_total'})
     bar_avg_traffic.update_traces({'name': _('Bikes')}, selector={'name': 'bike_total'})
@@ -869,14 +961,14 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
         SELECT
             {radio_time_unit},
             street_selection,
-            AVG(car_speed0)  AS car_speed0,
-            AVG(car_speed10) AS car_speed10,
-            AVG(car_speed20) AS car_speed20,
-            AVG(car_speed30) AS car_speed30,
-            AVG(car_speed40) AS car_speed40,
-            AVG(car_speed50) AS car_speed50,
-            AVG(car_speed60) AS car_speed60,
-            AVG(car_speed70) AS car_speed70,
+            ROUND(AVG(car_speed0), 1)  AS car_speed0,
+            ROUND(AVG(car_speed10), 1) AS car_speed10,
+            ROUND(AVG(car_speed20), 1) AS car_speed20,
+            ROUND(AVG(car_speed30), 1) AS car_speed30,
+            ROUND(AVG(car_speed40), 1) AS car_speed40,
+            ROUND(AVG(car_speed50), 1) AS car_speed50,
+            ROUND(AVG(car_speed60), 1) AS car_speed60,
+            ROUND(AVG(car_speed70), 1) AS car_speed70,
         MIN(date_local) AS first_seen
         FROM filtered_traffic_dt_str
         GROUP BY {radio_time_unit}, street_selection
@@ -894,14 +986,14 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     SELECT
         {radio_time_unit},
         street_selection,
-        car_speed0  / total_speed * 100 AS car_speed0,
-        car_speed10 / total_speed * 100 AS car_speed10,
-        car_speed20 / total_speed * 100 AS car_speed20,
-        car_speed30 / total_speed * 100 AS car_speed30,
-        car_speed40 / total_speed * 100 AS car_speed40,
-        car_speed50 / total_speed * 100 AS car_speed50,
-        car_speed60 / total_speed * 100 AS car_speed60,
-        car_speed70 / total_speed * 100 AS car_speed70
+        ROUND(car_speed0  / total_speed * 100, 1) AS car_speed0,
+        ROUND(car_speed10 / total_speed * 100, 1) AS car_speed10,
+        ROUND(car_speed20 / total_speed * 100, 1) AS car_speed20,
+        ROUND(car_speed30 / total_speed * 100, 1) AS car_speed30,
+        ROUND(car_speed40 / total_speed * 100, 1) AS car_speed40,
+        ROUND(car_speed50 / total_speed * 100, 1) AS car_speed50,
+        ROUND(car_speed60 / total_speed * 100, 1) AS car_speed60,
+        ROUND(car_speed70 / total_speed * 100, 1) AS car_speed70
     FROM totals
     """
 
@@ -909,17 +1001,17 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
         df_bar_speed_traffic = conn.execute(query).pl()
 
     bar_perc_speed = px.bar(df_bar_speed_traffic,
-         x=radio_time_unit, y=cols,
-         barmode='stack',
-         facet_col='street_selection',
-         category_orders={'street_selection': [street_name, 'All Streets']},
-         labels={'year': _('Year'), 'month': _('Month'), 'weekday': _('Week'), 'day': _('Day'), 'hour': _('Hour')},
-         color_discrete_map={'car_speed0': ADFC_lightgrey, 'car_speed10': ADFC_lightblue_D,
-                             'car_speed20': ADFC_lightblue, 'car_speed30': ADFC_green,
-                             'car_speed40': ADFC_green_L, 'car_speed50': ADFC_orange,
-                             'car_speed60': ADFC_crimson, 'car_speed70': ADFC_pink},
-         facet_col_spacing=0.04,
-         title=(_('Average car speed %') + ' (' + start_date_str + ' - ' + end_date_str + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)')
+        x=radio_time_unit, y=cols,
+        barmode='stack',
+        facet_col='street_selection',
+        category_orders={'street_selection': [street_name, 'All Streets']},
+        labels={'year': _('Year'), 'month': _('Month'), 'weekday': _('Week'), 'day': _('Day'), 'hour': _('Hour')},
+        color_discrete_map={'car_speed0': ADFC_lightgrey, 'car_speed10': ADFC_lightblue_D,
+                            'car_speed20': ADFC_lightblue, 'car_speed30': ADFC_green,
+                            'car_speed40': ADFC_green_L, 'car_speed50': ADFC_orange,
+                            'car_speed60': ADFC_crimson, 'car_speed70': ADFC_pink},
+        facet_col_spacing=0.04,
+        title=(_('Average car speed %') + ' (' + start_date_str + ' - ' + end_date_str + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)')
     )
 
     bar_perc_speed.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
@@ -947,7 +1039,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     query = f"""
     SELECT 
         {group_clause},
-        MEAN(v85) AS v85,
+        ROUND(MEAN(v85), 1) AS v85,
     MIN(date_local) AS first_seen
     FROM filtered_traffic_dt_str
     GROUP BY {group_clause}
@@ -956,15 +1048,6 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
 
     with db_lock:  # Ensure thread safety for writes
         df_bar_v85 = conn.execute(query).pl()
-
-    #df_bar_v85 = df_bar_v85_traffic.groupby(by=[radio_time_unit, 'street_selection'], sort= False, as_index=False).agg({'v85': 'mean'})
-
-    # df_bar_v85 = (
-    #     df_bar_v85_traffic
-    #     .group_by([radio_time_unit, "street_selection"],
-    #               maintain_order=True)  # maintain_order=True ≈ sort=False in Pandas
-    #     .agg(pl.col("v85").mean().alias("v85"))
-    # )
 
     bar_v85 = px.bar(df_bar_v85,
         x=radio_time_unit, y='v85',
@@ -1023,6 +1106,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     bar_ranking = px.bar(df_bar_ranking,
         x='x-labels', y=radio_y_axis,
         color=radio_y_axis,
+        hover_data={'ped_total': True, 'bike_total': True, 'car_total': True, 'heavy_total': True, 'id_street': True},
         color_continuous_scale='temps',
         labels={'ped_total': _('Pedestrians'), 'bike_total': _('Bikes'), 'car_total': _('Cars'), 'heavy_total': _('Heavy'), 'id_street': _('Street (segment id)')},
         title=(_('Absolute traffic') + ' (' + start_date_str + ' - ' + end_date_str + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)'),
@@ -1037,7 +1121,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     bar_ranking.update_layout(yaxis_title= _('Absolute count'))
     for annotation in bar_ranking.layout.annotations: annotation['font'] = {'size': 14}
 
-    return selected_street_header, selected_street_header_color, street_id_text, date_range_text, start_date, end_date, min_date, max_date, date_range_color, pie_traffic, line_abs_traffic, bar_avg_traffic, bar_perc_speed, bar_v85, bar_ranking
+    return selected_street_header, selected_street_header_color, street_id_text, date_range_text, start_date, end_date, min_date, max_date, date_range_color, pie_traffic, line_abs_traffic, bar_avg_traffic_hr, bar_avg_traffic, bar_perc_speed, bar_v85, bar_ranking
 
 ### Comparison Graph
 @app.callback(
@@ -1078,13 +1162,13 @@ def update_period_other_values(period_values_year, period_type_others, street_id
     segment_id = street_id_text[-10:]
 
     placeholders = ','.join(['?'] * len(period_values_year))
-    query = (f'SELECT DISTINCT segment_id, year, {_(period_type_others)}, '
+    query = (f'SELECT DISTINCT segment_id, year, {period_type_others}, '
              f'MIN(date_local) AS first_seen '
              f'FROM filtered_traffic '
              f'WHERE year IN ({placeholders}) '
              f'AND segment_id = ? '
              f'AND date_local >= ? AND date_local <= ? '
-             f'GROUP BY segment_id, year, {_(period_type_others)} '
+             f'GROUP BY segment_id, year, {period_type_others} '
              f'ORDER BY first_seen')
     params = period_values_year
     params.append(segment_id)

@@ -150,6 +150,9 @@ msgstr "Gesamtverkehr"
 msgid "Year"
 msgstr "Jahr"
 
+msgid "year"
+msgstr "Jahr"
+
 #: bzm_v01.py:521 bzm_v01.py:662 bzm_v01.py:663 bzm_v01.py:1066 bzm_v01.py:1102
 #: bzm_v01.py:1139 bzm_v01.py:1174 bzm_v01.py:1210 bzm_v01.py:1297
 msgid "Month"
@@ -199,6 +202,9 @@ msgstr ""
 msgid "Average traffic"
 msgstr "Durchschnittlicher Verkehr"
 
+msgid "Average traffic count per "
+msgstr "Durchschnittliche Verkehrsmenge pro "
+
 #: bzm_v01.py:555
 msgid "Yearly"
 msgstr "Jährlich"
@@ -236,8 +242,8 @@ msgid "Average car speed %"
 msgstr "Durchschnittliche Autogeschwindigkeit %"
 
 #: bzm_v01.py:1180
-msgid "Average car speed % - by time unit (stacked bars)"
-msgstr "Durchschnittliche Autogeschwindigkeit % - pro Zeiteinheit (gestapelte Balken)"
+msgid "Average car speed % - by time unit"
+msgstr "Durchschnittliche Autogeschwindigkeit % - pro Zeiteinheit"
 
 #: bzm_v01.py:591
 msgid "v85 car speed"
@@ -483,8 +489,8 @@ msgid "All Streets"
 msgstr "Alle Straßen"
 
 #: bzm_v01.py:1104 bzm_v01.py:1111
-msgid "Average traffic count"
-msgstr "Durchschnittliche Verkehrsmenge"
+msgid "Average traffic count per hour"
+msgstr "Durchschnittliche Verkehrsmenge pro Stunde"
 
 #: bzm_v01.py:1151 bzm_v01.py:1186
 msgid "Car speed"
@@ -516,6 +522,12 @@ msgstr "Gesamtzahl"
 #: bzm_v01.py:1297
 msgid "Week day"
 msgstr "Wochentag"
+
+msgid "day"
+msgstr "Tag"
+
+msgid "hour"
+msgstr "Stunde"
 
 #: bzm_v01.py:1310
 msgid "Period"

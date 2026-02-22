@@ -492,11 +492,17 @@ def get_language(lang_code_dd):
     Input(component_id='street_name_dd', component_property='value'),
     Input(component_id='hardware_version',component_property= 'value'),
     Input(component_id='toggle_active_filter',component_property= 'value'),
+    Input(component_id='toggle_map_style', component_property='value'),
 )
 
-def update_map(clickData, id_street, hardware_version, toggle_active_filter):
+def update_map(clickData, id_street, hardware_version, toggle_active_filter, toggle_map_style):
 
     callback_trigger = ctx.triggered_id
+
+    if toggle_map_style == ['']:
+        map_style = 'streets'
+    else:
+        map_style = 'satellite'
 
     # Get hardware version of currently selected street
     current_hw = int(df_map_base.loc[df_map_base['id_street'] == id_street, 'hardware_version'].iloc[0])
@@ -569,7 +575,7 @@ def update_map(clickData, id_street, hardware_version, toggle_active_filter):
         'Inactive - no data': ADFC_lightgrey},
         hover_data={'map_line_color': False, 'osm.highway': True, 'osm.address.city': True, 'osm.address.suburb': True, 'osm.address.postcode': True, 'hardware_version': True},
         labels={'segment_id': 'Segment', 'osm.highway': _('Highway type'), 'x': 'Lon', 'y': 'Lat', 'osm.address.city': _('City'), 'osm.address.suburb': _('District'), 'osm.address.postcode': _('Postal code')},
-        map_style="streets", center= dict(lat=lat_str, lon=lon_str), zoom= zoom_factor)
+        map_style=map_style, center= dict(lat=lat_str, lon=lon_str), zoom= zoom_factor)
 
     street_map.update_traces(line_width=5, opacity=1.0)
     street_map.update_traces({'name': _('More bikes than cars')}, selector={'name': 'More bikes than cars'})
@@ -581,7 +587,7 @@ def update_map(clickData, id_street, hardware_version, toggle_active_filter):
     street_map.update_layout(autosize=False)
     street_map.update_layout(margin=dict(l=0, r=0, t=0, b=0))
     street_map.update_layout(legend_title=_('Street color'))
-    street_map.update_layout(legend=dict(yanchor="top", y=0.99, xanchor="right", x=0.99))
+    street_map.update_layout(legend=dict(bgcolor='rgba(255,255,255,0.6)', yanchor="top", y=0.99, xanchor="right", x=0.99))
     street_map.update_layout(annotations=[
         dict(
             text=(

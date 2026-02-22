@@ -91,7 +91,7 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                     dbc.Col([
                         html.H6('Map info', id='popover_map_info', className='text-start', style={'color': ADFC_darkgrey}),
                         dbc.Popover(dbc.PopoverBody(_('Note: street colors represent bike/car ratios based on all data available and do not change with date- or hour selection. The map allows street segments to be selected individually. To select whole streets, select a street name from the drop down menu.')), target='popover_map_info', trigger='hover', placement='bottom'),
-                    ], sm=5),
+                    ], sm=6),
                     dbc.Col([
                         # Street drop down
                         dcc.Dropdown(
@@ -101,16 +101,17 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                                 {'label': '🇩🇪' + ' ' + _('Deutsch'), 'value': 'de'},
                             ],
                             value=INITIAL_LANGUAGE,
-                            clearable = False,
+                            clearable=False,
                             persistence = True,
                             persistence_type = 'local'
                         ),
-                    ], sm=7),
-                ], justify='end'),
+                    ], sm=6),
+                ], justify='end', align='center'),
                 html.H4(_('Select street:'), className='my-2'),
                 dcc.Dropdown(id='street_name_dd',
-                    options= id_street_options, #sorted(traffic_df['id_street'].unique()),
-                    value= INITIAL_STREET_ID
+                    options= id_street_options,
+                    value= INITIAL_STREET_ID,
+                    clearable=False
                 ),
                 html.Span([
                     html.H4(_('Traffic type - selected street'), id='selected_street_header', style={'color': 'black'}, className='my-2 d-inline-block'),
@@ -122,8 +123,20 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                 # Pie chart
                 dcc.Loading(id="loading-icon_pie_traffic", children=[html.Div(
                     dcc.Graph(id='pie_traffic', figure={}))], type="default"),
-                    html.H6(_('Selected segment ID:'), id='street_id_text', className='my-2', style={'color': ADFC_darkgrey}),
-                    html.H6(_('Number of selected segments:'), id='nof_selected_segments', className='my-2', style={'color': ADFC_darkgrey}),
+                dbc.Row([
+                    dbc.Col([
+                        dbc.Checklist(
+                            id='toggle_map_style',
+                            options=[{'label': 'Satellite', 'value': 'streets'}],
+                            value=[''],
+                            switch=False
+                        ),
+                    ], sm=5),
+                    dbc.Col([
+                        html.H6(_('Selected segment ID:'), id='street_id_text', className='my-2', style={'color': ADFC_darkgrey}),
+                        html.H6(_('Number of selected segments:'), id='nof_selected_segments', className='my-2', style={'color': ADFC_darkgrey}),
+                    ], sm=7)
+                ], align='end')
             ], sm=4),
         ], className= 'g-2 mt-1 mb-3 text-start'), #style= {'margin-right': 40}),
         # Date/Time selection and Uptime filter
@@ -346,7 +359,8 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                             id='period_values_year',
                             multi=True,
                             options=['2025', '2026'],
-                            className='ms-2 mb-2'
+                            className='ms-2 mb-2',
+                            clearable=False
                         ),
                     ], className='d-inline-block')
                 ], sm=5),
@@ -362,7 +376,8 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                                 {'label': _('Day'), 'value': 'date'}
                             ],
                             value='year',
-                            className='ms-2 mb-2'
+                            className='ms-2 mb-2',
+                            clearable=False
                         ),
                     ], sm=4, className='d-inline-block'),
                     dbc.Col([
@@ -371,7 +386,8 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                             id='period_values_others',
                             value=['2025', '2026'],
                             multi=True,
-                            className='ms-5 mb-2'
+                            className='ms-5 mb-2',
+                            clearable=False
                         ),
                     ], sm=8, className='d-inline-block')
                 ], sm=7),

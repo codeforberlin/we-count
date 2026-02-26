@@ -1321,13 +1321,13 @@ def comparison_chart(period_values_year, period_options_year,
 
     # TODO: check if you need ORDER BY {group_by}
     # Merge period A and period B
-    if period_type_others == _('date'):
+    if period_type_others in [_('date'), _('year_month')]:
         query = f"""
         SELECT *
         FROM df_period_grp_B
         FULL OUTER JOIN df_period_grp_A
         USING ({group_by}, street_selection)
-        ORDER BY first_seen_A
+        ORDER BY {group_by}
         """
     else:
         query = f"""
@@ -1335,10 +1335,11 @@ def comparison_chart(period_values_year, period_options_year,
         FROM df_period_grp_B
         FULL OUTER JOIN df_period_grp_A
         USING ({group_by}, street_selection)
-        ORDER BY first_seen_A
         """
 
     df_avg_traffic_delta_AB = conn.execute(query).fetchdf()
+    print(period_type_others)
+    output_excel(df_avg_traffic_delta_AB, 'df_avg_traffic_delta_AB')
 
     #duckdb_info(conn)
 

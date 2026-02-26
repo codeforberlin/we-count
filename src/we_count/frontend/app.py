@@ -19,6 +19,7 @@ from datetime import datetime, timedelta
 import pandas as pd
 import geopandas as gpd
 import duckdb
+import dash
 from dash import Dash, Output, Input, callback, ctx
 import dash_bootstrap_components as dbc
 from dash.exceptions import PreventUpdate
@@ -32,9 +33,9 @@ import polars as pl
 from typing import Callable
 _: Callable[[str], str]
 
-from .layout import serve_layout, INITIAL_STREET_ID, INITIAL_LANGUAGE
+from .layout import serve_layout, INITIAL_STREET_ID, INITIAL_LANGUAGE, ADFC_yellow
 from .layout import ADFC_blue, ADFC_crimson, ADFC_darkgrey, ADFC_green, ADFC_green_L
-from .layout import ADFC_lightblue, ADFC_lightblue_D, ADFC_lightgrey, ADFC_orange, ADFC_palegrey, ADFC_pink
+from .layout import ADFC_lightblue, ADFC_lightblue_D, ADFC_lightgrey, ADFC_orange, ADFC_palegrey, ADFC_pink, ADFC_red, ADFC_orange_L
 
 DEPLOYED = __name__ != '__main__'
 ASSET_DIR = os.path.join(os.path.dirname(__file__), 'assets')
@@ -107,6 +108,14 @@ def retrieve_data():
 
     traffic_relation = conn.read_parquet(os.path.join(data_dir, 'traffic_df_*.parquet'), union_by_name=True)
     traffic_relation.to_table('all_traffic')
+
+    # Export all data
+    # query = """
+    # COPY (SELECT * FROM all_traffic) TO
+    # 'all_traffic.parquet' (FORMAT parquet);
+    # """
+    # conn.execute(query)
+    # conn.close()
 
     with db_lock:
         # Alter dtypes for data processing and to enable sort order
@@ -488,6 +497,7 @@ def get_language(lang_code_dd):
     Output(component_id='street_name_dd', component_property='options'),
     Output(component_id='street_name_dd', component_property='value'),
     Output(component_id='nof_selected_segments', component_property='children'),
+    Output(component_id='toggle_map_style', component_property='value'),
     Input(component_id='street_map', component_property='clickData'),
     Input(component_id='street_name_dd', component_property='value'),
     Input(component_id='hardware_version',component_property= 'value'),
@@ -604,7 +614,7 @@ def update_map(clickData, id_street, hardware_version, toggle_active_filter, tog
         )
     ])
 
-    return street_map, hardware_version, street_name_dd_options, id_street, nof_selected_segments
+    return street_map, hardware_version, street_name_dd_options, id_street, nof_selected_segments, toggle_map_style
 
 ### General traffic callback ###
 @callback(
@@ -636,12 +646,17 @@ def update_map(clickData, id_street, hardware_version, toggle_active_filter, tog
     Input(component_id='radio_y_axis', component_property='value'),
     Input(component_id='floating_button', component_property='n_clicks'),
     Input(component_id='language_selector', component_property='value'),
+    Input(component_id='toggle_map_style', component_property='value'),
     prevent_initial_call='initial_duplicate',
 )
 
-def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, end_date, hour_range, toggle_uptime_filter, toggle_active_filter, hardware_version, radio_y_axis, floating_button, lang_code_dd):
+def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, end_date, hour_range, toggle_uptime_filter, toggle_active_filter, hardware_version, radio_y_axis, floating_button, lang_code_dd, toggle_map_style):
 
     callback_trigger = ctx.triggered_id
+
+    # Avoid chart refresh when map refresh only is needed
+    if callback_trigger == 'toggle_map_style':
+        return dash.no_update
 
     # Get segment_id/street name
     segment_id = id_street[-11:-1]
@@ -650,7 +665,6 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     selected_street_header = street_name
 
     #TODO: First callback triggers "hardware version"?
-
     ### Filter all traffic
     if callback_trigger in ['toggle_uptime_filter', 'toggle_active_filter', 'hardware_version']:
 
@@ -713,16 +727,15 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
         with db_lock:  # Ensure thread safety for writes
             conn.execute(query, params)
 
-    if callback_trigger in ['toggle_uptime_filter', 'toggle_active_filter', 'hardware_version', 'date_filter', 'range_slider', 'street_name_dd']:
-
         # Add selected street to filtered_traffic_dt table
         add_selected_street('filtered_traffic_dt', id_street, street_name)
 
     # Format dates for chart representation / processing
-    if callback_trigger in ['date_filter']:
-        from_date_format = '%Y-%m-%dT%H:%M:%S'
-    else:
-        from_date_format = '%Y-%m-%d'
+
+    # if callback_trigger in ['date_filter']:
+    #     from_date_format = '%Y-%m-%dT%H:%M:%S'
+    # else:
+    #     from_date_format = '%Y-%m-%d'
 
     to_date_format = '%d %b %Y'
 
@@ -763,12 +776,16 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     params = [street_name]
 
     with db_lock:  # Ensure thread safety for writes
-        df_pie = conn.execute(query, params).fetchdf()
+        df_pie = conn.execute(query, params).pl()
 
     df_pie_traffic = df_pie[['ped_total', 'bike_total', 'car_total', 'heavy_total']]
-    df_pie_traffic_ren = df_pie_traffic.rename(columns={'ped_total': _('Pedestrians'), 'bike_total': _('Bikes'), 'car_total': _('Cars'), 'heavy_total': _('Heavy')})
-    df_pie_traffic_sum = df_pie_traffic_ren.aggregate(['sum'])
-    df_pie_traffic_sum_T = df_pie_traffic_sum.transpose().reset_index()
+    df_pie_traffic_ren = df_pie_traffic.rename({'ped_total': _('Pedestrians'), 'bike_total': _('Bikes'), 'car_total': _('Cars'), 'heavy_total': _('Heavy')})
+    df_pie_traffic_sum = df_pie_traffic_ren.select(pl.all().sum())
+    df_pie_traffic_sum_T = df_pie_traffic_sum.transpose(
+        include_header=True,  # Keep original column names as first column
+        header_name="index",  # Name for the column containing original headers
+        column_names=["sum"]  # Name(s) for the new data column(s)
+    )
 
     pie_traffic = px.pie(df_pie_traffic_sum_T, names='index', values='sum', color='index', height=300,
     color_discrete_map={_('Pedestrians'): ADFC_lightblue, _('Bikes'): ADFC_green, _('Cars'): ADFC_orange, _('Heavy'): ADFC_crimson})
@@ -868,7 +885,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     bar_avg_traffic_hr.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
     bar_avg_traffic_hr.update_layout({'plot_bgcolor': ADFC_palegrey,'paper_bgcolor': ADFC_palegrey})
     bar_avg_traffic_hr.update_layout(yaxis_title=_('Average traffic count per hour'))
-    bar_avg_traffic_hr.update_yaxes(matches=None)
+    #bar_avg_traffic_hr.update_yaxes(matches=None)
     bar_avg_traffic_hr.update_layout(legend_title_text=_('Traffic Type'))
     bar_avg_traffic_hr.update_traces({'name': _('Pedestrians')}, selector={'name': 'ped_total'})
     bar_avg_traffic_hr.update_traces({'name': _('Bikes')}, selector={'name': 'bike_total'})
@@ -1006,16 +1023,23 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     with db_lock:  # Ensure thread safety for writes
         df_bar_speed_traffic = conn.execute(query).pl()
 
+    color_map_50 = {'car_speed0': ADFC_lightgrey, 'car_speed10': ADFC_lightblue_D,
+     'car_speed20': ADFC_lightblue, 'car_speed30': ADFC_green,
+     'car_speed40': ADFC_green_L, 'car_speed50': ADFC_orange,
+     'car_speed60': ADFC_crimson, 'car_speed70': ADFC_pink}
+
+    color_map_30 = {'car_speed0': ADFC_lightgrey, 'car_speed10': ADFC_green_L,
+     'car_speed20': ADFC_green, 'car_speed30': ADFC_orange_L,
+     'car_speed40': ADFC_orange, 'car_speed50': ADFC_pink,
+     'car_speed60': ADFC_red, 'car_speed70': ADFC_crimson}
+
     bar_perc_speed = px.bar(df_bar_speed_traffic,
         x=radio_time_unit, y=cols,
         barmode='stack',
         facet_col='street_selection',
         category_orders={'street_selection': [street_name, 'All Streets']},
         labels={'year': _('Year'), 'month': _('Month'), 'weekday': _('Week'), 'day': _('Day'), 'hour': _('Hour')},
-        color_discrete_map={'car_speed0': ADFC_lightgrey, 'car_speed10': ADFC_lightblue_D,
-                            'car_speed20': ADFC_lightblue, 'car_speed30': ADFC_green,
-                            'car_speed40': ADFC_green_L, 'car_speed50': ADFC_orange,
-                            'car_speed60': ADFC_crimson, 'car_speed70': ADFC_pink},
+        color_discrete_map=color_map_50,
         facet_col_spacing=0.04,
         title=(_('Average car speed %') + ' (' + start_date_str + ' - ' + end_date_str + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)')
     )
@@ -1101,7 +1125,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     # Remove '90000' from the labels to reduce x-labels space required
     df_bar_ranking['x-labels'] = df_bar_ranking['id_street'].copy()
     df_bar_ranking['x-labels'] = df_bar_ranking['x-labels'].astype('string')
-    df_bar_ranking['x-labels'] = df_bar_ranking['x-labels'].str.replace('900000', '')
+    df_bar_ranking['x-labels'] = df_bar_ranking['x-labels'].str.replace('90000', '')
 
     # Assess x and y for annotation
     #if not missing_data:
@@ -1205,8 +1229,6 @@ def update_period_other_values(period_values_year, period_type_others, street_id
 def comparison_chart(period_values_year, period_options_year,
                      period_type_others, period_values_others, period_options_others, id_street, min_date, max_date):
 
-    callback_trigger = ctx.triggered_id
-
     segment_id = id_street[-11:-1]
     street_name = id_street.split(' (')[0]
 
@@ -1272,10 +1294,10 @@ def comparison_chart(period_values_year, period_options_year,
         SUM(bike_total) AS bike_total,
         SUM(car_total) AS car_total,
         SUM(heavy_total) AS heavy_total,
-    MIN(date_local) AS first_seen
+    MIN(date_local) AS first_seen_A
     FROM df_period_A
     GROUP BY {group_clause}
-    ORDER BY first_seen
+    ORDER BY first_seen_A
     """
 
     query_B = f"""
@@ -1286,10 +1308,10 @@ def comparison_chart(period_values_year, period_options_year,
         SUM(bike_total) AS bike_total_d,
         SUM(car_total) AS car_total_d,
         SUM(heavy_total) AS heavy_total_d,
-    MIN(date_local) AS first_seen
+    MIN(date_local) AS first_seen_B
     FROM df_period_B
     GROUP BY {group_clause}
-    ORDER BY first_seen
+    ORDER BY first_seen_B
     """
 
     with db_lock:  # Ensure thread safety for writes
@@ -1305,6 +1327,7 @@ def comparison_chart(period_values_year, period_options_year,
         FROM df_period_grp_B
         FULL OUTER JOIN df_period_grp_A
         USING ({group_by}, street_selection)
+        ORDER BY first_seen_A
         """
     else:
         query = f"""
@@ -1312,6 +1335,7 @@ def comparison_chart(period_values_year, period_options_year,
         FROM df_period_grp_B
         FULL OUTER JOIN df_period_grp_A
         USING ({group_by}, street_selection)
+        ORDER BY first_seen_A
         """
 
     df_avg_traffic_delta_AB = conn.execute(query).fetchdf()

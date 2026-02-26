@@ -30,6 +30,8 @@ ADFC_orange = '#D78432'
 ADFC_crimson = '#B44958'
 ADFC_pink = '#EB9AAC'
 ADFC_yellow = '#EEDE72'
+ADFC_red = '#E07862'
+ADFC_orange_L = '#EDC773'
 
 info_icon = html.I(className='bi bi-info-circle-fill me-2')
 email_icon = html.I(className='bi bi-envelope-at-fill me-2')

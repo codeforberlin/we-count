@@ -80,7 +80,7 @@ def update_data(segments, df: pd.DataFrame, options, conns):
             report = res.get("report", [])
             if report:
                 new_rows = pd.DataFrame(report)
-                new_rows = new_rows[[c for c in KEEP_COLUMNS if c in new_rows.columns]]
+                new_rows = new_rows[[c for c in KEEP_COLUMNS if c in new_rows.columns]].dropna(axis=1, how='all')
                 if df is None:
                     df = new_rows
                 else:
@@ -180,6 +180,7 @@ def main(args=None):
         if df is None:
             print("No data.", file=sys.stderr)
             return
+        df = df.sort_values(['segment_id', 'date'])
         df.to_parquet(options.parquet, index=False, compression='zstd')
     else:
         newest_data = datetime.datetime.now(datetime.timezone.utc)

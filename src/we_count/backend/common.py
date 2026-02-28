@@ -71,10 +71,6 @@ def parse_options(options):
     if os.path.exists(options.secrets_file):
         with open(options.secrets_file, encoding="utf8") as sf:
             options.secrets = json.load(sf)
-        if not options.database:
-            options.database = options.secrets.get("database", "backup.db")
-        if "+" not in options.database and "://" not in options.database:
-            options.database = "sqlite+pysqlite:///" + options.database
     if getattr(options, "url", None) and "://" not in options.url:
         options.url = "https://" + options.url
     return options
@@ -88,15 +84,15 @@ def get_options(args=None, json_default="sensor.json"):
     parser.add_argument("-u", "--url", default="telraam-api.net",
                         help="Download from the given Telraam server")
     parser.add_argument("-s", "--secrets-file", default="secrets.json",
-                        metavar="FILE", help="Read Telraam API and database credentials from FILE")
+                        metavar="FILE", help="Read Telraam API credentials from FILE")
     parser.add_argument("-j", "--json-file", default=json_default,
                         metavar="FILE", help="Write / read Geo-JSON for segments to / from FILE")
     parser.add_argument("--excel",
                         help="Excel input file")
     parser.add_argument("--clear", action="store_true", default=False,
                         help="recreate data even if it is present")
-    parser.add_argument("-d", "--database",
-                        help="Database output file or URL")
+    parser.add_argument("-p", "--parquet", metavar="FILE", default="data.parquet",
+                        help="Data storage file")
     parser.add_argument("--csv",
                         help="Output prefix for monthly csv files")
     parser.add_argument("--csv-segments",

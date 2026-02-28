@@ -162,8 +162,7 @@ def _write_csv(filename, segments, df, advanced, month=None, delimiter=","):
 
 def main(args=None):
     options = get_options(args)
-    parquet_file = options.secrets["parquet_advanced"] if options.advanced else options.secrets["parquet"]
-    df = pd.read_parquet(parquet_file) if os.path.exists(parquet_file) else None
+    df = pd.read_parquet(options.parquet) if os.path.exists(options.parquet) else None
     conns = ConnectionProvider(options.secrets["tokens"], options.url) if options.url else None
     excel = False
     segments = load_segments(options.json_file)
@@ -177,7 +176,7 @@ def main(args=None):
         if df is None:
             print("No data.", file=sys.stderr)
             return
-        df.to_parquet(parquet_file, index=False)
+        df.to_parquet(options.parquet, index=False)
     else:
         newest_data = datetime.datetime.now(datetime.timezone.utc)
     save_segments(segments, options.json_file)

@@ -12,6 +12,7 @@ import json
 import os
 import sys
 
+import numpy as np
 import pandas as pd
 
 from common import ConnectionProvider, get_options, add_month, parse_utc, parse_utc_dict
@@ -61,6 +62,7 @@ def update_data(segments, df: pd.DataFrame, options, conns):
         last = parse_utc(s["last_data_package"])
         if options.verbose and last is not None and first < last:
             print("Retrieving data for segment %s between %s and %s." % (s["segment_id"], first, last))
+        new_rows = []
         while last is not None and first < last:
             interval_end = first + datetime.timedelta(days=20)
             payload = {
@@ -79,14 +81,28 @@ def update_data(segments, df: pd.DataFrame, options, conns):
                     json.dump(res, dump, indent=2)
             report = res.get("report", [])
             if report:
-                new_rows = pd.DataFrame(report)
-                new_rows = new_rows[[c for c in KEEP_COLUMNS if c in new_rows.columns]].dropna(axis=1, how='all')
-                if df is None:
-                    df = new_rows
-                else:
-                    df = pd.concat([df[~df["date"].isin(new_rows["date"]) | (df["segment_id"] != s["segment_id"])],
-                                    new_rows], ignore_index=True)
+                batch = pd.DataFrame(report)
+                new_rows.append(batch[[c for c in KEEP_COLUMNS if c in batch.columns]].dropna(axis=1, how='all'))
             first = interval_end
+        if new_rows:
+            new_df = pd.concat(new_rows, ignore_index=True)
+            del new_rows
+            if 'car_speed_hist_0to120plus' in new_df.columns:
+                scales = (new_df['car_lft'] + new_df['car_rgt']) * new_df['uptime'] / 100
+                new_df['car_speed_hist_0to120plus'] = [
+                    np.array([round(v * s) for v in hist], dtype=np.uint16) if hist is not None else None
+                    for hist, s in zip(new_df['car_speed_hist_0to120plus'], scales)
+                ]
+            count_cols = [c for c in new_df.columns if c.endswith(('_lft', '_rgt'))]
+            new_df[count_cols] = new_df[count_cols].fillna(0).round().astype('uint16')
+            float_cols = new_df.select_dtypes(include='float64').columns
+            new_df[float_cols] = new_df[float_cols].astype('float32')
+            if df is None:
+                df = new_df
+            else:
+                df = pd.concat([df[~df["date"].isin(new_df["date"]) | (df["segment_id"] != s["segment_id"])],
+                                new_df], ignore_index=True)
+            del new_df
         s[backup_date] = datetime.datetime.now(datetime.timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
         if last is not None and (newest_data is None or newest_data < last):
             newest_data = last
@@ -99,46 +115,48 @@ def _add_totals(df, modes):
         lft, rgt = f'{src}_lft', f'{src}_rgt'
         if lft not in df.columns:
             continue
-        df[f'{mode}_lft'] = df[lft].fillna(0).round().astype('Int64')
-        df[f'{mode}_rgt'] = df[rgt].fillna(0).round().astype('Int64')
-        df[f'{mode}_total'] = df[f'{mode}_lft'] + df[f'{mode}_rgt']
         if src != mode:
-            df = df.drop(columns=[lft, rgt])
+            df = df.rename(columns={lft: f'{mode}_lft', rgt: f'{mode}_rgt'})
+        df[f'{mode}_total'] = (df[f'{mode}_lft'] + df[f'{mode}_rgt']).astype('uint16')
     return df
 
 
 def _prepare_df(segments, df, advanced, month):
     # Filter to relevant segments and month (UTC)
     tz_map = {s['segment_id']: s.get('timezone', 'UTC') for s in segments}
-    utc = pd.to_datetime(df['date'], utc=True)
-    mask = df['segment_id'].isin(tz_map.keys())
-    if month is not None:
-        mask &= (utc.dt.year == month[0]) & (utc.dt.month == month[1])
-    df_out = df[mask]
+    df_out = df[df['segment_id'].isin(tz_map.keys())]
     if df_out.empty:
         return None
+    utc = pd.to_datetime(df_out['date'], utc=True)
+    if month is not None:
+        mask = (utc.dt.year == month[0]) & (utc.dt.month == month[1])
+        df_out, utc = df_out[mask], utc[mask]
+        if df_out.empty:
+            return None
 
     # Convert UTC to local time per segment and add totals
     local_ts = pd.Series(
-        [dt.tz_convert(tz) for dt, tz in zip(utc[mask], df_out['segment_id'].map(tz_map))],
+        [dt.tz_convert(tz) for dt, tz in zip(utc, df_out['segment_id'].map(tz_map))],
         index=df_out.index
     )
     df_out = df_out.assign(date_local=local_ts.dt.strftime('%Y-%m-%d %H:%M')).drop(columns=['date'])
     modes = BASIC_MODES + (ADVANCED_MODES if advanced else [])
     df_out = _add_totals(df_out, modes)
 
-    # Expand speed histogram: 25 x 5km/h bins to 8 x 10km/h bins
+    # Expand speed histogram: 25 x 5km/h bins to 8 x 10km/h bins, scale back to percentages
     hist_cols = [f'car_speed{s}' for s in range(0, 80, 10)]
 
     def expand_histogram(hist):
-        if hist is None:
-            return [None] * 8
-        result = [round(hist[2 * i] + hist[2 * i + 1], 2) for i in range(7)]
-        result.append(round(sum(hist[14:]), 2))
+        total = sum(hist or [0])
+        if total == 0:
+            return [0.0] * 8
+        result = [round((hist[2 * i] + hist[2 * i + 1]) * 100 / total, 2) for i in range(7)]
+        result.append(round(sum(hist[14:]) * 100 / total, 2))
         return result
 
-    hist_df = df_out['car_speed_hist_0to120plus'].apply(expand_histogram).apply(pd.Series)
-    hist_df.columns = hist_cols
+    hist_df = pd.DataFrame(
+        df_out['car_speed_hist_0to120plus'].apply(expand_histogram).tolist(),
+        columns=hist_cols, index=df_out.index)
     df_out = pd.concat([df_out.drop(columns=['car_speed_hist_0to120plus']), hist_df], axis=1)
 
     mode_cols = [f'{"ped" if m == "pedestrian" else m}_{s}' for m in modes for s in ('lft', 'rgt', 'total')]

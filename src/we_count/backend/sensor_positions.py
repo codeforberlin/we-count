@@ -71,7 +71,7 @@ def main(args=None):
             old_json = json.load(of)
         last_mod = parse_utc_dict(old_json, "created_at")
         delta = datetime.timedelta(minutes=30)
-        if datetime.datetime.now() - last_mod < delta:
+        if datetime.datetime.now(datetime.UTC) - last_mod < delta:
             if options.verbose:
                 print(f"Not recreating {options.json_file}, it is less than {delta} old.")
             return False

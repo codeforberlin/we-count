@@ -101,6 +101,8 @@ def get_options(args=None, json_default="sensor.json"):
                         help="First year to retrieve when writing csv")
     parser.add_argument("-r", "--retry", type=int, default=1,
                         help="number of retries on failure")
+    parser.add_argument("--max-prop-updates", type=int, default=10,
+                        help="maximum number of segment property updates per run")
     parser.add_argument("-a", "--advanced", action="store_true", default=False,
                         help="use the advanced API with quarterly data")
     parser.add_argument("--segments",

@@ -76,13 +76,13 @@ def parse_options(options):
     return options
 
 
-def get_options(args=None, json_default="sensor.json"):
+def get_options(args=None, json_default="sensor.json", url_default="telraam-api.net", parquet_default="data.parquet"):
     parser = argparse.ArgumentParser()
     # Berlin as in https://github.com/DLR-TS/sumo-berlin
     parser.add_argument("-b", "--bbox", default="12.78509,52.17841,13.84308,52.82727",
                         help="bounding box to retrieve in geo coordinates west,south,east,north")
-    parser.add_argument("-u", "--url", default="telraam-api.net",
-                        help="Download from the given Telraam server")
+    parser.add_argument("-u", "--url", default=url_default,
+                        help="Download from the given server")
     parser.add_argument("-s", "--secrets-file", default="secrets.json",
                         metavar="FILE", help="Read Telraam API credentials from FILE")
     parser.add_argument("-j", "--json-file", default=json_default,
@@ -91,7 +91,7 @@ def get_options(args=None, json_default="sensor.json"):
                         help="Excel input file")
     parser.add_argument("--clear", action="store_true", default=False,
                         help="recreate data even if it is present")
-    parser.add_argument("-p", "--parquet", metavar="FILE", default="data.parquet",
+    parser.add_argument("-p", "--parquet", metavar="FILE", default=parquet_default,
                         help="Data storage file")
     parser.add_argument("--csv",
                         help="Output prefix for monthly csv files")

@@ -37,7 +37,7 @@ def add_osm(res, old_data):
             break
 
 
-def update_props(bbox_segments, old_data, conns, retry):
+def update_props(bbox_segments, old_data, conns, retry, max_prop_updates):
     now = datetime.datetime.now(datetime.UTC)
     update_count = 0  # do not update too many at once, it is costly
     new_segments = []
@@ -45,7 +45,7 @@ def update_props(bbox_segments, old_data, conns, retry):
         if segment_id in old_data:
             old_segment = old_data[segment_id]
             last_prop_update = parse_utc_dict(old_segment["properties"], "last_prop_fetch")
-            if update_count > 10 or last_prop_update > now - datetime.timedelta(days=1):
+            if update_count >= max_prop_updates or last_prop_update > now - datetime.timedelta(days=1):
                 new_segments.append(old_segment)
                 continue
         update_count += 1
@@ -54,6 +54,8 @@ def update_props(bbox_segments, old_data, conns, retry):
             continue
         segment = segment_data["features"][0]
         segment["properties"] = {"segment_id": segment_id, "last_prop_fetch": now.isoformat()} | segment["properties"]
+        if segment_id in old_data and "osm" in old_data[segment_id]["properties"]:
+            segment["properties"]["osm"] = old_data[segment_id]["properties"]["osm"]
         new_segments.append(segment)
     invalid = set(old_data.keys()) - bbox_segments
     if invalid:
@@ -89,7 +91,7 @@ def main(args=None):
         "format description at https://app.swaggerhub.com/apis-docs/telraam/Telraam-API/1.2.0#/Segments/get_v1_segments_id__segment_id_",
         "created_at": datetime.datetime.now(datetime.UTC).isoformat(),
         "type": "FeatureCollection",
-        "features": update_props(bbox_segments, old_data, conns, options.retry)
+        "features": update_props(bbox_segments, old_data, conns, options.retry, options.max_prop_updates)
     }
     add_osm(res, old_data)
     with open(options.json_file, "w", encoding="utf8") as segment_json:

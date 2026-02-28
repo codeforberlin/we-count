@@ -62,6 +62,7 @@ def update_data(segments, df: pd.DataFrame, options, conns):
         last = parse_utc(s["last_data_package"])
         if options.verbose and last is not None and first < last:
             print("Retrieving data for segment %s between %s and %s." % (s["segment_id"], first, last))
+        error = False
         new_rows = []
         while last is not None and first < last:
             interval_end = first + datetime.timedelta(days=20)
@@ -73,6 +74,7 @@ def update_data(segments, df: pd.DataFrame, options, conns):
                 res = conns.request("/advanced/reports/traffic", "POST", str(payload), options.retry, "report")
                 if res.get("status_code") == 403:
                     print(" Skipping %s." % s["segment_id"], file=sys.stderr)
+                    error = True
                     break
             else:
                 res = conns.request("/v1/reports/traffic", "POST", str(payload), options.retry, "report")
@@ -83,7 +85,12 @@ def update_data(segments, df: pd.DataFrame, options, conns):
             if report:
                 batch = pd.DataFrame(report)
                 new_rows.append(batch[[c for c in KEEP_COLUMNS if c in batch.columns]].dropna(axis=1, how='all'))
+            else:
+                error = True
+                break
             first = interval_end
+        if error:
+            continue
         if new_rows:
             new_df = pd.concat(new_rows, ignore_index=True)
             del new_rows

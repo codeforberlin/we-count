@@ -12,7 +12,7 @@ import datetime
 import sys
 
 import osm
-from common import ConnectionProvider, get_options
+from common import ConnectionProvider, get_options, parse_utc_dict
 
 
 def add_osm(res, old_data):
@@ -24,13 +24,13 @@ def add_osm(res, old_data):
             osm_edge = old_data[segment_id]["properties"]["osm"]
             if "name" in osm_edge:
                 # use cached data if it is not outdated
-                last_osm_update = datetime.datetime.fromisoformat(osm_edge.get("last_osm_fetch", '1970-01-01 00:00:00+00:00'))
+                last_osm_update = parse_utc_dict(osm_edge, "last_osm_fetch")
                 if last_osm_update > now - datetime.timedelta(days=30):
                     segment["properties"]["osm"] = osm_edge
                     continue
         update_count += 1
         osm_edge = osm.find_edge(segment)
-        osm_edge["last_osm_fetch"] = now.isoformat(" ")
+        osm_edge["last_osm_fetch"] = now.isoformat()
         del osm_edge["geometry"]
         segment["properties"]["osm"] = osm_edge
         if update_count > 1:
@@ -44,7 +44,7 @@ def update_props(bbox_segments, old_data, conns, retry):
     for segment_id in sorted(bbox_segments):
         if segment_id in old_data:
             old_segment = old_data[segment_id]
-            last_prop_update = datetime.datetime.fromisoformat(old_segment["properties"].get("last_prop_fetch", '1970-01-01 00:00:00+00:00'))
+            last_prop_update = parse_utc_dict(old_segment["properties"], "last_prop_fetch")
             if update_count > 10 or last_prop_update > now - datetime.timedelta(days=1):
                 new_segments.append(old_segment)
                 continue
@@ -53,7 +53,7 @@ def update_props(bbox_segments, old_data, conns, retry):
         if not segment_data.get('features'):
             continue
         segment = segment_data["features"][0]
-        segment["properties"] = {"segment_id": segment_id, "last_prop_fetch": now.isoformat(" ")} | segment["properties"]
+        segment["properties"] = {"segment_id": segment_id, "last_prop_fetch": now.isoformat()} | segment["properties"]
         new_segments.append(segment)
     invalid = set(old_data.keys()) - bbox_segments
     if invalid:
@@ -67,14 +67,15 @@ def main(args=None):
     options = get_options(args)
     old_data = {}
     if os.path.exists(options.json_file) and not options.clear:
-        last_mod = datetime.datetime.fromtimestamp(os.path.getmtime(options.json_file))
+        with open(options.json_file, encoding="utf8") as of:
+            old_json = json.load(of)
+        last_mod = parse_utc_dict(old_json, "created_at")
         delta = datetime.timedelta(minutes=30)
         if datetime.datetime.now() - last_mod < delta:
             if options.verbose:
                 print(f"Not recreating {options.json_file}, it is less than {delta} old.")
             return False
-        with open(options.json_file, encoding="utf8") as of:
-            old_data = {s["properties"]["segment_id"] : s for s in json.load(of)["features"]}
+        old_data = {s["properties"]["segment_id"] : s for s in old_json["features"]}
 
     conns = ConnectionProvider(options.secrets["tokens"], options.url)
     res = conns.request("/v1/segments/area", "POST", str({"area": options.bbox}), retries=options.retry, required="features")
@@ -86,7 +87,7 @@ def main(args=None):
         "we_count_version": 2,
         "description": f"Telraam segments and instances for {options.bbox} enhanced with OpenStreetMap data, "
         "format description at https://app.swaggerhub.com/apis-docs/telraam/Telraam-API/1.2.0#/Segments/get_v1_segments_id__segment_id_",
-        "created_at": datetime.datetime.now(datetime.UTC).isoformat(" "),
+        "created_at": datetime.datetime.now(datetime.UTC).isoformat(),
         "type": "FeatureCollection",
         "features": update_props(bbox_segments, old_data, conns, options.retry)
     }

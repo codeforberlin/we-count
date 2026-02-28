@@ -6,6 +6,7 @@
 # @date    2023-01-15
 
 import argparse
+import datetime
 import json
 import os
 import pprint
@@ -54,6 +55,16 @@ class ConnectionProvider:
 
     def print_stats(self):
         print(len(self._connections), "connections", self._num_queries, "queries")
+
+
+def parse_utc(date):
+    if isinstance(date, datetime.datetime):
+        return date.astimezone(datetime.timezone.utc)
+    return datetime.datetime.fromisoformat(date.replace("Z", "+00:00")) if date and date != "NaT" else None
+
+
+def parse_utc_dict(dict, key):
+    return parse_utc(dict.get(key, '1970-01-01T00:00:00+00:00'))
 
 
 def parse_options(options):

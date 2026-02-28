@@ -105,6 +105,8 @@ def get_options(args=None, json_default="sensor.json"):
                         help="use the advanced API with quarterly data")
     parser.add_argument("--segments",
                         help="only process the given segment(s)")
+    parser.add_argument("--limit", type=int,
+                        help="only update the N most outdated segments")
     parser.add_argument("--dump", metavar="FILE",
                         help="dump all JSON answers to the given file (for debugging)")
     parser.add_argument("-v", "--verbose", action="count", default=0,

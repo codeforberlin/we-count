@@ -14,7 +14,7 @@ import sys
 
 import pandas as pd
 
-from common import ConnectionProvider, get_options, add_month, parse_utc
+from common import ConnectionProvider, get_options, add_month, parse_utc, parse_utc_dict
 
 
 BASIC_MODES = ['pedestrian', 'bike', 'car', 'heavy']
@@ -57,7 +57,7 @@ def update_data(segments, df: pd.DataFrame, options, conns):
         if not active:
             print("No active camera for segment %s." % s["segment_id"], file=sys.stderr)
             continue
-        first = parse_utc(s.get(backup_date, min(active)))
+        first = parse_utc(min(active) if options.clear else s.get(backup_date, min(active)))
         last = parse_utc(s["last_data_package"])
         if options.verbose and last is not None and first < last:
             print("Retrieving data for segment %s between %s and %s." % (s["segment_id"], first, last))
@@ -169,6 +169,10 @@ def main(args=None):
     if options.segments:
         filtered = [int(s.strip()) for s in options.segments.split(",")]
         filtered_segments = {k:v for k,v in segments.items() if k in filtered}
+    elif options.limit:
+        backup_date = "last_advanced_backup" if options.advanced else "last_data_backup"
+        backup_times = sorted([(parse_utc_dict(v, backup_date), k) for k,v in segments.items()])[:options.limit]
+        filtered_segments = {k:v for k,v in segments.items() if k in list(zip(*backup_times))[1]}
     else:
         filtered_segments = segments
     if conns:
@@ -176,7 +180,7 @@ def main(args=None):
         if df is None:
             print("No data.", file=sys.stderr)
             return
-        df.to_parquet(options.parquet, index=False)
+        df.to_parquet(options.parquet, index=False, compression='zstd')
     else:
         newest_data = datetime.datetime.now(datetime.timezone.utc)
     save_segments(segments, options.json_file)

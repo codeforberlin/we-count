@@ -6,7 +6,6 @@
 # @author  Michael Behrisch
 # @date    2023-01-03
 
-import bisect
 import csv
 import datetime
 import gzip
@@ -16,93 +15,93 @@ import sys
 import zoneinfo
 
 import openpyxl
-from sqlalchemy import create_engine, select
-from sqlalchemy.orm import Session
+import pandas as pd
 
-from common import ConnectionProvider, get_options, add_month
-from datamodel import Base, TrafficCount, TrafficCountAdvanced, Segment, Camera
+from common import ConnectionProvider, get_options, add_month, parse_utc
 
 
-def open_session(options):
-    engine = create_engine(options.database, echo=options.verbose > 1, future=True)
-    Base.metadata.create_all(engine)
-    return Session(engine)
+KEEP_COLUMNS = [
+    "instance_id", "segment_id", "date", "uptime",
+    "direction", "v85", "car_speed_hist_0to120plus",
+    "heavy_lft", "heavy_rgt", "car_lft", "car_rgt",
+    "bike_lft", "bike_rgt", "pedestrian_lft", "pedestrian_rgt",
+    # advanced only:
+    "mode_bus_lft", "mode_bus_rgt",
+    "mode_lighttruck_lft", "mode_lighttruck_rgt",
+    "mode_motorcycle_lft", "mode_motorcycle_rgt",
+    "mode_stroller_lft", "mode_stroller_rgt",
+    "mode_tractor_lft", "mode_tractor_rgt",
+    "mode_trailer_lft", "mode_trailer_rgt",
+    "mode_truck_lft", "mode_truck_rgt",
+    "mode_night_lft", "mode_night_rgt",
+    "speed_hist_car_lft", "speed_hist_car_rgt",
+    "brightness", "sharpness",
+]
 
-
-def get_segments(session, options):
+def load_segments(json_file):
     segments = {}
-    if options.json_file and os.path.exists(options.json_file):
-        with open(options.json_file, encoding="utf8") as of:
-            segment_data = json.load(of)
-    else:
-        for s in session.execute(select(Segment)):
-            segments[s.Segment.id] = s.Segment
-        return segments
-    for segment in segment_data.get("features", []):
-        sid = segment["properties"]["segment_id"]
-        s = session.get(Segment, sid)
-        if s is None:
-            s = Segment(segment["properties"])
-        else:
-            s.update(segment["properties"])
-        for camera in segment["properties"].get("cameras", []):
-            if session.get(Camera, camera["instance_id"]) is None:
-                s.add_camera(camera)
-        segments[sid] = s
+    with open(json_file, encoding="utf8") as segment_file:
+        for segment in json.load(segment_file).get("features", []):
+            sid = segment["properties"]["segment_id"]
+            segments[sid] = segment["properties"]
     return segments
 
 
-def update_db(segments, session, options, conns):
+def save_segments(segments, json_file):
+    with open(json_file, encoding="utf8") as segment_file:
+        content = json.load(segment_file)
+    for segment in content.get("features", []):
+        sid = segment["properties"]["segment_id"]
+        if sid in segments:
+            segment["properties"] = segments[sid]
+    with open(json_file + ".new", "w", encoding="utf8") as segment_file:
+        json.dump(content, segment_file, indent=2)
+    os.rename(json_file + ".new", json_file)
+
+
+def update_data(segments, df: pd.DataFrame, options, conns):
     print("Retrieving data for %s segments" % len(segments))
     newest_data = None
+    backup_date = "last_advanced_backup" if options.advanced else "last_data_backup"
     for s in segments.values():
-        session.add(s)
-        active = [c.first_data_utc for c in s.cameras if c.first_data_utc is not None]
+        active = [i["first_data_package"] for i in s["instance_ids"].values() if i["first_data_package"] is not None]
         if not active:
-            print("No active camera for segment %s." % s.id, file=sys.stderr)
+            print("No active camera for segment %s." % s["segment_id"], file=sys.stderr)
             continue
-        first = s.last_backup_utc if s.last_backup_utc else min(active)
-        last = s.last_data_utc
+        first = parse_utc(s.get(backup_date, min(active)))
+        last = parse_utc(s["last_data_package"])
         if options.verbose and last is not None and first < last:
-            print("Retrieving data for segment %s between %s and %s." % (s.id, first, last))
+            print("Retrieving data for segment %s between %s and %s." % (s["segment_id"], first, last))
         while last is not None and first < last:
+            interval_end = first + datetime.timedelta(days=20)
+            payload = {
+                "level": "segments", "format": "per-hour", "id": s["segment_id"],
+                "time_start": first.isoformat(), "time_end": interval_end.isoformat()}
             if options.advanced:
-                interval_end = first + datetime.timedelta(days=20)
-                payload = {
-                    "level": "segments", "format": "per-quarter", "id": s.id,
-                    "time_start": str(first), "time_end": str(interval_end),
-                    "columns": "instance_id,segment_id,date,interval,uptime,direction,v85,car_speed_hist_0to120plus,"
-                    "heavy_lft,heavy_rgt,car_lft,car_rgt,bike_lft,bike_rgt,pedestrian_lft,pedestrian_rgt,"
-                    "mode_bus_lft,mode_bus_rgt,mode_lighttruck_lft,mode_lighttruck_rgt,"
-                    "mode_motorcycle_lft,mode_motorcycle_rgt,mode_stroller_lft,mode_stroller_rgt,"
-                    "mode_tractor_lft,mode_tractor_rgt,mode_trailer_lft,mode_trailer_rgt,"
-                    "mode_truck_lft,mode_truck_rgt,mode_night_lft,mode_night_rgt,"
-                    "speed_hist_car_lft,speed_hist_car_rgt,brightness,sharpness"}
+                payload.update(format="per-quarter", columns=",".join(KEEP_COLUMNS))
                 res = conns.request("/advanced/reports/traffic", "POST", str(payload), options.retry, "report")
                 if res.get("status_code") == 403:
-                    print(" Skipping %s." % s.id, file=sys.stderr)
+                    print(" Skipping %s." % s["segment_id"], file=sys.stderr)
                     break
             else:
-                interval_end = first + datetime.timedelta(days=90)
-                payload = '{"level": "segments", "format": "per-hour", "id": "%s", "time_start": "%s", "time_end": "%s"}' % (s.id, first, interval_end)
-                res = conns.request("/v1/reports/traffic", "POST", payload, options.retry, "report")
+                res = conns.request("/v1/reports/traffic", "POST", str(payload), options.retry, "report")
             if options.dump:
                 with open(options.dump, "a", encoding="utf8") as dump:
                     json.dump(res, dump, indent=2)
-            for entry in res.get("report", []):
-                if entry["uptime"] > 0:
-                    tc = TrafficCount(entry) if entry.get("mode_truck_lft") is None else TrafficCountAdvanced(entry)
-                    idx = bisect.bisect(s.counts, tc.date_utc, key=lambda t: t.date_utc)
-                    if not s.counts or s.counts[idx-1].date_utc != tc.date_utc:
-                        s.counts.insert(idx, tc)
-                    else:
-                        s.counts[idx-1] = tc
+            report = res.get("report", [])
+            if report:
+                new_rows = pd.DataFrame(report)
+                new_rows = new_rows[[c for c in KEEP_COLUMNS if c in new_rows.columns]]
+                if df is None:
+                    df = new_rows
+                else:
+                    df = pd.concat([df[~df["date"].isin(new_rows["date"]) | (df["segment_id"] != s["segment_id"])],
+                                    new_rows], ignore_index=True)
             first = interval_end
-        s.last_backup_utc = datetime.datetime.now(datetime.timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+        s[backup_date] = datetime.datetime.now(datetime.timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
         if last is not None and (newest_data is None or newest_data < last):
             newest_data = last
-        session.commit()
-    return newest_data
+    return df, newest_data
 
 
 def round_separator(v, digits, sep):
@@ -134,11 +133,11 @@ def get_column_values(tc, local_date, advanced, sep=None):
     return result
 
 
-def _write_xl(filename, segments, advanced, month=None):
+def _write_xl(filename, segments, df, advanced, month=None):
     wb = openpyxl.Workbook()
     row = 1
     for s in segments:
-        tzinfo=zoneinfo.ZoneInfo(s.timezone)
+        tzinfo=zoneinfo.ZoneInfo(s["timezone"])
         for tc in s.counts:
             local_date = tc.date_utc.astimezone(tzinfo)
             if month is None or (local_date.year, local_date.month) == month:
@@ -153,12 +152,12 @@ def _write_xl(filename, segments, advanced, month=None):
         wb.save(filename)
 
 
-def _write_csv(filename, segments, advanced, month=None, delimiter=","):
+def _write_csv(filename, segments, df, advanced, month=None, delimiter=","):
     with gzip.open(filename, "wt") as csv_file:
         csv_out = csv.writer(csv_file, delimiter=delimiter)
         need_header = True
         for s in segments:
-            tzinfo=zoneinfo.ZoneInfo(s.timezone)
+            tzinfo=zoneinfo.ZoneInfo(s["timezone"])
             for tc in s.counts:
                 local_date = tc.date_utc.astimezone(tzinfo)
                 if month is None or (local_date.year, local_date.month) == month:
@@ -172,18 +171,25 @@ def _write_csv(filename, segments, advanced, month=None, delimiter=","):
 
 def main(args=None):
     options = get_options(args)
-    session = open_session(options)
+    parquet_file = options.secrets["parquet_advanced"] if options.advanced else options.secrets["parquet"]
+    df = pd.read_parquet(parquet_file) if os.path.exists(parquet_file) else None
     conns = ConnectionProvider(options.secrets["tokens"], options.url) if options.url else None
     excel = False
-    segments = get_segments(session, options)
+    segments = load_segments(options.json_file)
     if options.segments:
         filtered = [int(s.strip()) for s in options.segments.split(",")]
-        segments = {k:v for k,v in segments.items() if k in filtered}
+        filtered_segments = {k:v for k,v in segments.items() if k in filtered}
+    else:
+        filtered_segments = segments
     if conns:
-        session.commit()
-        newest_data = update_db(segments, session, options, conns)
+        df, newest_data = update_data(filtered_segments, df, options, conns)
+        if df is None:
+            print("No data.", file=sys.stderr)
+        else:
+            df.to_parquet(parquet_file, index=False)
     else:
         newest_data = datetime.datetime.now(datetime.timezone.utc)
+    save_segments(segments, options.json_file)
     if options.csv:
         if os.path.dirname(options.csv):
             os.makedirs(os.path.dirname(options.csv), exist_ok=True)
@@ -191,15 +197,15 @@ def main(args=None):
         month = (options.csv_start_year, 1) if options.csv_start_year else add_month(-1, *curr_month)
         while month <= curr_month:
             if excel:
-                _write_xl(options.csv + "_%s_%02i.xlsx" % month, segments.values(), options.advanced, month)
+                _write_xl(options.csv + "_%s_%02i.xlsx" % month, filtered_segments.values(), df, options.advanced, month)
             else:
-                _write_csv(options.csv + "_%s_%02i.csv.gz" % month, segments.values(), options.advanced, month)
+                _write_csv(options.csv + "_%s_%02i.csv.gz" % month, filtered_segments.values(), df, options.advanced, month)
             month = add_month(1, *month)
 
     if options.csv_segments:
         if os.path.dirname(options.csv_segments):
             os.makedirs(os.path.dirname(options.csv_segments), exist_ok=True)
-        for s in segments.values():
+        for s in filtered_segments.values():
             if excel:
                 _write_xl(options.csv_segments + "_%s.xlsx" % s.id, [s], options.advanced)
             else:

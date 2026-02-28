@@ -1,42 +1,31 @@
 #!/usr/bin/env python
-# Copyright (c) 2023-2024 Berlin zaehlt Mobilitaet
+# Copyright (c) 2023-2026 Berlin zaehlt Mobilitaet
 # SPDX-License-Identifier: MIT
 
 # @file    backup_data.py
 # @author  Michael Behrisch
 # @date    2023-01-03
 
-import csv
 import datetime
 import gzip
 import json
 import os
 import sys
-import zoneinfo
 
-import openpyxl
 import pandas as pd
 
 from common import ConnectionProvider, get_options, add_month, parse_utc
 
 
-KEEP_COLUMNS = [
-    "instance_id", "segment_id", "date", "uptime",
-    "direction", "v85", "car_speed_hist_0to120plus",
-    "heavy_lft", "heavy_rgt", "car_lft", "car_rgt",
-    "bike_lft", "bike_rgt", "pedestrian_lft", "pedestrian_rgt",
-    # advanced only:
-    "mode_bus_lft", "mode_bus_rgt",
-    "mode_lighttruck_lft", "mode_lighttruck_rgt",
-    "mode_motorcycle_lft", "mode_motorcycle_rgt",
-    "mode_stroller_lft", "mode_stroller_rgt",
-    "mode_tractor_lft", "mode_tractor_rgt",
-    "mode_trailer_lft", "mode_trailer_rgt",
-    "mode_truck_lft", "mode_truck_rgt",
-    "mode_night_lft", "mode_night_rgt",
-    "speed_hist_car_lft", "speed_hist_car_rgt",
-    "brightness", "sharpness",
-]
+BASIC_MODES = ['pedestrian', 'bike', 'car', 'heavy']
+ADVANCED_MODES = ['mode_bus', 'mode_lighttruck', 'mode_motorcycle', 'mode_stroller',
+                  'mode_tractor', 'mode_trailer', 'mode_truck', 'mode_night']
+KEEP_COLUMNS = ["instance_id", "segment_id", "date", "uptime",
+                "direction", "v85", "car_speed_hist_0to120plus",
+                # advanced only:
+                "brightness", "sharpness",
+                ] + [col for m in BASIC_MODES + ADVANCED_MODES for col in (f'{m}_lft', f'{m}_rgt')]
+
 
 def load_segments(json_file):
     segments = {}
@@ -104,69 +93,71 @@ def update_data(segments, df: pd.DataFrame, options, conns):
     return df, newest_data
 
 
-def round_separator(v, digits, sep):
-    if sep:
-        return str(round(v, digits)).replace(".", sep) if v is not None else ""
-    return round(v, digits) if v is not None else None
+def _add_totals(df, modes):
+    for src in modes:
+        mode = 'ped' if src == 'pedestrian' else src
+        lft, rgt = f'{src}_lft', f'{src}_rgt'
+        if lft not in df.columns:
+            continue
+        df[f'{mode}_lft'] = df[lft].fillna(0).round().astype('Int64')
+        df[f'{mode}_rgt'] = df[rgt].fillna(0).round().astype('Int64')
+        df[f'{mode}_total'] = df[f'{mode}_lft'] + df[f'{mode}_rgt']
+        if src != mode:
+            df = df.drop(columns=[lft, rgt])
+    return df
 
 
-def get_column_names(advanced):
-    res = ["segment_id", "date_local", "uptime"]
-    for mode in TrafficCountAdvanced.modes() if advanced else TrafficCount.modes():
-        if mode == "pedestrian":
-            mode = "ped"
-        res += [mode + "_lft", mode + "_rgt", mode + "_total"]
-    return res + ["v85"] + ["car_speed%s" % s for s in range(0, 80, 10)]
+def _prepare_df(segments, df, advanced, month):
+    # Filter to relevant segments and month (UTC)
+    tz_map = {s['segment_id']: s.get('timezone', 'UTC') for s in segments}
+    utc = pd.to_datetime(df['date'], utc=True)
+    mask = df['segment_id'].isin(tz_map.keys())
+    if month is not None:
+        mask &= (utc.dt.year == month[0]) & (utc.dt.month == month[1])
+    df_out = df[mask]
+    if df_out.empty:
+        return None
 
+    # Convert UTC to local time per segment and add totals
+    local_ts = pd.Series(
+        [dt.tz_convert(tz) for dt, tz in zip(utc[mask], df_out['segment_id'].map(tz_map))],
+        index=df_out.index
+    )
+    df_out = df_out.assign(date_local=local_ts.dt.strftime('%Y-%m-%d %H:%M')).drop(columns=['date'])
+    modes = BASIC_MODES + (ADVANCED_MODES if advanced else [])
+    df_out = _add_totals(df_out, modes)
 
-def get_column_values(tc, local_date, advanced, sep=None):
-    result = [tc.segment_id, str(local_date)[:-9], round_separator(tc.uptime_rel, 6, sep)]
-    for mode in TrafficCountAdvanced.modes() if advanced else TrafficCount.modes():
-        lft = getattr(tc, mode + "_lft")
-        rgt = getattr(tc, mode + "_rgt")
-        result += [round(lft) if lft is not None else None,
-                   round(rgt) if rgt is not None else None,
-                   round((lft or 0) + (rgt or 0)) if lft is not None or rgt is not None else None]
-    result += [round_separator(tc.v85, 1, sep)]
-    for v in tc.get_histogram():
-        result.append(round_separator(v, 2, sep))
-    return result
+    # Expand speed histogram: 25 x 5km/h bins to 8 x 10km/h bins
+    hist_cols = [f'car_speed{s}' for s in range(0, 80, 10)]
+
+    def expand_histogram(hist):
+        if hist is None:
+            return [None] * 8
+        result = [round(hist[2 * i] + hist[2 * i + 1], 2) for i in range(7)]
+        result.append(round(sum(hist[14:]), 2))
+        return result
+
+    hist_df = df_out['car_speed_hist_0to120plus'].apply(expand_histogram).apply(pd.Series)
+    hist_df.columns = hist_cols
+    df_out = pd.concat([df_out.drop(columns=['car_speed_hist_0to120plus']), hist_df], axis=1)
+
+    mode_cols = [f'{"ped" if m == "pedestrian" else m}_{s}' for m in modes for s in ('lft', 'rgt', 'total')]
+    output_cols = ['segment_id', 'date_local', 'uptime'] + mode_cols + ['v85'] + hist_cols
+    return df_out[output_cols]
 
 
 def _write_xl(filename, segments, df, advanced, month=None):
-    wb = openpyxl.Workbook()
-    row = 1
-    for s in segments:
-        tzinfo=zoneinfo.ZoneInfo(s["timezone"])
-        for tc in s.counts:
-            local_date = tc.date_utc.astimezone(tzinfo)
-            if month is None or (local_date.year, local_date.month) == month:
-                if row == 1:
-                    for col, val in enumerate(get_column_names(advanced), start=1):
-                        wb.active.cell(row=row, column=col).value = val
-                    row += 1
-                for col, val in enumerate(get_column_values(tc, local_date, advanced), start=1):
-                    wb.active.cell(row=row, column=col).value = val
-                row += 1
-    if row > 1:
-        wb.save(filename)
+    df_out = _prepare_df(segments, df, advanced, month)
+    if df_out is not None:
+        df_out.to_excel(filename, index=False, engine='openpyxl')
 
 
 def _write_csv(filename, segments, df, advanced, month=None, delimiter=","):
-    with gzip.open(filename, "wt") as csv_file:
-        csv_out = csv.writer(csv_file, delimiter=delimiter)
-        need_header = True
-        for s in segments:
-            tzinfo=zoneinfo.ZoneInfo(s["timezone"])
-            for tc in s.counts:
-                local_date = tc.date_utc.astimezone(tzinfo)
-                if month is None or (local_date.year, local_date.month) == month:
-                    if need_header:
-                        csv_out.writerow(get_column_names(advanced))
-                        need_header = False
-                    csv_out.writerow(get_column_values(tc, local_date, advanced))
-    if need_header:  # no data
-        os.remove(csv_file.name)
+    df_out = _prepare_df(segments, df, advanced, month)
+    if df_out is None:
+        return
+    with gzip.open(filename, 'wt') as csv_file:
+        df_out.to_csv(csv_file, index=False, sep=delimiter)
 
 
 def main(args=None):
@@ -185,8 +176,8 @@ def main(args=None):
         df, newest_data = update_data(filtered_segments, df, options, conns)
         if df is None:
             print("No data.", file=sys.stderr)
-        else:
-            df.to_parquet(parquet_file, index=False)
+            return
+        df.to_parquet(parquet_file, index=False)
     else:
         newest_data = datetime.datetime.now(datetime.timezone.utc)
     save_segments(segments, options.json_file)

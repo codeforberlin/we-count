@@ -81,10 +81,10 @@ def update_data(segments, df: pd.DataFrame, options, conns):
             if options.dump:
                 with open(options.dump, "a", encoding="utf8") as dump:
                     json.dump(res, dump, indent=2)
-            report = res.get("report", [])
-            if report:
-                batch = pd.DataFrame(report)
-                new_rows.append(batch[[c for c in KEEP_COLUMNS if c in batch.columns]].dropna(axis=1, how='all'))
+            if "report" in res:
+                if res["report"]:
+                    batch = pd.DataFrame(res["report"])
+                    new_rows.append(batch[[c for c in KEEP_COLUMNS if c in batch.columns]].dropna(axis=1, how='all'))
             else:
                 error = True
                 break

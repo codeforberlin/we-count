@@ -6,15 +6,47 @@
 # @author  Michael Behrisch
 # @date    2024-01-02
 
+import datetime
 import json
 import os
 from collections import Counter
 
 import numpy as np
+
+from common import parse_utc_dict
 import osmnx
 import plotly.express as px
 import requests
 import shapely
+
+
+def add_osm(features, old_data, max_updates=2):
+    """Add OSM data to features in-place. old_data maps segment_id -> properties dict.
+    Caches results for 30 days; updates at most max_updates features per call."""
+    now = datetime.datetime.now(datetime.timezone.utc)
+    update_count = 0
+    for feature in features:
+        segment_id = feature["properties"]["segment_id"]
+        if segment_id in old_data and "osm" in old_data[segment_id]:
+            osm_edge = old_data[segment_id]["osm"]
+            if "name" in osm_edge:
+                if parse_utc_dict(osm_edge, "last_osm_fetch") > now - datetime.timedelta(days=30):
+                    feature["properties"]["osm"] = osm_edge
+                    continue
+        geometry = feature.get("geometry")
+        if not geometry:
+            continue
+        update_count += 1
+        if geometry["type"] == "Point":
+            coords = [geometry["coordinates"]]
+        else:  # MultiLineString
+            coords = geometry["coordinates"][0]
+        osm_edge = find_edge(coords)
+        osm_edge["last_osm_fetch"] = now.isoformat()
+        del osm_edge["geometry"]
+        feature["properties"]["osm"] = osm_edge
+        if update_count >= max_updates:
+            break
 
 
 def ensure_graph(coords, graph=None):
@@ -25,14 +57,13 @@ def ensure_graph(coords, graph=None):
     return osmnx.graph_from_point((center[1], center[0]), network_type='all')
 
 
-def find_edge(segment, graph=None):
-    coords = segment["geometry"]["coordinates"][0]
+def find_edge(coords, graph=None):
     graph = ensure_graph(coords, graph)
     geoms = osmnx.graph_to_gdfs(graph, nodes=False)["geometry"]
 
     # build an r-tree spatial index by position for subsequent iloc
     rtree = shapely.STRtree(geoms)
-    bounds = np.add(shapely.bounds(shapely.LineString(coords)), [-0.001, -0.001, 0.001, 0.001])
+    bounds = np.add(shapely.bounds(shapely.MultiPoint(coords)), [-0.001, -0.001, 0.001, 0.001])
     pos = rtree.query_nearest(shapely.box(*bounds))
 
     min_dist = 1e14
@@ -59,8 +90,7 @@ def find_edge(segment, graph=None):
     return min_edge
 
 
-def find_nearest(segment, graph=None):
-    coords = segment["geometry"]["coordinates"][0]
+def find_nearest(coords, graph=None):
     graph = ensure_graph(coords, graph)
     count = Counter({None:0})
     nearest_edges = osmnx.nearest_edges(graph, *zip(*coords))
@@ -88,8 +118,9 @@ if __name__ == "__main__":
     lons = []
     names = []
     for s in segments["features"]:
-        edge = find_edge(s)
-        near_edge = find_nearest(s)
+        coords = s["geometry"]["coordinates"][0]
+        edge = find_edge(coords)
+        near_edge = find_nearest(coords)
         if edge["osmid"] != near_edge["osmid"]:
             print("dist", edge)
             print("near", near_edge)

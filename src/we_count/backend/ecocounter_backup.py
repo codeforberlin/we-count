@@ -13,96 +13,36 @@ import os
 import sys
 
 import pandas as pd
-import requests
 
 from common import get_options, parse_utc, parse_utc_dict, add_month
+from ecocounter_positions import DEFAULT_URL, fetch_all
 
-
-DEFAULT_URL = "https://api.viz.berlin.de/FROST-Server-EcoCounter2/v1.1"
 PERIOD_NORMAL = "1-Stunde"
 PERIOD_ADVANCED = "15-Min"
-
-
-def fetch_all(url, params=None):
-    """Paginated GET — follows @iot.nextLink until exhausted."""
-    result = []
-    while url:
-        r = requests.get(url, params=params)
-        r.raise_for_status()
-        data = r.json()
-        result.extend(data.get("value", []))
-        url = data.get("@iot.nextLink")
-        params = None  # params are encoded in nextLink
-    return result
+import ecocounter_positions
 
 
 def load_things(json_file):
-    """Load things metadata from JSON file. Returns dict keyed by int thing_id."""
+    """Load things from GeoJSON file. Returns dict keyed by segment_id (siteID)."""
     if not os.path.exists(json_file):
         return {}
     with open(json_file, encoding="utf8") as f:
         data = json.load(f)
-    return {int(k): v for k, v in data.get("things", {}).items()}
+    return {f["properties"]["segment_id"]: f["properties"]
+            for f in data.get("features", [])}
 
 
 def save_things(things, json_file):
-    """Write updated things dict to JSON file atomically."""
-    data = {
-        "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-        "things": {str(k): v for k, v in things.items()}
-    }
-    tmp = json_file + ".new"
-    with open(tmp, "w", encoding="utf8") as f:
-        json.dump(data, f, indent=2)
-    os.rename(tmp, json_file)
-
-
-def update_things(things, url):
-    """Fetch all Things from FROST API and cache their Datastream IDs."""
-    print("Updating Things metadata from API...")
-    all_things = fetch_all(url + "/Things", {"$select": "@iot.id,name,properties"})
-    for thing in all_things:
-        tid = thing["@iot.id"]
-        props = thing.get("properties", {})
-        # Fetch datastreams for this Thing
-        datastreams = fetch_all(
-            url + f"/Things({tid})/Datastreams",
-            {"$select": "@iot.id,properties"}
-        )
-        ds_lft = ds_rgt = ds_lft_adv = ds_rgt_adv = None
-        for ds in datastreams:
-            dp = ds.get("properties", {})
-            site_id = dp.get("siteID", 0)
-            period = dp.get("periodLength", "")
-            prefix = site_id // 1000000 if site_id else 0
-            if prefix == 101:
-                if period == PERIOD_NORMAL:
-                    ds_lft = ds["@iot.id"]
-                elif period == PERIOD_ADVANCED:
-                    ds_lft_adv = ds["@iot.id"]
-            elif prefix == 102:
-                if period == PERIOD_NORMAL:
-                    ds_rgt = ds["@iot.id"]
-                elif period == PERIOD_ADVANCED:
-                    ds_rgt_adv = ds["@iot.id"]
-        existing = things.get(tid, {})
-        first_data = props.get("firstData", "")
-        if first_data and "T" not in first_data:
-            first_data += "T00:00:00Z"
-        things[tid] = {
-            "siteName": props.get("siteName", thing.get("name", "")),
-            "district": props.get("district", ""),
-            "timezone": "Europe/Berlin",
-            "firstData": first_data,
-            "datastream_lft": ds_lft,
-            "datastream_rgt": ds_rgt,
-            "datastream_lft_advanced": ds_lft_adv,
-            "datastream_rgt_advanced": ds_rgt_adv,
-            # preserve backup timestamps
-            "last_data_backup": existing.get("last_data_backup"),
-            "last_advanced_backup": existing.get("last_advanced_backup"),
-        }
-    return things
+    """Write updated backup timestamps back into the GeoJSON file."""
+    with open(json_file, encoding="utf8") as f:
+        content = json.load(f)
+    for feature in content.get("features", []):
+        sid = feature["properties"]["segment_id"]
+        if sid in things:
+            feature["properties"] = things[sid]
+    with open(json_file + ".new", "w", encoding="utf8") as f:
+        json.dump(content, f, indent=2)
+    os.rename(json_file + ".new", json_file)
 
 
 def _fetch_observations(url, datastream_id, since):
@@ -120,11 +60,13 @@ def update_data(things, df, options):
     """Fetch new observations for all things, merge into df."""
     print(f"Retrieving data for {len(things)} stations")
     backup_date = "last_advanced_backup" if options.advanced else "last_data_backup"
+    period = PERIOD_ADVANCED if options.advanced else PERIOD_NORMAL
     newest_data = None
-    for tid, t in things.items():
-        ds_lft = t.get("datastream_lft_advanced" if options.advanced else "datastream_lft")
-        ds_rgt = t.get("datastream_rgt_advanced" if options.advanced else "datastream_rgt")
-        if not ds_lft or not ds_rgt:
+    for sid, t in things.items():
+        counters = t.get("counter", [])
+        ds_lft = next((c["datastreams"].get(period) for c in counters if c.get("bikes_left")), None)
+        ds_rgt = next((c["datastreams"].get(period) for c in counters if c.get("bikes_right")), None)
+        if not ds_lft:
             print(f"Missing datastreams for station {t['siteName']}, skipping.", file=sys.stderr)
             continue
         epoch = datetime.datetime(2010, 1, 1, tzinfo=datetime.timezone.utc)
@@ -133,14 +75,14 @@ def update_data(things, df, options):
         if options.verbose:
             print(f"Fetching {t['siteName']} since {since}")
         obs_lft = _fetch_observations(options.url, ds_lft, since)
-        obs_rgt = _fetch_observations(options.url, ds_rgt, since)
+        obs_rgt = _fetch_observations(options.url, ds_rgt, since) if ds_rgt else {}
         all_dates = sorted(set(obs_lft) | set(obs_rgt))
         if not all_dates:
             t[backup_date] = datetime.datetime.now(datetime.timezone.utc).replace(
                 hour=0, minute=0, second=0, microsecond=0).isoformat()
             continue
         new_df = pd.DataFrame({
-            "segment_id": tid,
+            "segment_id": sid,
             "date": all_dates,
             "bike_lft": pd.array([obs_lft.get(d, 0) for d in all_dates], dtype="uint16"),
             "bike_rgt": pd.array([obs_rgt.get(d, 0) for d in all_dates], dtype="uint16"),
@@ -149,7 +91,7 @@ def update_data(things, df, options):
         if df is None:
             df = new_df
         else:
-            df = pd.concat([df[~df["date"].isin(new_df["date"]) | (df["segment_id"] != tid)],
+            df = pd.concat([df[~df["date"].isin(new_df["date"]) | (df["segment_id"] != sid)],
                             new_df], ignore_index=True)
         last = parse_utc(all_dates[-1])
         if newest_data is None or newest_data < last:
@@ -196,17 +138,11 @@ def main(args=None):
         df[count_cols] = df[count_cols].astype("uint16")
     else:
         df = None
+    ecocounter_positions.main(args)
     things = load_things(options.json_file)
-    # Refresh Things metadata if missing or stale (>1 day old)
-    needs_update = not things
-    if not needs_update and os.path.exists(options.json_file):
-        with open(options.json_file, encoding="utf8") as f:
-            meta = json.load(f)
-        age = datetime.datetime.now(datetime.timezone.utc) - parse_utc(meta.get("created_at", "1970-01-01"))
-        needs_update = age > datetime.timedelta(days=1)
-    if needs_update:
-        things = update_things(things, options.url)
-        save_things(things, options.json_file)
+    if not things:
+        print("No station metadata found.", file=sys.stderr)
+        return
     if options.limit:
         backup_date = "last_advanced_backup" if options.advanced else "last_data_backup"
         epoch = datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)

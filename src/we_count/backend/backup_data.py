@@ -47,10 +47,13 @@ def save_segments(segments, json_file):
     save_json(json_file, content)
 
 
-def update_data(segments, df: pd.DataFrame, options, conns):
+def update_data(segments, options, conns):
+    """Fetch new rows from the API. Returns (new_df, newest_data) where new_df contains
+    only the newly fetched rows (not merged with existing data)."""
     print("Retrieving data for %s segments" % len(segments))
     newest_data = None
     backup_date = "last_advanced_backup" if options.advanced else "last_data_backup"
+    all_new = []
     for s in segments.values():
         active = [i["first_data_package"] for i in s["instance_ids"].values() if i["first_data_package"] is not None]
         if not active:
@@ -61,7 +64,6 @@ def update_data(segments, df: pd.DataFrame, options, conns):
         if options.verbose and last is not None and first < last:
             print("Retrieving data for segment %s between %s and %s." % (s["segment_id"], first, last))
         error = False
-        new_rows = []
         while last is not None and first < last:
             interval_end = first + datetime.timedelta(days=20)
             payload = {
@@ -82,36 +84,30 @@ def update_data(segments, df: pd.DataFrame, options, conns):
             if "report" in res:
                 if res["report"]:
                     batch = pd.DataFrame(res["report"])
-                    new_rows.append(batch[[c for c in KEEP_COLUMNS if c in batch.columns]].dropna(axis=1, how='all'))
+                    all_new.append(batch[[c for c in KEEP_COLUMNS if c in batch.columns]].dropna(axis=1, how='all'))
             else:
                 error = True
                 break
             first = interval_end
         if error:
             continue
-        if new_rows:
-            new_df = pd.concat(new_rows, ignore_index=True)
-            del new_rows
-            if 'car_speed_hist_0to120plus' in new_df.columns:
-                scales = (new_df['car_lft'].fillna(0) + new_df['car_rgt'].fillna(0)) * new_df['uptime'].fillna(0) / 100
-                new_df['car_speed_hist_0to120plus'] = [
-                    np.array([round(v * s) for v in hist], dtype=np.uint16) if hist is not None else None
-                    for hist, s in zip(new_df['car_speed_hist_0to120plus'], scales)
-                ]
-            count_cols = [c for c in new_df.columns if c.endswith(('_lft', '_rgt'))]
-            new_df[count_cols] = new_df[count_cols].fillna(0).round().astype('uint16')
-            float_cols = new_df.select_dtypes(include='float64').columns
-            new_df[float_cols] = new_df[float_cols].astype('float32')
-            if df is None:
-                df = new_df
-            else:
-                df = pd.concat([df[~df["date"].isin(new_df["date"]) | (df["segment_id"] != s["segment_id"])],
-                                new_df], ignore_index=True)
-            del new_df
         s[backup_date] = datetime.datetime.now(datetime.timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
         if last is not None and (newest_data is None or newest_data < last):
             newest_data = last
-    return df, newest_data
+    if not all_new:
+        return None, newest_data
+    new_df = pd.concat(all_new, ignore_index=True)
+    if 'car_speed_hist_0to120plus' in new_df.columns:
+        scales = (new_df['car_lft'].fillna(0) + new_df['car_rgt'].fillna(0)) * new_df['uptime'].fillna(0) / 100
+        new_df['car_speed_hist_0to120plus'] = [
+            np.array([round(v * s) for v in hist], dtype=np.uint16) if hist is not None else None
+            for hist, s in zip(new_df['car_speed_hist_0to120plus'], scales)
+        ]
+    count_cols = [c for c in new_df.columns if c.endswith(('_lft', '_rgt'))]
+    new_df[count_cols] = new_df[count_cols].fillna(0).round().astype('uint16')
+    float_cols = new_df.select_dtypes(include='float64').columns
+    new_df[float_cols] = new_df[float_cols].astype('float32')
+    return new_df, newest_data
 
 
 def _add_totals(df, modes):
@@ -183,9 +179,40 @@ def _write_csv(filename, segments, df, advanced, month=None, delimiter=","):
         df_out.to_csv(csv_file, index=False, sep=delimiter)
 
 
+def _year_file(parquet, year):
+    base = parquet[:-len(".parquet")] if parquet.endswith(".parquet") else parquet
+    return f"{base}_{year}.parquet"
+
+
+def _merge_year(new_year_df, year_file):
+    """Merge new rows for one year with the existing year parquet, return merged df."""
+    if not os.path.exists(year_file):
+        return new_year_df
+    existing = pd.read_parquet(year_file)
+    # Drop existing rows whose (segment_id, date) will be replaced by new data
+    new_keys = new_year_df.set_index(['segment_id', 'date']).index
+    keep = ~existing.set_index(['segment_id', 'date']).index.isin(new_keys)
+    return pd.concat([existing[keep], new_year_df], ignore_index=True)
+
+
+def load_parquet_years(parquet, years):
+    """Load only the requested year parquet files. Falls back to single file."""
+    parts = []
+    for year in years:
+        yf = _year_file(parquet, year)
+        if os.path.exists(yf):
+            parts.append(pd.read_parquet(yf))
+    if not parts:
+        # backward compat: single file
+        if os.path.exists(parquet):
+            df = pd.read_parquet(parquet)
+            return df[df['date'].str[:4].isin([str(y) for y in years])]
+        return None
+    return pd.concat(parts, ignore_index=True)
+
+
 def main(args=None):
     options = get_options(args)
-    df = pd.read_parquet(options.parquet) if os.path.exists(options.parquet) else None
     conns = ConnectionProvider(options.secrets["tokens"], options.url) if options.url else None
     excel = False
     segments = load_segments(options.json_file)
@@ -199,14 +226,20 @@ def main(args=None):
     else:
         filtered_segments = segments
     if conns:
-        df, newest_data = update_data(filtered_segments, df, options, conns)
-        if df is None:
+        new_df, newest_data = update_data(filtered_segments, options, conns)
+        if new_df is None:
             print("No data.", file=sys.stderr)
             return
-        df = df.sort_values(['segment_id', 'date'])
-        if os.path.exists(options.parquet):
-            os.rename(options.parquet, options.parquet + ".bak")
-        df.to_parquet(options.parquet, index=False, compression='zstd')
+        # Merge and save year by year — only load existing data for years that have new rows
+        for year, year_new in new_df.groupby(new_df['date'].str[:4]):
+            yf = _year_file(options.parquet, year)
+            year_df = _merge_year(year_new, yf)
+            year_df = year_df.sort_values(['segment_id', 'date'])
+            if os.path.exists(yf):
+                os.rename(yf, yf + ".bak")
+            year_df.to_parquet(yf, index=False, compression='zstd')
+            del year_df
+        del new_df
     else:
         newest_data = datetime.datetime.now(datetime.timezone.utc)
     save_segments(segments, options.json_file)
@@ -215,6 +248,13 @@ def main(args=None):
             os.makedirs(os.path.dirname(options.csv), exist_ok=True)
         curr_month = (newest_data.year, newest_data.month)
         month = (options.csv_start_year, 1) if options.csv_start_year else add_month(-1, *curr_month)
+        # Collect only the years needed, load them once for all CSV months
+        years_needed = set()
+        m = month
+        while m <= curr_month:
+            years_needed.add(m[0])
+            m = add_month(1, *m)
+        df = load_parquet_years(options.parquet, years_needed)
         while month <= curr_month:
             if excel:
                 _write_xl(options.csv + "_%s_%02i.xlsx" % month, filtered_segments.values(), df, options.advanced, month)

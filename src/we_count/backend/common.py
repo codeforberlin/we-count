@@ -83,6 +83,12 @@ def load_json_if_stale(json_file, clear=False, verbose=0):
     return old_json.get("features", [])
 
 
+def save_json(json_file, content):
+    with open(json_file + ".new", "w", encoding="utf8") as output:
+        json.dump(content, output, indent=2)
+    os.rename(json_file + ".new", json_file)
+
+
 def parse_options(options):
     if os.path.exists(options.secrets_file):
         with open(options.secrets_file, encoding="utf8") as sf:

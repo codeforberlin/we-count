@@ -7,11 +7,10 @@
 # @date    2023-01-15
 
 import datetime
-import json
 import sys
 
 import osm
-from common import ConnectionProvider, get_options, load_json_if_stale, parse_utc_dict
+from common import ConnectionProvider, get_options, load_json_if_stale, parse_utc_dict, save_json
 
 
 def update_props(bbox_segments, old_data, conns, retry, max_prop_updates):
@@ -19,6 +18,7 @@ def update_props(bbox_segments, old_data, conns, retry, max_prop_updates):
     update_count = 0  # do not update too many at once, it is costly
     new_segments = []
     for segment_id in sorted(bbox_segments):
+        old_segment = None
         if segment_id in old_data:
             old_segment = old_data[segment_id]
             last_prop_update = parse_utc_dict(old_segment["properties"], "last_prop_fetch")
@@ -31,8 +31,10 @@ def update_props(bbox_segments, old_data, conns, retry, max_prop_updates):
             continue
         segment = segment_data["features"][0]
         segment["properties"] = {"segment_id": segment_id, "last_prop_fetch": now.isoformat()} | segment["properties"]
-        if segment_id in old_data and "osm" in old_data[segment_id]["properties"]:
-            segment["properties"]["osm"] = old_data[segment_id]["properties"]["osm"]
+        if old_segment:
+            for keep in ("osm", "last_data_backup", "last_advanced_backup"):
+                if keep in old_segment["properties"]:
+                    segment["properties"][keep] = old_segment["properties"][keep]
         new_segments.append(segment)
     invalid = set(old_data.keys()) - bbox_segments
     if invalid:
@@ -64,8 +66,7 @@ def main(args=None):
         "features": update_props(bbox_segments, old_data, conns, options.retry, options.max_prop_updates)
     }
     osm.add_osm(res["features"], {sid: f["properties"] for sid, f in old_data.items()})
-    with open(options.json_file, "w", encoding="utf8") as segment_json:
-        json.dump(res, segment_json, indent=2)
+    save_json(options.json_file, res)
     return True
 
 

@@ -15,7 +15,7 @@ import sys
 import numpy as np
 import pandas as pd
 
-from common import ConnectionProvider, get_options, add_month, parse_utc, parse_utc_dict
+from common import ConnectionProvider, get_options, add_month, parse_utc, parse_utc_dict, save_json
 
 
 BASIC_MODES = ['pedestrian', 'bike', 'car', 'heavy']
@@ -44,9 +44,7 @@ def save_segments(segments, json_file):
         sid = segment["properties"]["segment_id"]
         if sid in segments:
             segment["properties"] = segments[sid]
-    with open(json_file + ".new", "w", encoding="utf8") as segment_file:
-        json.dump(content, segment_file, indent=2)
-    os.rename(json_file + ".new", json_file)
+    save_json(json_file, content)
 
 
 def update_data(segments, df: pd.DataFrame, options, conns):
@@ -206,6 +204,8 @@ def main(args=None):
             print("No data.", file=sys.stderr)
             return
         df = df.sort_values(['segment_id', 'date'])
+        if os.path.exists(options.parquet):
+            os.rename(options.parquet, options.parquet + ".bak")
         df.to_parquet(options.parquet, index=False, compression='zstd')
     else:
         newest_data = datetime.datetime.now(datetime.timezone.utc)

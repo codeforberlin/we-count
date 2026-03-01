@@ -7,15 +7,13 @@
 # @date    2026-03-01
 
 import datetime
-import json
-import os
 import sys
 from collections import defaultdict
 
 import requests
 
 import osm
-from common import get_options, load_json_if_stale
+from common import get_options, load_json_if_stale, save_json
 
 
 DEFAULT_URL = "https://api.viz.berlin.de/FROST-Server-EcoCounter2/v1.1"
@@ -32,7 +30,6 @@ def fetch_all(url, params=None):
         url = data.get("@iot.nextLink")
         params = None  # params are encoded in nextLink
     return result
-
 
 
 def main(args=None):
@@ -114,9 +111,7 @@ def main(args=None):
         "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "features": features,
     }
-    with open(options.json_file + ".new", "w", encoding="utf8") as f:
-        json.dump(result, f, indent=2)
-    os.rename(options.json_file + ".new", options.json_file)
+    save_json(options.json_file, result)
     return True
 
 

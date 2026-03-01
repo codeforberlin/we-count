@@ -39,6 +39,8 @@ def add_osm(features, old_data, max_updates=2):
         update_count += 1
         if geometry["type"] == "Point":
             coords = [geometry["coordinates"]]
+        elif geometry["type"] == "LineString":
+            coords = geometry["coordinates"]
         else:  # MultiLineString
             coords = geometry["coordinates"][0]
         osm_edge = find_edge(coords)

@@ -6,12 +6,9 @@ dash-extensions
 dash-leaflet
 duckdb
 geopandas>=1.0.0
-mysqlclient
 openpyxl
 osmnx>=1.9.2,<2.0.0
 plotly>=5.24
 pandas
 pyarrow
 requests
-sqlalchemy
-timezonefinder

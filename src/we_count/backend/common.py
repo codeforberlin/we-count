@@ -67,6 +67,22 @@ def parse_utc_dict(dict, key):
     return parse_utc(dict.get(key, '1970-01-01T00:00:00+00:00'))
 
 
+def load_json_if_stale(json_file, clear=False, verbose=0):
+    """Load GeoJSON features if file is stale (>30 min old) or missing.
+    Returns features list, or None if the file is fresh (caller should skip regeneration)."""
+    delta = datetime.timedelta(minutes=30)
+    if not os.path.exists(json_file) or clear:
+        return []
+    with open(json_file, encoding="utf8") as f:
+        old_json = json.load(f)
+    last_mod = parse_utc_dict(old_json, "created_at")
+    if datetime.datetime.now(datetime.timezone.utc) - last_mod < delta:
+        if verbose:
+            print(f"Not recreating {json_file}, it is less than {delta} old.")
+        return None
+    return old_json.get("features", [])
+
+
 def parse_options(options):
     if os.path.exists(options.secrets_file):
         with open(options.secrets_file, encoding="utf8") as sf:

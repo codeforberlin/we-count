@@ -14,7 +14,8 @@ from collections import defaultdict
 
 import requests
 
-from common import get_options, parse_utc_dict
+import osm
+from common import get_options, load_json_if_stale
 
 
 DEFAULT_URL = "https://api.viz.berlin.de/FROST-Server-EcoCounter2/v1.1"
@@ -33,20 +34,13 @@ def fetch_all(url, params=None):
     return result
 
 
+
 def main(args=None):
     options = get_options(args, json_default="ecocounter.json", url_default=DEFAULT_URL)
-    old_data = {}
-    if os.path.exists(options.json_file) and not options.clear:
-        with open(options.json_file, encoding="utf8") as f:
-            old_json = json.load(f)
-        last_mod = parse_utc_dict(old_json, "created_at")
-        delta = datetime.timedelta(minutes=30)
-        if datetime.datetime.now(datetime.timezone.utc) - last_mod < delta:
-            if options.verbose:
-                print(f"Not recreating {options.json_file}, it is less than {delta} old.")
-            return False
-        old_data = {f["properties"]["segment_id"]: f["properties"]
-                    for f in old_json.get("features", [])}
+    old_features = load_json_if_stale(options.json_file, options.clear, options.verbose)
+    if old_features is None:
+        return False
+    old_data = {f["properties"]["segment_id"]: f["properties"] for f in old_features}
 
     all_things = fetch_all(options.url + "/Things", {"$select": "@iot.id,name,description,properties"})
     if options.verbose:
@@ -114,6 +108,7 @@ def main(args=None):
             "properties": feature_props,
         })
 
+    osm.add_osm(features, old_data)
     result = {
         "type": "FeatureCollection",
         "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),

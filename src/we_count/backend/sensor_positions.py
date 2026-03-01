@@ -6,35 +6,12 @@
 # @author  Michael Behrisch
 # @date    2023-01-15
 
-import os
-import json
 import datetime
+import json
 import sys
 
 import osm
-from common import ConnectionProvider, get_options, parse_utc_dict
-
-
-def add_osm(res, old_data):
-    now = datetime.datetime.now(datetime.UTC)
-    update_count = 0  # do not update too many at once, it is costly
-    for segment in res["features"]:
-        segment_id = segment["properties"]["segment_id"]
-        if segment_id in old_data and "osm" in old_data[segment_id]["properties"]:
-            osm_edge = old_data[segment_id]["properties"]["osm"]
-            if "name" in osm_edge:
-                # use cached data if it is not outdated
-                last_osm_update = parse_utc_dict(osm_edge, "last_osm_fetch")
-                if last_osm_update > now - datetime.timedelta(days=30):
-                    segment["properties"]["osm"] = osm_edge
-                    continue
-        update_count += 1
-        osm_edge = osm.find_edge(segment)
-        osm_edge["last_osm_fetch"] = now.isoformat()
-        del osm_edge["geometry"]
-        segment["properties"]["osm"] = osm_edge
-        if update_count > 1:
-            break
+from common import ConnectionProvider, get_options, load_json_if_stale, parse_utc_dict
 
 
 def update_props(bbox_segments, old_data, conns, retry, max_prop_updates):
@@ -67,17 +44,10 @@ def update_props(bbox_segments, old_data, conns, retry, max_prop_updates):
 
 def main(args=None):
     options = get_options(args)
-    old_data = {}
-    if os.path.exists(options.json_file) and not options.clear:
-        with open(options.json_file, encoding="utf8") as of:
-            old_json = json.load(of)
-        last_mod = parse_utc_dict(old_json, "created_at")
-        delta = datetime.timedelta(minutes=30)
-        if datetime.datetime.now(datetime.UTC) - last_mod < delta:
-            if options.verbose:
-                print(f"Not recreating {options.json_file}, it is less than {delta} old.")
-            return False
-        old_data = {s["properties"]["segment_id"] : s for s in old_json["features"]}
+    old_features = load_json_if_stale(options.json_file, options.clear, options.verbose)
+    if old_features is None:
+        return False
+    old_data = {s["properties"]["segment_id"]: s for s in old_features}
 
     conns = ConnectionProvider(options.secrets["tokens"], options.url)
     res = conns.request("/v1/segments/area", "POST", str({"area": options.bbox}), retries=options.retry, required="features")
@@ -93,7 +63,7 @@ def main(args=None):
         "type": "FeatureCollection",
         "features": update_props(bbox_segments, old_data, conns, options.retry, options.max_prop_updates)
     }
-    add_osm(res, old_data)
+    osm.add_osm(res["features"], {sid: f["properties"] for sid, f in old_data.items()})
     with open(options.json_file, "w", encoding="utf8") as segment_json:
         json.dump(res, segment_json, indent=2)
     return True

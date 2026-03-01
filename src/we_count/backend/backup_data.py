@@ -95,7 +95,7 @@ def update_data(segments, df: pd.DataFrame, options, conns):
             new_df = pd.concat(new_rows, ignore_index=True)
             del new_rows
             if 'car_speed_hist_0to120plus' in new_df.columns:
-                scales = (new_df['car_lft'] + new_df['car_rgt']) * new_df['uptime'] / 100
+                scales = (new_df['car_lft'].fillna(0) + new_df['car_rgt'].fillna(0)) * new_df['uptime'].fillna(0) / 100
                 new_df['car_speed_hist_0to120plus'] = [
                     np.array([round(v * s) for v in hist], dtype=np.uint16) if hist is not None else None
                     for hist, s in zip(new_df['car_speed_hist_0to120plus'], scales)

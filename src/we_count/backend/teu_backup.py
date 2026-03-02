@@ -118,43 +118,75 @@ def _write_csv(filename, things, df, month=None):
         df_out.to_csv(csv_file, index=False)
 
 
+def _year_file(parquet, year):
+    base = parquet[:-len(".parquet")] if parquet.endswith(".parquet") else parquet
+    return f"{base}_{year}.parquet"
+
+
+def _merge_year(new_year_df, year_file):
+    if not os.path.exists(year_file):
+        return new_year_df
+    existing = pd.read_parquet(year_file)
+    new_keys = new_year_df.set_index(["segment_id", "date"]).index
+    keep = ~existing.set_index(["segment_id", "date"]).index.isin(new_keys)
+    return pd.concat([existing[keep], new_year_df], ignore_index=True)
+
+
+def load_parquet_years(parquet, years):
+    parts = [pd.read_parquet(_year_file(parquet, y))
+             for y in years if os.path.exists(_year_file(parquet, y))]
+    if not parts:
+        if os.path.exists(parquet):
+            df = pd.read_parquet(parquet)
+            return df[df["date"].str[:4].isin([str(y) for y in years])]
+        return None
+    return pd.concat(parts, ignore_index=True)
+
+
 def main(args=None):
     options = get_options(args, json_default="teu.json",
                           url_default=DEFAULT_URL, parquet_default="teu.parquet")
-    if os.path.exists(options.parquet):
-        df = pd.read_parquet(options.parquet)
-        count_cols = [v.lower() for v in VEHICLES if v.lower() in df.columns]
-        df[count_cols] = df[count_cols].astype("uint16")
-    else:
-        df = None
     teu_positions.main(args)
     things = load_things(options.json_file)
     if not things:
         print("No station metadata found.", file=sys.stderr)
         return
-    if options.limit:
-        backup_date = "last_advanced_backup" if options.advanced else "last_data_backup"
-        epoch = datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)
-        sorted_things = sorted(things.items(), key=lambda kv: parse_utc_dict(kv[1], backup_date) or epoch)
-        things = dict(sorted_things[:options.limit])
-    new_df, newest_data = update_data(things, options)
-    if new_df is None:
+    backup_date = "last_advanced_backup" if options.advanced else "last_data_backup"
+    sorted_things = sorted(things.items(), key=lambda kv: parse_utc_dict(kv[1], backup_date))
+    batch_size = options.limit or len(sorted_things)
+    batches = [dict(sorted_things[i:i + batch_size]) for i in range(0, len(sorted_things), batch_size)]
+
+    newest_data = None
+    for batch in batches:
+        new_df, nd = update_data(batch, options)
+        if nd is not None and (newest_data is None or newest_data < nd):
+            newest_data = nd
+        if new_df is not None:
+            for year, year_new in new_df.groupby(new_df["date"].str[:4]):
+                yf = _year_file(options.parquet, year)
+                year_df = _merge_year(year_new, yf)
+                year_df = year_df.sort_values(["segment_id", "date"])
+                if os.path.exists(yf):
+                    os.rename(yf, yf + ".bak")
+                year_df.to_parquet(yf, index=False, compression="zstd")
+                del year_df
+            del new_df
+        save_things(things, options.json_file)
+
+    if newest_data is None:
         print("No data.", file=sys.stderr)
         return
-    if df is not None:
-        for sid, sid_new in new_df.groupby("segment_id"):
-            df = df[~((df["segment_id"] == sid) & df["date"].isin(sid_new["date"]))]
-        df = pd.concat([df, new_df], ignore_index=True)
-    else:
-        df = new_df
-    df = df.sort_values(["segment_id", "date"])
-    df.to_parquet(options.parquet, index=False, compression="zstd")
-    save_things(load_things(options.json_file) | things, options.json_file)
     if options.csv:
         if os.path.dirname(options.csv):
             os.makedirs(os.path.dirname(options.csv), exist_ok=True)
         curr_month = (newest_data.year, newest_data.month)
         month = (options.csv_start_year, 1) if options.csv_start_year else add_month(-1, *curr_month)
+        years_needed = set()
+        m = month
+        while m <= curr_month:
+            years_needed.add(m[0])
+            m = add_month(1, *m)
+        df = load_parquet_years(options.parquet, years_needed)
         while month <= curr_month:
             _write_csv(options.csv + "_%s_%02i.csv.gz" % month, things, df, month)
             month = add_month(1, *month)

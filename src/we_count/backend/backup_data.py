@@ -15,6 +15,7 @@ import sys
 import numpy as np
 import pandas as pd
 
+import sensor_positions
 from common import ConnectionProvider, get_options, add_month, parse_utc, parse_utc_dict, save_json
 
 
@@ -213,63 +214,73 @@ def load_parquet_years(parquet, years):
 
 def main(args=None):
     options = get_options(args)
+    sensor_positions.main(args)
     conns = ConnectionProvider(options.secrets["tokens"], options.url) if options.url else None
     excel = False
     segments = load_segments(options.json_file)
+
+    # Segments used for CSV output (may be a subset when --segments is given)
     if options.segments:
-        filtered = [int(s.strip()) for s in options.segments.split(",")]
-        filtered_segments = {k:v for k,v in segments.items() if k in filtered}
-    elif options.limit:
-        backup_date = "last_advanced_backup" if options.advanced else "last_data_backup"
-        backup_times = sorted([(parse_utc_dict(v, backup_date), k) for k,v in segments.items()])[:options.limit]
-        filtered_segments = {k:v for k,v in segments.items() if k in list(zip(*backup_times))[1]}
+        filtered_ids = {int(s.strip()) for s in options.segments.split(",")}
+        output_segments = {k: v for k, v in segments.items() if k in filtered_ids}
     else:
-        filtered_segments = segments
+        output_segments = segments
+
     if conns:
-        new_df, newest_data = update_data(filtered_segments, options, conns)
-        if new_df is None:
+        if options.segments:
+            # Explicit segment list → single batch
+            batches = [output_segments]
+        else:
+            # Sort all segments by oldest backup first, split into batches of --limit size
+            backup_date = "last_advanced_backup" if options.advanced else "last_data_backup"
+            sorted_segs = sorted(segments.items(), key=lambda kv: parse_utc_dict(kv[1], backup_date))
+            batch_size = options.limit or len(sorted_segs)
+            batches = [dict(sorted_segs[i:i + batch_size]) for i in range(0, len(sorted_segs), batch_size)]
+
+        newest_data = None
+        for batch in batches:
+            new_df, nd = update_data(batch, options, conns)
+            if nd is not None and (newest_data is None or newest_data < nd):
+                newest_data = nd
+            if new_df is not None:
+                for year, year_new in new_df.groupby(new_df['date'].str[:4]):
+                    yf = _year_file(options.parquet, year)
+                    year_df = _merge_year(year_new, yf)
+                    year_df = year_df.sort_values(['segment_id', 'date'])
+                    if os.path.exists(yf):
+                        os.rename(yf, yf + ".bak")
+                    year_df.to_parquet(yf, index=False, compression='zstd')
+                    del year_df
+                del new_df
+            save_segments(segments, options.json_file)
+
+        if newest_data is None:
             print("No data.", file=sys.stderr)
             return
-        # Merge and save year by year — only load existing data for years that have new rows
-        for year, year_new in new_df.groupby(new_df['date'].str[:4]):
-            yf = _year_file(options.parquet, year)
-            year_df = _merge_year(year_new, yf)
-            year_df = year_df.sort_values(['segment_id', 'date'])
-            if os.path.exists(yf):
-                os.rename(yf, yf + ".bak")
-            year_df.to_parquet(yf, index=False, compression='zstd')
-            del year_df
-        del new_df
     else:
         newest_data = datetime.datetime.now(datetime.timezone.utc)
-    save_segments(segments, options.json_file)
+
     if options.csv:
         if os.path.dirname(options.csv):
             os.makedirs(os.path.dirname(options.csv), exist_ok=True)
         curr_month = (newest_data.year, newest_data.month)
         month = (options.csv_start_year, 1) if options.csv_start_year else add_month(-1, *curr_month)
-        # Collect only the years needed, load them once for all CSV months
-        years_needed = set()
-        m = month
-        while m <= curr_month:
-            years_needed.add(m[0])
-            m = add_month(1, *m)
-        df = load_parquet_years(options.parquet, years_needed)
+        df = load_parquet_years(options.parquet, range(month[0], curr_month[0] + 1))
         while month <= curr_month:
             if excel:
-                _write_xl(options.csv + "_%s_%02i.xlsx" % month, filtered_segments.values(), df, options.advanced, month)
+                _write_xl(options.csv + "_%s_%02i.xlsx" % month, output_segments.values(), df, options.advanced, month)
             else:
-                _write_csv(options.csv + "_%s_%02i.csv.gz" % month, filtered_segments.values(), df, options.advanced, month)
+                _write_csv(options.csv + "_%s_%02i.csv.gz" % month, output_segments.values(), df, options.advanced, month)
             month = add_month(1, *month)
 
     if options.csv_segments:
         if os.path.dirname(options.csv_segments):
             os.makedirs(os.path.dirname(options.csv_segments), exist_ok=True)
-        for s in filtered_segments.values():
+        for s in output_segments.values():
             if excel:
-                _write_xl(options.csv_segments + "_%s.xlsx" % s.id, [s], options.advanced)
+                _write_xl(options.csv_segments + "_%s.xlsx" % s.id, [s], df, options.advanced)
             else:
-                _write_csv(options.csv_segments + "_%s.csv.gz" % s.id, [s], options.advanced)
+                _write_csv(options.csv_segments + "_%s.csv.gz" % s.id, [s], df, options.advanced)
 
     if conns and options.verbose:
         conns.print_stats()

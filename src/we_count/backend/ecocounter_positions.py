@@ -10,26 +10,11 @@ import datetime
 import sys
 from collections import defaultdict
 
-import requests
-
 import osm
-from common import get_options, load_json_if_stale, save_json
+from common import fetch_all, get_options, load_json_if_stale, save_json
 
 
 DEFAULT_URL = "https://api.viz.berlin.de/FROST-Server-EcoCounter2/v1.1"
-
-
-def fetch_all(url, params=None):
-    """Paginated GET — follows @iot.nextLink until exhausted."""
-    result = []
-    while url:
-        r = requests.get(url, params=params)
-        r.raise_for_status()
-        data = r.json()
-        result.extend(data.get("value", []))
-        url = data.get("@iot.nextLink")
-        params = None  # params are encoded in nextLink
-    return result
 
 
 def main(args=None):

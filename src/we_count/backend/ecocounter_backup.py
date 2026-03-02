@@ -15,8 +15,7 @@ import sys
 import pandas as pd
 
 import ecocounter_positions
-from common import fetch_all, get_options, parse_utc, parse_utc_dict, add_month
-from ecocounter_positions import DEFAULT_URL
+import common
 
 PERIOD_NORMAL = "1-Stunde"
 PERIOD_ADVANCED = "15-Min"
@@ -48,7 +47,7 @@ def save_things(things, json_file):
 def _fetch_observations(url, datastream_id, since):
     """Fetch all observations for a datastream since a given UTC datetime."""
     filter_str = f"phenomenonTime ge {since.strftime('%Y-%m-%dT%H:%M:%S.000Z')}"
-    obs = fetch_all(
+    obs = common.fetch_all(
         url + f"/Datastreams({datastream_id})/Observations",
         {"$select": "phenomenonTime,result", "$filter": filter_str,
          "$orderby": "phenomenonTime asc", "$top": 1000}
@@ -70,8 +69,8 @@ def update_data(things, df, options):
             print(f"Missing datastreams for station {t['siteName']}, skipping.", file=sys.stderr)
             continue
         epoch = datetime.datetime(2010, 1, 1, tzinfo=datetime.timezone.utc)
-        first_data = parse_utc(t.get("firstData", "")) or epoch
-        since = first_data if options.clear else (parse_utc_dict(t, backup_date) or first_data)
+        first_data = common.parse_utc(t.get("firstData", "")) or epoch
+        since = first_data if options.clear else (common.parse_utc_dict(t, backup_date) or first_data)
         if options.verbose:
             print(f"Fetching {t['siteName']} since {since}")
         obs_lft = _fetch_observations(options.url, ds_lft, since)
@@ -93,7 +92,7 @@ def update_data(things, df, options):
         else:
             df = pd.concat([df[~df["date"].isin(new_df["date"]) | (df["segment_id"] != sid)],
                             new_df], ignore_index=True)
-        last = parse_utc(all_dates[-1])
+        last = common.parse_utc(all_dates[-1])
         if newest_data is None or newest_data < last:
             newest_data = last
         t[backup_date] = datetime.datetime.now(datetime.timezone.utc).replace(
@@ -114,10 +113,10 @@ def _prepare_df(things, df, month=None):
         if df_out.empty:
             return None
     local_ts = pd.Series(
-        [dt.tz_convert(tz) for dt, tz in zip(utc, df_out["segment_id"].map(tz_map))],
+        [dt.tz_convert(tz).strftime("%Y-%m-%d %H:%M") for dt, tz in zip(utc, df_out["segment_id"].map(tz_map))],
         index=df_out.index
     )
-    df_out = df_out.assign(date_local=local_ts.dt.strftime("%Y-%m-%d %H:%M")).drop(columns=["date"])
+    df_out = df_out.assign(date_local=local_ts).drop(columns=["date"])
     return df_out[["segment_id", "date_local", "bike_lft", "bike_rgt", "bike_total"]]
 
 
@@ -130,8 +129,8 @@ def _write_csv(filename, things, df, month=None):
 
 
 def main(args=None):
-    options = get_options(args, json_default="ecocounter.json",
-                          url_default=DEFAULT_URL, parquet_default="ecocounter.parquet")
+    options = common.get_options(args, json_default="ecocounter.json",
+                          url_default=ecocounter_positions.DEFAULT_URL, parquet_default="ecocounter.parquet")
     if os.path.exists(options.parquet):
         df = pd.read_parquet(options.parquet)
         count_cols = [c for c in df.columns if c.endswith(("_lft", "_rgt", "_total"))]
@@ -146,7 +145,7 @@ def main(args=None):
     if options.limit:
         backup_date = "last_advanced_backup" if options.advanced else "last_data_backup"
         epoch = datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)
-        sorted_things = sorted(things.items(), key=lambda kv: parse_utc_dict(kv[1], backup_date) or epoch)
+        sorted_things = sorted(things.items(), key=lambda kv: common.parse_utc_dict(kv[1], backup_date) or epoch)
         things = dict(sorted_things[:options.limit])
     df, newest_data = update_data(things, df, options)
     if df is None:
@@ -159,10 +158,10 @@ def main(args=None):
         if os.path.dirname(options.csv):
             os.makedirs(os.path.dirname(options.csv), exist_ok=True)
         curr_month = (newest_data.year, newest_data.month)
-        month = (options.csv_start_year, 1) if options.csv_start_year else add_month(-1, *curr_month)
+        month = (options.csv_start_year, 1) if options.csv_start_year else common.add_month(-1, *curr_month)
         while month <= curr_month:
             _write_csv(options.csv + "_%s_%02i.csv.gz" % month, things, df, month)
-            month = add_month(1, *month)
+            month = common.add_month(1, *month)
 
 
 if __name__ == "__main__":

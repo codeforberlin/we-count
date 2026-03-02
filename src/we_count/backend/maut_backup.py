@@ -15,8 +15,7 @@ import sys
 import pandas as pd
 
 import maut_positions
-from common import fetch_arcgis_features, get_options, parse_utc, add_month, save_json
-from maut_positions import DEFAULT_URL
+import common
 
 
 def load_things(json_file):
@@ -26,7 +25,7 @@ def load_things(json_file):
         data = json.load(f)
     things = {f["properties"]["segment_id"]: f["properties"]
               for f in data.get("features", [])}
-    last_backup = parse_utc(data.get("last_data_backup"))
+    last_backup = common.parse_utc(data.get("last_data_backup"))
     return things, last_backup
 
 
@@ -34,7 +33,7 @@ def save_last_backup(json_file, backup_date):
     with open(json_file, encoding="utf8") as f:
         content = json.load(f)
     content["last_data_backup"] = backup_date.isoformat()
-    save_json(json_file, content)
+    common.save_json(json_file, content)
 
 
 def _fetch_raw(segment_ids, options, since):
@@ -45,7 +44,7 @@ def _fetch_raw(segment_ids, options, since):
     since_str = since.strftime("%Y-%m-%d %H:%M:%S")
     if options.verbose:
         print(f"Fetching observations since {since_str}")
-    raw = fetch_arcgis_features(layer, {
+    raw = common.fetch_arcgis_features(layer, {
         "where": f"datum>timestamp '{since_str}'",
         "geometry": options.bbox,
         "inSR": "4326",
@@ -70,7 +69,7 @@ def _fetch_raw(segment_ids, options, since):
         })
     if not rows:
         return None, None
-    newest = parse_utc(max(r["date"] for r in rows))
+    newest = common.parse_utc(max(r["date"] for r in rows))
     return rows, newest
 
 
@@ -111,10 +110,10 @@ def _prepare_df(things, df, month=None):
         if df_out.empty:
             return None
     local_ts = pd.Series(
-        [dt.tz_convert(tz) for dt, tz in zip(utc, df_out["segment_id"].map(tz_map))],
+        [dt.tz_convert(tz).strftime("%Y-%m-%d") for dt, tz in zip(utc, df_out["segment_id"].map(tz_map))],
         index=df_out.index
     )
-    df_out = df_out.assign(date_local=local_ts.dt.strftime("%Y-%m-%d")).drop(columns=["date"])
+    df_out = df_out.assign(date_local=local_ts).drop(columns=["date"])
     return df_out[["segment_id", "date_local", "lkw"]]
 
 
@@ -127,8 +126,8 @@ def _write_csv(filename, things, df, month=None):
 
 
 def main(args=None):
-    options = get_options(args, json_default="maut.json",
-                          url_default=DEFAULT_URL, parquet_default="maut.parquet")
+    options = common.get_options(args, json_default="maut.json",
+                          url_default=maut_positions.DEFAULT_URL, parquet_default="maut.parquet")
     maut_positions.main(args)
     things, last_backup = load_things(options.json_file)
     if not things:
@@ -166,16 +165,16 @@ def main(args=None):
         if os.path.dirname(options.csv):
             os.makedirs(os.path.dirname(options.csv), exist_ok=True)
         curr_month = (newest_data.year, newest_data.month)
-        month = (options.csv_start_year, 1) if options.csv_start_year else add_month(-1, *curr_month)
+        month = (options.csv_start_year, 1) if options.csv_start_year else common.add_month(-1, *curr_month)
         years_needed = set()
         m = month
         while m <= curr_month:
             years_needed.add(m[0])
-            m = add_month(1, *m)
+            m = common.add_month(1, *m)
         df = load_parquet_years(options.parquet, years_needed)
         while month <= curr_month:
             _write_csv(options.csv + "_%s_%02i.csv.gz" % month, things, df, month)
-            month = add_month(1, *month)
+            month = common.add_month(1, *month)
 
 
 if __name__ == "__main__":

@@ -20,7 +20,7 @@ import sys
 
 import requests
 
-from common import get_options, parse_utc, save_json
+import common
 
 
 WFS_BASE = "https://gdi.berlin.de/services/wfs/verkehrsmengen_{year}"
@@ -64,7 +64,7 @@ def main(args=None):
     pre_args, remaining_args = pre.parse_known_args(args)
     year = pre_args.year
 
-    options = get_options(remaining_args, json_default=f"vmk_{year}.json")
+    options = common.get_options(remaining_args, json_default=f"vmk_{year}.json")
     options.year = year
     wfs_url = WFS_BASE.format(year=year)
 
@@ -72,7 +72,7 @@ def main(args=None):
     if not options.clear and os.path.exists(options.json_file):
         with open(options.json_file, encoding="utf8") as f:
             existing = json.load(f)
-        age = datetime.datetime.now(datetime.timezone.utc) - parse_utc(existing.get("created_at", "1970-01-01"))
+        age = datetime.datetime.now(datetime.timezone.utc) - common.parse_utc(existing.get("created_at", "1970-01-01"))
         if age < datetime.timedelta(days=REFRESH_DAYS):
             if options.verbose:
                 print(f"{options.json_file} is less than {REFRESH_DAYS} days old, skipping.")
@@ -143,7 +143,7 @@ def main(args=None):
     if os.path.dirname(options.json_file):
         os.makedirs(os.path.dirname(options.json_file), exist_ok=True)
 
-    save_json(options.json_file, {
+    common.save_json(options.json_file, {
         "type": "FeatureCollection",
         "year": year,
         "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),

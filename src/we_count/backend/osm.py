@@ -13,7 +13,7 @@ from collections import Counter
 
 import numpy as np
 
-from common import parse_utc_dict
+import common
 import osmnx
 import plotly.express as px
 import requests
@@ -30,7 +30,7 @@ def add_osm(features, old_data, max_updates=2):
         if segment_id in old_data and "osm" in old_data[segment_id]:
             osm_edge = old_data[segment_id]["osm"]
             if "name" in osm_edge:
-                if parse_utc_dict(osm_edge, "last_osm_fetch") > now - datetime.timedelta(days=30):
+                if common.parse_utc_dict(osm_edge, "last_osm_fetch") > now - datetime.timedelta(days=30):
                     feature["properties"]["osm"] = osm_edge
                     continue
         geometry = feature.get("geometry")

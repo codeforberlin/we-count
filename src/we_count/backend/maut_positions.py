@@ -12,7 +12,7 @@ import sys
 import requests
 
 import osm
-from common import fetch_arcgis_features, get_options, load_json_if_stale, save_json
+import common
 
 
 DEFAULT_URL = "https://webgis.toll-collect.de/server/rest/services/Hosted"
@@ -28,8 +28,8 @@ def _esri_polyline_to_geojson(geom):
 
 
 def main(args=None):
-    options = get_options(args, json_default="maut.json", url_default=DEFAULT_URL)
-    old_features = load_json_if_stale(options.json_file, options.clear, options.verbose)
+    options = common.get_options(args, json_default="maut.json", url_default=DEFAULT_URL)
+    old_features = common.load_json_if_stale(options.json_file, options.clear, options.verbose)
     if old_features is None:
         return False
     old_data = {f["properties"]["segment_id"]: f["properties"] for f in old_features}
@@ -48,7 +48,7 @@ def main(args=None):
     if options.verbose:
         print(f"Fetching sections for {latest_str}")
 
-    raw = fetch_arcgis_features(layer, {
+    raw = common.fetch_arcgis_features(layer, {
         "where": f"datum=timestamp '{latest_str}'",
         "geometry": options.bbox,
         "inSR": "4326",
@@ -88,7 +88,7 @@ def main(args=None):
         })
 
     osm.add_osm(features, old_data)
-    save_json(options.json_file, {
+    common.save_json(options.json_file, {
         "type": "FeatureCollection",
         "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "features": features,

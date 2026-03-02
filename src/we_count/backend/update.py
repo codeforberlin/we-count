@@ -22,14 +22,14 @@ for p in sys.path:
 import sensor_positions
 import backup_data
 import bzm_get_data
-from common import GEO_JSON_NAME
+import common
 
 
 print("Content-Type: text/html\n")
 secrets = os.path.join(BASE, "secrets.json")
 # csv_base = os.path.join("assets")
 csv_base = os.path.join(BASE, "..", "csv")
-json_path = os.path.join(csv_base, GEO_JSON_NAME)
+json_path = os.path.join(csv_base, common.GEO_JSON_NAME)
 if sensor_positions.main(["-j", json_path,
                           "-s", secrets, "-v"]):
     backup_data.main(["-j", json_path,

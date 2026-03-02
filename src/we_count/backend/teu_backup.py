@@ -15,8 +15,7 @@ import sys
 import pandas as pd
 
 import teu_positions
-from common import fetch_all, get_options, parse_utc, parse_utc_dict, add_month
-from teu_positions import DEFAULT_URL
+import common
 
 PERIOD_NORMAL = "1-Stunde"
 PERIOD_ADVANCED = "5-Min"
@@ -46,7 +45,7 @@ def save_things(things, json_file):
 
 def _fetch_observations(url, datastream_id, since):
     filter_str = f"phenomenonTime ge {since.strftime('%Y-%m-%dT%H:%M:%S.000Z')}"
-    obs = fetch_all(
+    obs = common.fetch_all(
         url + f"/Datastreams({datastream_id})/Observations",
         {"$select": "phenomenonTime,result", "$filter": filter_str,
          "$orderby": "phenomenonTime asc", "$top": 1000}
@@ -67,7 +66,7 @@ def update_data(things, options):
             print(f"Missing datastreams for {t.get('name', sid)}, skipping.", file=sys.stderr)
             continue
         epoch = datetime.datetime(2010, 1, 1, tzinfo=datetime.timezone.utc)
-        since = epoch if options.clear else (parse_utc_dict(t, backup_date) or epoch)
+        since = epoch if options.clear else (common.parse_utc_dict(t, backup_date) or epoch)
         if options.verbose:
             print(f"Fetching {t.get('name', sid)} since {since}")
         obs_by_vehicle = {v: _fetch_observations(options.url, ds_id, since)
@@ -82,7 +81,7 @@ def update_data(things, options):
             obs = obs_by_vehicle.get(v, {})
             row[v.lower()] = pd.array([obs.get(d, 0) for d in all_dates], dtype="uint16")
         all_new.append(pd.DataFrame(row))
-        last = parse_utc(all_dates[-1])
+        last = common.parse_utc(all_dates[-1])
         if newest_data is None or newest_data < last:
             newest_data = last
         t[backup_date] = datetime.datetime.now(datetime.timezone.utc).replace(
@@ -102,10 +101,10 @@ def _prepare_df(things, df, month=None):
         if df_out.empty:
             return None
     local_ts = pd.Series(
-        [dt.tz_convert(tz) for dt, tz in zip(utc, df_out["segment_id"].map(tz_map))],
+        [dt.tz_convert(tz).strftime("%Y-%m-%d %H:%M") for dt, tz in zip(utc, df_out["segment_id"].map(tz_map))],
         index=df_out.index
     )
-    df_out = df_out.assign(date_local=local_ts.dt.strftime("%Y-%m-%d %H:%M")).drop(columns=["date"])
+    df_out = df_out.assign(date_local=local_ts).drop(columns=["date"])
     count_cols = [v.lower() for v in VEHICLES]
     return df_out[["segment_id", "date_local"] + count_cols]
 
@@ -144,15 +143,15 @@ def load_parquet_years(parquet, years):
 
 
 def main(args=None):
-    options = get_options(args, json_default="teu.json",
-                          url_default=DEFAULT_URL, parquet_default="teu.parquet")
+    options = common.get_options(args, json_default="teu.json",
+                          url_default=teu_positions.DEFAULT_URL, parquet_default="teu.parquet")
     teu_positions.main(args)
     things = load_things(options.json_file)
     if not things:
         print("No station metadata found.", file=sys.stderr)
         return
     backup_date = "last_advanced_backup" if options.advanced else "last_data_backup"
-    sorted_things = sorted(things.items(), key=lambda kv: parse_utc_dict(kv[1], backup_date))
+    sorted_things = sorted(things.items(), key=lambda kv: common.parse_utc_dict(kv[1], backup_date))
     batch_size = options.limit or len(sorted_things)
     batches = [dict(sorted_things[i:i + batch_size]) for i in range(0, len(sorted_things), batch_size)]
 
@@ -180,16 +179,16 @@ def main(args=None):
         if os.path.dirname(options.csv):
             os.makedirs(os.path.dirname(options.csv), exist_ok=True)
         curr_month = (newest_data.year, newest_data.month)
-        month = (options.csv_start_year, 1) if options.csv_start_year else add_month(-1, *curr_month)
+        month = (options.csv_start_year, 1) if options.csv_start_year else common.add_month(-1, *curr_month)
         years_needed = set()
         m = month
         while m <= curr_month:
             years_needed.add(m[0])
-            m = add_month(1, *m)
+            m = common.add_month(1, *m)
         df = load_parquet_years(options.parquet, years_needed)
         while month <= curr_month:
             _write_csv(options.csv + "_%s_%02i.csv.gz" % month, things, df, month)
-            month = add_month(1, *month)
+            month = common.add_month(1, *month)
 
 
 if __name__ == "__main__":

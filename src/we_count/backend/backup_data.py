@@ -7,6 +7,7 @@
 # @date    2023-01-03
 
 import datetime
+import glob
 import gzip
 import json
 import os
@@ -16,7 +17,7 @@ import numpy as np
 import pandas as pd
 
 import sensor_positions
-from common import ConnectionProvider, get_options, add_month, parse_utc, parse_utc_dict, save_json
+import common
 
 
 BASIC_MODES = ['pedestrian', 'bike', 'car', 'heavy']
@@ -45,7 +46,7 @@ def save_segments(segments, json_file):
         sid = segment["properties"]["segment_id"]
         if sid in segments:
             segment["properties"] = segments[sid]
-    save_json(json_file, content)
+    common.save_json(json_file, content)
 
 
 def update_data(segments, options, conns):
@@ -60,8 +61,8 @@ def update_data(segments, options, conns):
         if not active:
             print("No active camera for segment %s." % s["segment_id"], file=sys.stderr)
             continue
-        first = parse_utc(min(active) if options.clear else s.get(backup_date, min(active)))
-        last = parse_utc(s["last_data_package"])
+        first = common.parse_utc(min(active) if options.clear else s.get(backup_date, min(active)))
+        last = common.parse_utc(s["last_data_package"])
         if options.verbose and last is not None and first < last:
             print("Retrieving data for segment %s between %s and %s." % (s["segment_id"], first, last))
         error = False
@@ -138,10 +139,10 @@ def _prepare_df(segments, df, advanced, month):
 
     # Convert UTC to local time per segment and add totals
     local_ts = pd.Series(
-        [dt.tz_convert(tz) for dt, tz in zip(utc, df_out['segment_id'].map(tz_map))],
+        [dt.tz_convert(tz).strftime('%Y-%m-%d %H:%M') for dt, tz in zip(utc, df_out['segment_id'].map(tz_map))],
         index=df_out.index
     )
-    df_out = df_out.assign(date_local=local_ts.dt.strftime('%Y-%m-%d %H:%M')).drop(columns=['date'])
+    df_out = df_out.assign(date_local=local_ts).drop(columns=['date'])
     modes = BASIC_MODES + (ADVANCED_MODES if advanced else [])
     df_out = _add_totals(df_out, modes)
 
@@ -196,26 +197,27 @@ def _merge_year(new_year_df, year_file):
     return pd.concat([existing[keep], new_year_df], ignore_index=True)
 
 
-def load_parquet_years(parquet, years):
-    """Load only the requested year parquet files. Falls back to single file."""
-    parts = []
-    for year in years:
-        yf = _year_file(parquet, year)
-        if os.path.exists(yf):
-            parts.append(pd.read_parquet(yf))
-    if not parts:
-        # backward compat: single file
+def load_parquet_years(parquet, years=None):
+    """Load year-split parquet files. If years is None, load all available years.
+    Falls back to single file for backward compatibility."""
+    base = parquet[:-len(".parquet")] if parquet.endswith(".parquet") else parquet
+    if years is None:
+        year_files = sorted(glob.glob(f"{base}_*.parquet"))
+    else:
+        year_files = [yf for y in years if os.path.exists(yf := _year_file(parquet, y))]
+    if not year_files:
         if os.path.exists(parquet):
             df = pd.read_parquet(parquet)
-            return df[df['date'].str[:4].isin([str(y) for y in years])]
+            return df if years is None else df[df['date'].str[:4].isin([str(y) for y in years])]
         return None
+    parts = [pd.read_parquet(yf) for yf in year_files]
     return pd.concat(parts, ignore_index=True)
 
 
 def main(args=None):
-    options = get_options(args)
+    options = common.get_options(args)
     sensor_positions.main(args)
-    conns = ConnectionProvider(options.secrets["tokens"], options.url) if options.url else None
+    conns = common.ConnectionProvider(options.secrets["tokens"], options.url) if options.url else None
     excel = False
     segments = load_segments(options.json_file)
 
@@ -233,7 +235,7 @@ def main(args=None):
         else:
             # Sort all segments by oldest backup first, split into batches of --limit size
             backup_date = "last_advanced_backup" if options.advanced else "last_data_backup"
-            sorted_segs = sorted(segments.items(), key=lambda kv: parse_utc_dict(kv[1], backup_date))
+            sorted_segs = sorted(segments.items(), key=lambda kv: common.parse_utc_dict(kv[1], backup_date))
             batch_size = options.limit or len(sorted_segs)
             batches = [dict(sorted_segs[i:i + batch_size]) for i in range(0, len(sorted_segs), batch_size)]
 
@@ -264,23 +266,24 @@ def main(args=None):
         if os.path.dirname(options.csv):
             os.makedirs(os.path.dirname(options.csv), exist_ok=True)
         curr_month = (newest_data.year, newest_data.month)
-        month = (options.csv_start_year, 1) if options.csv_start_year else add_month(-1, *curr_month)
+        month = (options.csv_start_year, 1) if options.csv_start_year else common.add_month(-1, *curr_month)
         df = load_parquet_years(options.parquet, range(month[0], curr_month[0] + 1))
         while month <= curr_month:
             if excel:
                 _write_xl(options.csv + "_%s_%02i.xlsx" % month, output_segments.values(), df, options.advanced, month)
             else:
                 _write_csv(options.csv + "_%s_%02i.csv.gz" % month, output_segments.values(), df, options.advanced, month)
-            month = add_month(1, *month)
+            month = common.add_month(1, *month)
 
     if options.csv_segments:
         if os.path.dirname(options.csv_segments):
             os.makedirs(os.path.dirname(options.csv_segments), exist_ok=True)
+        seg_df = df if options.csv else load_parquet_years(options.parquet)
         for s in output_segments.values():
             if excel:
-                _write_xl(options.csv_segments + "_%s.xlsx" % s.id, [s], df, options.advanced)
+                _write_xl(options.csv_segments + "_%s.xlsx" % s['segment_id'], [s], seg_df, options.advanced)
             else:
-                _write_csv(options.csv_segments + "_%s.csv.gz" % s.id, [s], df, options.advanced)
+                _write_csv(options.csv_segments + "_%s.csv.gz" % s['segment_id'], [s], seg_df, options.advanced)
 
     if conns and options.verbose:
         conns.print_stats()

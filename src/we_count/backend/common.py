@@ -139,16 +139,16 @@ def get_options(args=None, json_default="sensor.json", url_default="telraam-api.
                         metavar="FILE", help="Read Telraam API credentials from FILE")
     parser.add_argument("-j", "--json-file", default=json_default,
                         metavar="FILE", help="Write / read Geo-JSON for segments to / from FILE")
-    parser.add_argument("--excel",
-                        help="Excel input file")
+    parser.add_argument("--excel", action="store_true", default=False,
+                        help="create excel output file")
     parser.add_argument("--clear", action="store_true", default=False,
                         help="recreate data even if it is present")
     parser.add_argument("-p", "--parquet", metavar="FILE", default=parquet_default,
                         help="Data storage file")
     parser.add_argument("--csv",
-                        help="Output prefix for monthly csv files")
+                        help="Output prefix for monthly csv / excel files")
     parser.add_argument("--csv-segments",
-                        help="Output prefix for csv segment files")
+                        help="Output prefix for csv / excel segment files")
     parser.add_argument("-y", "--csv-start-year", type=int,
                         help="First year to retrieve when writing csv")
     parser.add_argument("-r", "--retry", type=int, default=1,

@@ -10,7 +10,7 @@ import datetime
 import sys
 
 import osm
-from common import ConnectionProvider, get_options, load_json_if_stale, parse_utc_dict, save_json
+import common
 
 
 def update_props(bbox_segments, old_data, conns, retry, max_prop_updates):
@@ -21,7 +21,7 @@ def update_props(bbox_segments, old_data, conns, retry, max_prop_updates):
         old_segment = None
         if segment_id in old_data:
             old_segment = old_data[segment_id]
-            last_prop_update = parse_utc_dict(old_segment["properties"], "last_prop_fetch")
+            last_prop_update = common.parse_utc_dict(old_segment["properties"], "last_prop_fetch")
             if update_count >= max_prop_updates or last_prop_update > now - datetime.timedelta(days=1):
                 new_segments.append(old_segment)
                 continue
@@ -45,13 +45,13 @@ def update_props(bbox_segments, old_data, conns, retry, max_prop_updates):
 
 
 def main(args=None):
-    options = get_options(args)
-    old_features = load_json_if_stale(options.json_file, options.clear, options.verbose)
+    options = common.get_options(args)
+    old_features = common.load_json_if_stale(options.json_file, options.clear, options.verbose)
     if old_features is None:
         return False
     old_data = {s["properties"]["segment_id"]: s for s in old_features}
 
-    conns = ConnectionProvider(options.secrets["tokens"], options.url)
+    conns = common.ConnectionProvider(options.secrets["tokens"], options.url)
     res = conns.request("/v1/segments/area", "POST", str({"area": options.bbox}), retries=options.retry, required="features")
     bbox_segments = set(f["properties"]["segment_id"] for f in res.get("features", []))
     if options.verbose:
@@ -66,7 +66,7 @@ def main(args=None):
         "features": update_props(bbox_segments, old_data, conns, options.retry, options.max_prop_updates)
     }
     osm.add_osm(res["features"], {sid: f["properties"] for sid, f in old_data.items()})
-    save_json(options.json_file, res)
+    common.save_json(options.json_file, res)
     return True
 
 

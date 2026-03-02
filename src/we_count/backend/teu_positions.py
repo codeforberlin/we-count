@@ -10,20 +10,20 @@ import datetime
 import sys
 
 import osm
-from common import fetch_all, get_options, load_json_if_stale, save_json
+import common
 
 
 DEFAULT_URL = "https://api.viz.berlin.de/FROST-Server-TEU/v1.1"
 
 
 def main(args=None):
-    options = get_options(args, json_default="teu.json", url_default=DEFAULT_URL)
-    old_features = load_json_if_stale(options.json_file, options.clear, options.verbose)
+    options = common.get_options(args, json_default="teu.json", url_default=DEFAULT_URL)
+    old_features = common.load_json_if_stale(options.json_file, options.clear, options.verbose)
     if old_features is None:
         return False
     old_data = {f["properties"]["segment_id"]: f["properties"] for f in old_features}
 
-    all_things = fetch_all(options.url + "/Things", {"$select": "@iot.id,name,description,properties"})
+    all_things = common.fetch_all(options.url + "/Things", {"$select": "@iot.id,name,description,properties"})
     if options.verbose:
         print(f"{len(all_things)} stations found.")
     features = []
@@ -37,7 +37,7 @@ def main(args=None):
             continue
 
         # Fetch MQ datastreams, organize by vehicle → measurement → period
-        datastreams_raw = fetch_all(
+        datastreams_raw = common.fetch_all(
             options.url + f"/Things({tid})/Datastreams",
             {"$select": "@iot.id,properties", "$filter": "properties/lane eq 'MQ'"}
         )
@@ -50,7 +50,7 @@ def main(args=None):
             datastreams.setdefault(vehicle, {}).setdefault(measurement, {})[period] = ds["@iot.id"]
 
         # Get coordinates from Thing location
-        locs = fetch_all(options.url + f"/Things({tid})/Locations", {"$select": "location"})
+        locs = common.fetch_all(options.url + f"/Things({tid})/Locations", {"$select": "location"})
         coords = None
         if locs:
             geo = locs[0].get("location", {})
@@ -81,7 +81,7 @@ def main(args=None):
         "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "features": features,
     }
-    save_json(options.json_file, result)
+    common.save_json(options.json_file, result)
     return True
 
 

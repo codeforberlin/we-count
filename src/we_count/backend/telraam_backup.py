@@ -277,6 +277,8 @@ def main(args=None):
         year = None
         while month <= curr_month:
             if year != month[0]:
+                if year is not None:
+                    del df
                 year = month[0]
                 df = load_parquet_years(options.parquet, [year])
             if options.excel:
@@ -284,7 +286,6 @@ def main(args=None):
             else:
                 _write_csv(options.csv + "_%s_%02i.csv.gz" % month, output_segments.values(), df, options.advanced, month)
             month = common.add_month(1, *month)
-            del df
 
     if options.csv_segments:
         if os.path.dirname(options.csv_segments):

@@ -14,12 +14,12 @@ import sys
 
 import pandas as pd
 
-from common import get_options, parse_utc, parse_utc_dict, add_month
-from ecocounter_positions import DEFAULT_URL, fetch_all
+import ecocounter_positions
+from common import fetch_all, get_options, parse_utc, parse_utc_dict, add_month
+from ecocounter_positions import DEFAULT_URL
 
 PERIOD_NORMAL = "1-Stunde"
 PERIOD_ADVANCED = "15-Min"
-import ecocounter_positions
 
 
 def load_things(json_file):

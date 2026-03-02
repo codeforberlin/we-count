@@ -89,6 +89,36 @@ def save_json(json_file, content):
     os.rename(json_file + ".new", json_file)
 
 
+def fetch_all(url, params=None):
+    """Paginated GET against an OGC SensorThings API — follows @iot.nextLink."""
+    result = []
+    while url:
+        r = requests.get(url, params=params)
+        r.raise_for_status()
+        data = r.json()
+        result.extend(data.get("value", []))
+        url = data.get("@iot.nextLink")
+        params = None  # params are encoded in nextLink
+    return result
+
+
+def fetch_arcgis_features(layer_url, params, page_size=1000):
+    """Paginated query against an ArcGIS Feature Server layer."""
+    result = []
+    offset = 0
+    while True:
+        r = requests.get(layer_url + "/query",
+                         params={**params, "resultOffset": offset, "resultRecordCount": page_size})
+        r.raise_for_status()
+        data = r.json()
+        features = data.get("features", [])
+        result.extend(features)
+        if not data.get("exceededTransferLimit"):
+            break
+        offset += len(features)
+    return result
+
+
 def parse_options(options):
     if os.path.exists(options.secrets_file):
         with open(options.secrets_file, encoding="utf8") as sf:
@@ -130,7 +160,7 @@ def get_options(args=None, json_default="sensor.json", url_default="telraam-api.
     parser.add_argument("--segments",
                         help="only process the given segment(s)")
     parser.add_argument("--limit", type=int,
-                        help="only update the N most outdated segments")
+                        help="process segments in batches of N, sorted by oldest backup first")
     parser.add_argument("--dump", metavar="FILE",
                         help="dump all JSON answers to the given file (for debugging)")
     parser.add_argument("-v", "--verbose", action="count", default=0,

@@ -149,7 +149,7 @@ def _prepare_df(segments, df, advanced, month):
     hist_cols = [f'car_speed{s}' for s in range(0, 80, 10)]
 
     def expand_histogram(hist):
-        total = sum(hist or [0])
+        total = 0 if hist is None else sum(hist)
         if total == 0:
             return [0.0] * 8
         result = [round((hist[2 * i] + hist[2 * i + 1]) * 100 / total, 2) for i in range(7)]

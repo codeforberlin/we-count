@@ -2,7 +2,7 @@
 # Copyright (c) 2023-2024 Berlin zaehlt Mobilitaet
 # SPDX-License-Identifier: MIT
 
-# @file    sensor_positions.py
+# @file    telraam_positions.py
 # @author  Michael Behrisch
 # @date    2023-01-15
 

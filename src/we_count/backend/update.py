@@ -19,8 +19,8 @@ for p in sys.path:
         sys.path = [venv] + sys.path
         break
 
-import sensor_positions
-import backup_data
+import telraam_positions
+import telraam_backup
 import bzm_get_data
 import common
 
@@ -30,9 +30,9 @@ secrets = os.path.join(BASE, "secrets.json")
 # csv_base = os.path.join("assets")
 csv_base = os.path.join(BASE, "..", "csv")
 json_path = os.path.join(csv_base, common.GEO_JSON_NAME)
-if sensor_positions.main(["-j", json_path,
-                          "-s", secrets, "-v"]):
-    backup_data.main(["-j", json_path,
+if telraam_positions.main(["-j", json_path,
+                           "-s", secrets, "-v"]):
+    telraam_backup.main(["-j", json_path,
                       "--csv", os.path.join(csv_base, "bzm_telraam"),
                       "--csv-segments", os.path.join(csv_base, "segments", "bzm_telraam"),
                       "-s", secrets, "-v"])

@@ -2,7 +2,7 @@
 # Copyright (c) 2023-2026 Berlin zaehlt Mobilitaet
 # SPDX-License-Identifier: MIT
 
-# @file    backup_data.py
+# @file    telraam_backup.py
 # @author  Michael Behrisch
 # @date    2023-01-03
 
@@ -16,7 +16,7 @@ import sys
 import numpy as np
 import pandas as pd
 
-import sensor_positions
+import telraam_positions
 import common
 
 
@@ -197,7 +197,7 @@ def _merge_year(new_year_df, year_file):
     return pd.concat([existing[keep], new_year_df], ignore_index=True)
 
 
-def load_parquet_years(parquet, years=None):
+def load_parquet_years(parquet, years=None, segments=None):
     """Load year-split parquet files. If years is None, load all available years.
     Falls back to single file for backward compatibility."""
     base = parquet[:-len(".parquet")] if parquet.endswith(".parquet") else parquet
@@ -210,13 +210,20 @@ def load_parquet_years(parquet, years=None):
             df = pd.read_parquet(parquet)
             return df if years is None else df[df['date'].str[:4].isin([str(y) for y in years])]
         return None
-    parts = [pd.read_parquet(yf) for yf in year_files]
+    parts = []
+    for yf in year_files:
+        df = pd.read_parquet(yf)
+        if segments:
+            parts.append(df[df['segment_id'].isin(segments)])
+            del df
+        else:
+            parts.append(df)
     return pd.concat(parts, ignore_index=True)
 
 
 def main(args=None):
     options = common.get_options(args)
-    sensor_positions.main(args)
+    telraam_positions.main(args)
     conns = common.ConnectionProvider(options.secrets["tokens"], options.url) if options.url else None
     excel = False
     segments = load_segments(options.json_file)
@@ -267,23 +274,28 @@ def main(args=None):
             os.makedirs(os.path.dirname(options.csv), exist_ok=True)
         curr_month = (newest_data.year, newest_data.month)
         month = (options.csv_start_year, 1) if options.csv_start_year else common.add_month(-1, *curr_month)
-        df = load_parquet_years(options.parquet, range(month[0], curr_month[0] + 1))
+        year = None
         while month <= curr_month:
-            if excel:
+            if year != month[0]:
+                year = month[0]
+                df = load_parquet_years(options.parquet, [year])
+            if options.excel:
                 _write_xl(options.csv + "_%s_%02i.xlsx" % month, output_segments.values(), df, options.advanced, month)
             else:
                 _write_csv(options.csv + "_%s_%02i.csv.gz" % month, output_segments.values(), df, options.advanced, month)
             month = common.add_month(1, *month)
+            del df
 
     if options.csv_segments:
         if os.path.dirname(options.csv_segments):
             os.makedirs(os.path.dirname(options.csv_segments), exist_ok=True)
-        seg_df = df if options.csv else load_parquet_years(options.parquet)
         for s in output_segments.values():
-            if excel:
+            seg_df = load_parquet_years(options.parquet, segments=[s['segment_id']])
+            if options.excel:
                 _write_xl(options.csv_segments + "_%s.xlsx" % s['segment_id'], [s], seg_df, options.advanced)
             else:
                 _write_csv(options.csv_segments + "_%s.csv.gz" % s['segment_id'], [s], seg_df, options.advanced)
+            del seg_df
 
     if conns and options.verbose:
         conns.print_stats()

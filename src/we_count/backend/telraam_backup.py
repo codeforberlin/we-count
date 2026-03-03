@@ -223,7 +223,7 @@ def load_parquet_years(parquet, years=None, segments=None):
 
 def main(args=None):
     options = common.get_options(args)
-    for output in (options.json_file, options.csv, options.csv_segments, options.parquet):
+    for output in (options.json_file, options.single_line_output, options.csv, options.csv_segments, options.parquet):
         if output and os.path.dirname(output):
             os.makedirs(os.path.dirname(output), exist_ok=True)
     telraam_positions.main(args)

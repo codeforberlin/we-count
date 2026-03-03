@@ -14,4 +14,4 @@
 
 cd $(dirname $0)/..
 . ../venv_wecount/bin/activate
-src/we_count/backend/telraam_backup.py -j csv/bzm_telraam_segments.geojson -p parquet/bzm_telraam_traffic_data.parquet -v --csv csv/bzm_telraam
+src/we_count/backend/telraam_backup.py -j csv/bzm_telraam_segments.geojson -p parquet/bzm_telraam_traffic_data.parquet -v --csv csv/bzm_telraam --single-line-output csv/kibana/bzm_telraam_segments.geojson

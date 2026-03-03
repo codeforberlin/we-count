@@ -163,6 +163,8 @@ def get_options(args=None, json_default="sensor.json", url_default="telraam-api.
                         help="process segments in batches of N, sorted by oldest backup first")
     parser.add_argument("--dump", metavar="FILE",
                         help="dump all JSON answers to the given file (for debugging)")
+    parser.add_argument("--single-line-output", metavar="FILE",
+                        help="write one JSON object per segment per line to FILE")
     parser.add_argument("-v", "--verbose", action="count", default=0,
                         help="increase verbosity, twice enables verbose sqlalchemy output")
     return parse_options(parser.parse_args(args=args))

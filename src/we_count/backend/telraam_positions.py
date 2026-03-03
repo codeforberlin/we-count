@@ -7,6 +7,7 @@
 # @date    2023-01-15
 
 import datetime
+import json
 import sys
 
 import osm
@@ -57,16 +58,31 @@ def main(args=None):
     if options.verbose:
         print(f"{len(bbox_segments)} total sensor positions in the bounding box.")
 
+    created_at = datetime.datetime.now(datetime.UTC)
     res = {
         "we_count_version": 2,
         "description": f"Telraam segments and instances for {options.bbox} enhanced with OpenStreetMap data, "
         "format description at https://app.swaggerhub.com/apis-docs/telraam/Telraam-API/1.2.0#/Segments/get_v1_segments_id__segment_id_",
-        "created_at": datetime.datetime.now(datetime.UTC).isoformat(),
+        "created_at": created_at.isoformat(),
         "type": "FeatureCollection",
         "features": update_props(bbox_segments, old_data, conns, options.retry, options.max_prop_updates)
     }
     osm.add_osm(res["features"], {sid: f["properties"] for sid, f in old_data.items()})
     common.save_json(options.json_file, res)
+    if options.single_line_output:
+        with open(options.single_line_output, "w", encoding="utf8") as out:
+            for segment in res["features"]:
+                s = {"last_update": created_at.isoformat(" ")[:-16], "geometry": segment["geometry"],
+                     **segment["properties"], "segment_id": str(segment["properties"]["segment_id"])}
+                if "osm" in s:
+                    s["osm"]["osmid"] = str(s["osm"]["osmid"])
+                if s.get("instance_ids"):
+                    s["cameras"] = [{"instance_id": str(iid),
+                                     **{k: str(v) if k[-3:] in ("mac", "_id") else v for k, v in inst.items()}}
+                                    for iid, inst in s["instance_ids"].items()]
+                    del s["instance_ids"]
+                    json.dump(s, out)
+                    out.write("\n")
     return True
 
 

@@ -153,8 +153,8 @@ def _prepare_df(segments, df, advanced, month):
         total = 0 if hist is None else sum(hist)
         if total == 0:
             return [0.0] * 8
-        result = [round((hist[2 * i] + hist[2 * i + 1]) * 100 / total, 2) for i in range(7)]
-        result.append(round(sum(hist[14:]) * 100 / total, 2))
+        result = [round((hist[2 * i] + hist[2 * i + 1]) * 100. / total, 2) for i in range(7)]
+        result.append(round(sum(hist[14:]) * 100. / total, 2))
         return result
 
     hist_df = pd.DataFrame(

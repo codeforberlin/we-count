@@ -223,12 +223,13 @@ def load_parquet_years(parquet, years=None, segments=None):
 
 def main(args=None):
     options = common.get_options(args)
+    for output in (options.json_file, options.csv, options.csv_segments, options.parquet):
+        if output and os.path.dirname(output):
+            os.makedirs(os.path.dirname(output), exist_ok=True)
     telraam_positions.main(args)
     conns = common.ConnectionProvider(options.secrets["tokens"], options.url) if options.url else None
-    excel = False
     segments = load_segments(options.json_file)
 
-    # Segments used for CSV output (may be a subset when --segments is given)
     if options.segments:
         filtered_ids = {int(s.strip()) for s in options.segments.split(",")}
         output_segments = {k: v for k, v in segments.items() if k in filtered_ids}
@@ -237,7 +238,6 @@ def main(args=None):
 
     if conns:
         if options.segments:
-            # Explicit segment list → single batch
             batches = [output_segments]
         else:
             # Sort all segments by oldest backup first, split into batches of --limit size
@@ -270,8 +270,6 @@ def main(args=None):
         newest_data = datetime.datetime.now(datetime.timezone.utc)
 
     if options.csv:
-        if os.path.dirname(options.csv):
-            os.makedirs(os.path.dirname(options.csv), exist_ok=True)
         curr_month = (newest_data.year, newest_data.month)
         month = (options.csv_start_year, 1) if options.csv_start_year else common.add_month(-1, *curr_month)
         year = None
@@ -288,8 +286,6 @@ def main(args=None):
             month = common.add_month(1, *month)
 
     if options.csv_segments:
-        if os.path.dirname(options.csv_segments):
-            os.makedirs(os.path.dirname(options.csv_segments), exist_ok=True)
         for s in output_segments.values():
             seg_df = load_parquet_years(options.parquet, segments=[s['segment_id']])
             if options.excel:

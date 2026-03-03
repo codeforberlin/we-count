@@ -57,7 +57,7 @@ def update_data(segments, options, conns):
     backup_date = "last_advanced_backup" if options.advanced else "last_data_backup"
     all_new = []
     for s in segments.values():
-        active = [i["first_data_package"] for i in s["instance_ids"].values() if i["first_data_package"] is not None]
+        active = [i["first_data_package"] for i in s.get("instance_ids", {}).values() if i["first_data_package"] is not None]
         if not active:
             print("No active camera for segment %s." % s["segment_id"], file=sys.stderr)
             continue

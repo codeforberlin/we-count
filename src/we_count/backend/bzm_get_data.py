@@ -70,8 +70,8 @@ def get_locations(filepath="https://berlin-zaehlt.de/csv/bzm_telraam_segments.ge
     geometry = df_geojson['features'].apply(lambda x: shapely.geometry.shape(x['geometry']).wkt).rename('geometry')
 
     def get_hardware(x):
-        if x['properties']['cameras']:
-            return x['properties']['cameras'][0]['hardware_version']
+        if x['properties'].get('instance_ids'):
+            return list(x['properties']['instance_ids'].values())[0]['hardware_version']
         return 0
     hardware = df_geojson['features'].apply(get_hardware).rename('hardware_version')
     columns = ['segment_id', 'last_data_package'] + OSM_COLUMNS

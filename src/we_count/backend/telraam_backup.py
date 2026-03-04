@@ -7,8 +7,6 @@
 # @date    2023-01-03
 
 import datetime
-import glob
-import gzip
 import json
 import os
 import sys
@@ -154,52 +152,8 @@ def _write_xl(filename, segments, df, advanced, month=None):
         df_out.to_excel(filename, index=False, engine='openpyxl')
 
 
-def _write_csv(filename, segments, df, advanced, month=None, delimiter=","):
-    df_out = _prepare_df(segments, df, advanced, month)
-    if df_out is None:
-        return
-    with gzip.open(filename, 'wt') as csv_file:
-        df_out.to_csv(csv_file, index=False, sep=delimiter)
 
 
-def _year_file(parquet, year):
-    base = parquet[:-len(".parquet")] if parquet.endswith(".parquet") else parquet
-    return f"{base}_{year}.parquet"
-
-
-def _merge_year(new_year_df, year_file):
-    """Merge new rows for one year with the existing year parquet, return merged df."""
-    if not os.path.exists(year_file):
-        return new_year_df
-    existing = pd.read_parquet(year_file)
-    # Drop existing rows whose (segment_id, date) will be replaced by new data
-    new_keys = new_year_df.set_index(['segment_id', 'date']).index
-    keep = ~existing.set_index(['segment_id', 'date']).index.isin(new_keys)
-    return pd.concat([existing[keep], new_year_df], ignore_index=True)
-
-
-def load_parquet_years(parquet, years=None, segments=None):
-    """Load year-split parquet files. If years is None, load all available years.
-    Falls back to single file for backward compatibility."""
-    base = parquet[:-len(".parquet")] if parquet.endswith(".parquet") else parquet
-    if years is None:
-        year_files = sorted(glob.glob(f"{base}_*.parquet"))
-    else:
-        year_files = [yf for y in years if os.path.exists(yf := _year_file(parquet, y))]
-    if not year_files:
-        if os.path.exists(parquet):
-            df = pd.read_parquet(parquet)
-            return df if years is None else df[df['date'].str[:4].isin([str(y) for y in years])]
-        return None
-    parts = []
-    for yf in year_files:
-        df = pd.read_parquet(yf)
-        if segments:
-            parts.append(df[df['segment_id'].isin(segments)])
-            del df
-        else:
-            parts.append(df)
-    return pd.concat(parts, ignore_index=True)
 
 
 def main(args=None):
@@ -234,8 +188,8 @@ def main(args=None):
                 newest_data = nd
             if new_df is not None:
                 for year, year_new in new_df.groupby(new_df['date'].str[:4]):
-                    yf = _year_file(options.parquet, year)
-                    year_df = _merge_year(year_new, yf)
+                    yf = common.year_file(options.parquet, year)
+                    year_df = common.merge_parquet(year_new, yf)
                     year_df = year_df.sort_values(['segment_id', 'date'])
                     if os.path.exists(yf):
                         os.rename(yf, yf + ".bak")
@@ -259,20 +213,20 @@ def main(args=None):
                 if year is not None:
                     del df
                 year = month[0]
-                df = load_parquet_years(options.parquet, [year])
+                df = common.load_parquet_years(options.parquet, [year])
             if options.excel:
                 _write_xl(options.csv + "_%s_%02i.xlsx" % month, output_segments.values(), df, options.advanced, month)
             else:
-                _write_csv(options.csv + "_%s_%02i.csv.gz" % month, output_segments.values(), df, options.advanced, month)
+                common.write_csv(options.csv + "_%s_%02i.csv.gz" % month, _prepare_df(output_segments.values(), df, options.advanced, month))
             month = common.add_month(1, *month)
 
     if options.csv_segments:
         for s in output_segments.values():
-            seg_df = load_parquet_years(options.parquet, segments=[s['segment_id']])
+            seg_df = common.load_parquet_years(options.parquet, segments=[s['segment_id']])
             if options.excel:
                 _write_xl(options.csv_segments + "_%s.xlsx" % s['segment_id'], [s], seg_df, options.advanced)
             else:
-                _write_csv(options.csv_segments + "_%s.csv.gz" % s['segment_id'], [s], seg_df, options.advanced)
+                common.write_csv(options.csv_segments + "_%s.csv.gz" % s['segment_id'], _prepare_df([s], seg_df, options.advanced))
             del seg_df
 
     if conns and options.verbose:

@@ -7,7 +7,6 @@
 # @date    2026-02-28
 
 import datetime
-import gzip
 import os
 import sys
 
@@ -31,12 +30,14 @@ def _fetch_observations(url, datastream_id, since):
     return {o["phenomenonTime"].split("/")[0]: o["result"] for o in obs}
 
 
-def update_data(things, df, options):
-    """Fetch new observations for all things, merge into df."""
+def update_data(things, options):
+    """Fetch new observations for all things. Returns (new_df, newest_data) where
+    new_df contains only the newly fetched rows."""
     print(f"Retrieving data for {len(things)} stations")
     backup_date = "last_advanced_backup" if options.advanced else "last_data_backup"
     period = PERIOD_ADVANCED if options.advanced else PERIOD_NORMAL
     newest_data = None
+    all_new = []
     for sid, t in things.items():
         counters = t.get("counter", [])
         ds_lft = next((c["datastreams"].get(period) for c in counters if c.get("bikes_left")), None)
@@ -55,17 +56,13 @@ def update_data(things, df, options):
                 "bike_lft": pd.array([obs_lft.get(d, 0) for d in all_dates], dtype="uint16"),
                 "bike_rgt": pd.array([obs_rgt.get(d, 0) for d in all_dates], dtype="uint16"),
             })
-            if df is None:
-                df = new_df
-            else:
-                df = pd.concat([df[~df["date"].isin(new_df["date"]) | (df["segment_id"] != sid)],
-                                new_df], ignore_index=True)
+            all_new.append(new_df)
             last = common.parse_utc(all_dates[-1])
             if newest_data is None or newest_data < last:
                 newest_data = last
         t[backup_date] = datetime.datetime.now(datetime.timezone.utc).replace(
             hour=0, minute=0, second=0, microsecond=0).isoformat()
-    return df, newest_data
+    return pd.concat(all_new, ignore_index=True) if all_new else None, newest_data
 
 
 def _prepare_df(things, df, month=None):
@@ -89,44 +86,44 @@ def _prepare_df(things, df, month=None):
     return df_out[["segment_id", "date_local", "bike_lft", "bike_rgt", "bike_total"]]
 
 
-def _write_csv(filename, things, df, month=None):
-    df_out = _prepare_df(things, df, month)
-    if df_out is None:
-        return
-    with gzip.open(filename, "wt") as csv_file:
-        df_out.to_csv(csv_file, index=False)
-
-
 def main(args=None):
     options = common.get_options(args, json_default="ecocounter.json",
                           url_default=ecocounter_positions.DEFAULT_URL, parquet_default="ecocounter.parquet")
-    if os.path.exists(options.parquet):
-        df = pd.read_parquet(options.parquet)
-    else:
-        df = None
     ecocounter_positions.main(args)
     things = common.load_segments(options.json_file)
     if not things:
         print("No station metadata found.", file=sys.stderr)
         return
-    if options.limit:
-        backup_date = "last_advanced_backup" if options.advanced else "last_data_backup"
-        sorted_things = sorted(things.items(), key=lambda kv: common.parse_utc_dict(kv[1], backup_date))
-        things = dict(sorted_things[:options.limit])
-    df, newest_data = update_data(things, df, options)
-    if df is None:
+    backup_date = "last_advanced_backup" if options.advanced else "last_data_backup"
+    sorted_things = sorted(things.items(), key=lambda kv: common.parse_utc_dict(kv[1], backup_date))
+    batch_size = options.limit or len(sorted_things)
+    batches = [dict(sorted_things[i:i + batch_size]) for i in range(0, len(sorted_things), batch_size)]
+
+    newest_data = None
+    for batch in batches:
+        new_df, nd = update_data(batch, options)
+        if nd is not None and (newest_data is None or newest_data < nd):
+            newest_data = nd
+        if new_df is not None:
+            merged = common.merge_parquet(new_df, options.parquet)
+            merged = merged.sort_values(["segment_id", "date"])
+            if os.path.exists(options.parquet):
+                os.rename(options.parquet, options.parquet + ".bak")
+            merged.to_parquet(options.parquet, index=False, compression="zstd")
+            del merged, new_df
+        common.save_segments(batch, options.json_file)
+
+    if newest_data is None:
         print("No data.", file=sys.stderr)
         return
-    df = df.sort_values(["segment_id", "date"])
-    df.to_parquet(options.parquet, index=False, compression="zstd")
-    common.save_segments(things, options.json_file)
     if options.csv:
         if os.path.dirname(options.csv):
             os.makedirs(os.path.dirname(options.csv), exist_ok=True)
+        df = pd.read_parquet(options.parquet)
         curr_month = (newest_data.year, newest_data.month)
         month = (options.csv_start_year, 1) if options.csv_start_year else common.add_month(-1, *curr_month)
         while month <= curr_month:
-            _write_csv(options.csv + "_%s_%02i.csv.gz" % month, things, df, month)
+            common.write_csv(options.csv + "_%s_%02i.csv.gz" % month, _prepare_df(things, df, month))
             month = common.add_month(1, *month)
 
 

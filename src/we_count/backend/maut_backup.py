@@ -7,7 +7,6 @@
 # @date    2026-03-01
 
 import datetime
-import gzip
 import json
 import os
 import sys
@@ -16,17 +15,6 @@ import pandas as pd
 
 import maut_positions
 import common
-
-
-def load_things(json_file):
-    if not os.path.exists(json_file):
-        return {}, None
-    with open(json_file, encoding="utf8") as f:
-        data = json.load(f)
-    things = {f["properties"]["segment_id"]: f["properties"]
-              for f in data.get("features", [])}
-    last_backup = common.parse_utc(data.get("last_data_backup"))
-    return things, last_backup
 
 
 def save_last_backup(json_file, backup_date):
@@ -73,31 +61,6 @@ def _fetch_raw(segment_ids, options, since):
     return rows, newest
 
 
-def _year_file(parquet, year):
-    base = parquet[:-len(".parquet")] if parquet.endswith(".parquet") else parquet
-    return f"{base}_{year}.parquet"
-
-
-def _merge_year(new_year_df, year_file):
-    if not os.path.exists(year_file):
-        return new_year_df
-    existing = pd.read_parquet(year_file)
-    new_keys = new_year_df.set_index(["segment_id", "date"]).index
-    keep = ~existing.set_index(["segment_id", "date"]).index.isin(new_keys)
-    return pd.concat([existing[keep], new_year_df], ignore_index=True)
-
-
-def load_parquet_years(parquet, years):
-    parts = [pd.read_parquet(_year_file(parquet, y))
-             for y in years if os.path.exists(_year_file(parquet, y))]
-    if not parts:
-        if os.path.exists(parquet):
-            df = pd.read_parquet(parquet)
-            return df[df["date"].str[:4].isin([str(y) for y in years])]
-        return None
-    return pd.concat(parts, ignore_index=True)
-
-
 def _prepare_df(things, df, month=None):
     tz_map = {sid: t.get("timezone", "Europe/Berlin") for sid, t in things.items()}
     df_out = df[df["segment_id"].isin(tz_map.keys())]
@@ -117,19 +80,13 @@ def _prepare_df(things, df, month=None):
     return df_out[["segment_id", "date_local", "lkw"]]
 
 
-def _write_csv(filename, things, df, month=None):
-    df_out = _prepare_df(things, df, month)
-    if df_out is None:
-        return
-    with gzip.open(filename, "wt") as csv_file:
-        df_out.to_csv(csv_file, index=False)
-
-
 def main(args=None):
     options = common.get_options(args, json_default="maut.json",
                           url_default=maut_positions.DEFAULT_URL, parquet_default="maut.parquet")
     maut_positions.main(args)
-    things, last_backup = load_things(options.json_file)
+    things = common.load_segments(options.json_file)
+    with open(options.json_file, encoding="utf8") as f:
+        last_backup = common.parse_utc(json.load(f).get("last_data_backup")) if things else None
     if not things:
         print("No section metadata found.", file=sys.stderr)
         return
@@ -151,8 +108,8 @@ def main(args=None):
         new_df = pd.DataFrame(batch_rows)
         new_df["lkw"] = new_df["lkw"].astype("uint32")
         for year, year_new in new_df.groupby(new_df["date"].str[:4]):
-            yf = _year_file(options.parquet, year)
-            year_df = _merge_year(year_new, yf)
+            yf = common.year_file(options.parquet, year)
+            year_df = common.merge_parquet(year_new, yf)
             year_df = year_df.sort_values(["segment_id", "date"])
             if os.path.exists(yf):
                 os.rename(yf, yf + ".bak")
@@ -171,9 +128,9 @@ def main(args=None):
         while m <= curr_month:
             years_needed.add(m[0])
             m = common.add_month(1, *m)
-        df = load_parquet_years(options.parquet, years_needed)
+        df = common.load_parquet_years(options.parquet, years_needed)
         while month <= curr_month:
-            _write_csv(options.csv + "_%s_%02i.csv.gz" % month, things, df, month)
+            common.write_csv(options.csv + "_%s_%02i.csv.gz" % month, _prepare_df(things, df, month))
             month = common.add_month(1, *month)
 
 

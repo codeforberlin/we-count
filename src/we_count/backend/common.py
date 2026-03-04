@@ -7,6 +7,8 @@
 
 import argparse
 import datetime
+import glob
+import gzip
 import json
 import os
 import pprint
@@ -14,6 +16,7 @@ import random
 import sys
 import time
 
+import pandas as pd
 import requests
 
 
@@ -64,7 +67,7 @@ def parse_utc(date):
 
 
 def parse_utc_dict(dict, key):
-    return parse_utc(dict.get(key, '1970-01-01T00:00:00+00:00'))
+    return parse_utc(dict.get(key) or '1970-01-01T00:00:00+00:00')
 
 
 def load_json_if_stale(json_file, clear=False, verbose=0):
@@ -89,8 +92,57 @@ def save_json(json_file, content):
     os.rename(json_file + ".new", json_file)
 
 
+def year_file(parquet, year):
+    base = parquet[:-len(".parquet")] if parquet.endswith(".parquet") else parquet
+    return f"{base}_{year}.parquet"
+
+
+def merge_parquet(new_df, parquet):
+    """Upsert new_df into parquet, replacing existing rows with the same (segment_id, date)."""
+    if not os.path.exists(parquet):
+        return new_df
+    existing = pd.read_parquet(parquet)
+    new_keys = new_df.set_index(["segment_id", "date"]).index
+    keep = ~existing.set_index(["segment_id", "date"]).index.isin(new_keys)
+    return pd.concat([existing[keep], new_df], ignore_index=True)
+
+
+def load_parquet_years(parquet, years=None, segments=None):
+    """Load year-split parquet files. If years is None, load all available years.
+    Falls back to single file for backward compatibility."""
+    if years is None:
+        base = parquet[:-len(".parquet")] if parquet.endswith(".parquet") else parquet
+        year_files = sorted(glob.glob(f"{base}_*.parquet"))
+    else:
+        year_files = [yf for y in years if os.path.exists(yf := year_file(parquet, y))]
+    if not year_files:
+        if os.path.exists(parquet):
+            df = pd.read_parquet(parquet)
+            return df if years is None else df[df['date'].str[:4].isin([str(y) for y in years])]
+        return None
+    parts = []
+    for yf in year_files:
+        df = pd.read_parquet(yf)
+        if segments:
+            parts.append(df[df['segment_id'].isin(segments)])
+            del df
+        else:
+            parts.append(df)
+    return pd.concat(parts, ignore_index=True)
+
+
+def write_csv(filename, df_out):
+    """Write df_out to a gzip-compressed CSV file. No-op if df_out is None."""
+    if df_out is None:
+        return
+    with gzip.open(filename, "wt") as csv_file:
+        df_out.to_csv(csv_file, index=False)
+
+
 def load_segments(json_file):
     """Load segments from GeoJSON file. Returns dict keyed by segment_id."""
+    if not os.path.exists(json_file):
+        return {}
     with open(json_file, encoding="utf8") as f:
         return {feat["properties"]["segment_id"]: feat["properties"]
                 for feat in json.load(f).get("features", [])}

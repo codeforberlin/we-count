@@ -18,10 +18,8 @@ from datetime import datetime
 import pandas as pd
 import requests
 import shapely.geometry
-#from sqlalchemy import create_engine
 
-from common import add_month, parse_options
-#from datamodel import TrafficCount
+import common
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'data')
 CSV_DIR = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'csv')
@@ -102,7 +100,7 @@ def _read_csv(start_year=None, start_month=None, end_year=None, end_month=None, 
                 print(f'No local copy, retrieving {file} from the web.')
             path = 'https://berlin-zaehlt.de/csv/' + file
         all_files.append(path)
-        year, month = add_month(1, year, month)
+        year, month = common.add_month(1, year, month)
     if verbose:
         print('Getting traffic data files...')
     df = pd.concat((pd.read_csv(f) for f in all_files), ignore_index=True)
@@ -110,23 +108,6 @@ def _read_csv(start_year=None, start_month=None, end_year=None, end_month=None, 
     # Change date_local to datetime
     df['date_local'] = pd.to_datetime(df['date_local'])
     return df
-
-# def _read_sql(options):
-#     start = datetime.now() - timedelta(days=30*options.months)
-#     engine = create_engine(options.database, echo=options.verbose > 1, future=True)
-#     columns = "segment_id, date_utc AS date_local, uptime_rel AS uptime, car_speed_histogram"
-#     for mode in TrafficCount.modes():
-#         columns += f", {mode}_lft + {mode}_rgt AS {mode}_total"
-#     table_df = pd.read_sql_query(f"SELECT {columns} FROM traffic_count WHERE date_utc > '{start}'", con=engine, parse_dates=["date_local"])
-#     if len(table_df) > 0:
-#         def hist_parse(x):
-#             return TrafficCount.parse_histogram(x.iloc[0], x.iloc[1] * x.iloc[2])
-#         histogram_df = table_df[["car_speed_histogram", "car_total", "uptime"]].apply(hist_parse, axis=1, result_type='expand')
-#         histogram_df.columns = ["car_speed%s" % s for s in range(0, 80, 10)]
-#     else:
-#         histogram_df = pd.DataFrame(columns=["car_speed%s" % s for s in range(0, 80, 10)])
-#     return pd.concat((table_df, histogram_df), axis=1)
-
 
 def add_date_columns(traffic_df, verbose):
     if verbose:
@@ -183,10 +164,6 @@ def get_options(args=None, json_default="sensor.json"):
                         metavar="FILE", help="Read database credentials from FILE")
     parser.add_argument("-j", "--json-file", default=json_default,
                         metavar="FILE", help="Write / read Geo-JSON for segments to / from FILE")
-    parser.add_argument("--csv", action="store_true", default=False,
-                        help="use CSV input")
-    parser.add_argument("-d", "--database",
-                        help="Database input file or URL")
     parser.add_argument("-o", "--output", default="traffic_df_%s.parquet",
                         help="Traffic data output file (format is derived from file extension)")
     parser.add_argument("-l", "--location-output", default="df_geojson.parquet",
@@ -198,29 +175,26 @@ def get_options(args=None, json_default="sensor.json"):
     parser.add_argument("-f", "--force", action="store_true", default=False,
                         help="create output files even if they exist and are up to date")
     parser.add_argument("-v", "--verbose", action="count", default=0,
-                        help="increase verbosity, twice enables verbose sqlalchemy output")
-    raw_options = parser.parse_args(args=args)
-    if not raw_options.database:
-        raw_options.csv = True
-    return parse_options(raw_options)
+                        help="increase verbosity")
+    return common.parse_options(parser.parse_args(args=args))
 
 
 def main(args=None):
     options = get_options(args)
-    end_year, end_month = add_month(1, datetime.now().year, datetime.now().month)
-    year, month = add_month(-options.months, datetime.now().year, datetime.now().month)
+    end_year, end_month = common.add_month(1, datetime.now().year, datetime.now().month)
+    year, month = common.add_month(-options.months, datetime.now().year, datetime.now().month)
     month = ((month - 1) // options.aggregate) * options.aggregate + 1
     locations = get_locations()
     save_df(locations, options.location_output, options.verbose)
     while (year, month) < (end_year, end_month):
-        yearp, monthp = add_month(options.aggregate, year, month)
-        out_file = options.output % ("%s_%02i-%s_%02i" % ((year, month) + add_month(-1, yearp, monthp)))
-        if add_month(options.aggregate, yearp, monthp) < (end_year, end_month) and os.path.exists(os.path.join(DATA_DIR, out_file)) and not options.force:
+        yearp, monthp = common.add_month(options.aggregate, year, month)
+        out_file = options.output % ("%s_%02i-%s_%02i" % ((year, month) + common.add_month(-1, yearp, monthp)))
+        if common.add_month(options.aggregate, yearp, monthp) < (end_year, end_month) and os.path.exists(os.path.join(DATA_DIR, out_file)) and not options.force:
             year, month = yearp, monthp
             continue
         if (yearp, monthp) > (end_year, end_month):
             yearp, monthp = end_year, end_month
-        traffic_df = _read_csv(year, month, yearp, monthp, options.verbose) if options.csv else _read_sql(options)
+        traffic_df = _read_csv(year, month, yearp, monthp, options.verbose)
         merged_df = merge_data(locations, None, traffic_df)
         save_df(merged_df, out_file, options.verbose)
         if options.verbose:

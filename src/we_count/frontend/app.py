@@ -278,7 +278,7 @@ def get_min_max_str(start_date, end_date, id_street, table):
 
     with db_lock:
         min_date_local = conn.execute(query, params).fetchone()
-    min_date = min_date_local[0].strftime('%Y-%m-%d')
+    min_date = min_date_local[0].strftime('%Y-%m-%dT%H:%M:%S')
 
     query = f"""
     SELECT max(date_local)
@@ -289,7 +289,7 @@ def get_min_max_str(start_date, end_date, id_street, table):
 
     with db_lock:
         max_date_local = conn.execute(query, params).fetchone()
-    max_date = max_date_local[0].strftime('%Y-%m-%d')
+    max_date = max_date_local[0].strftime('%Y-%m-%dT%H:%M:%S')
 
     if start_date > max_date or end_date < min_date:
         missing_data = True
@@ -375,7 +375,7 @@ if try_start_date > start_date:
     start_date = try_start_date
 
 # Put dates to required dropdown format
-to_date_format = '%Y-%m-%d'
+to_date_format = '%Y-%m-%dT%H:%M:%S'
 start_date = datetime.strftime(start_date, to_date_format)
 end_date = datetime.strftime(end_date, to_date_format)
 
@@ -387,7 +387,7 @@ min_date, max_date, start_date, end_date, message, missing_data = get_min_max_st
 from_date_format = '%Y-%m-%d'
 end_date_dt = convert(end_date, from_date_format)
 two_weeks_ago_dt = end_date_dt - timedelta(weeks=2)
-two_weeks_ago = two_weeks_ago_dt.strftime('%Y-%m-%d')
+two_weeks_ago = two_weeks_ago_dt.strftime('%Y-%m-%dT%H:%M:%S')
 
 # Prepare street options for dropdown menu
 query = f"""

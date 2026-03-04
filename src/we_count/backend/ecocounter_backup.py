@@ -8,7 +8,6 @@
 
 import datetime
 import gzip
-import json
 import os
 import sys
 
@@ -19,29 +18,6 @@ import common
 
 PERIOD_NORMAL = "1-Stunde"
 PERIOD_ADVANCED = "15-Min"
-
-
-def load_things(json_file):
-    """Load things from GeoJSON file. Returns dict keyed by segment_id (siteID)."""
-    if not os.path.exists(json_file):
-        return {}
-    with open(json_file, encoding="utf8") as f:
-        data = json.load(f)
-    return {f["properties"]["segment_id"]: f["properties"]
-            for f in data.get("features", [])}
-
-
-def save_things(things, json_file):
-    """Write updated backup timestamps back into the GeoJSON file."""
-    with open(json_file, encoding="utf8") as f:
-        content = json.load(f)
-    for feature in content.get("features", []):
-        sid = feature["properties"]["segment_id"]
-        if sid in things:
-            feature["properties"] = things[sid]
-    with open(json_file + ".new", "w", encoding="utf8") as f:
-        json.dump(content, f, indent=2)
-    os.rename(json_file + ".new", json_file)
 
 
 def _fetch_observations(url, datastream_id, since):
@@ -65,36 +41,28 @@ def update_data(things, df, options):
         counters = t.get("counter", [])
         ds_lft = next((c["datastreams"].get(period) for c in counters if c.get("bikes_left")), None)
         ds_rgt = next((c["datastreams"].get(period) for c in counters if c.get("bikes_right")), None)
-        if not ds_lft:
-            print(f"Missing datastreams for station {t['siteName']}, skipping.", file=sys.stderr)
-            continue
-        epoch = datetime.datetime(2010, 1, 1, tzinfo=datetime.timezone.utc)
-        first_data = common.parse_utc(t.get("firstData", "")) or epoch
+        first_data = common.parse_utc(t.get("firstData", ""))
         since = first_data if options.clear else (common.parse_utc_dict(t, backup_date) or first_data)
         if options.verbose:
             print(f"Fetching {t['siteName']} since {since}")
-        obs_lft = _fetch_observations(options.url, ds_lft, since)
+        obs_lft = _fetch_observations(options.url, ds_lft, since) if ds_lft else {}
         obs_rgt = _fetch_observations(options.url, ds_rgt, since) if ds_rgt else {}
         all_dates = sorted(set(obs_lft) | set(obs_rgt))
-        if not all_dates:
-            t[backup_date] = datetime.datetime.now(datetime.timezone.utc).replace(
-                hour=0, minute=0, second=0, microsecond=0).isoformat()
-            continue
-        new_df = pd.DataFrame({
-            "segment_id": sid,
-            "date": all_dates,
-            "bike_lft": pd.array([obs_lft.get(d, 0) for d in all_dates], dtype="uint16"),
-            "bike_rgt": pd.array([obs_rgt.get(d, 0) for d in all_dates], dtype="uint16"),
-        })
-        new_df["bike_total"] = (new_df["bike_lft"] + new_df["bike_rgt"]).astype("uint16")
-        if df is None:
-            df = new_df
-        else:
-            df = pd.concat([df[~df["date"].isin(new_df["date"]) | (df["segment_id"] != sid)],
-                            new_df], ignore_index=True)
-        last = common.parse_utc(all_dates[-1])
-        if newest_data is None or newest_data < last:
-            newest_data = last
+        if all_dates:
+            new_df = pd.DataFrame({
+                "segment_id": sid,
+                "date": all_dates,
+                "bike_lft": pd.array([obs_lft.get(d, 0) for d in all_dates], dtype="uint16"),
+                "bike_rgt": pd.array([obs_rgt.get(d, 0) for d in all_dates], dtype="uint16"),
+            })
+            if df is None:
+                df = new_df
+            else:
+                df = pd.concat([df[~df["date"].isin(new_df["date"]) | (df["segment_id"] != sid)],
+                                new_df], ignore_index=True)
+            last = common.parse_utc(all_dates[-1])
+            if newest_data is None or newest_data < last:
+                newest_data = last
         t[backup_date] = datetime.datetime.now(datetime.timezone.utc).replace(
             hour=0, minute=0, second=0, microsecond=0).isoformat()
     return df, newest_data
@@ -117,6 +85,7 @@ def _prepare_df(things, df, month=None):
         index=df_out.index
     )
     df_out = df_out.assign(date_local=local_ts).drop(columns=["date"])
+    df_out["bike_total"] = (df_out["bike_lft"] + df_out["bike_rgt"]).astype("uint16")
     return df_out[["segment_id", "date_local", "bike_lft", "bike_rgt", "bike_total"]]
 
 
@@ -133,19 +102,16 @@ def main(args=None):
                           url_default=ecocounter_positions.DEFAULT_URL, parquet_default="ecocounter.parquet")
     if os.path.exists(options.parquet):
         df = pd.read_parquet(options.parquet)
-        count_cols = [c for c in df.columns if c.endswith(("_lft", "_rgt", "_total"))]
-        df[count_cols] = df[count_cols].astype("uint16")
     else:
         df = None
     ecocounter_positions.main(args)
-    things = load_things(options.json_file)
+    things = common.load_segments(options.json_file)
     if not things:
         print("No station metadata found.", file=sys.stderr)
         return
     if options.limit:
         backup_date = "last_advanced_backup" if options.advanced else "last_data_backup"
-        epoch = datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)
-        sorted_things = sorted(things.items(), key=lambda kv: common.parse_utc_dict(kv[1], backup_date) or epoch)
+        sorted_things = sorted(things.items(), key=lambda kv: common.parse_utc_dict(kv[1], backup_date))
         things = dict(sorted_things[:options.limit])
     df, newest_data = update_data(things, df, options)
     if df is None:
@@ -153,7 +119,7 @@ def main(args=None):
         return
     df = df.sort_values(["segment_id", "date"])
     df.to_parquet(options.parquet, index=False, compression="zstd")
-    save_things(load_things(options.json_file) | things, options.json_file)
+    common.save_segments(things, options.json_file)
     if options.csv:
         if os.path.dirname(options.csv):
             os.makedirs(os.path.dirname(options.csv), exist_ok=True)

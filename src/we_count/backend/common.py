@@ -89,6 +89,24 @@ def save_json(json_file, content):
     os.rename(json_file + ".new", json_file)
 
 
+def load_segments(json_file):
+    """Load segments from GeoJSON file. Returns dict keyed by segment_id."""
+    with open(json_file, encoding="utf8") as f:
+        return {feat["properties"]["segment_id"]: feat["properties"]
+                for feat in json.load(f).get("features", [])}
+
+
+def save_segments(segments, json_file):
+    """Write updated backup timestamps back into the GeoJSON file."""
+    with open(json_file, encoding="utf8") as segment_file:
+        content = json.load(segment_file)
+    for segment in content.get("features", []):
+        sid = segment["properties"]["segment_id"]
+        if sid in segments:
+            segment["properties"] = segments[sid]
+    save_json(json_file, content)
+
+
 def fetch_all(url, params=None):
     """Paginated GET against an OGC SensorThings API — follows @iot.nextLink."""
     result = []
@@ -166,7 +184,7 @@ def get_options(args=None, json_default="sensor.json", url_default="telraam-api.
     parser.add_argument("--single-line-output", metavar="FILE",
                         help="write one JSON object per segment per line to FILE")
     parser.add_argument("-v", "--verbose", action="count", default=0,
-                        help="increase verbosity, twice enables verbose sqlalchemy output")
+                        help="increase verbosity")
     return parse_options(parser.parse_args(args=args))
 
 def benchmark(func):

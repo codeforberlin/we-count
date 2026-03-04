@@ -30,25 +30,6 @@ KEEP_COLUMNS = ["instance_id", "segment_id", "date", "uptime",
                 ] + [col for m in BASIC_MODES + ADVANCED_MODES for col in (f'{m}_lft', f'{m}_rgt')]
 
 
-def load_segments(json_file):
-    segments = {}
-    with open(json_file, encoding="utf8") as segment_file:
-        for segment in json.load(segment_file).get("features", []):
-            sid = segment["properties"]["segment_id"]
-            segments[sid] = segment["properties"]
-    return segments
-
-
-def save_segments(segments, json_file):
-    with open(json_file, encoding="utf8") as segment_file:
-        content = json.load(segment_file)
-    for segment in content.get("features", []):
-        sid = segment["properties"]["segment_id"]
-        if sid in segments:
-            segment["properties"] = segments[sid]
-    common.save_json(json_file, content)
-
-
 def update_data(segments, options, conns):
     """Fetch new rows from the API. Returns (new_df, newest_data) where new_df contains
     only the newly fetched rows (not merged with existing data)."""
@@ -228,7 +209,7 @@ def main(args=None):
             os.makedirs(os.path.dirname(output), exist_ok=True)
     telraam_positions.main(args)
     conns = common.ConnectionProvider(options.secrets["tokens"], options.url) if options.url else None
-    segments = load_segments(options.json_file)
+    segments = common.load_segments(options.json_file)
 
     if options.segments:
         filtered_ids = {int(s.strip()) for s in options.segments.split(",")}
@@ -261,7 +242,7 @@ def main(args=None):
                     year_df.to_parquet(yf, index=False, compression='zstd')
                     del year_df
                 del new_df
-            save_segments(segments, options.json_file)
+            common.save_segments(segments, options.json_file)
 
         if newest_data is None:
             print("No data.", file=sys.stderr)

@@ -277,9 +277,8 @@ def get_min_max_str(start_date, end_date, id_street, table):
     params = [id_street]
 
     with db_lock:
-        min_date = conn.execute(query, params).fetchone()
-    min_date = min_date[0]
-    min_date = min_date.strftime('%Y-%m-%dT%H:%M:%S')
+        min_date_local = conn.execute(query, params).fetchone()
+    min_date = min_date_local[0].strftime('%Y-%m-%d')
 
     query = f"""
     SELECT max(date_local)
@@ -289,9 +288,8 @@ def get_min_max_str(start_date, end_date, id_street, table):
     params = [id_street]
 
     with db_lock:
-        max_date = conn.execute(query, params).fetchone()
-    max_date = max_date[0]
-    max_date = max_date.strftime('%Y-%m-%dT%H:%M:%S')
+        max_date_local = conn.execute(query, params).fetchone()
+    max_date = max_date_local[0].strftime('%Y-%m-%d')
 
     if start_date > max_date or end_date < min_date:
         missing_data = True

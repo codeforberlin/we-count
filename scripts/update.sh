@@ -13,10 +13,9 @@ scripts/update_data.sh
 /usr/bin/pkill -HUP -F /run/gunicorn/we-count/pid
 
 # update remote code and data
-# TODO the code should go in a different directory to avoid public exposure
-rsync -a scripts src radtk.de@ssh.strato.de:wecount/
-rsync -a csv/.htaccess csv/LICENSE* csv/READ_ME radtk.de@ssh.strato.de:wecount/csv/
-ssh radtk.de@ssh.strato.de wecount/scripts/update_data.sh
+rsync -a scripts src radtk.de@ssh.strato.de:we-count-code/
+rsync -a csv/.htaccess csv/LICENSE* csv/READ_ME radtk.de@ssh.strato.de:we-count-code/csv/
+ssh radtk.de@ssh.strato.de we-count-code/scripts/update_data.sh
 
 # "self" update
 cd $HOME/we-count-beta

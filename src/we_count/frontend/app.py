@@ -384,7 +384,7 @@ end_date = datetime.strftime(end_date, to_date_format)
 min_date, max_date, start_date, end_date, message, missing_data = get_min_max_str(start_date, end_date, INITIAL_STREET_ID, 'all_traffic')
 
 # Get active filter date (two weeks ago from the last date in the dataset)
-from_date_format = '%Y-%m-%d'
+from_date_format = '%Y-%m-%dT%H:%M:%S'
 end_date_dt = convert(end_date, from_date_format)
 two_weeks_ago_dt = end_date_dt - timedelta(weeks=2)
 two_weeks_ago = two_weeks_ago_dt.strftime('%Y-%m-%dT%H:%M:%S')

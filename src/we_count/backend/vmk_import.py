@@ -72,65 +72,33 @@ def main(args=None):
 
     if options.verbose:
         print(f"Fetching WFS layers for {year}...")
-    kfz_features = _fetch_layer(wfs_url, f"verkehrsmengen_{year}:dtvw{year}kfz", options.verbose)
-    lkw_features = _fetch_layer(wfs_url, f"verkehrsmengen_{year}:dtvw{year}lkw", options.verbose)
-    rad_features = _fetch_layer(wfs_url, f"verkehrsmengen_{year}:dtvw{year}rad", options.verbose)
-    if not kfz_features:
-        print(f"No KFZ features found for year {year}. Is this year available?", file=sys.stderr)
+
+    layers = [
+        (f"verkehrsmengen_{year}:dtvw{year}kfz", "dtvw_kfz"),
+        (f"verkehrsmengen_{year}:dtvw{year}lkw", "dtvw_lkw"),
+        (f"verkehrsmengen_{year}:dtvw{year}rad", "dtvw_rad"),
+    ]
+    features_by_link = {}
+    for layer_name, prop_name in layers:
+        fetched = _fetch_layer(wfs_url, layer_name, options.verbose)
+        for f in fetched:
+            link_id = f["properties"]["link_id"]
+            if link_id not in features_by_link:
+                features_by_link[link_id] = {
+                    "type": "Feature",
+                    "geometry": f["geometry"],
+                    "properties": {"segment_id": link_id, **f["properties"]},
+                }
+            features_by_link[link_id]["properties"][prop_name] = f["properties"].get(prop_name)
+    if not features_by_link:
+        print(f"No features found for year {year}. Is this year available?", file=sys.stderr)
         return False
 
-    # Build lookup dicts for the count values and geometries
-    lkw_by_link = {f["properties"]["link_id"]: f["properties"]["dtvw_lkw"] for f in lkw_features}
-    rad_by_link  = {f["properties"]["link_id"]: f["properties"]["dtvw_rad"]  for f in rad_features}
-    rad_feat_by_link = {f["properties"]["link_id"]: f for f in rad_features}
-
-    def _props(raw, extra):
-        p = raw["properties"]
-        return {
-            "segment_id": p["link_id"],
-            "str_name":   p.get("str_name"),
-            "str_bez":    p.get("str_bez"),
-            "bezirk":     p.get("bezirk"),
-            "stadtteil":  p.get("stadtteil"),
-            "strklasse":  p.get("strklasse"),
-            "strklasse1": p.get("strklasse1"),
-            "strklasse2": p.get("strklasse2"),
-            **extra,
-        }
-
-    # KFZ layer is the primary source (geometry + kfz/lkw/rad counts)
-    kfz_link_ids = set()
-    geo_features = []
-    for f in kfz_features:
-        link_id = f["properties"]["link_id"]
-        kfz_link_ids.add(link_id)
-        geo_features.append({
-            "type": "Feature",
-            "geometry": f["geometry"],
-            "properties": _props(f, {
-                "dtvw_kfz": f["properties"].get("dtvw_kfz"),
-                "dtvw_lkw": lkw_by_link.get(link_id),
-                "dtvw_rad": rad_by_link.get(link_id),
-            }),
-        })
-
-    # Rad-only edges (cycle paths not in KFZ layer)
-    for link_id, f in rad_feat_by_link.items():
-        if link_id in kfz_link_ids:
-            continue
-        geo_features.append({
-            "type": "Feature",
-            "geometry": f["geometry"],
-            "properties": _props(f, {
-                "dtvw_kfz": None,
-                "dtvw_lkw": None,
-                "dtvw_rad": f["properties"].get("dtvw_rad"),
-            }),
-        })
-
+    geo_features = list(features_by_link.values())
     if options.verbose:
-        print(f"Saving {len(geo_features)} features ({len(kfz_link_ids)} KFZ/LKW + "
-              f"{len(geo_features) - len(kfz_link_ids)} Rad-only) to {options.json_file}")
+        kfz_count = sum(1 for f in geo_features if f["properties"].get("dtvw_kfz") is not None)
+        print(f"Saving {len(geo_features)} features ({kfz_count} KFZ/LKW + "
+              f"{len(geo_features) - kfz_count} Rad-only) to {options.json_file}")
 
     if os.path.dirname(options.json_file):
         os.makedirs(os.path.dirname(options.json_file), exist_ok=True)

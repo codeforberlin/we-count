@@ -12,7 +12,7 @@
 # A checkout of the repo https://github.com/codeforberlin/we-count, where this script resides in a first level subdir (scripts).
 # A secrets.json directly in the checkout dir.
 # Beside this is a virtual env called venv_wecount with all dependencies from requirements_backend.txt installed.
-# Data will be generated into a parquet and a csv dir, the geojson does into csv as well.
+# Data will be generated into a parquet and a csv dir, the geojson goes into csv as well.
 # This script is also fine for an initial setup.
 
 TELRAAM_SEGMENTS=csv/bzm_telraam_segments.geojson
@@ -24,7 +24,7 @@ else
     # first run of the day, complete backup
     src/we_count/backend/telraam_backup.py -j $TELRAAM_SEGMENTS --single-line-output csv/kibana/bzm_telraam_segments.geojson -p parquet/bzm_telraam_traffic_data.parquet --csv csv/bzm_telraam --csv-segments csv/segments/bzm_telraam --csv-start-year 2021 --max-prop-updates 500 -v --limit 10
     src/we_count/backend/telraam_backup.py -j $TELRAAM_SEGMENTS -p parquet/bzm_telraam_traffic_advanced.parquet -v --limit 10 --advanced
-    src/we_count/backend/ecocounter_backup.py -j csv/bzm_ecocounter_segments.geojson -p parquet/bzm_ecocounter_traffic_data.parquet -v
+    src/we_count/backend/ecocounter_backup.py -j csv/bzm_ecocounter_segments.geojson -p parquet/bzm_ecocounter_traffic_data.parquet --csv csv/bzm_ecocounter --csv-segments csv/segments/bzm_ecocounter -v
     src/we_count/backend/ecocounter_backup.py -j csv/bzm_ecocounter_segments.geojson -p parquet/bzm_ecocounter_traffic_advanced.parquet -v --advanced
     src/we_count/backend/teu_backup.py -j csv/bzm_teu_segments.geojson -p parquet/bzm_teu_traffic_data.parquet -v --limit 10
     src/we_count/backend/teu_backup.py -j csv/bzm_teu_segments.geojson -p parquet/bzm_teu_traffic_advanced.parquet -v --limit 10 --advanced

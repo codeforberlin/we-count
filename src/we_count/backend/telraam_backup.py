@@ -206,7 +206,7 @@ def main(args=None):
 
     if options.csv:
         curr_month = (newest_data.year, newest_data.month)
-        month = (options.csv_start_year, 1) if options.csv_start_year else common.add_month(-1, *curr_month)
+        month = (options.year, 1) if options.year else common.add_month(-1, *curr_month)
         year = None
         while month <= curr_month:
             if year != month[0]:

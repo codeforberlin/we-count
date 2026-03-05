@@ -122,7 +122,7 @@ def main(args=None):
         if os.path.dirname(options.csv):
             os.makedirs(os.path.dirname(options.csv), exist_ok=True)
         curr_month = (newest_data.year, newest_data.month)
-        month = (options.csv_start_year, 1) if options.csv_start_year else common.add_month(-1, *curr_month)
+        month = (options.year, 1) if options.year else common.add_month(-1, *curr_month)
         years_needed = set()
         m = month
         while m <= curr_month:

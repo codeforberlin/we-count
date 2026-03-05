@@ -159,12 +159,36 @@ def save_segments(segments, json_file):
     save_json(json_file, content)
 
 
-def fetch_all(url, params=None):
+def _get_with_retry(url, params, retries=3, retry_wait=60):
+    """GET with retry on transient errors (5xx, connection/timeout).
+    Returns the response on success, None on permanent failure."""
+    for attempt in range(retries):
+        try:
+            r = requests.get(url, params=params)
+        except requests.exceptions.RequestException as e:
+            print(f"Connection error fetching {url}: {e}, retrying in {retry_wait}s ({attempt + 1}/{retries})", file=sys.stderr)
+            if attempt + 1 < retries:
+                time.sleep(retry_wait)
+            continue
+        if r.status_code < 400:
+            return r
+        if r.status_code < 500:
+            print(f"HTTP {r.status_code} fetching {url}: permanent error.", file=sys.stderr)
+            return None
+        print(f"HTTP {r.status_code} fetching {url}, retrying in {retry_wait}s ({attempt + 1}/{retries})", file=sys.stderr)
+        if attempt + 1 < retries:
+            time.sleep(retry_wait)
+    print(f"Giving up on {url} after {retries} attempts.", file=sys.stderr)
+    return None
+
+
+def fetch_all(url, params=None, retries=3, retry_wait=60):
     """Paginated GET against an OGC SensorThings API — follows @iot.nextLink."""
     result = []
     while url:
-        r = requests.get(url, params=params)
-        r.raise_for_status()
+        r = _get_with_retry(url, params, retries, retry_wait)
+        if r is None:
+            return []
         data = r.json()
         result.extend(data.get("value", []))
         url = data.get("@iot.nextLink")
@@ -172,14 +196,15 @@ def fetch_all(url, params=None):
     return result
 
 
-def fetch_arcgis_features(layer_url, params, page_size=1000):
+def fetch_arcgis_features(layer_url, params, page_size=1000, retries=3, retry_wait=60):
     """Paginated query against an ArcGIS Feature Server layer."""
     result = []
     offset = 0
+    url = layer_url + "/query"
     while True:
-        r = requests.get(layer_url + "/query",
-                         params={**params, "resultOffset": offset, "resultRecordCount": page_size})
-        r.raise_for_status()
+        r = _get_with_retry(url, {**params, "resultOffset": offset, "resultRecordCount": page_size}, retries, retry_wait)
+        if r is None:
+            return []
         data = r.json()
         features = data.get("features", [])
         result.extend(features)
@@ -198,7 +223,8 @@ def parse_options(options):
     return options
 
 
-def get_options(args=None, json_default="sensor.json", url_default="telraam-api.net", parquet_default="data.parquet"):
+def get_options(args=None, json_default="sensor.json", url_default="telraam-api.net",
+                parquet_default="data.parquet", year_default=None):
     parser = argparse.ArgumentParser()
     # Berlin as in https://github.com/DLR-TS/sumo-berlin
     parser.add_argument("-b", "--bbox", default="12.78509,52.17841,13.84308,52.82727",
@@ -219,7 +245,7 @@ def get_options(args=None, json_default="sensor.json", url_default="telraam-api.
                         help="Output prefix for monthly csv / excel files")
     parser.add_argument("--csv-segments",
                         help="Output prefix for csv / excel segment files")
-    parser.add_argument("-y", "--csv-start-year", type=int,
+    parser.add_argument("-y", "--year", "--csv-start-year", type=int, default=year_default,
                         help="First year to retrieve when writing csv")
     parser.add_argument("-r", "--retry", type=int, default=1,
                         help="number of retries on failure")

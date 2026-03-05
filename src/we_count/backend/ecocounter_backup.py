@@ -19,13 +19,14 @@ PERIOD_NORMAL = "1-Stunde"
 PERIOD_ADVANCED = "15-Min"
 
 
-def _fetch_observations(url, datastream_id, since):
+def _fetch_observations(url, datastream_id, since, retries=1):
     """Fetch all observations for a datastream since a given UTC datetime."""
     filter_str = f"phenomenonTime ge {since.strftime('%Y-%m-%dT%H:%M:%S.000Z')}"
     obs = common.fetch_all(
         url + f"/Datastreams({datastream_id})/Observations",
         {"$select": "phenomenonTime,result", "$filter": filter_str,
-         "$orderby": "phenomenonTime asc", "$top": 1000}
+         "$orderby": "phenomenonTime asc", "$top": 1000},
+        retries=retries
     )
     return {o["phenomenonTime"].split("/")[0]: o["result"] for o in obs}
 
@@ -46,8 +47,8 @@ def update_data(things, options):
         since = first_data if options.clear else (common.parse_utc_dict(t, backup_date) or first_data)
         if options.verbose:
             print(f"Fetching {t['siteName']} since {since}")
-        obs_lft = _fetch_observations(options.url, ds_lft, since) if ds_lft else {}
-        obs_rgt = _fetch_observations(options.url, ds_rgt, since) if ds_rgt else {}
+        obs_lft = _fetch_observations(options.url, ds_lft, since, options.retry) if ds_lft else {}
+        obs_rgt = _fetch_observations(options.url, ds_rgt, since, options.retry) if ds_rgt else {}
         all_dates = sorted(set(obs_lft) | set(obs_rgt))
         if all_dates:
             new_df = pd.DataFrame({
@@ -121,7 +122,7 @@ def main(args=None):
             os.makedirs(os.path.dirname(options.csv), exist_ok=True)
         df = pd.read_parquet(options.parquet)
         curr_month = (newest_data.year, newest_data.month)
-        month = (options.csv_start_year, 1) if options.csv_start_year else common.add_month(-1, *curr_month)
+        month = (options.year, 1) if options.year else common.add_month(-1, *curr_month)
         while month <= curr_month:
             common.write_csv(options.csv + "_%s_%02i.csv.gz" % month, _prepare_df(things, df, month))
             month = common.add_month(1, *month)

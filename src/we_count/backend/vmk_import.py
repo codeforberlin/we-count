@@ -12,7 +12,6 @@
 # Data: DTVw (Durchschnittlicher täglicher Verkehr Werktag)
 # Available years: 2019, 2023 (others return 404)
 
-import argparse
 import datetime
 import json
 import os
@@ -57,22 +56,15 @@ def _fetch_layer(wfs_url, layer_name, verbose=0):
 
 
 def main(args=None):
-    # Pre-parse --year so we can set the right json default before get_options.
-    # Pass remaining_args to get_options so --year doesn't cause an error there.
-    pre = argparse.ArgumentParser(add_help=False)
-    pre.add_argument("--year", type=int, default=2023)
-    pre_args, remaining_args = pre.parse_known_args(args)
-    year = pre_args.year
-
-    options = common.get_options(remaining_args, json_default=f"vmk_{year}.json")
-    options.year = year
+    options = common.get_options(args, json_default=f"vmk_2023.json", year_default=2023)
+    year = options.year
     wfs_url = WFS_BASE.format(year=year)
 
     # Skip if file is fresh enough
     if not options.clear and os.path.exists(options.json_file):
         with open(options.json_file, encoding="utf8") as f:
             existing = json.load(f)
-        age = datetime.datetime.now(datetime.timezone.utc) - common.parse_utc(existing.get("created_at", "1970-01-01"))
+        age = datetime.datetime.now(datetime.timezone.utc) - common.parse_utc_dict(existing, "created_at")
         if age < datetime.timedelta(days=REFRESH_DAYS):
             if options.verbose:
                 print(f"{options.json_file} is less than {REFRESH_DAYS} days old, skipping.")

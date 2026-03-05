@@ -23,7 +23,7 @@ def main(args=None):
         return False
     old_data = {f["properties"]["segment_id"]: f["properties"] for f in old_features}
 
-    all_things = common.fetch_all(options.url + "/Things", {"$select": "@iot.id,name,description,properties"})
+    all_things = common.fetch_all(options.url + "/Things", {"$select": "@iot.id,name,description,properties"}, retries=options.retry)
     if options.verbose:
         print(f"{len(all_things)} stations found.")
     features = []
@@ -39,7 +39,8 @@ def main(args=None):
         # Fetch MQ datastreams, organize by vehicle → measurement → period
         datastreams_raw = common.fetch_all(
             options.url + f"/Things({tid})/Datastreams",
-            {"$select": "@iot.id,properties", "$filter": "properties/lane eq 'MQ'"}
+            {"$select": "@iot.id,properties", "$filter": "properties/lane eq 'MQ'"},
+            retries=options.retry
         )
         datastreams = {}
         for ds in datastreams_raw:
@@ -50,7 +51,7 @@ def main(args=None):
             datastreams.setdefault(vehicle, {}).setdefault(measurement, {})[period] = ds["@iot.id"]
 
         # Get coordinates from Thing location
-        locs = common.fetch_all(options.url + f"/Things({tid})/Locations", {"$select": "location"})
+        locs = common.fetch_all(options.url + f"/Things({tid})/Locations", {"$select": "location"}, retries=options.retry)
         coords = None
         if locs:
             geo = locs[0].get("location", {})

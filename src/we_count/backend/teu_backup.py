@@ -21,12 +21,13 @@ VEHICLES = ["KFZ", "PKW", "LKW"]
 
 
 
-def _fetch_observations(url, datastream_id, since):
+def _fetch_observations(url, datastream_id, since, retries=1):
     filter_str = f"phenomenonTime ge {since.strftime('%Y-%m-%dT%H:%M:%S.000Z')}"
     obs = common.fetch_all(
         url + f"/Datastreams({datastream_id})/Observations",
         {"$select": "phenomenonTime,result", "$filter": filter_str,
-         "$orderby": "phenomenonTime asc", "$top": 1000}
+         "$orderby": "phenomenonTime asc", "$top": 1000},
+        retries=retries
     )
     return {o["phenomenonTime"].split("/")[0]: o["result"] for o in obs}
 
@@ -47,7 +48,7 @@ def update_data(things, options):
         since = epoch if options.clear else (common.parse_utc_dict(t, backup_date) or epoch)
         if options.verbose:
             print(f"Fetching {t.get('name', sid)} since {since}")
-        obs_by_vehicle = {v: _fetch_observations(options.url, ds_id, since)
+        obs_by_vehicle = {v: _fetch_observations(options.url, ds_id, since, options.retry)
                           for v, ds_id in ds_by_vehicle.items() if ds_id}
         all_dates = sorted(set().union(*obs_by_vehicle.values()))
         if not all_dates:
@@ -124,7 +125,7 @@ def main(args=None):
         if os.path.dirname(options.csv):
             os.makedirs(os.path.dirname(options.csv), exist_ok=True)
         curr_month = (newest_data.year, newest_data.month)
-        month = (options.csv_start_year, 1) if options.csv_start_year else common.add_month(-1, *curr_month)
+        month = (options.year, 1) if options.year else common.add_month(-1, *curr_month)
         years_needed = set()
         m = month
         while m <= curr_month:

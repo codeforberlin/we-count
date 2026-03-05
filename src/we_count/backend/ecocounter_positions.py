@@ -24,7 +24,7 @@ def main(args=None):
         return False
     old_data = {f["properties"]["segment_id"]: f["properties"] for f in old_features}
 
-    all_things = common.fetch_all(options.url + "/Things", {"$select": "@iot.id,name,description,properties"})
+    all_things = common.fetch_all(options.url + "/Things", {"$select": "@iot.id,name,description,properties"}, retries=options.retry)
     if options.verbose:
         print(f"{len(all_things)} stations found.")
     features = []
@@ -34,7 +34,7 @@ def main(args=None):
 
         # Fetch datastreams: collect all periods and directions
         datastreams = common.fetch_all(options.url + f"/Things({tid})/Datastreams",
-                                {"$select": "@iot.id,properties,observedArea"})
+                                {"$select": "@iot.id,properties,observedArea"}, retries=options.retry)
         segment_id = props.get("siteID")
         if segment_id is None:
             print(f"Warning: no segment_id for {props.get('siteName', tid)}", file=sys.stderr)
@@ -65,7 +65,7 @@ def main(args=None):
         ]
 
         # Get coordinates from Thing location for the geometry
-        locs = common.fetch_all(options.url + f"/Things({tid})/Locations", {"$select": "location"})
+        locs = common.fetch_all(options.url + f"/Things({tid})/Locations", {"$select": "location"}, retries=options.retry)
         coords = None
         if locs:
             geo = locs[0].get("location", {})

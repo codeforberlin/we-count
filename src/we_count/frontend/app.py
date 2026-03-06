@@ -33,7 +33,7 @@ import polars as pl
 from typing import Callable
 _: Callable[[str], str]
 
-from .layout import serve_layout, INITIAL_STREET_ID, INITIAL_LANGUAGE, ADFC_yellow
+from .layout import serve_layout, INITIAL_STREET_ID, INITIAL_LANGUAGE
 from .layout import ADFC_blue, ADFC_crimson, ADFC_darkgrey, ADFC_green, ADFC_green_L
 from .layout import ADFC_lightblue, ADFC_lightblue_D, ADFC_lightgrey, ADFC_orange, ADFC_palegrey, ADFC_pink, ADFC_red, ADFC_orange_L
 
@@ -568,6 +568,10 @@ def update_map(clickData, id_street, hardware_version, toggle_active_filter, tog
         idx = df_map.loc[df_map['segment_id'] == segment_id]
         zoom_factor = 11
 
+    # Get maximum speed for the selected street
+    #maxspeed = df_map.loc[df_map['segment_id'] == segment_id ]['osm.maxspeed'].iloc[0]
+
+
     # TODO: improve efficiency by managing translation w/o recalculating bc ratios
     lon_str = idx['x'].values[0]
     lat_str = idx['y'].values[0]
@@ -1021,6 +1025,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     with db_lock:  # Ensure thread safety for writes
         df_bar_speed_traffic = conn.execute(query).pl()
 
+    # Prepare max speed color maps
     color_map_50 = {'car_speed0': ADFC_lightgrey, 'car_speed10': ADFC_lightblue_D,
      'car_speed20': ADFC_lightblue, 'car_speed30': ADFC_green,
      'car_speed40': ADFC_green_L, 'car_speed50': ADFC_orange,
@@ -1031,21 +1036,45 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
      'car_speed40': ADFC_orange, 'car_speed50': ADFC_pink,
      'car_speed60': ADFC_red, 'car_speed70': ADFC_crimson}
 
+    # Get maximum speed for the selected street and set color map
+    maxspeed = df_map.loc[df_map['segment_id'] == segment_id ]['osm.maxspeed'].iloc[0]
+
+    if maxspeed == '30':
+        speed_color_map = color_map_30
+        max_speed_logo = '\\assets\\30.png'
+    else:
+        speed_color_map = color_map_50
+        max_speed_logo = '\\assets\\50.png'
+
+    path_to_speed_logo = os.path.join(ASSET_DIR, max_speed_logo)
+
     bar_perc_speed = px.bar(df_bar_speed_traffic,
         x=radio_time_unit, y=cols,
         barmode='stack',
         facet_col='street_selection',
         category_orders={'street_selection': [street_name, 'All Streets']},
         labels={'year': _('Year'), 'month': _('Month'), 'weekday': _('Week'), 'day': _('Day'), 'hour': _('Hour')},
-        color_discrete_map=color_map_50,
+        color_discrete_map=speed_color_map,
         facet_col_spacing=0.04,
         title=(_('Average car speed %') + ' (' + start_date_str + ' - ' + end_date_str + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)')
     )
 
     bar_perc_speed.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
-    bar_perc_speed.for_each_annotation(lambda a: a.update(text=a.text.replace(street_name, street_name + _(' (segment:') + segment_id + ')')))
+    bar_perc_speed.for_each_annotation(lambda a: a.update(text=a.text.replace(street_name, street_name + _(' (segment:') + segment_id + ', max ' + maxspeed + ' km/h)')))
     bar_perc_speed.for_each_annotation(lambda a: a.update(text=a.text.replace('All Streets', _('All Streets'))))
     bar_perc_speed.update_layout(legend_title_text=_('Car speed'))
+    # bar_perc_speed.add_layout_image(
+    #     dict(
+    #         source=max_speed_logo,
+    #         x=0.018,
+    #         y=1.14,
+    #         xref='paper',
+    #         yref='paper',
+    #         sizex=0.15,
+    #         sizey=0.15,
+    #         layer='above'
+    #     )
+    # )
     bar_perc_speed.update_traces({'name': '0 - 10 km/h'}, selector={'name': 'car_speed0'})
     bar_perc_speed.update_traces({'name': '10 - 20 km/h'}, selector={'name': 'car_speed10'})
     bar_perc_speed.update_traces({'name': '20 - 30 km/h'}, selector={'name': 'car_speed20'})
@@ -1336,7 +1365,6 @@ def comparison_chart(period_values_year, period_options_year,
         """
 
     df_avg_traffic_delta_AB = conn.execute(query).fetchdf()
-    print(period_type_others)
     output_excel(df_avg_traffic_delta_AB, 'df_avg_traffic_delta_AB')
 
     #duckdb_info(conn)

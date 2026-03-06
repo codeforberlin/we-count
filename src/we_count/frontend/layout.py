@@ -75,12 +75,12 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
             # Anchor for language switch
             dcc.Location(id='url', refresh=True),
         ]),
-        dbc.Row([
-            # Announcement
-            dbc.Col(
-                html.H5(_('Notice: we are moving server, until then, the maximum selectable date will be 04-02-2026.'), className='my-2', style={'background-color': ADFC_yellow, 'color': ADFC_crimson})
-            ),
-        ]),
+        # dbc.Row([
+        #     # Announcement
+        #     dbc.Col(
+        #         html.H5(_('Notice: we are moving server, until then, the maximum selectable date will be 04-02-2026.'), className='my-2', style={'background-color': ADFC_yellow, 'color': ADFC_crimson})
+        #     ),
+        # ]),
         dbc.Row([
             # Street map
             dbc.Col([
@@ -300,7 +300,7 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
             dbc.Col([
                 html.H4(_('Average car speed % - by time unit'), className='my-3'),
                 dcc.Loading(id="loading-icon_bar_perc_speed", children=[html.Div(
-                    dcc.Graph(id='bar_perc_speed', figure={}, config={'modeBarButtonsToRemove': ['select2d', 'lasso2d', 'zoomIn2d', 'zoomOut2d', 'autoScale2d']}),)])
+                    dcc.Graph(id='bar_perc_speed', figure={}, config={'modeBarButtonsToRemove': ['select2d', 'lasso2d', 'zoomIn2d', 'zoomOut2d', 'autoScale2d']}),)]),
             ], sm=12
             ),
         ], className='g-2 p-1'),

@@ -43,6 +43,9 @@ msgstr "Eingegrenzter Bereich"
 msgid "Project partners: "
 msgstr "Projektpartner: "
 
+msgid "Map info"
+msgstr "Karteninformationen"
+
 #: bzm_v01.py:415
 msgid ""
 "Note: street colors represent bike/car ratios based on all data available"
@@ -71,6 +74,15 @@ msgstr "Wähle Straße:"
 #: bzm_v01.py:436
 msgid "Traffic type - selected street"
 msgstr "Verkehrstyp - gewählte Straße"
+
+msgid "Selected segment ID: "
+msgstr "Ausgewählte Segment-ID: "
+
+msgid "Satellite"
+msgstr "Satellit"
+
+msgid "Number of selected segments: "
+msgstr "Anzahl der ausgewählten Segmente: "
 
 #: bzm_v01.py:439
 msgid ""

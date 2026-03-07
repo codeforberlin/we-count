@@ -528,7 +528,7 @@ def update_map(clickData, id_street, hardware_version, toggle_active_filter, tog
         hardware_version = [1, 2]
 
     # Get number of selected segments
-    nof_selected_segments = 'Number of selected segments: ' + str(len(df_map['segment_id'].unique()))
+    nof_selected_segments = _('Number of selected segments: ') + str(len(df_map['segment_id'].unique()))
 
     # Update options for street_name_dd, without inactive
     df_map_options = df_map[df_map['map_line_color']!='Inactive - no data']
@@ -662,7 +662,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
 
     # Get segment_id/street name
     segment_id = id_street[-11:-1]
-    street_id_text = 'Selected segment ID: ' + str(segment_id)
+    street_id_text = _('Selected segment ID: ') + str(segment_id)
     street_name = id_street.split(' (')[0]
     selected_street_header = street_name
 

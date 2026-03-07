@@ -91,7 +91,7 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
             dbc.Col([
                 dbc.Row([
                     dbc.Col([
-                        html.H6('Map info', id='popover_map_info', className='text-start', style={'color': ADFC_darkgrey}),
+                        html.H6(_('Map info'), id='popover_map_info', className='text-start', style={'color': ADFC_darkgrey}),
                         dbc.Popover(dbc.PopoverBody(_('Note: street colors represent bike/car ratios based on all data available and do not change with date- or hour selection. The map allows street segments to be selected individually. To select whole streets, select a street name from the drop down menu.')), target='popover_map_info', trigger='hover', placement='bottom'),
                     ], sm=6),
                     dbc.Col([
@@ -129,15 +129,16 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                     dbc.Col([
                         dbc.Checklist(
                             id='toggle_map_style',
-                            options=[{'label': 'Satellite', 'value': 'streets'}],
+                            options=[{'label': _('Satellite'), 'value': 'streets'}],
                             value=[''],
-                            switch=False
+                            switch=False,
+                            style={'color': ADFC_darkgrey}
                         ),
-                    ], sm=5),
+                    ], sm=4),
                     dbc.Col([
-                        html.H6(_('Selected segment ID:'), id='street_id_text', className='my-2', style={'color': ADFC_darkgrey}),
-                        html.H6(_('Number of selected segments:'), id='nof_selected_segments', className='my-2', style={'color': ADFC_darkgrey}),
-                    ], sm=7)
+                        html.H6(_('Selected segment ID: '), id='street_id_text', className='my-2', style={'color': ADFC_darkgrey}),
+                        html.H6(_('Number of selected segments: '), id='nof_selected_segments', className='my-2', style={'color': ADFC_darkgrey}),
+                    ], sm=8)
                 ], align='end')
             ], sm=4),
         ], className= 'g-2 mt-1 mb-3 text-start'), #style= {'margin-right': 40}),

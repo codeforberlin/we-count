@@ -12,7 +12,7 @@ WorkingDirectory=/home/we-count/goatcounter
 Environment=GOATCOUNTER_API_KEY=11zsu4tl5pan31wwb37m76kyeh1tw7h0ezebelj22kb6oe7et5o9
 
 ExecStart=/home/we-count/goatcounter/goatcounter import \
-  -site we-count.codefor.de \
+  -site http://127.0.0.1:9090/goatcounter \
   -format combined \
   -follow \
   /var/log/gunicorn/we-count/access.log

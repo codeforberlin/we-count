@@ -1,0 +1,20 @@
+[Unit]
+Description=we-count GoatCounter log importer
+After=goatcounter.service
+Requires=goatcounter.service
+
+[Service]
+User=we-count
+Group=we-count
+
+WorkingDirectory=/home/we-count/goatcounter
+ExecStart=/home/we-count/goatcounter/goatcounter import \
+  -site we-count.codefor.de \
+  -format combined \
+  -follow \
+  /var/log/gunicorn/we-count/access.log
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

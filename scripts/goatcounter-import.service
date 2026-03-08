@@ -8,6 +8,9 @@ User=we-count
 Group=we-count
 
 WorkingDirectory=/home/we-count/goatcounter
+
+Environment=GOATCOUNTER_API_KEY=11zsu4tl5pan31wwb37m76kyeh1tw7h0ezebelj22kb6oe7et5o9
+
 ExecStart=/home/we-count/goatcounter/goatcounter import \
   -site we-count.codefor.de \
   -format combined \
@@ -18,3 +21,5 @@ RestartSec=5
 
 [Install]
 WantedBy=multi-user.target
+
+# the API key can be generated using ./goatcounter db create apitoken -name importer -perm count -user 1

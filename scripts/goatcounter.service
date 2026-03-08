@@ -19,3 +19,4 @@ WantedBy=multi-user.target
 
 # to set this up download goatcounter from https://github.com/arp242/goatcounter/releases and symlink the newest version, then
 # ./goatcounter db create site -vhost=we-count.codefor.de -user.email=kontakt@berlin-zaehlt.de -createdb
+# copy the service files to /etc/systemd/system and enable them with systemctl enable --now goatcounter goatcounter-import

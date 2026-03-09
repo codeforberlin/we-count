@@ -15,8 +15,10 @@ from . import app
 
 GOATCOUNTER_URL = "http://127.0.0.1:9090/goatcounter"
 
-@app.app.route("/goatcounter/", defaults={"path": ""})
-@app.app.route("/goatcounter/<path:path>", methods=["GET", "POST", "PUT", "DELETE"])
+application = app.app.server
+
+@application.route("/goatcounter/", defaults={"path": ""})
+@application.route("/goatcounter/<path:path>", methods=["GET", "POST", "PUT", "DELETE"])
 def goatcounter_proxy(path):
     resp = requests.request(
         method=request.method,
@@ -24,7 +26,6 @@ def goatcounter_proxy(path):
         headers={k: v for k, v in request.headers if k.lower() != "host"},
         params=request.query_string.decode(),
         data=request.get_data(),
+        stream=True,
     )
-    return Response(resp.content, status=resp.status_code, headers=dict(resp.headers))
-
-application = app.app.server
+    return Response(resp.raw.read(), status=resp.status_code, headers=dict(resp.headers))

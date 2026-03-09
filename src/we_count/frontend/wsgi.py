@@ -13,7 +13,7 @@ from flask import request, Response
 
 from . import app
 
-GOATCOUNTER_URL = "http://127.0.0.1:9090/goatcounter"
+GOATCOUNTER_URL = "http://127.0.0.1:9090"
 
 application = app.app.server
 
@@ -27,5 +27,6 @@ def goatcounter_proxy(path):
         params=request.query_string.decode(),
         data=request.get_data(),
         stream=True,
+        allow_redirects=False,
     )
     return Response(resp.raw.read(), status=resp.status_code, headers=dict(resp.headers))

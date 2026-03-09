@@ -10,7 +10,6 @@ WorkingDirectory=/home/we-count/goatcounter
 ExecStart=/home/we-count/goatcounter/goatcounter serve \
   -listen=127.0.0.1:9090 \
   -tls=none \
-  -base-path=/goatcounter \
   -automigrate
 Restart=always
 

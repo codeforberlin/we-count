@@ -1,4 +1,4 @@
-# Copyright (c) 2024-2025 Berlin zählt Mobilität
+# Copyright (c) 2024-2026 Berlin zählt Mobilität
 # SPDX-License-Identifier: MIT
 
 # @file    wsgi.py
@@ -6,14 +6,13 @@
 # @author  Michael Behrisch
 # @date    2025-12-01
 
-# this is the entry point for WSGI server like gunicorn
+# this is the entry point for a WSGI server like gunicorn
+# it also redirects requests to a running goatcounter
 
 import requests
 from flask import request, Response
 
 from . import app
-
-GOATCOUNTER_URL = "http://127.0.0.1:9090"
 
 application = app.app.server
 
@@ -22,7 +21,7 @@ application = app.app.server
 def goatcounter_proxy(path):
     resp = requests.request(
         method=request.method,
-        url=f"{GOATCOUNTER_URL}/goatcounter/{path}",
+        url=f"http://127.0.0.1:9090/goatcounter/{path}",
         headers={k: v for k, v in request.headers if k.lower() != "host"},
         params=request.query_string.decode(),
         data=request.get_data(),

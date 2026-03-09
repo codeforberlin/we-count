@@ -22,7 +22,7 @@ application = app.app.server
 def goatcounter_proxy(path):
     resp = requests.request(
         method=request.method,
-        url=f"{GOATCOUNTER_URL}/{path}",
+        url=f"{GOATCOUNTER_URL}/goatcounter/{path}",
         headers={k: v for k, v in request.headers if k.lower() != "host"},
         params=request.query_string.decode(),
         data=request.get_data(),

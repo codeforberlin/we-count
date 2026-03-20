@@ -115,21 +115,22 @@ The map is constantly being developed. The determination of the positions and th
 
 ### Setup
 
-1. Install MySQL client libraries on the machine depending on the Operating System.
-
-2. Install the project's dependencies, preferably in a virtual environment:
+1. Install the project's dependencies, preferably in a virtual environment:
 
 ```sh
+git clone https://github.com/codeforberlin/we-count
+sudo apt install python3-venv locales-all
+python -m venv venv_wecount
+. ./venv_wecount/bin/activate
 pip install -r requirements.txt
 ```
 
 ### Ingest data
 
-Run the following script to ingest the mobility data as a compressed file (note: currently bzm_v01 will work with off-line version only):
+Run the following script to ingest current mobility data as a compressed file:
 
 ```sh
-python src/bzm_get_data.py
-python src/bzm_get_data_stand_alone_v01.py to generate off-line data file for use with current version of bzm_v01.py
+python src/we_count/backend/bzm_get_data.py
 ```
 
 ### Dashboard
@@ -138,5 +139,4 @@ Run the following script to serve a data app built with Dash by Plotly.
 
 ```sh
 python src/bzm_v01.py
-For off-line use make sure the downloaded file "traffic_df_2023_2024_2025_YTD.csv.gz" is available in the src/assets folder (create with bzm_get_data_stand_alone_v01.py)
 ```

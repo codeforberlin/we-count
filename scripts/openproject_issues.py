@@ -36,6 +36,8 @@ def clean_issue(issue, custom_field_names):
     for key, value in issue.items():
         if key in ("id", "subject", "description") or key in custom_field_names:
             result[custom_field_names.get(key, key)] = value
+    result["type"] = issue.get("_links", {}).get("type", {}).get("title")
+    result["status"] = issue.get("_links", {}).get("status", {}).get("title")
     return result
 
 
@@ -77,13 +79,17 @@ def check_issues(issues, geojson_file):
     for feature in geojson.get("features", []):
         props = feature.get("properties", {})
         sid = props.get("segment_id")
-        macs = {inst["mac"] for inst in props.get("instance_ids", {}).values() if "mac" in inst}
+        macs = {inst["mac"]: inst["status"] for inst in props.get("instance_ids", {}).values() if "mac" in inst}
         segments[sid] = macs
 
     errors = 0
+    known_serials = {}
     for issue in issues:
         segment_field = issue.get("Segment", "")
         serial = issue.get("Seriennummer")
+        if serial is None and issue['type'] not in ("Task", "Phase"):
+            print(f"Issue {issue['id']}: No serial set for: {issue['subject']}")
+            errors += 1
         if not segment_field or serial is None:
             continue
         segment_id = int(segment_field.split()[0].split("B")[0].split("A")[0])
@@ -94,6 +100,16 @@ def check_issues(issues, geojson_file):
         elif serial not in macs:
             print(f"Issue {issue['id']}: MAC {serial} not found in segment {segment_id} (known MACs: {macs})")
             errors += 1
+        elif serial in known_serials:
+            print(f"Issue {issue['id']}: Duplicate serial set, already seen in: {known_serials[serial]}")
+            errors += 1
+        elif issue['status'] == "Counting" and macs[serial] != "active":
+            print(f"Issue {issue['id']}: is counting but mac is {macs[serial]}")
+            errors += 1
+        elif issue['status'] != "Counting" and macs[serial] == "active":
+            print(f"Issue {issue['id']}: is {issue['status']} but mac is active")
+            errors += 1
+        known_serials[serial] = issue['id']
 
     if errors == 0:
         print(f"All {len(issues)} issues passed the check.")

@@ -18,9 +18,10 @@ import telraam_positions
 import common
 
 
-BASIC_MODES = ['pedestrian', 'bike', 'car', 'heavy']
-ADVANCED_MODES = ['mode_bus', 'mode_lighttruck', 'mode_motorcycle', 'mode_stroller',
-                  'mode_tractor', 'mode_trailer', 'mode_truck', 'mode_night']
+# original API name -> output column name (derived from COLUMN_MAP)
+MODE_RENAME = {v["original"]: k for k, v in telraam_positions.COLUMN_MAP.items()}
+BASIC_MODES = [v["original"] for k, v in telraam_positions.COLUMN_MAP.items() if not v.get("advanced")]
+ADVANCED_MODES = [v["original"] for k, v in telraam_positions.COLUMN_MAP.items() if v.get("advanced")]
 KEEP_COLUMNS = ["instance_id", "segment_id", "date", "uptime",
                 "direction", "v85", "car_speed_hist_0to120plus",
                 # advanced only:
@@ -78,6 +79,7 @@ def update_data(segments, options, conns):
     if not all_new:
         return None, newest_data
     new_df = pd.concat(all_new, ignore_index=True)
+    new_df['date'] = pd.to_datetime(new_df['date'], utc=True)
     if 'car_speed_hist_0to120plus' in new_df.columns:
         scales = (new_df['car_lft'].fillna(0) + new_df['car_rgt'].fillna(0)) * new_df['uptime'].fillna(0) / 100
         new_df['car_speed_hist_0to120plus'] = [
@@ -85,7 +87,9 @@ def update_data(segments, options, conns):
             for hist, s in zip(new_df['car_speed_hist_0to120plus'], scales)
         ]
     count_cols = [c for c in new_df.columns if c.endswith(('_lft', '_rgt'))]
-    new_df[count_cols] = new_df[count_cols].fillna(0).round().astype('uint16')
+    uptime = new_df['uptime'].fillna(0)
+    new_df[count_cols] = (new_df[count_cols].fillna(0)
+                          .mul(uptime, axis=0).round().astype(pd.UInt16Dtype()))
     float_cols = new_df.select_dtypes(include='float64').columns
     new_df[float_cols] = new_df[float_cols].astype('float32')
     return new_df, newest_data
@@ -93,7 +97,7 @@ def update_data(segments, options, conns):
 
 def _add_totals(df, modes):
     for src in modes:
-        mode = 'ped' if src == 'pedestrian' else src
+        mode = MODE_RENAME.get(src, src)
         lft, rgt = f'{src}_lft', f'{src}_rgt'
         if lft not in df.columns:
             continue
@@ -109,7 +113,7 @@ def _prepare_df(segments, df, advanced, month):
     df_out = df[df['segment_id'].isin(tz_map.keys())]
     if df_out.empty:
         return None
-    utc = pd.to_datetime(df_out['date'], utc=True)
+    utc = df_out['date']
     if month is not None:
         mask = (utc.dt.year == month[0]) & (utc.dt.month == month[1])
         df_out, utc = df_out[mask], utc[mask]
@@ -122,6 +126,10 @@ def _prepare_df(segments, df, advanced, month):
         index=df_out.index
     )
     df_out = df_out.assign(date_local=local_ts).drop(columns=['date'])
+    # Restore uptime-corrected counts (raw counts / uptime); uptime=0 rows have count=0
+    count_cols = [c for c in df_out.columns if c.endswith(('_lft', '_rgt'))]
+    uptime = df_out['uptime'].where(df_out['uptime'] > 0, other=1)
+    df_out[count_cols] = df_out[count_cols].div(uptime, axis=0)
     modes = BASIC_MODES + (ADVANCED_MODES if advanced else [])
     df_out = _add_totals(df_out, modes)
 
@@ -141,7 +149,7 @@ def _prepare_df(segments, df, advanced, month):
         columns=hist_cols, index=df_out.index)
     df_out = pd.concat([df_out.drop(columns=['car_speed_hist_0to120plus']), hist_df], axis=1)
 
-    mode_cols = [f'{"ped" if m == "pedestrian" else m}_{s}' for m in modes for s in ('lft', 'rgt', 'total')]
+    mode_cols = [f'{MODE_RENAME.get(m, m)}_{s}' for m in modes for s in ('lft', 'rgt', 'total')]
     output_cols = ['segment_id', 'date_local', 'uptime'] + mode_cols + ['v85'] + hist_cols
     return df_out[output_cols]
 
@@ -187,7 +195,7 @@ def main(args=None):
             if nd is not None and (newest_data is None or newest_data < nd):
                 newest_data = nd
             if new_df is not None:
-                for year, year_new in new_df.groupby(new_df['date'].str[:4]):
+                for year, year_new in new_df.groupby(new_df['date'].dt.year):
                     yf = common.year_file(options.parquet, year)
                     year_df = common.merge_parquet(year_new, yf)
                     year_df = year_df.sort_values(['segment_id', 'date'])

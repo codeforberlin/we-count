@@ -118,7 +118,7 @@ def load_parquet_years(parquet, years=None, segments=None):
     if not year_files:
         if os.path.exists(parquet):
             df = pd.read_parquet(parquet)
-            return df if years is None else df[df['date'].str[:4].isin([str(y) for y in years])]
+            return df if years is None else df[df['date'].dt.year.isin(years)]
         return None
     parts = []
     for yf in year_files:

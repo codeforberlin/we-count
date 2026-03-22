@@ -21,14 +21,8 @@ import bast_positions
 import common
 
 
-VEHICLE_TYPES = ['KFZ', 'SV', 'Mot', 'Pkw', 'Lfw', 'PmA', 'Bus', 'LoA', 'LmA', 'Sat', 'Son']
-# KFZ = sum of all, SV = sum of heavy vehicles — both are derived and not stored
-DERIVED_TYPES = {'KFZ', 'SV'}
 VT_NAMES = {'Mot': 'motorcycle', 'Pkw': 'car', 'Lfw': 'delivery_van', 'PmA': 'car_trailer',
             'Bus': 'bus', 'LoA': 'rigid_truck', 'LmA': 'truck_trailer', 'Sat': 'semi_truck', 'Son': 'other'}
-NON_DERIVED = [(i, vt) for i, vt in enumerate(VEHICLE_TYPES) if vt not in DERIVED_TYPES]
-DATA_COLUMNS = bast_positions.DATA_COLUMNS
-N_VT = len(VEHICLE_TYPES)
 _TZ = ZoneInfo("Europe/Berlin")
 
 
@@ -44,19 +38,32 @@ def _parse_value(s):
 
 
 def _parse_station_file(content):
-    """Parse a BASt station data file. Returns (rows, directions) where directions is
-    ['lft', 'rgt'] for bidirectional stations or ['lft'] for unidirectional ones."""
+    """Parse a BASt station data file. Returns (rows, lanes_lft, lanes_rgt)."""
     lines = content.splitlines()
     if len(lines) < 4:
-        return [], ['lft']
+        return [], 1, 0
     # R line: R{lanes_lft} {lanes_rgt} {lft_name} {lft_heading} {rgt_name} {rgt_heading};
     r_parts = lines[1][1:].split()
     try:
         lanes_lft, lanes_rgt = int(r_parts[0]), int(r_parts[1])
     except (IndexError, ValueError):
-        return [], ['lft']
+        return [], 1, 0
 
-    directions = ['lft', 'rgt'] if lanes_rgt > 0 else ['lft']
+    # S line: S{n_groups} {n_types} {group_name_1} ... {type_name_1} ...
+    # Positions 1-2: n_groups, 4-5: n_types (fixed-width)
+    s_line = lines[2]
+    try:
+        n_groups = int(s_line[1:3])
+        n_types = int(s_line[4:6])
+    except (ValueError, IndexError):
+        return [], ['lft']
+    # Type names follow the group names in the S-line tokens
+    s_tokens = s_line[1:].rstrip(';').split()
+    type_names = s_tokens[2 + n_groups:2 + n_groups + n_types]
+    # Map type names to output column names; skip types not in VT_NAMES
+    type_cols = [(i, VT_NAMES[name]) for i, name in enumerate(type_names) if name in VT_NAMES]
+
+    total_lanes = lanes_lft + lanes_rgt
     rows = []
     for line in lines[3:]:
         parts = line.rstrip(';\n').split()
@@ -64,38 +71,47 @@ def _parse_station_file(content):
             continue
         first = parts[0]
         if ':' in first:
-            # Merged token "YYMMDDqHH:MM" — quality char sits between date and time
+            # Merged token "YYMMDDsHH:MM" — status char 's' sits between date and time
+            # when the status is non-space (e.g. 'i' for inserted/extra DST hour)
             colon = first.index(':')
             date_str = first[:colon - 3]
+            status = first[colon - 3]
             time_str = first[colon - 2:colon + 3]
             values = parts[1:]
         else:
             date_str, time_str, values = first, parts[1], parts[2:]
+            status = ' '
         try:
             year = 2000 + int(date_str[:2])
             # Time is END of measurement interval; subtract 1 h to get start
             month, day, hour = int(date_str[2:4]), int(date_str[4:6]), int(time_str[:2]) - 1
         except (ValueError, IndexError):
             continue
-        utc_dt = datetime.datetime(year, month, day, hour, 0, tzinfo=_TZ).astimezone(datetime.timezone.utc)
+        # fold=1 for 'i' (inserted) rows: in autumn DST this is the second occurrence
+        # of the repeated local hour, which maps to the CET (post-transition) UTC time.
+        fold = 1 if status == 'i' else 0
+        utc_dt = datetime.datetime(year, month, day, hour, 0, fold=fold, tzinfo=_TZ).astimezone(datetime.timezone.utc)
 
-        def lane_sum(type_idx, lane_offset, n_lanes):
-            total = 0
-            for lane in range(n_lanes):
-                idx = (lane_offset + lane) * N_VT + type_idx
+        # Token layout: total_lanes * n_groups group tokens first, then
+        # total_lanes * n_types individual-type tokens.
+        row = {'date': utc_dt}
+        for t, col in type_cols:
+            for lane in range(lanes_lft):
+                idx = total_lanes * n_groups + lane * n_types + t
                 if idx < len(values):
                     count, q = _parse_value(values[idx])
-                    if q != 'a':
-                        total += count
-            return total
-
-        row = {'date': utc_dt}
-        for type_idx, vt in NON_DERIVED:
-            col = VT_NAMES[vt]
-            row[f'{col}_lft'] = lane_sum(type_idx, 0, lanes_lft)
-            row[f'{col}_rgt'] = lane_sum(type_idx, lanes_lft, lanes_rgt) if lanes_rgt > 0 else pd.NA
+                    row[f'{col}_lft_{lane + 1}'] = pd.NA if q == 'a' else count
+                else:
+                    row[f'{col}_lft_{lane + 1}'] = pd.NA
+            for lane in range(lanes_rgt):
+                idx = total_lanes * n_groups + (lanes_lft + lane) * n_types + t
+                if idx < len(values):
+                    count, q = _parse_value(values[idx])
+                    row[f'{col}_rgt_{lane + 1}'] = pd.NA if q == 'a' else count
+                else:
+                    row[f'{col}_rgt_{lane + 1}'] = pd.NA
         rows.append(row)
-    return rows, directions
+    return rows, lanes_lft, lanes_rgt
 
 
 def _parse_monthly_zip(zf, year, month, things, verbose=0):
@@ -106,7 +122,7 @@ def _parse_monthly_zip(zf, year, month, things, verbose=0):
     ext = f"{year % 100:02d}{format(month, 'X')}"
     station_ids = set(things.keys())
     all_rows = []
-    station_directions = {}
+    station_lanes = {}
     found = 0
     for name in zf.namelist():
         base = os.path.basename(name)
@@ -120,31 +136,34 @@ def _parse_monthly_zip(zf, year, month, things, verbose=0):
         if sid not in station_ids:
             continue
         found += 1
-        rows, directions = _parse_station_file(zf.read(name).decode('latin-1'))
-        station_directions[sid] = directions
+        rows, lanes_lft, lanes_rgt = _parse_station_file(zf.read(name).decode('latin-1'))
+        station_lanes[sid] = (lanes_lft, lanes_rgt)
         for row in rows:
             all_rows.append({'segment_id': sid, **row})
     if verbose:
         print(f"  {year}-{month:02d}: {found} station files, "
               f"{len(set(r['segment_id'] for r in all_rows))} with data")
     if not all_rows:
-        return None, station_directions
+        return None, station_lanes
     df = pd.DataFrame(all_rows)
-    for full in DATA_COLUMNS:
-        if full in df.columns:
-            df[full] = df[full].astype(pd.Int32Dtype())
-    return df, station_directions
+    count_cols = [c for c in df.columns if c not in ('segment_id', 'date')]
+    for c in count_cols:
+        df[c] = df[c].astype(pd.UInt16Dtype())
+    return df, station_lanes
 
 
-def _save_last_backup(json_file, backup_date, station_directions=None):
+def _save_last_backup(json_file, backup_date, station_lanes=None):
     with open(json_file, encoding="utf8") as f:
         content = json.load(f)
     content["last_data_backup"] = backup_date.isoformat()
-    if station_directions:
+    if station_lanes:
         for feature in content.get("features", []):
             sid = feature["properties"]["segment_id"]
-            if sid in station_directions:
-                feature["properties"]["directions"] = station_directions[sid]
+            if sid in station_lanes:
+                lft, rgt = station_lanes[sid]
+                feature["properties"]["lanes_lft"] = lft
+                feature["properties"]["lanes_rgt"] = rgt
+                feature["properties"]["directions"] = ["lft", "rgt"] if rgt > 0 else ["lft"]
     common.save_json(json_file, content)
 
 
@@ -164,7 +183,8 @@ def _prepare_df(things, df, month=None):
         index=df_out.index
     )
     df_out = df_out.assign(date_local=local_ts).drop(columns=["date"])
-    return df_out[["segment_id", "date_local"] + list(DATA_COLUMNS)]
+    data_cols = [c for c in df_out.columns if c not in ("segment_id", "date_local")]
+    return df_out[["segment_id", "date_local"] + data_cols]
 
 
 def main(args=None):
@@ -210,7 +230,7 @@ def main(args=None):
         return
 
     newest_data = None
-    all_station_directions = {}
+    all_station_lanes = {}
     tmp_zip = "/tmp/bast_data.zip"
     try:
         for url, months in zips_to_process.items():
@@ -221,16 +241,20 @@ def main(args=None):
                 for year, month in months:
                     if is_nested:
                         inner_name = f"DZ_{year}_{month:02d}_Rohdaten.zip"
-                        if inner_name not in outer_zf.namelist():
+                        inner_name2 = f"DZ-{year}-{month:02d}.zip"
+                        if inner_name in outer_zf.namelist():
+                            inner_zf = zipfile.ZipFile(io.BytesIO(outer_zf.read(inner_name)))
+                        elif inner_name2 in outer_zf.namelist():
+                            inner_zf = zipfile.ZipFile(io.BytesIO(outer_zf.read(inner_name2)))
+                        else:
                             if options.verbose:
-                                print(f"  {inner_name} not in archive, skipping.")
+                                print(f"  {inner_name} and {inner_name2} not in archive, skipping.")
                             continue
-                        inner_zf = zipfile.ZipFile(io.BytesIO(outer_zf.read(inner_name)))
                     else:
                         inner_zf = outer_zf
 
-                    new_df, station_directions = _parse_monthly_zip(inner_zf, year, month, things, options.verbose)
-                    all_station_directions.update(station_directions)
+                    new_df, station_lanes = _parse_monthly_zip(inner_zf, year, month, things, options.verbose)
+                    all_station_lanes.update(station_lanes)
                     if is_nested:
                         inner_zf.close()
 
@@ -244,7 +268,7 @@ def main(args=None):
                         del year_df, new_df
 
                     newest_data = datetime.datetime(year, month, 1, tzinfo=datetime.timezone.utc)
-                    _save_last_backup(options.json_file, newest_data, all_station_directions)
+                    _save_last_backup(options.json_file, newest_data, all_station_lanes)
     finally:
         if os.path.exists(tmp_zip):
             os.remove(tmp_zip)

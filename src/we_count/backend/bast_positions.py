@@ -34,8 +34,10 @@ COLUMN_MAP = {
     "heavy":         {"original": "SV",  "sum_of": ["bus", "rigid_truck", "truck_trailer", "semi_truck", "other"]},
     "motor_vehicle": {"original": "KFZ", "sum_of": ["motorcycle", "car", "delivery_van", "car_trailer", "bus", "rigid_truck", "truck_trailer", "semi_truck", "other"]},
 }
-DATA_COLUMNS = [f'{k}_{d}' for k, v in COLUMN_MAP.items()
-                if "sum_of" not in v for d in v.get("directions", [])]
+# Base vehicle-type column names (without direction/lane suffixes).
+# Actual parquet columns are named {type}_lft_{n} / {type}_rgt_{n} where n is the
+# 1-indexed lane number, read from the S-header of each BASt station file.
+DATA_COLUMNS = [k for k, v in COLUMN_MAP.items() if "sum_of" not in v]
 
 
 def get_zip_urls(page_url, retries=3, retry_wait=30):
@@ -47,7 +49,6 @@ def get_zip_urls(page_url, retries=3, retry_wait=30):
     text = r.text
     annual = {}
     for m in re.finditer(r'files\.bast\.de/index\.php/s/(\w+)/download/DZ_(\d{4})_Rohdaten\.zip', text):
-        print(m)
         year = int(m.group(2))
         annual[year] = f"https://{m.group()}"
     monthly = {}

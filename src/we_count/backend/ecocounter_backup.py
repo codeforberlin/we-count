@@ -53,12 +53,14 @@ def update_data(things, options):
         if all_dates:
             new_df = pd.DataFrame({
                 "segment_id": sid,
-                "date": all_dates,
-                "bike_lft": pd.array([obs_lft.get(d, 0) for d in all_dates], dtype="uint16"),
-                "bike_rgt": pd.array([obs_rgt.get(d, 0) for d in all_dates], dtype="uint16"),
+                "date": pd.to_datetime(all_dates, utc=True),
+                "bike_lft": (pd.array([obs_lft.get(d, 0) for d in all_dates], dtype=pd.UInt16Dtype())
+                             if ds_lft else pd.array([pd.NA] * len(all_dates), dtype=pd.UInt16Dtype())),
+                "bike_rgt": (pd.array([obs_rgt.get(d, 0) for d in all_dates], dtype=pd.UInt16Dtype())
+                             if ds_rgt else pd.array([pd.NA] * len(all_dates), dtype=pd.UInt16Dtype())),
             })
             all_new.append(new_df)
-            last = common.parse_utc(all_dates[-1])
+            last = common.parse_utc(all_dates[-1])  # all_dates are ISO strings from FROST
             if newest_data is None or newest_data < last:
                 newest_data = last
         t[backup_date] = datetime.datetime.now(datetime.timezone.utc).replace(
@@ -72,7 +74,7 @@ def _prepare_df(things, df, month=None):
     df_out = df[df["segment_id"].isin(tz_map.keys())]
     if df_out.empty:
         return None
-    utc = pd.to_datetime(df_out["date"], utc=True)
+    utc = df_out["date"]
     if month is not None:
         mask = (utc.dt.year == month[0]) & (utc.dt.month == month[1])
         df_out, utc = df_out[mask], utc[mask]
@@ -83,8 +85,7 @@ def _prepare_df(things, df, month=None):
         index=df_out.index
     )
     df_out = df_out.assign(date_local=local_ts).drop(columns=["date"])
-    df_out["bike_total"] = (df_out["bike_lft"] + df_out["bike_rgt"]).astype("uint16")
-    return df_out[["segment_id", "date_local", "bike_lft", "bike_rgt", "bike_total"]]
+    return df_out[["segment_id", "date_local", "bike_lft", "bike_rgt"]]
 
 
 def main(args=None):

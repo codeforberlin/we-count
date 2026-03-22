@@ -17,7 +17,7 @@ import common
 
 PERIOD_NORMAL = "1-Stunde"
 PERIOD_ADVANCED = "5-Min"
-VEHICLES = ["KFZ", "PKW", "LKW"]
+VT_NAMES = {"PKW": "car", "LKW": "heavy"}
 
 
 
@@ -40,7 +40,7 @@ def update_data(things, options):
     all_new = []
     for sid, t in things.items():
         ds_by_vehicle = {v: t.get("datastreams", {}).get(v, {}).get("Anzahl", {}).get(period)
-                         for v in VEHICLES}
+                         for v in VT_NAMES}
         if not any(ds_by_vehicle.values()):
             print(f"Missing datastreams for {t.get('name', sid)}, skipping.", file=sys.stderr)
             continue
@@ -55,10 +55,13 @@ def update_data(things, options):
             t[backup_date] = datetime.datetime.now(datetime.timezone.utc).replace(
                 hour=0, minute=0, second=0, microsecond=0).isoformat()
             continue
-        row = {"segment_id": sid, "date": all_dates}
-        for v in VEHICLES:
-            obs = obs_by_vehicle.get(v, {})
-            row[v.lower()] = pd.array([obs.get(d, 0) for d in all_dates], dtype="uint16")
+        row = {"segment_id": sid, "date": pd.to_datetime(all_dates, utc=True)}
+        for v, t in VT_NAMES:
+            if v not in obs_by_vehicle:
+                row[t] = pd.array([pd.NA] * len(all_dates), dtype=pd.UInt16Dtype())
+            else:
+                obs = obs_by_vehicle[v]
+                row[t] = pd.array([obs.get(d, 0) for d in all_dates], dtype=pd.UInt16Dtype())
         all_new.append(pd.DataFrame(row))
         last = common.parse_utc(all_dates[-1])
         if newest_data is None or newest_data < last:
@@ -73,7 +76,7 @@ def _prepare_df(things, df, month=None):
     df_out = df[df["segment_id"].isin(tz_map.keys())]
     if df_out.empty:
         return None
-    utc = pd.to_datetime(df_out["date"], utc=True)
+    utc = df_out["date"]
     if month is not None:
         mask = (utc.dt.year == month[0]) & (utc.dt.month == month[1])
         df_out, utc = df_out[mask], utc[mask]
@@ -84,8 +87,7 @@ def _prepare_df(things, df, month=None):
         index=df_out.index
     )
     df_out = df_out.assign(date_local=local_ts).drop(columns=["date"])
-    count_cols = [v.lower() for v in VEHICLES]
-    return df_out[["segment_id", "date_local"] + count_cols]
+    return df_out[["segment_id", "date_local"] + list(VT_NAMES.values())]
 
 
 def main(args=None):
@@ -107,7 +109,7 @@ def main(args=None):
         if nd is not None and (newest_data is None or newest_data < nd):
             newest_data = nd
         if new_df is not None:
-            for year, year_new in new_df.groupby(new_df["date"].str[:4]):
+            for year, year_new in new_df.groupby(new_df["date"].dt.year):
                 yf = common.year_file(options.parquet, year)
                 year_df = common.merge_parquet(year_new, yf)
                 year_df = year_df.sort_values(["segment_id", "date"])

@@ -52,12 +52,12 @@ def _fetch_raw(segment_ids, options, since):
         dt = datetime.datetime.fromtimestamp(a["datum"] / 1000, tz=datetime.timezone.utc)
         rows.append({
             "segment_id": a["abschnitt_id"],
-            "date": dt.isoformat(),
-            "lkw": a["anzahl_befahrungen"] or 0,
+            "date": dt,
+            "heavy": a["anzahl_befahrungen"],
         })
     if not rows:
         return None, None
-    newest = common.parse_utc(max(r["date"] for r in rows))
+    newest = max(r["date"] for r in rows)
     return rows, newest
 
 
@@ -66,7 +66,7 @@ def _prepare_df(things, df, month=None):
     df_out = df[df["segment_id"].isin(tz_map.keys())]
     if df_out.empty:
         return None
-    utc = pd.to_datetime(df_out["date"], utc=True)
+    utc = df_out["date"]
     if month is not None:
         mask = (utc.dt.year == month[0]) & (utc.dt.month == month[1])
         df_out, utc = df_out[mask], utc[mask]
@@ -77,7 +77,7 @@ def _prepare_df(things, df, month=None):
         index=df_out.index
     )
     df_out = df_out.assign(date_local=local_ts).drop(columns=["date"])
-    return df_out[["segment_id", "date_local", "lkw"]]
+    return df_out[["segment_id", "date_local", "heavy"]]
 
 
 def main(args=None):
@@ -106,8 +106,8 @@ def main(args=None):
         if not batch_rows:
             continue
         new_df = pd.DataFrame(batch_rows)
-        new_df["lkw"] = new_df["lkw"].astype("uint32")
-        for year, year_new in new_df.groupby(new_df["date"].str[:4]):
+        new_df["heavy"] = new_df["heavy"].astype(pd.UInt16Dtype())
+        for year, year_new in new_df.groupby(new_df["date"].dt.year):
             yf = common.year_file(options.parquet, year)
             year_df = common.merge_parquet(year_new, yf)
             year_df = year_df.sort_values(["segment_id", "date"])

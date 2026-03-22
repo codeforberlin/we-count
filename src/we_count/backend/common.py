@@ -159,12 +159,15 @@ def save_segments(segments, json_file):
     save_json(json_file, content)
 
 
-def _get_with_retry(url, params, retries=3, retry_wait=60):
+_HEADERS = {"User-Agent": "WeCount/1.0 (https://github.com/codeforberlin/we-count)"}
+
+
+def _get_with_retry(url, params, retries=3, retry_wait=60, timeout=120, stream=False):
     """GET with retry on transient errors (5xx, connection/timeout).
     Returns the response on success, None on permanent failure."""
     for attempt in range(retries):
         try:
-            r = requests.get(url, params=params)
+            r = requests.get(url, params=params, headers=_HEADERS, timeout=timeout, stream=stream)
         except requests.exceptions.RequestException as e:
             print(f"Connection error fetching {url}: {e}, retrying in {retry_wait}s ({attempt + 1}/{retries})", file=sys.stderr)
             if attempt + 1 < retries:

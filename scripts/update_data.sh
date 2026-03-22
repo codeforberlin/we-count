@@ -31,4 +31,5 @@ else
     src/we_count/backend/maut_backup.py -j csv/bzm_maut_segments.geojson -p parquet/bzm_maut_traffic_data.parquet -v --limit 10
     src/we_count/backend/vmk_import.py -j csv/bzm_vmk_2023.json
     src/we_count/backend/vmk_import.py -j csv/bzm_vmk_2019.json --year 2019
+    src/we_count/backend/bast_backup.py -j csv/bzm_bast_segments.geojson -p parquet/bzm_bast_traffic_data.parquet -v
 fi

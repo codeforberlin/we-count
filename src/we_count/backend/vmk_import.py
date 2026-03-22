@@ -24,6 +24,13 @@ import common
 
 WFS_BASE = "https://gdi.berlin.de/services/wfs/verkehrsmengen_{year}"
 REFRESH_DAYS = 30
+COLUMN_MAP = {
+    "car":           {"original": "derived: dtvw_kfz - dtvw_lkw"},
+    "heavy":         {"original": "dtvw_lkw"},
+    "bike":          {"original": "dtvw_rad"},
+    "motor_vehicle": {"original": "dtvw_kfz", "sum_of": ["car", "heavy"]},
+}
+DATA_COLUMNS = list(COLUMN_MAP.keys())
 
 
 def _fetch_layer(wfs_url, layer_name, verbose=0):
@@ -74,12 +81,12 @@ def main(args=None):
         print(f"Fetching WFS layers for {year}...")
 
     layers = [
-        (f"verkehrsmengen_{year}:dtvw{year}kfz", "dtvw_kfz"),
-        (f"verkehrsmengen_{year}:dtvw{year}lkw", "dtvw_lkw"),
-        (f"verkehrsmengen_{year}:dtvw{year}rad", "dtvw_rad"),
+        (f"verkehrsmengen_{year}:dtvw{year}kfz", "dtvw_kfz", "motor_vehicle"),
+        (f"verkehrsmengen_{year}:dtvw{year}lkw", "dtvw_lkw", "heavy"),
+        (f"verkehrsmengen_{year}:dtvw{year}rad", "dtvw_rad", "bike"),
     ]
     features_by_link = {}
-    for layer_name, prop_name in layers:
+    for layer_name, prop_name, translation in layers:
         fetched = _fetch_layer(wfs_url, layer_name, options.verbose)
         for f in fetched:
             link_id = f["properties"]["link_id"]
@@ -89,16 +96,24 @@ def main(args=None):
                     "geometry": f["geometry"],
                     "properties": {"segment_id": link_id, **f["properties"]},
                 }
-            features_by_link[link_id]["properties"][prop_name] = f["properties"].get(prop_name)
+            features_by_link[link_id]["properties"][translation] = f["properties"].get(prop_name)
     if not features_by_link:
         print(f"No features found for year {year}. Is this year available?", file=sys.stderr)
         return False
 
+    # Derive car = motor_vehicle - heavy
+    for f in features_by_link.values():
+        p = f["properties"]
+        mv = p.pop("motor_vehicle", None)
+        heavy = p.get("heavy")
+        if mv is not None and heavy is not None:
+            p["car"] = mv - heavy
+
     geo_features = list(features_by_link.values())
     if options.verbose:
-        kfz_count = sum(1 for f in geo_features if f["properties"].get("dtvw_kfz") is not None)
-        print(f"Saving {len(geo_features)} features ({kfz_count} KFZ/LKW + "
-              f"{len(geo_features) - kfz_count} Rad-only) to {options.json_file}")
+        car_count = sum(1 for f in geo_features if f["properties"].get("car") is not None)
+        print(f"Saving {len(geo_features)} features ({car_count} with motor vehicle data + "
+              f"{len(geo_features) - car_count} bike-only) to {options.json_file}")
 
     if os.path.dirname(options.json_file):
         os.makedirs(os.path.dirname(options.json_file), exist_ok=True)
@@ -107,6 +122,8 @@ def main(args=None):
         "type": "FeatureCollection",
         "year": year,
         "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "columns": DATA_COLUMNS,
+        "column_map": COLUMN_MAP,
         "features": geo_features,
     })
     return True

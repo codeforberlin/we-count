@@ -13,6 +13,26 @@ import sys
 import osm
 import common
 
+COLUMN_MAP = {
+    "ped":           {"original": "pedestrian",      "directions": ["lft", "rgt"], "sum_of": ["stroller"]},
+    "bike":          {"original": "bike",            "directions": ["lft", "rgt"], "sum_of": ["motorcycle"]},
+    "car":           {"original": "car",             "directions": ["lft", "rgt"], "sum_of": ["delivery_van"]},
+    "heavy":         {"original": "heavy",           "directions": ["lft", "rgt"],
+                      "sum_of": ["bus", "rigid_truck", "truck_trailer", "tractor"]},
+    "bus":           {"original": "mode_bus",        "directions": ["lft", "rgt"], "advanced": True},
+    "delivery_van":  {"original": "mode_lighttruck", "directions": ["lft", "rgt"], "advanced": True},
+    "motorcycle":    {"original": "mode_motorcycle", "directions": ["lft", "rgt"], "advanced": True},
+    "stroller":      {"original": "mode_stroller",   "directions": ["lft", "rgt"], "advanced": True},
+    "tractor":       {"original": "mode_tractor",    "directions": ["lft", "rgt"], "advanced": True},
+    "truck_trailer": {"original": "mode_trailer",    "directions": ["lft", "rgt"], "advanced": True},
+    "rigid_truck":   {"original": "mode_truck",      "directions": ["lft", "rgt"], "advanced": True},
+    "night":         {"original": "mode_night",      "directions": ["lft", "rgt"], "advanced": True},
+}
+DATA_COLUMNS = [f'{k}_{d}' for k, v in COLUMN_MAP.items()
+                if not v.get("advanced") for d in v["directions"]]
+ADVANCED_DATA_COLUMNS = [f'{k}_{d}' for k, v in COLUMN_MAP.items()
+                         if v.get("advanced") for d in v["directions"]]
+
 
 def update_props(bbox_segments, old_data, conns, retry, max_prop_updates):
     now = datetime.datetime.now(datetime.UTC)
@@ -65,6 +85,9 @@ def main(args=None):
         "format description at https://app.swaggerhub.com/apis-docs/telraam/Telraam-API/1.2.0#/Segments/get_v1_segments_id__segment_id_",
         "created_at": created_at.isoformat(),
         "type": "FeatureCollection",
+        "columns": DATA_COLUMNS,
+        "advanced_columns": ADVANCED_DATA_COLUMNS,
+        "column_map": COLUMN_MAP,
         "features": update_props(bbox_segments, old_data, conns, options.retry, options.max_prop_updates)
     }
     osm.add_osm(res["features"], {sid: f["properties"] for sid, f in old_data.items()})

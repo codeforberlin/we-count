@@ -16,6 +16,8 @@ import common
 
 
 DEFAULT_URL = "https://webgis.toll-collect.de/server/rest/services/Hosted"
+COLUMN_MAP = {"heavy": {"original": "lkw"}}
+DATA_COLUMNS = ["heavy"]
 
 
 def _esri_polyline_to_geojson(geom):
@@ -91,6 +93,8 @@ def main(args=None):
     common.save_json(options.json_file, {
         "type": "FeatureCollection",
         "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "columns": DATA_COLUMNS,
+        "column_map": COLUMN_MAP,
         "features": features,
     })
     return True

@@ -14,6 +14,12 @@ import common
 
 
 DEFAULT_URL = "https://api.viz.berlin.de/FROST-Server-TEU/v1.1"
+COLUMN_MAP = {
+    "car":           {"original": "PKW"},
+    "heavy":         {"original": "LKW"},
+    "motor_vehicle": {"original": "KFZ", "sum_of": ["car", "heavy"]},
+}
+DATA_COLUMNS = [k for k, v in COLUMN_MAP.items() if "sum_of" not in v]
 
 
 def main(args=None):
@@ -80,6 +86,8 @@ def main(args=None):
     result = {
         "type": "FeatureCollection",
         "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "columns": DATA_COLUMNS,
+        "column_map": COLUMN_MAP,
         "features": features,
     }
     common.save_json(options.json_file, result)

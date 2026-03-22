@@ -15,6 +15,8 @@ import common
 
 
 DEFAULT_URL = "https://api.viz.berlin.de/FROST-Server-EcoCounter2/v1.1"
+COLUMN_MAP = {"bike": {"original": "bike", "directions": ["lft", "rgt"]}}
+DATA_COLUMNS = [f'{k}_{d}' for k, v in COLUMN_MAP.items() for d in v.get("directions", [])]
 
 
 def main(args=None):
@@ -94,6 +96,8 @@ def main(args=None):
     result = {
         "type": "FeatureCollection",
         "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "columns": DATA_COLUMNS,
+        "column_map": COLUMN_MAP,
         "features": features,
     }
     common.save_json(options.json_file, result)

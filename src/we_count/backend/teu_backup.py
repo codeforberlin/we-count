@@ -56,7 +56,7 @@ def update_data(things, options):
                 hour=0, minute=0, second=0, microsecond=0).isoformat()
             continue
         row = {"segment_id": sid, "date": pd.to_datetime(all_dates, utc=True)}
-        for v, t in VT_NAMES:
+        for v, t in VT_NAMES.items():
             if v not in obs_by_vehicle:
                 row[t] = pd.array([pd.NA] * len(all_dates), dtype=pd.UInt16Dtype())
             else:

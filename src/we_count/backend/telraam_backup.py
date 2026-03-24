@@ -103,7 +103,7 @@ def _add_totals(df, modes):
             continue
         if src != mode:
             df = df.rename(columns={lft: f'{mode}_lft', rgt: f'{mode}_rgt'})
-        df[f'{mode}_total'] = (df[f'{mode}_lft'] + df[f'{mode}_rgt']).astype('uint16')
+        df[f'{mode}_total'] = df[f'{mode}_lft'].fillna(0) + df[f'{mode}_rgt'].fillna(0)
     return df
 
 

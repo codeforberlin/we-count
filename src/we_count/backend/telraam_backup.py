@@ -88,8 +88,8 @@ def update_data(segments, options, conns):
         ]
     count_cols = [c for c in new_df.columns if c.endswith(('_lft', '_rgt'))]
     uptime = new_df['uptime'].fillna(0)
-    new_df[count_cols] = (new_df[count_cols].fillna(0)
-                          .mul(uptime, axis=0).round().astype(pd.UInt16Dtype()))
+    counts = new_df[count_cols].fillna(0).mul(uptime, axis=0).round()
+    new_df[count_cols] = counts.where(counts <= 65535).astype(pd.UInt16Dtype())
     float_cols = new_df.select_dtypes(include='float64').columns
     new_df[float_cols] = new_df[float_cols].astype('float32')
     return new_df, newest_data

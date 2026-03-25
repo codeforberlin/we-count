@@ -55,7 +55,7 @@ def update_data(things, options):
             t[backup_date] = datetime.datetime.now(datetime.timezone.utc).replace(
                 hour=0, minute=0, second=0, microsecond=0).isoformat()
             continue
-        row = {"segment_id": sid, "date": pd.to_datetime(all_dates, utc=True)}
+        row = {"segment_id": sid, "date": pd.to_datetime(all_dates, utc=True, format="ISO8601")}
         for name, translation in VT_NAMES.items():
             if name not in obs_by_vehicle:
                 row[translation] = pd.array([pd.NA] * len(all_dates), dtype=pd.UInt16Dtype())

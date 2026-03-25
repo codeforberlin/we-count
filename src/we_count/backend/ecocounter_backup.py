@@ -53,7 +53,7 @@ def update_data(things, options):
         if all_dates:
             new_df = pd.DataFrame({
                 "segment_id": sid,
-                "date": pd.to_datetime(all_dates, utc=True),
+                "date": pd.to_datetime(all_dates, utc=True, format="ISO8601"),
                 "bike_lft": (pd.array([obs_lft.get(d, 0) for d in all_dates], dtype=pd.UInt16Dtype())
                              if ds_lft else pd.array([pd.NA] * len(all_dates), dtype=pd.UInt16Dtype())),
                 "bike_rgt": (pd.array([obs_rgt.get(d, 0) for d in all_dates], dtype=pd.UInt16Dtype())

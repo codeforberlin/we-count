@@ -67,6 +67,9 @@ msgstr "Englisch"
 msgid "Deutsch"
 msgstr "German"
 
+msgid "Main filters:"
+msgstr "Hauptfilter:"
+
 #: bzm_v01.py:429
 msgid "Select street:"
 msgstr "Wähle Straße:"
@@ -355,16 +358,19 @@ msgid " measurements"
 msgstr " Messungen"
 
 #: bzm_v01.py:769
-msgid "Dashboard development & creation:"
-msgstr "Dashboard-Entwicklung & Entwurf:"
+msgid "Dashboard development: "
+msgstr "Dashboard-Entwicklung: "
 
 #: bzm_v01.py:769
 msgid " and "
 msgstr " und "
 
 #: bzm_v01.py:772
-msgid "For dashboard improvement requests email us:"
-msgstr "Für Vorschläge oder Verbesserungen senden Sie uns eine E-Mail:"
+msgid "For dashboard improvement requests: "
+msgstr "Für Vorschläge oder Verbesserungen: "
+
+msgid "email us"
+msgstr "senden Sie uns eine E-Mail"
 
 #: bzm_v01.py:777
 msgid "Contact Us"

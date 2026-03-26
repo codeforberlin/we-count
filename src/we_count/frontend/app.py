@@ -646,13 +646,12 @@ def update_map(clickData, id_street, hardware_version, toggle_active_filter, tog
     Input(component_id='toggle_active_filter', component_property='value'),
     Input(component_id='hardware_version', component_property='value'),
     Input(component_id='radio_y_axis', component_property='value'),
-    Input(component_id='floating_button', component_property='n_clicks'),
     Input(component_id='language_selector', component_property='value'),
     Input(component_id='toggle_map_style', component_property='value'),
     prevent_initial_call='initial_duplicate',
 )
 
-def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, end_date, hour_range, toggle_uptime_filter, toggle_active_filter, hardware_version, radio_y_axis, floating_button, lang_code_dd, toggle_map_style):
+def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, end_date, hour_range, toggle_uptime_filter, toggle_active_filter, hardware_version, radio_y_axis, lang_code_dd, toggle_map_style):
 
     callback_trigger = ctx.triggered_id
 

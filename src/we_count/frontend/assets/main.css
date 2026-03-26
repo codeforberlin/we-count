@@ -30,3 +30,25 @@ body {
   border-color: var(--bs-primary) !important;
   box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.3);
 }
+
+.header-fixed {
+  height: 1.0rem;        /* adjust to fit 1–2 lines */
+  line-height: 1.0rem;
+  overflow: hidden;
+  white-space: normal;
+  text-overflow: ellipsis;
+}
+
+.col-flex {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start; /* or space-between if you want spacing */
+}
+
+.header-clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;    /* max lines */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

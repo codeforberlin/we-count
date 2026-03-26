@@ -21,7 +21,7 @@ VT_NAMES = {"PKW": "car", "LKW": "heavy"}
 
 
 
-def _fetch_observations(url, datastream_id, since, retries=1):
+def _fetch_observations(url, datastream_id, since, retries):
     filter_str = f"phenomenonTime ge {since.strftime('%Y-%m-%dT%H:%M:%S.000Z')}"
     obs = common.fetch_all(
         url + f"/Datastreams({datastream_id})/Observations",

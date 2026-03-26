@@ -26,8 +26,8 @@ else
     src/we_count/backend/telraam_backup.py -j $TELRAAM_SEGMENTS -p parquet/bzm_telraam_traffic_advanced.parquet -v --limit 10 --advanced
     src/we_count/backend/ecocounter_backup.py -j csv/bzm_ecocounter_segments.geojson -p parquet/bzm_ecocounter_traffic_data.parquet --csv csv/bzm_ecocounter --csv-segments csv/segments/bzm_ecocounter --csv-start-year 2015 -v
     src/we_count/backend/ecocounter_backup.py -j csv/bzm_ecocounter_segments.geojson -p parquet/bzm_ecocounter_traffic_advanced.parquet -v --advanced
-    src/we_count/backend/teu_backup.py -j csv/bzm_teu_segments.geojson -p parquet/bzm_teu_traffic_data.parquet -v --limit 10
-    src/we_count/backend/teu_backup.py -j csv/bzm_teu_segments.geojson -p parquet/bzm_teu_traffic_advanced.parquet -v --limit 10 --advanced
+    src/we_count/backend/teu_backup.py -j csv/bzm_teu_segments.geojson -p parquet/bzm_teu_traffic_data.parquet -v --limit 10 -r 3
+    src/we_count/backend/teu_backup.py -j csv/bzm_teu_segments.geojson -p parquet/bzm_teu_traffic_advanced.parquet -v --limit 10 --advanced -r 3
     src/we_count/backend/maut_backup.py -j csv/bzm_maut_segments.geojson -p parquet/bzm_maut_traffic_data.parquet -v --limit 10
     src/we_count/backend/vmk_import.py -j csv/bzm_vmk_2023.json
     src/we_count/backend/vmk_import.py -j csv/bzm_vmk_2019.json --year 2019

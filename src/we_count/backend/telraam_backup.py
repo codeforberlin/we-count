@@ -103,11 +103,11 @@ def _add_totals(df, modes):
             continue
         if src != mode:
             df = df.rename(columns={lft: f'{mode}_lft', rgt: f'{mode}_rgt'})
-        df[f'{mode}_total'] = df[f'{mode}_lft'].fillna(0) + df[f'{mode}_rgt'].fillna(0)
+        df[f'{mode}_total'] = df[f'{mode}_lft'] + df[f'{mode}_rgt']
     return df
 
 
-def _prepare_df(segments, df, advanced, month):
+def _prepare_df(segments, df, advanced, month=None):
     # Filter to relevant segments and month (UTC)
     tz_map = {s['segment_id']: s.get('timezone', 'UTC') for s in segments}
     df_out = df[df['segment_id'].isin(tz_map.keys())]
@@ -129,7 +129,7 @@ def _prepare_df(segments, df, advanced, month):
     # Restore uptime-corrected counts (raw counts / uptime); uptime=0 rows have count=0
     count_cols = [c for c in df_out.columns if c.endswith(('_lft', '_rgt'))]
     uptime = df_out['uptime'].where(df_out['uptime'] > 0, other=1)
-    df_out[count_cols] = df_out[count_cols].div(uptime, axis=0)
+    df_out[count_cols] = df_out[count_cols].div(uptime, axis=0).fillna(0).round().astype(int)
     modes = BASIC_MODES + (ADVANCED_MODES if advanced else [])
     df_out = _add_totals(df_out, modes)
 

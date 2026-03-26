@@ -127,6 +127,12 @@ def main(args=None):
         while month <= curr_month:
             common.write_csv(options.csv + "_%s_%02i.csv.gz" % month, _prepare_df(things, df, month))
             month = common.add_month(1, *month)
+    if options.csv_segments:
+        if os.path.dirname(options.csv_segments):
+            os.makedirs(os.path.dirname(options.csv_segments), exist_ok=True)
+        df = pd.read_parquet(options.parquet)
+        for i, s in things.items():
+            common.write_csv(options.csv_segments + "_%s.csv.gz" % s['segment_id'], _prepare_df({i:s}, df))
 
 
 if __name__ == "__main__":

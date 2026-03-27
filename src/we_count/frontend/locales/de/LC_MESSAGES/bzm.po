@@ -48,16 +48,17 @@ msgstr "Karteninformationen"
 
 #: bzm_v01.py:415
 msgid ""
-"Note: street colors represent bike/car ratios based on all data available"
-" and do not change with date- or hour selection. The map allows street "
-"segments to be selected individually. To select whole streets, select a "
-"street name from the drop down menu."
+"Note: street colors represent bike/car ratios based on all data available "
+"and do not change with date- or hour selection. The map allows street "
+"segments to be selected by mouse-click. Upon selection, the map will zoom "
+"with the selected street in the center."
+
 msgstr ""
 "Hinweis: Die Straßenfarben stellen das Fahrrad-Auto-Verhältnis auf "
 "Grundlage aller verfügbaren Daten dar und ändern sich nicht mit der "
 "Datums- oder Stundenauswahl. Die Karte ermöglicht die Auswahl einzelner "
-"Straßenabschnitte. Um ganze Straßen auszuwählen, wähle einen Straßennamen"
-" aus dem Dropdown-Menü."
+"Segmente per Mausklick. Nach der Auswahl wird die Karte so gezoomt, "
+"dass die ausgewählte Straße im Zentrum angezeigt wird."
 
 #: bzm_v01.py:422
 msgid "English"

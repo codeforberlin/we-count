@@ -341,7 +341,7 @@ def get_min_max_dates(id_street: str):
 # this assumes an initial street id of the form "name (segment_id)"
 street_name, segment_id = INITIAL_STREET_ID[:-1].split(" (")
 
-zoom_factor = 11
+zoom_factor =11
 
 geo_df, json_df_features, traffic_df_id_bc, conn = retrieve_data()
 
@@ -566,7 +566,7 @@ def update_map(clickData, id_street, hardware_version, toggle_active_filter, tog
         # Zoom out upon initial load or hardware change
         segment_id = id_street[-11:-1]
         idx = df_map.loc[df_map['segment_id'] == segment_id]
-        zoom_factor = 11
+        zoom_factor = 10
 
     # Get maximum speed for the selected street
     #maxspeed = df_map.loc[df_map['segment_id'] == segment_id ]['osm.maxspeed'].iloc[0]
@@ -886,7 +886,6 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     bar_avg_traffic_hr.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
     bar_avg_traffic_hr.update_layout({'plot_bgcolor': ADFC_palegrey,'paper_bgcolor': ADFC_palegrey})
     bar_avg_traffic_hr.update_layout(yaxis_title=_('Average traffic count per hour'))
-    #bar_avg_traffic_hr.update_yaxes(matches=None)
     bar_avg_traffic_hr.update_layout(legend_title_text=_('Traffic Type'))
     bar_avg_traffic_hr.update_traces({'name': _('Pedestrians')}, selector={'name': 'ped_total'})
     bar_avg_traffic_hr.update_traces({'name': _('Bikes')}, selector={'name': 'bike_total'})

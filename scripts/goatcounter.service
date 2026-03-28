@@ -3,11 +3,11 @@ Description=we-count GoatCounter
 After=network.target
 
 [Service]
-User=we-count
-Group=we-count
+User=www-data
+Group=www-data
 
-WorkingDirectory=/home/we-count/goatcounter
-ExecStart=/home/we-count/goatcounter/goatcounter serve \
+WorkingDirectory=/srv/www/goatcounter
+ExecStart=/srv/www/goatcounter/goatcounter serve \
   -listen=127.0.0.1:9090 \
   -tls=none \
   -base-path=/goatcounter \

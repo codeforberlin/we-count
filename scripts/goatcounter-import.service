@@ -4,22 +4,25 @@ After=goatcounter.service
 Requires=goatcounter.service
 
 [Service]
-User=we-count
-Group=we-count
+User=www-data
+Group=www-data
 
-WorkingDirectory=/home/we-count/goatcounter
+WorkingDirectory=/srv/www/goatcounter
 
-Environment=GOATCOUNTER_API_KEY=11zsu4tl5pan31wwb37m76kyeh1tw7h0ezebelj22kb6oe7et5o9
+# insert the API key below
+# It can be generated using `./goatcounter db create apitoken -name importer -perm count -user 1`
+# and then use `sqlite3 goatcounter-data/db.sqlite3` and `select * from api_tokens;`
+Environment=GOATCOUNTER_API_KEY=<super_secret_api_key>
 
-ExecStart=/home/we-count/goatcounter/goatcounter import \
-  -site http://127.0.0.1:9090 \
+ExecStart=/srv/www/goatcounter/goatcounter import \
+  -site http://127.0.0.1:9090/goatcounter \
   -format combined \
   -follow \
-  /var/log/gunicorn/we-count/access.log
+  /var/log/apache2/other_vhosts_access.log
+# if you don't use it behind an apache proxy, use /var/log/gunicorn/we-count/access.log (or whatever is configured in goatcounter.service) instead 
+
 Restart=on-failure
 RestartSec=5
 
 [Install]
 WantedBy=multi-user.target
-
-# the API key can be generated using ./goatcounter db create apitoken -name importer -perm count -user 1

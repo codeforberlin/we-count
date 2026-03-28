@@ -11,6 +11,7 @@
 # It can also be used as a script to just save the data to a file.
 
 import argparse
+import json
 import locale
 import os
 from datetime import datetime
@@ -50,30 +51,34 @@ def save_df(df:pd.DataFrame, file_name: str, verbose=False) -> None:
         df.to_csv(path, index=False)
 
 
-def get_locations(filepath="https://berlin-zaehlt.de/csv/bzm_telraam_segments.geojson"):
-    local_file = os.path.join(DATA_DIR, os.path.basename(filepath))
-    if has_min_size(filepath):
-        response = requests.get(filepath)
-        if not os.path.exists(DATA_DIR):
-            os.makedirs(DATA_DIR)
-        with open(local_file, 'wb') as f:
-            f.write(response.content)
-    df_geojson = pd.read_json(local_file)
+def get_locations(filepath):
+    if os.path.exists(filepath):
+        local_file = filepath
+    else:
+        local_file = os.path.join(DATA_DIR, os.path.basename(filepath))
+        if has_min_size(filepath):
+            response = requests.get(filepath)
+            if not os.path.exists(DATA_DIR):
+                os.makedirs(DATA_DIR)
+            with open(local_file, 'wb') as f:
+                f.write(response.content)
+    with open(local_file, encoding='utf8') as f:
+        features = pd.Series(json.load(f)['features'])
 
     # Flatten the json structure
-    normalized = pd.json_normalize(df_geojson['features'])
+    normalized = pd.json_normalize(features)
 
     # Remove 'properties' from column names for ease of use
     normalized.columns = normalized.columns.str.replace('properties.', '', regex=True)
 
     # Convert geometry to WKT
-    geometry = df_geojson['features'].apply(lambda x: shapely.geometry.shape(x['geometry']).wkt).rename('geometry')
+    geometry = features.apply(lambda x: shapely.geometry.shape(x['geometry']).wkt).rename('geometry')
 
     def get_hardware(x):
         if x['properties'].get('instance_ids'):
             return list(x['properties']['instance_ids'].values())[0]['hardware_version']
         return 0
-    hardware = df_geojson['features'].apply(get_hardware).rename('hardware_version')
+    hardware = features.apply(get_hardware).rename('hardware_version')
     columns = ['segment_id', 'last_data_package'] + OSM_COLUMNS
     df_geojson = pd.concat([normalized[columns], geometry, hardware], axis=1)
     df_geojson['id_street'] = df_geojson['osm.name'].astype(str) + ' (' + df_geojson['segment_id'].astype(str) + ')'
@@ -158,11 +163,9 @@ def merge_data(locations, cache_file=os.path.join(DATA_DIR, 'traffic_df_2024_Q4_
     return traffic_df.reset_index(drop=True)
 
 
-def get_options(args=None, json_default="sensor.json"):
+def get_options(args):
     parser = argparse.ArgumentParser()
-    parser.add_argument("-s", "--secrets-file", default="secrets.json",
-                        metavar="FILE", help="Read database credentials from FILE")
-    parser.add_argument("-j", "--json-file", default=json_default,
+    parser.add_argument("-j", "--json-file", default="https://berlin-zaehlt.de/csv/bzm_telraam_segments.geojson",
                         metavar="FILE", help="Write / read Geo-JSON for segments to / from FILE")
     parser.add_argument("-o", "--output", default="traffic_df_%s.parquet",
                         help="Traffic data output file (format is derived from file extension)")
@@ -176,7 +179,7 @@ def get_options(args=None, json_default="sensor.json"):
                         help="create output files even if they exist and are up to date")
     parser.add_argument("-v", "--verbose", action="count", default=0,
                         help="increase verbosity")
-    return common.parse_options(parser.parse_args(args=args))
+    return parser.parse_args(args=args)
 
 
 def main(args=None):
@@ -184,7 +187,7 @@ def main(args=None):
     end_year, end_month = common.add_month(1, datetime.now().year, datetime.now().month)
     year, month = common.add_month(-options.months, datetime.now().year, datetime.now().month)
     month = ((month - 1) // options.aggregate) * options.aggregate + 1
-    locations = get_locations()
+    locations = get_locations(options.json_file)
     save_df(locations, options.location_output, options.verbose)
     while (year, month) < (end_year, end_month):
         yearp, monthp = common.add_month(options.aggregate, year, month)

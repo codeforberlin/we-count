@@ -1,6 +1,0 @@
-Options +Indexes
-IndexOptions FancyIndexing FoldersFirst SuppressDescription NameWidth=*
-
-Options +MultiViews
-RemoveType .gz
-AddEncoding gzip .gz

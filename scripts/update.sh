@@ -8,7 +8,7 @@ git fetch -q
 git checkout eb55927ed447d03440c56a4e24ff1ede0b85d94e
 
 # update local data and restart
-scripts/update_data.sh
+scripts/update_data.sh /srv/www/
 ../venv_wecount/bin/python src/we_count/backend/bzm_get_data.py
 /usr/bin/pkill -HUP -F /run/gunicorn/we-count/pid
 

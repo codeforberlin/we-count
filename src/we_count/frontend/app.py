@@ -609,7 +609,7 @@ def update_map(clickData, id_street, hardware_version, toggle_active_filter, tog
                     '<a href="https://www.berlin.de/sen/uvk/mobilitaet-und-verkehr/verkehrsplanung/radverkehr/weitere-radinfrastruktur/zaehlstellen-und-fahrradbarometer/">SenUMVK Berlin<br></a>'
                 ]) + '' +
                 sep.join([
-                    '<a href="https://berlin-zaehlt.de/csv/">CSV data</a> under <a href="https://creativecommons.org/licenses/by/4.0/">CC-BY 4.0</a> and <a href="https://www.govdata.de/dl-de/by-2-0">dl-de/by-2-0</a>'
+                    '<a href="https://berlin-zaehlt.de/csv/">CSV</a> and <a href="https://berlin-zaehlt.de/parquet/">Parquet</a> data under <a href="https://creativecommons.org/licenses/by/4.0/">CC-BY 4.0</a> and <a href="https://www.govdata.de/dl-de/by-2-0">dl-de/by-2-0</a>'
                 ])
             ),
             showarrow=False, align='left', xref='paper', yref='paper', x=0, y=0

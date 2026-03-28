@@ -128,7 +128,7 @@ def main(args=None, annual_urls=None, monthly_urls=None):
         import json
         with open(options.json_file, encoding="utf8") as f:
             existing = json.load(f)
-        age = datetime.datetime.now(datetime.timezone.utc) - common.parse_utc_dict(existing, "created_at")
+        age = datetime.datetime.now(datetime.timezone.utc) - common.parse_utc_dict(existing.get("properties", {}), "created_at")
         if age < datetime.timedelta(days=REFRESH_DAYS):
             if options.verbose:
                 print(f"{options.json_file} is less than {REFRESH_DAYS} days old, skipping.")
@@ -193,9 +193,11 @@ def main(args=None, annual_urls=None, monthly_urls=None):
         os.makedirs(os.path.dirname(options.json_file), exist_ok=True)
     common.save_json(options.json_file, {
         "type": "FeatureCollection",
-        "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-        "columns": DATA_COLUMNS,
-        "column_map": COLUMN_MAP,
+        "properties": {
+            "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            "columns": DATA_COLUMNS,
+            "column_map": COLUMN_MAP,
+        },
         "features": features,
     })
     return True

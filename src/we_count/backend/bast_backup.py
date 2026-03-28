@@ -155,7 +155,7 @@ def _parse_monthly_zip(zf, year, month, things, verbose=0):
 def _save_last_backup(json_file, backup_date, station_lanes=None):
     with open(json_file, encoding="utf8") as f:
         content = json.load(f)
-    content["last_data_backup"] = backup_date.isoformat()
+    content.setdefault("properties", {})["last_data_backup"] = backup_date.isoformat()
     if station_lanes:
         for feature in content.get("features", []):
             sid = feature["properties"]["segment_id"]
@@ -201,7 +201,7 @@ def main(args=None):
         return
 
     with open(options.json_file, encoding="utf8") as f:
-        last_backup = common.parse_utc(json.load(f).get("last_data_backup"))
+        last_backup = common.parse_utc(json.load(f).get("properties", {}).get("last_data_backup"))
 
     now = datetime.datetime.now(datetime.timezone.utc)
     if options.clear or last_backup is None:

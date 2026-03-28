@@ -85,9 +85,11 @@ def main(args=None):
     osm.add_osm(features, old_data)
     result = {
         "type": "FeatureCollection",
-        "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-        "columns": DATA_COLUMNS,
-        "column_map": COLUMN_MAP,
+        "properties": {
+            "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            "columns": DATA_COLUMNS,
+            "column_map": COLUMN_MAP,
+        },
         "features": features,
     }
     common.save_json(options.json_file, result)

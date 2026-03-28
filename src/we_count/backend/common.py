@@ -78,7 +78,7 @@ def load_json_if_stale(json_file, clear=False, verbose=0):
         return []
     with open(json_file, encoding="utf8") as f:
         old_json = json.load(f)
-    last_mod = parse_utc_dict(old_json, "created_at")
+    last_mod = parse_utc_dict(old_json.get("properties", {}), "created_at")
     if datetime.datetime.now(datetime.timezone.utc) - last_mod < delta:
         if verbose:
             print(f"Not recreating {json_file}, it is less than {delta} old.")

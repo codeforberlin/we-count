@@ -80,14 +80,16 @@ def main(args=None):
 
     created_at = datetime.datetime.now(datetime.UTC)
     res = {
-        "we_count_version": 2,
-        "description": f"Telraam segments and instances for {options.bbox} enhanced with OpenStreetMap data, "
-        "format description at https://app.swaggerhub.com/apis-docs/telraam/Telraam-API/1.2.0#/Segments/get_v1_segments_id__segment_id_",
-        "created_at": created_at.isoformat(),
         "type": "FeatureCollection",
-        "columns": DATA_COLUMNS,
-        "advanced_columns": ADVANCED_DATA_COLUMNS,
-        "column_map": COLUMN_MAP,
+        "properties": {
+            "we_count_version": 2,
+            "description": f"Telraam segments and instances for {options.bbox} enhanced with OpenStreetMap data, "
+            "format description at https://app.swaggerhub.com/apis-docs/telraam/Telraam-API/1.2.0#/Segments/get_v1_segments_id__segment_id_",
+            "created_at": created_at.isoformat(),
+            "columns": DATA_COLUMNS,
+            "advanced_columns": ADVANCED_DATA_COLUMNS,
+            "column_map": COLUMN_MAP,
+        },
         "features": update_props(bbox_segments, old_data, conns, options.retry, options.max_prop_updates)
     }
     osm.add_osm(res["features"], {sid: f["properties"] for sid, f in old_data.items()})

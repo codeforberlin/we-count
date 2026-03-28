@@ -20,7 +20,7 @@ import common
 def save_last_backup(json_file, backup_date):
     with open(json_file, encoding="utf8") as f:
         content = json.load(f)
-    content["last_data_backup"] = backup_date.isoformat()
+    content.setdefault("properties", {})["last_data_backup"] = backup_date.isoformat()
     common.save_json(json_file, content)
 
 
@@ -86,7 +86,7 @@ def main(args=None):
     maut_positions.main(args)
     things = common.load_segments(options.json_file)
     with open(options.json_file, encoding="utf8") as f:
-        last_backup = common.parse_utc(json.load(f).get("last_data_backup")) if things else None
+        last_backup = common.parse_utc(json.load(f).get("properties", {}).get("last_data_backup")) if things else None
     if not things:
         print("No section metadata found.", file=sys.stderr)
         return

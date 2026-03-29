@@ -451,34 +451,34 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
             dbc.Row([
                 # Links left
                 dbc.Col([
-                    html.H6([_('More information about the '),
+                    html.Ul([
+                        html.Li([_('More information about the '),
                             html.A('Berlin zählt Mobilität', href='https://adfc-tk.de/wir-zaehlen/', target="_blank"),_(' (BzM) initiative'),],
                            ),
-                    html.H6([_('Request a counter at the '),
-                            html.A(_('Citizen Science-Projekt'), href="https://telraam.net/en/candidates/berlin-zaehlt-mobilitaet/berlin-zaehlt-mobilitaet", target="_blank"),],
-                            ),
-                    html.H6([_('Data protection around the '),
-                            html.A(_('Telraam camera'), href="https://telraam.net/home/blog/telraam-privacy", target="_blank"),_(' measurements'),],
-                            ),
-                    html.H6([_('Open data source: '),
-                             html.A('Open Data Berlin', href="https://daten.berlin.de/datensaetze/berlin-zaehlt-mobilitaet", target="_blank")],
-                            ),
-                ], className= 'ms-2', sm=6),
+                        html.Li([_('Request a counter at the '),
+                                html.A(_('Citizen Science-Projekt'), href="https://telraam.net/en/candidates/berlin-zaehlt-mobilitaet/berlin-zaehlt-mobilitaet", target="_blank"),],
+                                ),
+                        html.Li([_('Data protection around the '),
+                                html.A(_('Telraam camera'), href="https://telraam.net/home/blog/telraam-privacy", target="_blank"),_(' measurements'),],
+                                ),
+                        html.Li([_('Open data source: '),
+                                 html.A('Open Data Berlin', href="https://daten.berlin.de/datensaetze/berlin-zaehlt-mobilitaet", target="_blank")],
+                                ),
+                    ]),
+                ], sm=6),
 
                 # Links right
                 dbc.Col([
-                    html.H6([_('Dashboard development: ') + 'Egbert Klaassen' + _(' and ') + 'Michael Behrisch'],
-                            className='ms-2',
-                            ),
-                    html.H6([_('For dashboard improvement requests: '),
-                             html.A(_('email us'), href='mailto: kontakt@berlin-zaehlt.de')],
-                            className='mt-4 mb-4 ms-2',
-                            ),
-                ], className= 'ms-2', sm=5),
+                    html.Ul([
+                        html.Li([_('Dashboard development: ') + 'Egbert Klaassen' + _(' and ') + 'Michael Behrisch']),
+                        html.Li([_('For dashboard improvement requests: '),
+                                 html.A(_('email us'), href='mailto: kontakt@berlin-zaehlt.de')]),
+                    ]),
+                ], sm=6),
             ]),
-        ], className= 'rounded text-black g-0 p-1 mb-3', style={'background-color': ADFC_yellow, 'opacity': 1.0}),
+        ], className='rounded text-black g-0 p-1 mb-3', style={'background-color': ADFC_yellow, 'opacity': 1.0}),
 
-        ### Legal disclaimeers
+    ### Legal disclaimeers
         dbc.Row([
             dbc.Col([
                 html.P(_('Disclaimer'), style= {'font-size': 12, 'color': ADFC_darkgrey}),

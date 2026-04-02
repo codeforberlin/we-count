@@ -443,7 +443,7 @@ df_map = update_map_data(df_map_base, traffic_df_id_bc, 'toggle_active_filter', 
 if not DEPLOYED:
     print('Starting dash ...')
 
-app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP],
+app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP, '/assets/main.css'],
            meta_tags=[{'name': 'viewport', 'content': 'width=device-width, initial-scale=1'}]
            )
 
@@ -831,16 +831,15 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     line_abs_traffic.update_yaxes(matches=None)
     line_abs_traffic.update_xaxes(matches=None)
     line_abs_traffic.for_each_yaxis(lambda yaxis: yaxis.update(showticklabels=True))
-    line_abs_traffic.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
-    for annotation in line_abs_traffic.layout.annotations: annotation['font'] = {'size': 14}
     line_abs_traffic.update_traces({'name': _('Pedestrians')}, selector={'name': 'ped_total'})
     line_abs_traffic.update_traces({'name': _('Bikes')}, selector={'name': 'bike_total'})
     line_abs_traffic.update_traces({'name': _('Cars')}, selector={'name': 'car_total'})
     line_abs_traffic.update_traces({'name': _('Heavy')}, selector={'name': 'heavy_total'})
+    line_abs_traffic.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
     line_abs_traffic.for_each_annotation(lambda a: a.update(text=a.text.replace(street_name, street_name + _(' (segment:') + segment_id + ')')))
     line_abs_traffic.for_each_annotation(lambda a: a.update(text=a.text.replace('All Streets', _('All Streets'))))
+    for annotation in line_abs_traffic.layout.annotations: annotation['font'] = {'size': 14}
     #Range Slider: line_abs_traffic.update_xaxes(rangeslider_visible=True)
-
 
     ### Create average traffic bar chart by hour
     group_cols = [radio_time_unit, 'street_selection']

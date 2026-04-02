@@ -65,8 +65,8 @@ msgid "English"
 msgstr "Englisch"
 
 #: bzm_v01.py:423
-msgid "Deutsch"
-msgstr "German"
+msgid "German"
+msgstr "Deutsch"
 
 msgid "Main filters:"
 msgstr "Hauptfilter:"

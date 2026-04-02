@@ -4,23 +4,83 @@ body {
   font-family: 'Calibri', 'Arial', sans-serif;
 }
 
-/* Make both date fields smaller and inline */
-#date_filter input {
-    width: 100px !important;   /* Narrower fields */
-    font-size: 14px;           /* Smaller text */
-    font-style: inherit;
-    font-weight: 400;
-    height: 20px;
-    padding: 4px 6px;          /* Compact padding */
-}
-
 /* change the background color */
 .navbar-custom {
     background-color: #4433cc;
 }
-/* Change the track's color */
+
+/* RangeSlider color */
+.rc-slider-handle {
+    border: solid 2px #0d6efd !important;
+}
+.rc-slider-dot {
+    border: solid 2px #0d6efd !important;
+}
+.rc-slider-track {
+    border: solid 2px #0d6efd !important;
+}
 .rc-slider-rail {
     background-color: lightgrey;
+}
+
+
+/* Target the dropdown menu items */
+.VirtualizedSelectOption {
+    background-color: white;
+    color: black;
+}
+
+.VirtualizedSelectFocusedOption {
+    background-color: #0d6efd; /* ADFC light blue*/
+    color: #fff; /* Bootstrap black/grey font */
+}
+
+/* DatePickerRange */
+
+/* Style the input boxes */
+.DateInput_input,
+.DateInput_input_1 {
+    background-color: #fff !important;
+    color: #212529 !important; /* Bootstrap black/grey font */
+    font-style: inherit;
+    font-size: 15px;
+    font-weight: 400;
+    width: 100px !important;
+    height: 30px !important;
+    border: none !important;
+}
+
+/* Style the calendar popup */
+.DayPicker {
+    background-color: #fff !important; /* Box shade white*/
+    color: #fff !important;
+    border-color: blue !important;
+}
+
+.DateRangePickerKeyboardShortcuts_showSpan {
+    visible: False !important;
+    background: fff !important;
+    border-color: blue !important;
+ }
+
+/* Highlight selected dates */
+.CalendarDay__selected_span,
+.CalendarDay__selected_span_3 {
+    background: #D7EDF2 !important; /* BZM light blue */
+    color: #212529 !important; /* Bootstrap black/grey font */
+    border-color: #DEDEDE !important; /* ADFC light grey */
+}
+
+/* Navigation arrows left and right*/
+.DayPickerNavigation_button {
+    background: #fff;
+}
+
+/* Range start and end */
+.CalendarDay__selected_start,
+.CalendarDay__selected_end {
+    background: #0d6efd !important; /* Bootstrap blue */
+    color: white;
 }
 
 /* border on focus - default is blue

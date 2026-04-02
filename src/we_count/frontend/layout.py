@@ -118,10 +118,10 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                                 {'label': '🇩🇪' + ' ' + _('Deutsch'), 'value': 'de'},
                             ],
                             value=INITIAL_LANGUAGE,
-                            clearable=False,
                             persistence = True,
                             persistence_type = 'local',
-                            className='g-0'
+                            className='g-0',
+                            clearable=False,
                         ),
                     ], sm=6),
                 ]),
@@ -129,7 +129,7 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                 dcc.Dropdown(id='street_name_dd',
                     options= id_street_options,
                     value= INITIAL_STREET_ID,
-                    clearable=False
+                    clearable=False,
                 ),
                 html.Span([
                     html.H4(_('Traffic type - selected street'), id='selected_street_header', style={'color': 'black'}, className='my-2 d-inline-block'),
@@ -222,13 +222,16 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                     max=24,
                     step=1,
                     value = INITIAL_HOUR_RANGE,
-                    className='align-bottom mb-2',
+                    className='align-bottom ms-2 me-2 mb-2',
+                    allowCross=False,
                     tooltip={'always_visible': False, 'placement' : 'bottom', 'template': '{value}' + _(" Hour")}),
             ], sm=6),
             dbc.Col([
-                html.H6(_('Pick date range:'), className='ms-2 mt-2 text-nowrap', id='date_range_text'),
+            ], sm=1),
+            dbc.Col([
+                html.H6(_('Pick date range:'), className='mt-2 text-nowrap', id='date_range_text'),
                 # Date picker
-                dcc.DatePickerRange(
+                    dcc.DatePickerRange(
                     id="date_filter",
                     start_date=start_date,
                     end_date=end_date,
@@ -239,9 +242,9 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                     number_of_months_shown=2,
                     minimum_nights=0,
                     updatemode='bothdates',
-                    className='align-bottom justify-center ms-2 mb-2',
+                    className='align-bottom justify-center mb-2',
                 ),
-            ], sm=6),
+            ], sm=3),
         ], className='g-2 sticky-top rounded', style={'background-color': ADFC_skyblue}),
 
         #Absolute traffic

@@ -89,8 +89,8 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
             # Street Map
             dbc.Col([
                 dcc.Loading(id="loading-icon_street_map", children=[html.Div(
-                    dcc.Graph(id='street_map', figure={}, className='bg-#F2F2F2', style={'height': 520}))]),
-            ],  sm=8),
+                    dcc.Graph(id='street_map', figure={}, config={'ScrollZoom': True, 'displayModeBar': False, 'staticPlot': False, 'responsive': True} , className='bg-#F2F2F2', style={'height': 520}))]),
+            ], sm=8),
 
             # Pie chart and infos
             dbc.Col([
@@ -150,7 +150,7 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
         # Filters
         dbc.Row([
             dbc.Col([
-                html.H6(_('Main filters:'), className='ms-2 mt-0'),
+                html.H6(_('Main filters:'), className='ms-2'),
             ], sm=2),
             dbc.Col([
                 html.Span([
@@ -161,7 +161,7 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                         value=['filter_uptime_selected'],
                         inline=False,
                         switch=True,
-                        className='d-inline-block ms-2 mt-0'
+                        className='d-inline-block ms-2'
                     ),
                     dbc.Popover(
                         dbc.PopoverBody(
@@ -178,7 +178,7 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                         value=['filter_active_selected'],
                         inline=True,
                         switch=True,
-                        className='d-inline-block ms-2 mt-0'
+                        className='d-inline-block ms-2'
                     ),
                     dbc.Popover(
                         dbc.PopoverBody(
@@ -195,7 +195,7 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                         value=[1, 2],
                         inline=True,
                         switch=True,
-                        className='d-inline-block ms-2 mt-0'
+                        className='d-inline-block ms-2'
                     ),
                     dbc.Popover(
                         dbc.PopoverBody(
@@ -203,33 +203,37 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                         target="popover_hardware_version", trigger="hover"),
                 ]),
             ], sm=4),
-        # Horizontal line
-        html.Hr(style={
-            "border": "none",
-            "border-top": "2px solid #53917E",  # custom color
-            "margin": "10px 0"
-        }),
-        ], className='g-2 sticky-top rounded', style={'background-color': ADFC_skyblue}),
+            # Horizontal line
+            html.Hr(style={
+                "border": "none",
+                "border-top": "2px solid #53917E",  # custom color
+                "margin": "10px 0"
+            }),
+        ], className='g-2 rounded align-items-center', style={'background-color': ADFC_skyblue}),
 
         # Date and hour range selection
         dbc.Row([
             dbc.Col([
-                html.H6(_('Set hour range:'), className='ms-2 mt-2'),
+                dbc.Row([
+                    html.H6(_('Set hour range:'), className='ms-2'),
+                ]),
                 # Hour slider
-                dcc.RangeSlider(
+                dbc.Row([
+                    dcc.RangeSlider(
                     id='range_slider',
                     min=0,
                     max=24,
                     step=1,
                     value = INITIAL_HOUR_RANGE,
-                    className='align-bottom ms-2 me-2 mb-2',
+                    className='align-items-bottom mb-2',
                     allowCross=False,
                     tooltip={'always_visible': False, 'placement' : 'bottom', 'template': '{value}' + _(" Hour")}),
+                ]),
             ], sm=6),
             dbc.Col([
             ], sm=1),
             dbc.Col([
-                html.H6(_('Pick date range:'), className='mt-2 text-nowrap', id='date_range_text'),
+                html.H6(_('Pick date range:'), className='text-nowrap', id='date_range_text'),
                 # Date picker
                     dcc.DatePickerRange(
                     id="date_filter",

@@ -577,6 +577,7 @@ def update_map(clickData, id_street, hardware_version, toggle_active_filter, tog
     lat_str = idx['y'].values[0]
 
     sep = '&nbsp;|&nbsp;'
+
     street_map = px.line_map(df_map, lat='y', lon='x', custom_data=['segment_id', 'hardware_version'],line_group='segment_id', hover_name = 'osm.name', color= 'map_line_color',
         color_discrete_map= {
         'More bikes than cars': ADFC_green,
@@ -585,17 +586,19 @@ def update_map(clickData, id_street, hardware_version, toggle_active_filter, tog
         'Over 5x more cars': ADFC_crimson,
         'Over 10x more cars': ADFC_pink,
         'Inactive - no data': ADFC_lightgrey},
-        hover_data={'map_line_color': False, 'osm.highway': True, 'osm.address.city': True, 'osm.address.suburb': True, 'osm.address.postcode': True, 'hardware_version': True},
+        hover_data={'map_line_color': False, 'osm.highway': True, 'osm.address.city': True, 'osm.address.suburb': True, 'osm.address.postcode': True, 'hardware_version': True, 'osm.maxspeed': True},
         labels={'segment_id': 'Segment', 'osm.highway': _('Highway type'), 'x': 'Lon', 'y': 'Lat', 'osm.address.city': _('City'), 'osm.address.suburb': _('District'), 'osm.address.postcode': _('Postal code')},
         map_style=map_style, center= dict(lat=lat_str, lon=lon_str), zoom= zoom_factor)
 
-    street_map.update_traces(line_width=5, opacity=1.0)
+    street_map.update_traces(mode='lines+markers')
+    street_map.update_traces(line_width=5, opacity=0.7)
     street_map.update_traces({'name': _('More bikes than cars')}, selector={'name': 'More bikes than cars'})
     street_map.update_traces({'name': _('More cars than bikes')}, selector={'name': 'More cars than bikes'})
     street_map.update_traces({'name': _('Over 2x more cars')}, selector={'name': 'Over 2x more cars'})
     street_map.update_traces({'name': _('Over 5x more cars')}, selector={'name': 'Over 5x more cars'})
     street_map.update_traces({'name': _('Over 10x more cars')}, selector={'name': 'Over 10x more cars'})
     street_map.update_traces({'name': _('Inactive - no data')}, selector={'name': 'Inactive - no data'}, visible='legendonly')
+    street_map.update_layout(uirevision=True)
     street_map.update_layout(autosize=False)
     street_map.update_layout(margin=dict(l=0, r=0, t=0, b=0))
     street_map.update_layout(legend_title=_('Street color'))
@@ -1036,9 +1039,14 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     # Get maximum speed for the selected street and set color map
     maxspeed = df_map.loc[df_map['segment_id'] == segment_id ]['osm.maxspeed'].iloc[0]
 
+    # Show max speed logo
     if maxspeed == '30':
         speed_color_map = color_map_30
         max_speed_logo = '\\assets\\30.png'
+    if maxspeed == "['50', '30']":
+        speed_color_map = color_map_30
+        maxspeed = 'partly 30, partly 50'
+        max_speed_logo = '\\assets\\30.png' #!change if used
     else:
         speed_color_map = color_map_50
         max_speed_logo = '\\assets\\50.png'

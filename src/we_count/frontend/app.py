@@ -338,10 +338,10 @@ def get_min_max_dates(id_street: str):
 
     return min_date, max_date
 
-# this assumes an initial street id of the form "name (segment_id)"
+# This assumes an initial street id of the form "name (segment_id)"
 street_name, segment_id = INITIAL_STREET_ID[:-1].split(" (")
 
-zoom_factor =11
+#zoom_factor =8
 
 geo_df, json_df_features, traffic_df_id_bc, conn = retrieve_data()
 
@@ -507,8 +507,13 @@ def update_map(clickData, id_street, hardware_version, toggle_active_filter, tog
 
     callback_trigger = ctx.triggered_id
 
-    if toggle_map_style == ['']:
+    print(toggle_map_style)
+    if toggle_map_style == 'streets':
         map_style = 'streets'
+    elif toggle_map_style == 'open-street-map':
+        map_style = 'open-street-map'
+    elif toggle_map_style == 'carto-positron':
+        map_style = 'carto-positron'
     else:
         map_style = 'satellite'
 

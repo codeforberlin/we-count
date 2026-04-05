@@ -68,8 +68,11 @@ msgstr "Englisch"
 msgid "German"
 msgstr "Deutsch"
 
-msgid "Main filters:"
-msgstr "Hauptfilter:"
+msgid "Filters:"
+msgstr "Filter:"
+
+msgid "Map style:"
+msgstr "Kartenstil:"
 
 #: bzm_v01.py:429
 msgid "Select street:"

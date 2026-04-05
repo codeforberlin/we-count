@@ -20,6 +20,7 @@ ADFC_green_L = '#25C996'
 ADFC_palegrey = '#F2F2F2'
 ADFC_lightgrey = '#DEDEDE'
 ADFC_darkgrey = '#737373'
+ADFC_middlegrey = '#A7A7A7'
 ADFC_cyan = '#61CBF4'
 ADFC_lightblue = '#95CBD8'
 ADFC_lightblue_D = '#6DB7C9'
@@ -101,14 +102,17 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                         dbc.Popover(dbc.PopoverBody(
                             _('Note: street colors represent bike/car ratios based on all data available and do not change with date- or hour selection. The map allows street segments to be selected by mouse-click. Upon selection, the map will zoom with the selected street in the center.')),
                             target='popover_map_info', trigger='hover', placement='bottom'),
-                        dbc.Checklist(
-                            id='toggle_map_style',
-                            options=[{'label': _('Satellite'), 'value': 'streets'}],
-                            value=[''],
-                            switch=False,
-                            style={'color': ADFC_darkgrey}
-                        ),
-                    ], sm=6),
+                        # dbc.RadioItems(
+                        #     id='toggle_map_style',
+                        #     options=[{'label': _('Default'), 'value': 'streets'},
+                        #              {'label': _('Satellite'), 'value': 'satellite'},
+                        #              {'label': _('OSM'), 'value': 'open-street-map'}],
+                        #     value='streets',
+                        #     switch=False,
+                        #     inline=True,
+                        #     style={'color': ADFC_darkgrey}
+                        # ),
+                    ], sm=8),
                     dbc.Col([
                         # Street drop down
                         dcc.Dropdown(
@@ -123,7 +127,7 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                             className='g-0',
                             clearable=False,
                         ),
-                    ], sm=6),
+                    ], sm=4),
                 ]),
                 html.H4(_('Select street:'), className='my-2'),
                 dcc.Dropdown(id='street_name_dd',
@@ -133,7 +137,7 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                 ),
                 html.Span([
                     html.H4(_('Traffic type - selected street'), id='selected_street_header', style={'color': 'black'}, className='my-2 d-inline-block'),
-                    html.I(className='bi bi-info-circle-fill h6 ms-1', id='popover_traffic_type', style={'align': 'top', 'color': ADFC_darkgrey}),
+                    html.I(className='bi bi-info-circle-fill h6 ms-1', id='popover_traffic_type', style={'align': 'top', 'color': ADFC_middlegrey}),
                     dbc.Popover(
                         dbc.PopoverBody(_('Traffic type split of the currently selected street, based on currently selected date and hour range.')),
                     target="popover_traffic_type", trigger="hover")
@@ -141,81 +145,88 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                 # Pie chart
                 dcc.Loading(id="loading-icon_pie_traffic", children=[html.Div(
                     dcc.Graph(id='pie_traffic', figure={}))], type="default"),
-                    html.H6(_('Selected segment ID: '), id='street_id_text', className='mt-1 mb-0', style={'color': ADFC_darkgrey}),
-                    html.H6(_('Number of selected segments: '), id='nof_selected_segments', className='mt-0 mb-0', style={'color': ADFC_darkgrey}),
+                html.H6(_('Selected segment ID: '), id='street_id_text', className='mt-1 mb-0', style={'color': ADFC_darkgrey}),
+                html.H6(_('Number of selected segments: '), id='nof_selected_segments', className='mt-0 mb-0', style={'color': ADFC_darkgrey}),
             ], sm=4),
         ], className= 'g-2 mt-1 mb-3 text-start'),
 
-
-        # Filters
+        ### Filters
         dbc.Row([
             dbc.Col([
-                html.H6(_('Main filters:'), className='ms-2'),
-            ], sm=2),
+                html.H6(_('Map style:'), className='ms-2 fw-bold d-inline'),
+                dbc.RadioItems(
+                    id='toggle_map_style',
+                    options=[{'label': _('Default'), 'value': 'streets'},
+                             {'label': _('OSM'), 'value': 'open-street-map'},
+                             {'label': _('Carto'), 'value': 'carto-positron'},
+                             {'label': _('Satellite'), 'value': 'satellite'}],
+                    value='streets',
+                    switch=False,
+                    inline=True,
+                    className='ms-2 d-inline-block',
+                ),
+            ], sm=5),
             dbc.Col([
+                html.H6(_('Filters:'), className='ms-2 fw-bold d-inline'),
                 html.Span([
                     dbc.Checklist(
                         id='toggle_uptime_filter',
-                        options=[{'label': html.Div([_(' Uptime > 70%'), html.I(className='bi bi-info-circle-fill h6 ms-2', id='popover_filter_uptime', style={'color': ADFC_darkgrey})]),
+                        options=[{'label': html.Div([_(' Uptime > 70%'), html.I(className='bi bi-info-circle-fill h6 ms-2', id='popover_filter_uptime', style={'color': ADFC_middlegrey})]),
                                   'value': 'filter_uptime_selected'}],
                         value=['filter_uptime_selected'],
                         inline=False,
                         switch=True,
-                        className='d-inline-block ms-2'
+                        className='ms-2 d-inline-block'
                     ),
                     dbc.Popover(
                         dbc.PopoverBody(
                             _('A high uptime of >70% will always mean very good data. The first and last daylight hour of the day will always have lower uptimes. If uptimes during the day are below 0.5, that is usually a clear sign that something is probably wrong with the sensor.')),
                         target='popover_filter_uptime', trigger="hover"),
                 ]),
-            ], sm=3),
-            dbc.Col([
                 html.Span([
                     dbc.Checklist(
                         id='toggle_active_filter',
-                        options=[{'label': html.Div([_(' Active only'), html.I(className='bi bi-info-circle-fill h6 ms-2', id='popover_filter_active', style={'color': ADFC_darkgrey})]),
+                        options=[{'label': html.Div([_(' Active only'), html.I(className='bi bi-info-circle-fill h6 ms-2', id='popover_filter_active', style={'color': ADFC_middlegrey})]),
                                   'value': 'filter_active_selected'}],
                         value=['filter_active_selected'],
                         inline=True,
                         switch=True,
-                        className='d-inline-block ms-2'
+                        className='ms-2 d-inline-block'
                     ),
                     dbc.Popover(
                         dbc.PopoverBody(
                             _('Active only means that only cameras that are or have been active during the last 14 days are included. Switching off this feature will include all cameras with data.')),
                         target='popover_filter_active', trigger="hover"),
                 ]),
-            ], sm=3),
-            dbc.Col([
                 html.Span([
                     dbc.Checklist(
                         id='hardware_version',
-                        options=[{'label': _('V1 Sensor'), 'value': 1}, {'label': html.Div([_('S2 Sensor'), html.I(className='bi bi-info-circle-fill h6 ms-2', id='popover_hardware_version', style={'color': ADFC_darkgrey})]),
+                        options=[{'label': _('V1 Sensor'), 'value': 1}, {'label': html.Div([_('S2 Sensor'), html.I(className='bi bi-info-circle-fill h6 ms-2', id='popover_hardware_version', style={'color': ADFC_middlegrey})]),
                                                                          'value': 2}],
                         value=[1, 2],
                         inline=True,
                         switch=True,
-                        className='d-inline-block ms-2'
+                        className='ms-2 d-inline-block'
                     ),
                     dbc.Popover(
                         dbc.PopoverBody(
                             _("Click to show/hide cameras with hardware versions 1 and or 2. Switching off both, will re-enable both automatically. Note: the 'All streets' graphs below are based on all streets, regardless which camera hardware version is selected")),
                         target="popover_hardware_version", trigger="hover"),
                 ]),
-            ], sm=4),
+            ], sm=7),
             # Horizontal line
             html.Hr(style={
                 "border": "none",
                 "border-top": "2px solid #53917E",  # custom color
                 "margin": "10px 0"
             }),
-        ], className='g-2 rounded align-items-center', style={'background-color': ADFC_skyblue}),
+        ], className='g-2 rounded d-flex align-items-center', style={'background-color': ADFC_skyblue}),
 
         # Date and hour range selection
         dbc.Row([
             dbc.Col([
                 dbc.Row([
-                    html.H6(_('Set hour range:'), className='ms-2'),
+                    html.H6(_('Set hour range:'), className='ms-2 fw-bold'),
                 ]),
                 # Hour slider
                 dbc.Row([
@@ -233,7 +244,7 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
             dbc.Col([
             ], sm=1),
             dbc.Col([
-                html.H6(_('Pick date range:'), className='text-nowrap', id='date_range_text'),
+                html.H6(_('Pick date range:'), className='fw-bold text-nowrap', id='date_range_text'),
                 # Date picker
                     dcc.DatePickerRange(
                     id="date_filter",
@@ -277,7 +288,7 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                     dbc.Popover(
                         dbc.PopoverBody(_('Hover over the top-right of a graph and click the camera symbol to download in png-format')),
                         target="download_html_graphs", trigger="hover")
-                ], style={'display': 'inline-block', 'color': ADFC_darkgrey}),
+                ], style={'display': 'inline-block', 'color': ADFC_middlegrey}),
             ], className='text-end', sm=4),
         ], className='g-2 p-1'),
         dbc.Row([
@@ -335,7 +346,7 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
             dbc.Col([
                 html.Span([html.H4(_('v85 car speed'), className='my-3 me-2', style={'display': 'inline-block'}),
                            html.I(className='bi bi-info-circle-fill h6', id='popover_v85_speed',
-                                  style={'display': 'inline-block', 'color': ADFC_darkgrey})]),
+                                  style={'display': 'inline-block', 'color': ADFC_middlegrey})]),
                 dbc.Popover(
                     dbc.PopoverBody(
                         _('The V85 is a widely used indicator in the world of mobility and road safety, as it is deemed to be representative of the speed one can reasonably maintain on a road.')),
@@ -430,7 +441,7 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
         html.Span(
             [html.H4(_('Compare traffic periods'), className='my-3 me-2', style={'display': 'inline-block'}),
              html.I(className='bi bi-info-circle-fill h6', id='compare_traffic_periods',
-                    style={'display': 'inline-block', 'color': ADFC_darkgrey})]),
+                    style={'display': 'inline-block', 'color': ADFC_middlegrey})]),
         dbc.Popover(
             dbc.PopoverBody(
                 _('This chart allows four period-types to be compared: day, week, month or year. For each of these, two periods can be compared (e.g. month vs. month or day vs. day, etc.). Solid lines represent the first period, dashed lines represent the second selected period. You can select the year range on the left to narrow down the available periods shown on the right. You can select a period type from the dropdown menu in the center. You can choose which periods to compare using the dropdown menu located on the right side. If you select anything other than exactly two periods, the graph will automatically use the year period type and display data for 2025 and 2026.')),

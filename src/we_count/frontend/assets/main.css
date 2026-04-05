@@ -23,7 +23,6 @@ body {
     background-color: lightgrey;
 }
 
-
 /* Target the dropdown menu items */
 .VirtualizedSelectOption {
     background-color: white;
@@ -32,7 +31,7 @@ body {
 
 .VirtualizedSelectFocusedOption {
     background-color: #0d6efd; /* ADFC light blue*/
-    color: #fff; /* Bootstrap black/grey font */
+    color: #fff;
 }
 
 /* DatePickerRange */
@@ -89,6 +88,11 @@ body {
 .dbc .is-focused:not(.is-open) > .Select-control {
   border-color: var(--bs-primary) !important;
   box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.3);
+}
+
+.js-plotly-plot, .dash-graph {
+    touch-action: none;
+    -ms-touch-action: none;
 }
 
 .header-fixed {

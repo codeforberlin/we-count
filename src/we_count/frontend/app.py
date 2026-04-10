@@ -34,8 +34,12 @@ from typing import Callable
 _: Callable[[str], str]
 
 from .layout import serve_layout, INITIAL_STREET_ID, INITIAL_LANGUAGE
-from .layout import ADFC_blue, ADFC_crimson, ADFC_darkgrey, ADFC_green, ADFC_green_L
-from .layout import ADFC_lightblue, ADFC_lightblue_D, ADFC_lightgrey, ADFC_orange, ADFC_palegrey, ADFC_pink, ADFC_red, ADFC_orange_L
+#from .layout import ADFC_blue, ADFC_crimson, ADFC_darkgrey, ADFC_green, ADFC_green_L
+#from .layout import ADFC_lightblue, ADFC_lightblue_D, ADFC_lightgrey, ADFC_orange, ADFC_palegrey, ADFC_pink, ADFC_red, ADFC_orange_L
+
+from .layout import ADFC_palegrey, ADFC_lightgrey, ADFC_middlegrey, ADFC_darkgrey, ADFC_green_L, ADFC_green
+from .layout import ADFC_lightblue, ADFC_lightblue_D, ADFC_cyan, ADFC_skyblue, ADFC_blue, ADFC_darkblue
+from .layout import ADFC_yellow, ADFC_orange_L, ADFC_orange, ADFC_crimson, ADFC_pink, ADFC_red
 
 DEPLOYED = __name__ != '__main__'
 ASSET_DIR = os.path.join(os.path.dirname(__file__), 'assets')
@@ -507,7 +511,6 @@ def update_map(clickData, id_street, hardware_version, toggle_active_filter, tog
 
     callback_trigger = ctx.triggered_id
 
-    print(toggle_map_style)
     if toggle_map_style == 'streets':
         map_style = 'streets'
     elif toggle_map_style == 'open-street-map':
@@ -1048,15 +1051,15 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     if maxspeed == '30':
         speed_color_map = color_map_30
         max_speed_logo = '\\assets\\30.png'
-    if maxspeed == "['50', '30']":
+    elif maxspeed == "['50', '30']":
         speed_color_map = color_map_30
-        maxspeed = 'partly 30, partly 50'
+        maxspeed = '30 / 50'
         max_speed_logo = '\\assets\\30.png' #!change if used
     else:
         speed_color_map = color_map_50
         max_speed_logo = '\\assets\\50.png'
 
-    path_to_speed_logo = os.path.join(ASSET_DIR, max_speed_logo)
+    #path_to_speed_logo = os.path.join(ASSET_DIR, max_speed_logo)
 
     bar_perc_speed = px.bar(df_bar_speed_traffic,
         x=radio_time_unit, y=cols,

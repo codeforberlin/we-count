@@ -15,24 +15,25 @@ _: Callable[[str], str]
 
 
 # Initialize constants, variables and get data
-ADFC_green = '#1C9873'
-ADFC_green_L = '#25C996'
 ADFC_palegrey = '#F2F2F2'
 ADFC_lightgrey = '#DEDEDE'
-ADFC_darkgrey = '#737373'
 ADFC_middlegrey = '#A7A7A7'
-ADFC_cyan = '#61CBF4'
+ADFC_darkgrey = '#737373'
+ADFC_green_L = '#25C996'
+ADFC_green = '#1C9873'
 ADFC_lightblue = '#95CBD8'
 ADFC_lightblue_D = '#6DB7C9'
+ADFC_cyan = '#61CBF4'
 ADFC_skyblue = '#D7EDF2'
 ADFC_blue = '#2C4B78'
 ADFC_darkblue = '#331F45'
+ADFC_yellow = '#EEDE72'
+ADFC_orange_L = '#EDC773'
 ADFC_orange = '#D78432'
 ADFC_crimson = '#B44958'
 ADFC_pink = '#EB9AAC'
-ADFC_yellow = '#EEDE72'
 ADFC_red = '#E07862'
-ADFC_orange_L = '#EDC773'
+
 
 info_icon = html.I(className='bi bi-info-circle-fill me-2')
 email_icon = html.I(className='bi bi-envelope-at-fill me-2')
@@ -102,16 +103,6 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                         dbc.Popover(dbc.PopoverBody(
                             _('Note: street colors represent bike/car ratios based on all data available and do not change with date- or hour selection. The map allows street segments to be selected by mouse-click. Upon selection, the map will zoom with the selected street in the center.')),
                             target='popover_map_info', trigger='hover', placement='bottom'),
-                        # dbc.RadioItems(
-                        #     id='toggle_map_style',
-                        #     options=[{'label': _('Default'), 'value': 'streets'},
-                        #              {'label': _('Satellite'), 'value': 'satellite'},
-                        #              {'label': _('OSM'), 'value': 'open-street-map'}],
-                        #     value='streets',
-                        #     switch=False,
-                        #     inline=True,
-                        #     style={'color': ADFC_darkgrey}
-                        # ),
                     ], sm=8),
                     dbc.Col([
                         # Street drop down
@@ -156,7 +147,7 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                 html.H6(_('Map style:'), className='ms-2 fw-bold d-inline'),
                 dbc.RadioItems(
                     id='toggle_map_style',
-                    options=[{'label': _('Default'), 'value': 'streets'},
+                    options=[{'label': _('Streets'), 'value': 'streets'},
                              {'label': _('OSM'), 'value': 'open-street-map'},
                              {'label': _('Carto'), 'value': 'carto-positron'},
                              {'label': _('Satellite'), 'value': 'satellite'}],

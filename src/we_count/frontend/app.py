@@ -238,10 +238,16 @@ def update_map_data(df_map_base, df, active_selected, hardware_version):
     df_map = df_map.drop(nan_rows.index)
     # TODO: some streets in "bzm_telraam_segments.geojson" have no camera info and so appear as hardware version "0", the below puts these to "1"
     df_map['hardware_version'] = df_map['hardware_version'].replace(0,1)
+    print('update_map_data')
+    print(df_map.info())
+    print('update_map_data, unique segments: ', len(df_map['segment_id'].unique()))
 
     # TODO: Filter uptime although at the moment it looks like there are no streets with < 0.7 uptime only
     # Filter on active cameras (data available later than two weeks ago)
     if active_selected == ['filter_active_selected']:
+        print('update_map_data, active_selected: ', active_selected)
+        print('update_map_data, two_weeks_ago: ', two_weeks_ago)
+
         # get segment_id's with data >= two weeks ago
         df_map_active = df_map[df_map['last_data_package'] >= two_weeks_ago]
         active_segment_ids = df_map_active['segment_id'].unique()
@@ -510,6 +516,7 @@ def get_language(lang_code_dd):
 def update_map(clickData, id_street, hardware_version, toggle_active_filter, toggle_map_style):
 
     callback_trigger = ctx.triggered_id
+    print('update map, callback_trigger: ', callback_trigger)
 
     if toggle_map_style == 'streets':
         map_style = 'streets'
@@ -525,6 +532,7 @@ def update_map(clickData, id_street, hardware_version, toggle_active_filter, tog
 
     # Update df-map data in case of uptime change, active filter change or hardware change
     if callback_trigger == 'toggle_active_filter' or 'hardware_version':
+        print('update_map, callback_trigger = toggle_active_filter: ', callback_trigger)
         df_map = update_map_data(df_map_base, traffic_df_id_bc, toggle_active_filter, hardware_version)
 
     # Switch selected street if camera hardware version does not fit selection
@@ -541,6 +549,7 @@ def update_map(clickData, id_street, hardware_version, toggle_active_filter, tog
     # Update options for street_name_dd, without inactive
     df_map_options = df_map[df_map['map_line_color']!='Inactive - no data']
     street_name_dd_options = sorted(df_map_options['id_street'].unique())
+    print('update_map, street_name_dd_options: ', street_name_dd_options)
 
     # Switch selected street if not in options
     if not id_street in street_name_dd_options:
@@ -679,7 +688,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     #TODO: First callback triggers "hardware version"?
     ### Filter all traffic
     if callback_trigger in ['toggle_uptime_filter', 'toggle_active_filter', 'hardware_version']:
-
+        print('update_graphs', callback_trigger)
         query = ('CREATE OR REPLACE TEMP TABLE filtered_traffic AS '
                  'SELECT * '
                  'FROM all_traffic ')
@@ -690,6 +699,8 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
             # Filter uptime
             query += 'WHERE uptime > 0.7 '
             if toggle_active_filter == ['filter_active_selected']:
+                print('update_graphs uptime filter', toggle_active_filter)
+                print('update_graphs uptime filter', two_weeks_ago)
                 # Filter active cameras
                 query += 'AND CAST(last_data_package_naive AS DATE) >= ? '
                 params = [two_weeks_ago]
@@ -700,6 +711,8 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
         else:
             # Filter active selected
             if toggle_active_filter == ['filter_active_selected']:
+                print('update_graphs', toggle_active_filter)
+                print('update_graphs', two_weeks_ago)
                 query += 'WHERE CAST(last_data_package_naive AS DATE) >= ? '
                 params = [two_weeks_ago]
                 if hardware_version == [1]:

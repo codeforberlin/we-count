@@ -237,10 +237,6 @@ def update_map_data(df_map_base, df, active_selected, hardware_version):
     nan_rows = df_map[df_map['segment_id'].isnull()]
     df_map = df_map.drop(nan_rows.index)
 
-    # Remove 9000004122
-    #df_map = df_map[df_map['segment_id'] <= 9000004122]
-    #output_excel(df_map,'df_map_wo')
-
     # TODO: some streets in "bzm_telraam_segments.geojson" have no camera info and so appear as hardware version "0", the below puts these to "1"
     df_map['hardware_version'] = df_map['hardware_version'].replace(0,1)
 
@@ -439,8 +435,8 @@ json_df_features.set_index('segment_id', inplace=True)
 #TODO: move json_df_features to geopandas
 df_map_base = geo_df_map_info.join(json_df_features)
 # Remove rows w/o street names
-nan_rows = df_map_base[df_map_base['osm.name'].isnull()]
-df_map_base = df_map_base.drop(nan_rows.index)
+# nan_rows = df_map_base[df_map_base['osm.name'].isnull()]
+# df_map_base = df_map_base.drop(nan_rows.index)
 
 # Free memory
 del json_df_features
@@ -687,6 +683,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     #TODO: First callback triggers "hardware version"?
     ### Filter all traffic
     if callback_trigger in ['toggle_uptime_filter', 'toggle_active_filter', 'hardware_version']:
+
         query = ('CREATE OR REPLACE TEMP TABLE filtered_traffic AS '
                  'SELECT * '
                  'FROM all_traffic ')

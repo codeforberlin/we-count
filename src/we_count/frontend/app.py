@@ -116,7 +116,7 @@ def retrieve_data():
     # Export all data
     # query = """
     # COPY (SELECT * FROM all_traffic) TO
-    # 'all_traffic.parquet' (FORMAT parquet);
+    # 'all_traffic_Apr-17.parquet' (FORMAT parquet);
     # """
     # conn.execute(query)
     # conn.close()
@@ -435,8 +435,8 @@ json_df_features.set_index('segment_id', inplace=True)
 #TODO: move json_df_features to geopandas
 df_map_base = geo_df_map_info.join(json_df_features)
 # Remove rows w/o street names
-# nan_rows = df_map_base[df_map_base['osm.name'].isnull()]
-# df_map_base = df_map_base.drop(nan_rows.index)
+nan_rows = df_map_base[df_map_base['osm.name'].isnull()]
+df_map_base = df_map_base.drop(nan_rows.index)
 
 # Free memory
 del json_df_features
@@ -531,13 +531,14 @@ def update_map(clickData, id_street, hardware_version, toggle_active_filter, tog
     if callback_trigger == 'toggle_active_filter' or 'hardware_version':
         df_map = update_map_data(df_map_base, traffic_df_id_bc, toggle_active_filter, hardware_version)
 
-    # Switch selected street if camera hardware version does not fit selection
-    if hardware_version == [1] and current_hw == 2:
-        id_street = 'Alte Jakobstraße (9000002582)'
-    elif hardware_version == [2] and current_hw == 1:
-        id_street = 'Dresdener Straße (9000006667)'
-    elif hardware_version == [1, 2] or hardware_version == [] or hardware_version == [2, 1]:
-        hardware_version = [1, 2]
+    if callback_trigger == 'hardware_version':
+        # Switch selected street if single hardware version does not fit current street
+        if hardware_version == [1] and current_hw == 2:
+            id_street = 'Alte Jakobstraße (9000002582)'
+        elif hardware_version == [2] and current_hw == 1:
+            id_street = 'Dresdener Straße (9000006667)'
+        elif hardware_version == []:
+            hardware_version = [1, 2]
 
     # Get number of selected segments
     nof_selected_segments = _('Number of selected segments: ') + str(len(df_map['segment_id'].unique()))
@@ -545,15 +546,6 @@ def update_map(clickData, id_street, hardware_version, toggle_active_filter, tog
     # Update options for street_name_dd, without inactive
     df_map_options = df_map[df_map['map_line_color']!='Inactive - no data']
     street_name_dd_options = sorted(df_map_options['id_street'].unique())
-
-    # Switch selected street if not in options
-    if not id_street in street_name_dd_options:
-        if current_hw == 1:
-            id_street = 'Alte Jakobstraße (9000002582)'
-        elif current_hw == 2:
-           id_street = 'Dresdener Straße (9000006667)'
-        else:
-            id_street = street_name_dd_options[0]
 
     # Free up memory
     del df_map_options
@@ -1049,7 +1041,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
      'car_speed60': ADFC_red, 'car_speed70': ADFC_crimson}
 
     # Get maximum speed for the selected street and set color map
-    maxspeed = df_map.loc[df_map['segment_id'] == segment_id ]['osm.maxspeed'].iloc[0]
+    maxspeed = str(df_map.loc[df_map['segment_id'] == segment_id ]['osm.maxspeed'].iloc[0])
 
     # Show max speed logo
     if maxspeed == '30':

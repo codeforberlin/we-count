@@ -92,7 +92,7 @@ def main(args=None):
         },
         "features": update_props(bbox_segments, old_data, conns, options.retry, options.max_prop_updates)
     }
-    osm.add_osm(res["features"], {sid: f["properties"] for sid, f in old_data.items()})
+    osm.add_osm(res["features"], {sid: f["properties"] for sid, f in old_data.items()}, options.max_osm_updates)
     common.save_json(options.json_file, res)
     if options.single_line_output:
         with open(options.single_line_output, "w", encoding="utf8") as out:

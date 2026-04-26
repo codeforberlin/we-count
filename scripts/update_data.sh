@@ -22,7 +22,7 @@ if [ "$(date -r $TELRAAM_SEGMENTS +%Y-%m-%d)" = "$(date +%Y-%m-%d)" ]; then
     src/we_count/backend/telraam_backup.py -j $TELRAAM_SEGMENTS --single-line-output ${1}csv/kibana/bzm_telraam_segments.geojson -p ${1}parquet/bzm_telraam_traffic_data.parquet -v --csv ${1}csv/bzm_telraam
 else
     # first run of the day, complete backup
-    src/we_count/backend/telraam_backup.py -j $TELRAAM_SEGMENTS --single-line-output ${1}csv/kibana/bzm_telraam_segments.geojson -p ${1}parquet/bzm_telraam_traffic_data.parquet --csv ${1}csv/bzm_telraam --csv-segments ${1}csv/segments/bzm_telraam --csv-start-year 2021 --max-prop-updates 500 -v --limit 10
+    src/we_count/backend/telraam_backup.py -j $TELRAAM_SEGMENTS --single-line-output ${1}csv/kibana/bzm_telraam_segments.geojson -p ${1}parquet/bzm_telraam_traffic_data.parquet --csv ${1}csv/bzm_telraam --csv-segments ${1}csv/segments/bzm_telraam --csv-start-year 2021 --max-prop-updates 500 --max-osm-updates 20 -v --limit 10
     src/we_count/backend/telraam_backup.py -j $TELRAAM_SEGMENTS -p ${1}parquet/bzm_telraam_traffic_advanced.parquet -v --limit 10 --advanced
     src/we_count/backend/ecocounter_backup.py -j ${1}csv/bzm_ecocounter_segments.geojson -p ${1}parquet/bzm_ecocounter_traffic_data.parquet --csv ${1}csv/bzm_ecocounter --csv-segments ${1}csv/segments/bzm_ecocounter --csv-start-year 2015 -v
     src/we_count/backend/ecocounter_backup.py -j ${1}csv/bzm_ecocounter_segments.geojson -p ${1}parquet/bzm_ecocounter_traffic_advanced.parquet -v --advanced

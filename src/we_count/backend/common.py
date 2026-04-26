@@ -254,6 +254,8 @@ def get_options(args=None, json_default="sensor.json", url_default="telraam-api.
                         help="number of retries on failure")
     parser.add_argument("--max-prop-updates", type=int, default=10,
                         help="maximum number of segment property updates per run")
+    parser.add_argument("--max-osm-updates", type=int, default=2,
+                        help="maximum number of segment OpenStreetMap data updates per run")
     parser.add_argument("-a", "--advanced", action="store_true", default=False,
                         help="use the advanced API with quarterly data")
     parser.add_argument("--segments",

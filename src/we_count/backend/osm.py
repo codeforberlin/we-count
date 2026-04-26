@@ -9,6 +9,7 @@
 import datetime
 import json
 import os
+import random
 from collections import Counter
 
 import numpy as np
@@ -25,7 +26,9 @@ def add_osm(features, old_data, max_updates=2):
     Caches results for 30 days; updates at most max_updates features per call."""
     now = datetime.datetime.now(datetime.timezone.utc)
     update_count = 0
-    for feature in features:
+    shuffled = list(features)
+    random.shuffle(shuffled)
+    for feature in shuffled:
         segment_id = feature["properties"]["segment_id"]
         if segment_id in old_data and "osm" in old_data[segment_id]:
             osm_edge = old_data[segment_id]["osm"]

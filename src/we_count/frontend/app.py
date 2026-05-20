@@ -34,12 +34,12 @@ import polars as pl
 from typing import Callable
 _: Callable[[str], str]
 
-sys.path.append(r'/src/we_count/frontend')
+#sys.path.append(r'/src/we_count/frontend')
 
-from layout import serve_layout, INITIAL_STREET_ID, INITIAL_LANGUAGE
-from layout import ADFC_palegrey, ADFC_lightgrey, ADFC_middlegrey, ADFC_darkgrey, ADFC_green_L, ADFC_green
-from layout import ADFC_lightblue, ADFC_lightblue_D, ADFC_cyan, ADFC_skyblue, ADFC_blue, ADFC_darkblue
-from layout import ADFC_yellow, ADFC_orange_L, ADFC_orange, ADFC_crimson, ADFC_pink, ADFC_red
+from .layout import serve_layout, INITIAL_STREET_ID, INITIAL_LANGUAGE
+from .layout import ADFC_palegrey, ADFC_lightgrey, ADFC_middlegrey, ADFC_darkgrey, ADFC_green_L, ADFC_green
+from .layout import ADFC_lightblue, ADFC_lightblue_D, ADFC_cyan, ADFC_skyblue, ADFC_blue, ADFC_darkblue
+from .layout import ADFC_yellow, ADFC_orange_L, ADFC_orange, ADFC_crimson, ADFC_pink, ADFC_red
 
 DEPLOYED = __name__ != '__main__'
 ASSET_DIR = os.path.join(os.path.dirname(__file__), 'assets')

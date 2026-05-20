@@ -14,6 +14,7 @@
 """
 
 import os
+import sys
 import gettext
 from datetime import datetime, timedelta
 import pandas as pd
@@ -33,13 +34,12 @@ import polars as pl
 from typing import Callable
 _: Callable[[str], str]
 
-from .layout import serve_layout, INITIAL_STREET_ID, INITIAL_LANGUAGE
-#from .layout import ADFC_blue, ADFC_crimson, ADFC_darkgrey, ADFC_green, ADFC_green_L
-#from .layout import ADFC_lightblue, ADFC_lightblue_D, ADFC_lightgrey, ADFC_orange, ADFC_palegrey, ADFC_pink, ADFC_red, ADFC_orange_L
+sys.path.append(r'/src/we_count/frontend')
 
-from .layout import ADFC_palegrey, ADFC_lightgrey, ADFC_middlegrey, ADFC_darkgrey, ADFC_green_L, ADFC_green
-from .layout import ADFC_lightblue, ADFC_lightblue_D, ADFC_cyan, ADFC_skyblue, ADFC_blue, ADFC_darkblue
-from .layout import ADFC_yellow, ADFC_orange_L, ADFC_orange, ADFC_crimson, ADFC_pink, ADFC_red
+from layout import serve_layout, INITIAL_STREET_ID, INITIAL_LANGUAGE
+from layout import ADFC_palegrey, ADFC_lightgrey, ADFC_middlegrey, ADFC_darkgrey, ADFC_green_L, ADFC_green
+from layout import ADFC_lightblue, ADFC_lightblue_D, ADFC_cyan, ADFC_skyblue, ADFC_blue, ADFC_darkblue
+from layout import ADFC_yellow, ADFC_orange_L, ADFC_orange, ADFC_crimson, ADFC_pink, ADFC_red
 
 DEPLOYED = __name__ != '__main__'
 ASSET_DIR = os.path.join(os.path.dirname(__file__), 'assets')
@@ -116,7 +116,7 @@ def retrieve_data():
     # Export all data
     # query = """
     # COPY (SELECT * FROM all_traffic) TO
-    # 'all_traffic_Apr-17.parquet' (FORMAT parquet);
+    # 'all_traffic_Apr-22.parquet' (FORMAT parquet);
     # """
     # conn.execute(query)
     # conn.close()
@@ -145,17 +145,42 @@ def retrieve_data():
     with db_lock:
         traffic_df_id_bc = conn.execute(query).fetch_df()
 
-    # Add last_data_package from json_df_features to all_traffic
-    last_data_package_df = pd.DataFrame(json_df_features[['segment_id', 'last_data_package']])
+    # Add last_data_package and osm.highway from json_df_features to all_traffic
+    last_data_package_df = json_df_features[['segment_id', 'last_data_package', 'osm.highway']]
     last_data_package_df['last_data_package'] = pd.to_datetime(last_data_package_df['last_data_package'], format='mixed')
+    last_data_package_df = last_data_package_df.rename(columns={'osm.highway': 'street_type'})
+    last_data_package_df['street_type'] = last_data_package_df['street_type'].astype(object)
 
     with db_lock:
         conn.register('last_data_package_table', last_data_package_df)
 
+    # query = """
+    # CREATE OR REPLACE TABLE all_traffic AS
+    # SELECT a.*,
+    #     j.last_data_package AT TIME ZONE 'UTC' AS last_data_package_naive
+    # FROM all_traffic AS a
+    # LEFT JOIN last_data_package_table AS j ON a.segment_id = j.segment_id
+    # """
+    #
+    # with db_lock:
+    #     conn.execute(query)
+    #
+    # query = """
+    # CREATE OR REPLACE TABLE all_traffic AS
+    # SELECT a.*,
+    #     j.street_type AS street_type
+    # FROM all_traffic AS a
+    # LEFT JOIN last_data_package_table AS j ON a.segment_id = j.segment_id
+    # """
+    #
+    # with db_lock:
+    #     conn.execute(query)
+
     query = """
     CREATE OR REPLACE TABLE all_traffic AS
     SELECT a.*,
-        j.last_data_package AT TIME ZONE 'UTC' AS last_data_package_naive
+        j.last_data_package AT TIME ZONE 'UTC' AS last_data_package_naive,
+        j.street_type AS street_type
     FROM all_traffic AS a
     LEFT JOIN last_data_package_table AS j ON a.segment_id = j.segment_id
     """
@@ -229,7 +254,7 @@ def get_bike_car_ratios(traffic_df_id_bc):
 
     return traffic_df_id_bc
 
-def update_map_data(df_map_base, df, active_selected, hardware_version):
+def update_map_data(df_map_base, df, active_selected, hardware_version, street_type_dd):
 
     # Prepare map info by joining geo_df_map_info with map_line_color from traffic_df_id_bc (based on bike/car ratios)
     df_map = df_map_base.join(df)
@@ -253,6 +278,18 @@ def update_map_data(df_map_base, df, active_selected, hardware_version):
         df_map = df_map[df_map['hardware_version'] == 1]
     elif hardware_version == [2]:
         df_map = df_map[df_map['hardware_version'] == 2]
+
+
+    # Filter on camera hardware version
+    if street_type_dd == 'primary':
+        df_map = df_map[df_map['osm.highway'] == 'primary']
+    elif street_type_dd == 'secondary':
+        df_map = df_map[df_map['osm.highway'] == 'secondary']
+    elif street_type_dd == 'tertiary':
+        df_map = df_map[df_map['osm.highway'] == 'tertiary']
+    elif street_type_dd == 'residential':
+        df_map = df_map[df_map['osm.highway'] == 'residential']
+
 
     # Add map_line_color category and add column information to cover inactive cameras
     df_map['map_line_color'] = df_map['map_line_color'].cat.add_categories([('Inactive - no data')])
@@ -409,6 +446,9 @@ with db_lock:
     # Convert df to list
     id_street_options = id_street_options_df['id_street'].to_list()
 
+# Free memory
+del id_street_options_df
+
 ### Prepare map data ###
 if not DEPLOYED:
     print('Prepare map...')
@@ -445,7 +485,7 @@ del json_df_features
 traffic_df_id_bc = get_bike_car_ratios(traffic_df_id_bc)
 
 # Join map data and bike/car ratio data to df_map
-df_map = update_map_data(df_map_base, traffic_df_id_bc, 'toggle_active_filter', [1,2])
+df_map = update_map_data(df_map_base, traffic_df_id_bc, 'toggle_active_filter', [1,2], 'all')
 
 ### Run Dash app ###
 if not DEPLOYED:
@@ -506,12 +546,13 @@ def get_language(lang_code_dd):
     Output(component_id='toggle_map_style', component_property='value'),
     Input(component_id='street_map', component_property='clickData'),
     Input(component_id='street_name_dd', component_property='value'),
+    Input(component_id='street_type_dd',component_property= 'value'),
     Input(component_id='hardware_version',component_property= 'value'),
     Input(component_id='toggle_active_filter',component_property= 'value'),
     Input(component_id='toggle_map_style', component_property='value'),
 )
 
-def update_map(clickData, id_street, hardware_version, toggle_active_filter, toggle_map_style):
+def update_map(clickData, id_street, street_type_dd, hardware_version, toggle_active_filter, toggle_map_style):
 
     callback_trigger = ctx.triggered_id
 
@@ -526,10 +567,11 @@ def update_map(clickData, id_street, hardware_version, toggle_active_filter, tog
 
     # Get hardware version of currently selected street
     current_hw = int(df_map_base.loc[df_map_base['id_street'] == id_street, 'hardware_version'].iloc[0])
+    current_st = df_map_base.loc[df_map_base['id_street'] == id_street, 'osm.highway'].iloc[0]
 
-    # Update df-map data in case of uptime change, active filter change or hardware change
-    if callback_trigger == 'toggle_active_filter' or 'hardware_version':
-        df_map = update_map_data(df_map_base, traffic_df_id_bc, toggle_active_filter, hardware_version)
+    # Update df-map data in case of uptime change, active filter change, hardware change or street_type change
+    if callback_trigger == 'toggle_active_filter' or 'hardware_version' or 'street_type_dd':
+        df_map = update_map_data(df_map_base, traffic_df_id_bc, toggle_active_filter, hardware_version, street_type_dd)
 
     if callback_trigger == 'hardware_version':
         # Switch selected street if single hardware version does not fit current street
@@ -539,6 +581,18 @@ def update_map(clickData, id_street, hardware_version, toggle_active_filter, tog
             id_street = 'Dresdener Straße (9000006667)'
         elif hardware_version == []:
             hardware_version = [1, 2]
+
+    if callback_trigger == 'street_type_dd':
+        # Switch selected street if single hardware version does not fit current street
+        if street_type_dd != current_st:
+            if street_type_dd == 'primary':
+                id_street = 'Leipziger Straße (9000008543)'
+            if street_type_dd == 'secondary':
+                id_street = 'Köpenicker Straße (9000006435)'
+            if street_type_dd == 'tertiary':
+                id_street = 'Adalbertstraße (9000009042)'
+            elif street_type_dd == 'residential':
+                id_street = 'Dresdener Straße (9000006667)'
 
     # Get number of selected segments
     nof_selected_segments = _('Number of selected segments: ') + str(len(df_map['segment_id'].unique()))
@@ -591,7 +645,7 @@ def update_map(clickData, id_street, hardware_version, toggle_active_filter, tog
         'Over 10x more cars': ADFC_pink,
         'Inactive - no data': ADFC_lightgrey},
         hover_data={'map_line_color': False, 'osm.highway': True, 'osm.address.city': True, 'osm.address.suburb': True, 'osm.address.postcode': True, 'hardware_version': True, 'osm.maxspeed': True},
-        labels={'segment_id': 'Segment', 'osm.highway': _('Highway type'), 'x': 'Lon', 'y': 'Lat', 'osm.address.city': _('City'), 'osm.address.suburb': _('District'), 'osm.address.postcode': _('Postal code')},
+        labels={'segment_id': 'Segment', 'osm.highway': _('Highway type'), 'x': 'Lon', 'y': 'Lat', 'osm.address.city': _('City'), 'osm.address.suburb': _('District'), 'osm.address.postcode': _('Postal code'), 'hardware_version': _('Hardware version'), 'osm.maxspeed': _('Speed limit')},
         map_style=map_style, center= dict(lat=lat_str, lon=lon_str), zoom= zoom_factor)
 
     street_map.update_traces(mode='lines+markers')
@@ -646,6 +700,7 @@ def update_map(clickData, id_street, hardware_version, toggle_active_filter, tog
     Input(component_id='radio_time_division', component_property='value'),
     Input(component_id='radio_time_unit', component_property='value'),
     Input(component_id='street_name_dd', component_property='value'),
+    Input(component_id='street_type_dd', component_property='value'),
     Input(component_id="date_filter", component_property="start_date"),
     Input(component_id="date_filter", component_property="end_date"),
     Input(component_id='range_slider', component_property='value'),
@@ -658,7 +713,7 @@ def update_map(clickData, id_street, hardware_version, toggle_active_filter, tog
     prevent_initial_call='initial_duplicate',
 )
 
-def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, end_date, hour_range, toggle_uptime_filter, toggle_active_filter, hardware_version, radio_y_axis, lang_code_dd, toggle_map_style):
+def update_graphs(radio_time_division, radio_time_unit, id_street, street_type_dd, start_date, end_date, hour_range, toggle_uptime_filter, toggle_active_filter, hardware_version, radio_y_axis, lang_code_dd, toggle_map_style):
 
     callback_trigger = ctx.triggered_id
 
@@ -674,7 +729,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
 
     #TODO: First callback triggers "hardware version"?
     ### Filter all traffic
-    if callback_trigger in ['toggle_uptime_filter', 'toggle_active_filter', 'hardware_version']:
+    if callback_trigger in ['toggle_uptime_filter', 'toggle_active_filter', 'hardware_version', 'street_type_dd']:
 
         query = ('CREATE OR REPLACE TEMP TABLE filtered_traffic AS '
                  'SELECT * '
@@ -693,6 +748,18 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
                 query += 'AND hardware_version = 1 '
             elif hardware_version == [2]:
                 query += 'AND hardware_version = 2 '
+            if street_type_dd == 'primary':
+                query += 'AND street_type = ? '
+                params.append('primary')
+            elif street_type_dd == 'secondary':
+                query += 'AND street_type = ? '
+                params.append('secondary')
+            elif street_type_dd == 'tertiary':
+                query += 'AND street_type = ? '
+                params.append('tertiary')
+            elif street_type_dd == 'residential':
+                query += 'AND street_type = ? '
+                params.append('residential')
         else:
             # Filter active selected
             if toggle_active_filter == ['filter_active_selected']:
@@ -702,11 +769,35 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
                     query += 'AND hardware_version = 1 '
                 elif hardware_version == [2]:
                     query += 'AND hardware_version = 2 '
+                if street_type_dd == 'primary':
+                    query += 'AND street_type = ? '
+                    params.append('primary')
+                elif street_type_dd == 'secondary':
+                    query += 'AND street_type = ? '
+                    params.append('secondary')
+                elif street_type_dd == 'tertiary':
+                    query += 'AND street_type = ? '
+                    params.append('tertiary')
+                elif street_type_dd == 'residential':
+                    query += 'AND street_type = ? '
+                    params.append('residential')
             else:
                 if hardware_version == [1]:
                     query += 'WHERE hardware_version = 1 '
                 elif hardware_version == [2]:
                     query += 'WHERE hardware_version = 2 '
+                if street_type_dd == 'primary':
+                    query += 'AND street_type = ? '
+                    params.append('primary')
+                elif street_type_dd == 'secondary':
+                    query += 'AND street_type = ? '
+                    params.append('secondary')
+                elif street_type_dd == 'tertiary':
+                    query += 'AND street_type = ? '
+                    params.append('tertiary')
+                elif street_type_dd == 'residential':
+                    query += 'AND street_type = ? '
+                    params.append('residential')
 
         # Add or update table filtered_traffic
         with db_lock:  # Ensure thread safety for writes
@@ -717,7 +808,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, start_date, e
     # Check if selected street has data for selected data range
     min_date, max_date, start_date, end_date, message, missing_data = get_min_max_str(start_date, end_date, id_street, 'filtered_traffic')
 
-    if callback_trigger in ['toggle_uptime_filter', 'toggle_active_filter', 'hardware_version', 'date_filter', 'range_slider', 'street_name_dd']:
+    if callback_trigger in ['toggle_uptime_filter', 'toggle_active_filter', 'hardware_version', 'date_filter', 'range_slider', 'street_name_dd', 'street_type_dd']:
 
         # Create/update filtered traffic by start/end date
         query = """
@@ -1303,7 +1394,6 @@ def comparison_chart(period_values_year, period_options_year,
     with db_lock:
         conn.execute(query_A, params_A)
         conn.execute(query_B, params_B)
-        # duckdb_info(conn)
 
     # Prepare grouping and graph labels
     if period_type_others == _('year_month'):
@@ -1375,7 +1465,6 @@ def comparison_chart(period_values_year, period_options_year,
 
     df_avg_traffic_delta_AB = conn.execute(query).fetchdf()
 
-    #duckdb_info(conn)
 
     # Draw graph
     line_avg_delta_traffic = px.line(df_avg_traffic_delta_AB,

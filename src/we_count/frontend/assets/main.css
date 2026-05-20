@@ -20,7 +20,7 @@ body {
     border: solid 2px #0d6efd !important;
 }
 .rc-slider-rail {
-    background-color: lightgrey;
+    background-color: #0d6efd !important;
 }
 
 /* Target the dropdown menu items */
@@ -34,6 +34,16 @@ body {
     color: #fff;
 }
 
+/* Dropdown upward */
+.street_type .Select-menu-outer{
+  top: auto !important;
+  bottom: 100% !important;
+}
+
+.toggle_map_style .Select-menu-outer{
+  top: auto !important;
+  bottom: 100% !important;
+}
 /* DatePickerRange */
 
 /* Style the input boxes */

@@ -451,6 +451,30 @@ msgstr "Bezirk"
 msgid "Postal code"
 msgstr "Postleitzahl"
 
+msgid "Hardware version"
+msgstr "Hardware Version"
+
+msgid "Street type:"
+msgstr "Straßentyp:"
+
+msgid "All"
+msgstr "Alle"
+
+msgid "Primary"
+msgstr "Bundesstraße"
+
+msgid "Secondary"
+msgstr "Landesstraße"
+
+msgid "Tertiary"
+msgstr "Verbindungsstraße"
+
+msgid "Residential"
+msgstr "Anliegerstraße"
+
+msgid "Speed limit"
+msgstr "Tempolimit"
+
 #: bzm_v01.py:926
 msgid "More bikes than cars"
 msgstr "Mehr Zweiräder als Autos"

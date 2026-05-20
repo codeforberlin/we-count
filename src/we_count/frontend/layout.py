@@ -145,18 +145,35 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
         dbc.Row([
             dbc.Col([
                 html.H6(_('Map style:'), className='ms-2 fw-bold d-inline'),
-                dbc.RadioItems(
+            ], sm=1),
+            dbc.Col([
+                dcc.Dropdown(
                     id='toggle_map_style',
                     options=[{'label': _('Streets'), 'value': 'streets'},
                              {'label': _('OSM'), 'value': 'open-street-map'},
                              {'label': _('Carto'), 'value': 'carto-positron'},
                              {'label': _('Satellite'), 'value': 'satellite'}],
                     value='streets',
-                    switch=False,
-                    inline=True,
-                    className='ms-2 d-inline-block',
+                    clearable=False,
+                    className='toggle_map_style',
                 ),
-            ], sm=5),
+            ], sm=1),
+            dbc.Col([
+                html.H6(_('Street type:'), className='ms-2 fw-bold d-inline'),
+            ], sm=1),
+            dbc.Col([
+                dcc.Dropdown(
+                    id='street_type_dd',
+                    options=[{'label': _('All'), 'value': 'all'},
+                             {'label': _('Primary'), 'value': 'primary'},
+                             {'label': _('Secondary'), 'value': 'secondary'},
+                             {'label': _('Tertiary'), 'value': 'tertiary'},
+                             {'label': _('Residential'), 'value': 'residential'}],
+                    value='all',
+                    clearable=False,
+                    className='street_type',
+                ),
+            ], sm=2),
             dbc.Col([
                 html.H6(_('Filters:'), className='ms-2 fw-bold d-inline'),
                 html.Span([
@@ -204,7 +221,7 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                             _("Click to show/hide cameras with hardware versions 1 and or 2. Switching off both, will re-enable both automatically. Note: the 'All streets' graphs below are based on all streets, regardless which camera hardware version is selected")),
                         target="popover_hardware_version", trigger="hover"),
                 ]),
-            ], sm=7),
+            ], sm=6),
             # Horizontal line
             html.Hr(style={
                 "border": "none",

@@ -156,6 +156,7 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                     value='streets',
                     clearable=False,
                     className='toggle_map_style',
+                    style={'overflow': 'visible'}
                 ),
             ], sm=1),
             dbc.Col([
@@ -209,13 +210,16 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                 html.Span([
                     dbc.Checklist(
                         id='hardware_version',
-                        options=[{'label': _('V1 Sensor'), 'value': 1}, {'label': html.Div([_('S2 Sensor'), html.I(className='bi bi-info-circle-fill h6 ms-2', id='popover_hardware_version', style={'color': ADFC_middlegrey})]),
-                                                                         'value': 2}],
+                        options=[{'label': _('V1 Sensor'), 'value': 1},
+                                 #{'label': html.Div([_('S2 Sensor'), html.I(className='bi bi-info-circle-fill h6 ms-2', id='popover_hardware_version', style={'color': ADFC_middlegrey})]),
+                                 #                                        'value': 2}],
+                                 {'label': _('S2 Sensor'), 'value': 2}],
                         value=[1, 2],
                         inline=True,
                         switch=True,
                         className='ms-2 d-inline-block'
                     ),
+                    html.I(className='bi bi-info-circle-fill h6', id='popover_hardware_version', style={'color': ADFC_middlegrey}),
                     dbc.Popover(
                         dbc.PopoverBody(
                             _("Click to show/hide cameras with hardware versions 1 and or 2. Switching off both, will re-enable both automatically. Note: the 'All streets' graphs below are based on all streets, regardless which camera hardware version is selected")),

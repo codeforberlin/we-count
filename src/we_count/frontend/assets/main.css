@@ -38,12 +38,18 @@ body {
 .street_type .Select-menu-outer{
   top: auto !important;
   bottom: 100% !important;
+  z-index: 1050; /* Make sure this is higher than the sticky row */
+  position: absolute; /* Necessary for z-index to take effect */
 }
 
-.toggle_map_style .Select-menu-outer{
+/* Dropdown upward */
+.toggle_map_style .Select-menu-outer {
   top: auto !important;
   bottom: 100% !important;
+  z-index: 1050; /* Make sure this is higher than the sticky row */
+  position: absolute; /* Necessary for z-index to take effect */
 }
+
 /* DatePickerRange */
 
 /* Style the input boxes */

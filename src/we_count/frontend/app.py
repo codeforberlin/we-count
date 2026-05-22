@@ -28,6 +28,7 @@ import plotly.express as px
 from threading import Lock
 from dateutil import parser
 import polars as pl
+import random
 
 # the following is basically to suppress warnings about "_" being undefined
 # "from gettext import gettext as _" does not work because we use gettext.install later on, which installs "_"
@@ -279,17 +280,9 @@ def update_map_data(df_map_base, df, active_selected, hardware_version, street_t
     elif hardware_version == [2]:
         df_map = df_map[df_map['hardware_version'] == 2]
 
-
     # Filter on camera hardware version
-    if street_type_dd == 'primary':
-        df_map = df_map[df_map['osm.highway'] == 'primary']
-    elif street_type_dd == 'secondary':
-        df_map = df_map[df_map['osm.highway'] == 'secondary']
-    elif street_type_dd == 'tertiary':
-        df_map = df_map[df_map['osm.highway'] == 'tertiary']
-    elif street_type_dd == 'residential':
-        df_map = df_map[df_map['osm.highway'] == 'residential']
-
+    if street_type_dd in ['primary', 'secondary', 'tertiary', 'residential']:
+        df_map = df_map[df_map['osm.highway'] == street_type_dd]
 
     # Add map_line_color category and add column information to cover inactive cameras
     df_map['map_line_color'] = df_map['map_line_color'].cat.add_categories([('Inactive - no data')])
@@ -556,43 +549,59 @@ def update_map(clickData, id_street, street_type_dd, hardware_version, toggle_ac
 
     callback_trigger = ctx.triggered_id
 
-    if toggle_map_style == 'streets':
-        map_style = 'streets'
-    elif toggle_map_style == 'open-street-map':
-        map_style = 'open-street-map'
-    elif toggle_map_style == 'carto-positron':
-        map_style = 'carto-positron'
-    else:
-        map_style = 'satellite'
+    # Set default map style and change if new selected
+    map_style = 'streets'
+    if callback_trigger == toggle_map_style:
+        map_style = toggle_map_style
 
-    # Get hardware version of currently selected street
+    # Get hardware version and street type of currently selected street
     current_hw = int(df_map_base.loc[df_map_base['id_street'] == id_street, 'hardware_version'].iloc[0])
-    current_st = df_map_base.loc[df_map_base['id_street'] == id_street, 'osm.highway'].iloc[0]
+    current_street_type = df_map_base.loc[df_map_base['id_street'] == id_street, 'osm.highway'].iloc[0]
 
-    # Update df-map data in case of uptime change, active filter change, hardware change or street_type change
+    # Update df-map data in case of active filter change, hardware change or street_type change
     if callback_trigger == 'toggle_active_filter' or 'hardware_version' or 'street_type_dd':
         df_map = update_map_data(df_map_base, traffic_df_id_bc, toggle_active_filter, hardware_version, street_type_dd)
 
+    preferred_streets = ['Dresdener Straße (9000006667)', 'Platz der Luftbrücke (9000007879)','Wilhelmstraße (9000008514)', 'Leipziger Straße (9000008543)', 'Köpenicker Straße (9000006435)', 'Adalbertstraße (9000009042)','Alte Jakobstraße (9000002582)']
+    # Create a colum that marks preferred streets
+    df_map['preferred_street'] = df_map['id_street'].isin(preferred_streets)
+    # CHeck if df_map contains any preferred streets
+    nof_preferred_streets = df_map['preferred_street'].sum()
+    preferred_street_available = False
+    if nof_preferred_streets > 0:
+        preferred_street_available = True
+
+    if callback_trigger == 'toggle_active_filter':
+        if toggle_active_filter == ['filter_active_selected']:
+            if preferred_street_available:
+                # Switch to first preferred street
+                id_street = df_map.loc[df_map['preferred_street'] == True, 'id_street'].iloc[0]
+            else:
+                # Set to random available street
+                id_street = df_map['id_street'][random.randint(0,len(df_map))]
+
+    # Set new street if current street does not fit the hardware version
     if callback_trigger == 'hardware_version':
-        # Switch selected street if single hardware version does not fit current street
-        if hardware_version == [1] and current_hw == 2:
-            id_street = 'Alte Jakobstraße (9000002582)'
-        elif hardware_version == [2] and current_hw == 1:
-            id_street = 'Dresdener Straße (9000006667)'
+        if hardware_version == [1] and current_hw == 2 or hardware_version == [2] and current_hw == 1:
+            if preferred_street_available:
+                # Switch to first preferred street
+                id_street = df_map.loc[df_map['preferred_street'] == True, 'id_street'].iloc[0]
+            else:
+                # Set to random available street
+                id_street = df_map['id_street'][random.randint(0,len(df_map))]
         elif hardware_version == []:
+            # Do not allow to switch off both hardware versions
             hardware_version = [1, 2]
 
+    # Set new street if current street does not fit the street type
     if callback_trigger == 'street_type_dd':
-        # Switch selected street if single hardware version does not fit current street
-        if street_type_dd != current_st:
-            if street_type_dd == 'primary':
-                id_street = 'Leipziger Straße (9000008543)'
-            if street_type_dd == 'secondary':
-                id_street = 'Köpenicker Straße (9000006435)'
-            if street_type_dd == 'tertiary':
-                id_street = 'Adalbertstraße (9000009042)'
-            elif street_type_dd == 'residential':
-                id_street = 'Dresdener Straße (9000006667)'
+        if street_type_dd != current_street_type:
+            if preferred_street_available:
+                # Switch to first preferred street
+                id_street = df_map.loc[df_map['preferred_street'] == True, 'id_street'].iloc[0]
+            else:
+                # Set to random available street
+                id_street = df_map['id_street'][random.randint(0,len(df_map))]
 
     # Get number of selected segments
     nof_selected_segments = _('Number of selected segments: ') + str(len(df_map['segment_id'].unique()))
@@ -620,6 +629,10 @@ def update_map(clickData, id_street, street_type_dd, hardware_version, toggle_ac
         segment_id = id_street[-11:-1]
         idx = df_map.loc[df_map['segment_id'] == segment_id]
         zoom_factor = 13
+    elif callback_trigger == 'hardware_version' or 'street_type_dd':
+        segment_id = id_street[-11:-1]
+        idx = df_map.loc[df_map['segment_id'] == segment_id]
+        zoom_factor = 11
     else:
         # Zoom out upon initial load or hardware change
         segment_id = id_street[-11:-1]

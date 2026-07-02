@@ -156,8 +156,9 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                     value='streets',
                     clearable=False,
                     className='toggle_map_style',
-                    style={'overflow': 'visible'}
-                ),
+                    style={'overflow': 'visible'},
+                    searchable=False
+    ),
             ], sm=1),
             dbc.Col([
                 html.H6(_('Street type:'), className='ms-2 fw-bold d-inline'),
@@ -173,6 +174,7 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                     value='all',
                     clearable=False,
                     className='street_type',
+                    searchable=False
                 ),
             ], sm=2),
             dbc.Col([
@@ -186,7 +188,7 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                         inline=False,
                         switch=True,
                         className='ms-2 d-inline-block'
-                    ),
+    ),
                     dbc.Popover(
                         dbc.PopoverBody(
                             _('A high uptime of >70% will always mean very good data. The first and last daylight hour of the day will always have lower uptimes. If uptimes during the day are below 0.5, that is usually a clear sign that something is probably wrong with the sensor.')),
@@ -248,7 +250,7 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                     max=24,
                     step=1,
                     value = INITIAL_HOUR_RANGE,
-                    className='align-items-bottom mb-2',
+                    className='align-items-bottom ms-2 mb-2',
                     allowCross=False,
                     tooltip={'always_visible': False, 'placement' : 'bottom', 'template': '{value}' + _(" Hour")}),
                 ]),
@@ -258,8 +260,9 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
             dbc.Col([
                 html.H6(_('Pick date range:'), className='fw-bold text-nowrap', id='date_range_text'),
                 # Date picker
-                    dcc.DatePickerRange(
+                dcc.DatePickerRange(
                     id="date_filter",
+                    updatemode='bothdates',
                     start_date=start_date,
                     end_date=end_date,
                     min_date_allowed=min_date,
@@ -268,7 +271,7 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                     end_date_placeholder_text='DD-MM-YYYY',
                     number_of_months_shown=2,
                     minimum_nights=0,
-                    updatemode='bothdates',
+                    clearable=False,
                     className='align-bottom justify-center mb-2',
                 ),
             ], sm=3),
@@ -416,9 +419,14 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                     multi=True,
                     options=['2025', '2026'],
                     className='ms-2 mb-2',
-                    clearable=False
+                    clearable=False,
+                    searchable=False,
+                    labels={
+                        'select_all': _('Select All'),
+                        'selected_count': '{num_selected}' + ' ' + _('selected'),
+                    }
                 ),
-            ], className='col-flex', sm=6), #className='d-inline-block')
+            ], className='col-flex', sm=5), #className='d-inline-block')
             # Select period type
             dbc.Col([
                 html.H6(_('Select period type:'), className='ms-2 fw-bold header-fixed header-clamp'),
@@ -432,7 +440,8 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                     ],
                     value='year',
                     className='ms-2 mb-2',
-                    clearable=False
+                    clearable=False,
+                    searchable=False
                 ),
             ], className='col-flex', sm=2), #className='d-inline-block'),
             # Select two periods
@@ -442,10 +451,15 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                     id='period_values_others',
                     value=['2025', '2026'],
                     multi=True,
-                    className='ms-2 mb-2',
-                    clearable=False
-                ),
-            ], className='col-flex',  sm=4), #className='d-inline-block')
+                    className='ms-2 mb-2 me-2',
+                    clearable=False,
+                    searchable=False,
+                    labels={
+                        'select_all': _('Select All'),
+                        'selected_count': '{num_selected}' + ' ' + _('selected'),
+                    }
+    ),
+            ], className='col-flex', sm=3), #className='d-inline-block')
         ], className='sticky-top rounded g-2 p-1 align-bottom', style={'background-color': ADFC_lightblue, 'opacity': 1.0}),
 
     # Comparison graph
@@ -517,7 +531,7 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                 html.P(_('The layout and design of the offer as a whole as well as its individual elements are protected by copyright. The same applies to the images, graphics and editorial contributions used in detail as well as their selection and compilation. Further use and reproduction are only permitted for private purposes. No changes may be made to it. Public use of the offer may only take place with the consent of the operator.'), style= {'font-size': 10, 'color': ADFC_darkgrey}),
             ], sm=12),
         ], className='g-2 p-1'),
-    ],
+    ], style={"--Dash-Fill-Interactive-Strong": "#0d6efd"},
     fluid = 'sm',
     className = 'dbc'
 )

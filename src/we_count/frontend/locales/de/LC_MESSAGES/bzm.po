@@ -310,6 +310,15 @@ msgstr "Vergleiche Verkehrszeiträume"
 msgid "Select year scope:"
 msgstr "Jahresbereich auswählen:"
 
+msgid "Select All"
+msgstr "Alles auswählen"
+
+msgid "selected"
+msgstr "ausgewählt"
+
+msgid "Search"
+msgstr "Suche"
+
 msgid "Select period type:"
 msgstr "Periodentyp auswählen:"
 

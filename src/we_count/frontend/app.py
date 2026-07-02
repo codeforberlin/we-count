@@ -14,14 +14,14 @@
 """
 
 import os
-import sys
 import gettext
 from datetime import datetime, timedelta
+
 import pandas as pd
 import geopandas as gpd
 import duckdb
 import dash
-from dash import Dash, Output, Input, callback, ctx
+from dash import Dash, Output, Input, callback, ctx, State
 import dash_bootstrap_components as dbc
 from dash.exceptions import PreventUpdate
 import plotly.express as px
@@ -38,9 +38,9 @@ _: Callable[[str], str]
 #sys.path.append(r'/src/we_count/frontend')
 
 from .layout import serve_layout, INITIAL_STREET_ID, INITIAL_LANGUAGE
-from .layout import ADFC_palegrey, ADFC_lightgrey, ADFC_middlegrey, ADFC_darkgrey, ADFC_green_L, ADFC_green
-from .layout import ADFC_lightblue, ADFC_lightblue_D, ADFC_cyan, ADFC_skyblue, ADFC_blue, ADFC_darkblue
-from .layout import ADFC_yellow, ADFC_orange_L, ADFC_orange, ADFC_crimson, ADFC_pink, ADFC_red
+from .layout import ADFC_palegrey, ADFC_lightgrey, ADFC_darkgrey, ADFC_green_L, ADFC_green
+from .layout import ADFC_lightblue, ADFC_lightblue_D, ADFC_blue
+from .layout import ADFC_orange_L, ADFC_orange, ADFC_crimson, ADFC_pink, ADFC_red
 
 DEPLOYED = __name__ != '__main__'
 ASSET_DIR = os.path.join(os.path.dirname(__file__), 'assets')
@@ -692,6 +692,7 @@ def update_map(clickData, id_street, street_type_dd, hardware_version, toggle_ac
 
     return street_map, hardware_version, street_name_dd_options, id_street, nof_selected_segments, toggle_map_style
 
+
 ### General traffic callback ###
 @callback(
     Output(component_id='selected_street_header', component_property='children'),
@@ -739,6 +740,9 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, street_type_d
     street_id_text = _('Selected segment ID: ') + str(segment_id)
     street_name = id_street.split(' (')[0]
     selected_street_header = street_name
+
+    # end_date was just cleared by the component after start_date changed
+    #today = datetime.today().strftime('%Y-%m-%dT%H:%M:%S')
 
     #TODO: First callback triggers "hardware version"?
     ### Filter all traffic
@@ -819,6 +823,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, street_type_d
             conn.execute('CREATE OR REPLACE TEMP TABLE filtered_traffic AS SELECT * EXCLUDE (uptime, hardware_version, last_data_package_naive) FROM filtered_traffic')
 
     # Check if selected street has data for selected data range
+
     min_date, max_date, start_date, end_date, message, missing_data = get_min_max_str(start_date, end_date, id_street, 'filtered_traffic')
 
     if callback_trigger in ['toggle_uptime_filter', 'toggle_active_filter', 'hardware_version', 'date_filter', 'range_slider', 'street_name_dd', 'street_type_dd']:

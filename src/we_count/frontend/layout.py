@@ -44,7 +44,6 @@ INITIAL_STREET_ID = 'Dresdener Straße (9000006667)'
 INITIAL_LANGUAGE = 'de'
 INITIAL_HOUR_RANGE = [0, 24]
 
-
 def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, max_date):
     return dbc.Container(
         [
@@ -412,24 +411,36 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
         # Menu
         dbc.Row([
             # Select year(s)
-            dbc.Col([
-                html.H6(_('Select year scope:'), className='ms-2 fw-bold header-fixed header-clamp'),
-                dcc.Dropdown(
-                    id='period_values_year',
-                    multi=True,
-                    options=['2025', '2026'],
-                    className='ms-2 mb-2',
-                    clearable=False,
-                    searchable=False,
-                    labels={
-                        'select_all': _('Select All'),
-                        'selected_count': '{num_selected}' + ' ' + _('selected'),
-                    }
-                ),
-            ], className='col-flex', sm=5), #className='d-inline-block')
+            dbc.Col(
+                sm=5,
+                children=[
+                    html.Div(
+                        style={"height": "50px"},
+                        children=[
+                            dbc.Label(_('Select year scope:'), style={"display": "block"})
+                        ], className='ms-2 fw-bold'
+                    ),
+                    dcc.Dropdown(
+                        id='period_values_year',
+                        multi=True,
+                        options=['2025', '2026'],
+                        className='ms-2 mb-2',
+                        clearable=False,
+                        searchable=False,
+                        labels=
+                        {'select_all': _('Select All'),
+                         'selected_count': '{num_selected}' + ' ' + _('selected')},
+                    ),
+                ],
+            ),
             # Select period type
             dbc.Col([
-                html.H6(_('Select period type:'), className='ms-2 fw-bold header-fixed header-clamp'),
+                html.Div(
+                    style={"height": "50px"},
+                    children=[
+                        dbc.Label(_('Select period type:'), style={"display": "block"})
+                    ], className='ms-2 fw-bold'
+                ),
                 dcc.Dropdown(
                     id='period_type_others',
                     options=[
@@ -443,23 +454,24 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                     clearable=False,
                     searchable=False
                 ),
-            ], className='col-flex', sm=2), #className='d-inline-block'),
+            ], className='col-flex', sm=2),
             # Select two periods
             dbc.Col([
-                html.H6(_('Select two periods to compare:'), id= 'select_two', className='ms-2 fw-bold header-fixed header-clamp'),
+                html.Div(
+                    style={"height": "50px"},
+                    children=[
+                        dbc.Label(_('Select two periods to compare:'), id='select_two', style={"display": "block"})
+                    ], className='ms-2 fw-bold'
+                ),
                 dcc.Dropdown(
                     id='period_values_others',
                     value=['2025', '2026'],
                     multi=True,
                     className='ms-2 mb-2 me-2',
                     clearable=False,
-                    searchable=False,
-                    labels={
-                        'select_all': _('Select All'),
-                        'selected_count': '{num_selected}' + ' ' + _('selected'),
-                    }
-    ),
-            ], className='col-flex', sm=3), #className='d-inline-block')
+                    searchable=False
+                ),
+            ], className='col-flex', sm=4),
         ], className='sticky-top rounded g-2 p-1 align-bottom', style={'background-color': ADFC_lightblue, 'opacity': 1.0}),
 
     # Comparison graph

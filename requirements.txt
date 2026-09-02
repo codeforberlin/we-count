@@ -2,6 +2,7 @@
 babel
 dash>=4.3.0
 dash_bootstrap_components
+# only used by src/test_bzm_v01_leaflet.py, not by the dashboard itself
 dash_daq
 dash-extensions
 dash-leaflet
@@ -9,3 +10,6 @@ duckdb
 geopandas>=1.0.0
 plotly>=6.6.0
 polars
+# NOTE: "random" was listed here but it is part of the Python standard library.
+# The name on PyPI belongs to an unrelated project, so installing it pulled in
+# third party code the app never imports.

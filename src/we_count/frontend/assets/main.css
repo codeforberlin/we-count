@@ -1,194 +1,26 @@
-/* ------------------------------------------------------------------ *
- * Berlin zählt Mobilität - dashboard styling
- *
- * Sizing lives here (not in the Python layout) so that phone / tablet /
- * desktop proportions can be tuned in one place.  Breakpoints follow
- * Bootstrap 5: sm 576, md 768, lg 992, xl 1200, xxl 1400.
- * ------------------------------------------------------------------ */
-
-/* ---------- General ---------- */
+/*General layout*/
 body {
   margin: 0;
   font-family: 'Calibri', 'Arial', sans-serif;
-  -webkit-text-size-adjust: 100%;
 }
 
-/* Keep the fluid container readable on very wide monitors. */
-.bzm-container {
-  max-width: 1800px;
-  padding-left: 0.75rem;
-  padding-right: 0.75rem;
+/* Dash 4 renders the dropdown menu (.dash-dropdown-content) inside the
+   .dash-dropdown-wrapper. Raise it above the sticky filter bars, which use
+   Bootstrap's .sticky-top z-index (1020), so the menu is always in front
+   regardless of the drop direction. */
+.dash-dropdown-wrapper:has(.dash-dropdown.toggle_map_style) .dash-dropdown-content,
+.dash-dropdown-wrapper:has(.dash-dropdown.street_type) .dash-dropdown-content {
+    z-index: 2000;
 }
 
-/* Never let a wide graph or table force the whole page to scroll sideways. */
-html, body {
-  overflow-x: hidden;
+/* Bottom-align the pie chart and the segment info below it with the map.
+   The column height is set in layout.py to match the map height. */
+.traffic-pie-col {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
-/* ---------- Navbar ---------- */
-.bzm-navbar .navbar-brand {
-  font-size: clamp(1.25rem, 4.5vw, 2.25rem);
-  white-space: normal;
-}
-
-.bzm-navbar .navbar-nav {
-  flex-wrap: wrap;
-  align-items: center;
-}
-
-/* Shrink the partner logos rather than letting them overflow. */
-.bzm-partner-logo {
-  max-height: 50px;
-  height: auto;
-  max-width: 100%;
-}
-
-@media (max-width: 575.98px) {
-  .bzm-partner-logo {
-    max-height: 32px;
-  }
-}
-
-/* ---------- Graph sizing ---------- */
-/* Plotly graphs are configured with responsive:true, so they follow the
-   height given to their container here. */
-.bzm-map {
-  height: 520px;
-  width: 100%;
-}
-
-.bzm-graph {
-  height: 450px;
-  width: 100%;
-}
-
-.bzm-graph--tall {
-  height: 600px;
-}
-
-.bzm-pie {
-  height: 300px;
-  width: 100%;
-}
-
-/* Tablets */
-@media (max-width: 991.98px) {
-  .bzm-map {
-    height: 420px;
-  }
-  .bzm-graph {
-    height: 420px;
-  }
-  .bzm-graph--tall {
-    height: 520px;
-  }
-}
-
-/* Phones - the side-by-side facets need vertical room to stay legible. */
-@media (max-width: 767.98px) {
-  .bzm-map {
-    height: 340px;
-  }
-  .bzm-graph {
-    height: 360px;
-  }
-  .bzm-graph--tall {
-    height: 440px;
-  }
-  .bzm-pie {
-    height: 260px;
-  }
-}
-
-/* ---------- Sticky filter bars ---------- */
-/* Sticky bars are useful on desktop but eat scarce vertical space on a
-   phone, so they only stick from the md breakpoint upwards. */
-@media (min-width: 768px) {
-  .bzm-sticky {
-    position: sticky;
-    top: 0;
-    z-index: 1020;
-  }
-}
-
-/* ---------- Controls ---------- */
-.bzm-control {
-  padding-top: 0.35rem;
-  padding-bottom: 0.35rem;
-}
-
-/* Dropdown menus of the two map/street selectors open upwards. */
-.street_type .dash-dropdown-menu,
-.toggle_map_style .dash-dropdown-menu {
-  bottom: 100%;
-  top: auto;
-}
-
-/* Radio groups wrap instead of overflowing, with comfortable tap targets. */
-.bzm-radio {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem 1.25rem;
-}
-
-.bzm-radio label {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  margin: 0;
-  min-height: 2rem;
-  cursor: pointer;
-}
-
-.bzm-radio input {
-  margin: 0;
-}
-
-/* Toggle switches: comfortable tap target on touch devices. */
-.form-switch .form-check-input {
-  min-width: 2.25rem;
-  min-height: 1.15rem;
-}
-
-/* Date picker: full width on phones so it does not clip. */
-.bzm-datepicker,
-.bzm-datepicker .DateRangePicker,
-.bzm-datepicker .DateRangePickerInput {
-  max-width: 100%;
-}
-
-@media (max-width: 767.98px) {
-  .bzm-datepicker .DateRangePicker,
-  .bzm-datepicker .DateRangePickerInput {
-    width: 100%;
-  }
-  .bzm-datepicker .DateInput {
-    width: 42%;
-  }
-  .bzm-datepicker .DateInput_input {
-    font-size: 0.95rem;
-    padding: 0.35rem 0.4rem;
-  }
-  /* Keep the calendar popup inside the viewport. */
-  .bzm-datepicker .DateRangePicker_picker {
-    left: 0 !important;
-  }
-}
-
-/* ---------- Legal text ---------- */
-.bzm-legal-heading {
-  font-size: 12px;
-  color: #737373;
-  margin-bottom: 0.25rem;
-}
-
-.bzm-legal-body {
-  font-size: 10px;
-  color: #737373;
-}
-
-/* ---------- Popovers ---------- */
-/* Explanations are long; keep them readable but bounded on small screens. */
-.popover {
-  max-width: min(90vw, 480px);
+.traffic-pie-col > .pie-chart-wrap {
+    margin-top: auto;
 }

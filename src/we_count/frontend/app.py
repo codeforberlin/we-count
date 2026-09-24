@@ -23,7 +23,6 @@ onto the same database with its own temporary-object catalog, so callbacks can
 create temp tables with fixed names without clobbering each other and without
 serialising all readers behind a lock.
 """
-
 import gettext
 import json
 import os
@@ -1011,7 +1010,8 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, street_type_d
             labels={**traffic_label_map, 'id_street': _('Street (segment id)')},
             title=_('Absolute traffic') + suffix)
         bar_ranking.update_layout(plot_bgcolor=ADFC_palegrey, paper_bgcolor=ADFC_palegrey,
-                                  yaxis_title=_('Absolute count'))
+                                  yaxis_title=_('Absolute count'), xaxis_title=None)
+        #bar_ranking.update_xaxes(showticklabels=False)
         bar_ranking.update_coloraxes(colorbar_title_text=traffic_label_map[y_axis])
 
         # Point at the selected street, if it is part of the ranking at all

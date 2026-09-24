@@ -382,12 +382,12 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                         id='radio_time_unit',
                         options=[
                             {'label': _('Yearly'), 'value': 'year'},
-                            {'label': _('Monthly'), 'value': _('month')},
-                            {'label': _('Weekly'), 'value': _('weekday')},
+                            {'label': _('Monthly'), 'value': 'month'},
+                            {'label': _('Weekly'), 'value': 'weekday'},
                             {'label': _('Daily'), 'value': 'day'},
                             {'label': _('Hourly'), 'value': 'hour'}
                         ],
-                        value=_('weekday'),
+                        value='weekday',
                         inline=True,
                         inputStyle={"margin-right": "5px", "margin-left": "20px"},
                     ),
@@ -504,7 +504,7 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                         id='period_type_others',
                         options=[
                             {'label': _('Year'), 'value': 'year'},
-                            {'label': _('Month'), 'value': _('year_month')},
+                            {'label': _('Month'), 'value': 'year_month'},
                             {'label': _('Week'), 'value': 'year_week'},
                             {'label': _('Day'), 'value': 'date'}
                         ],

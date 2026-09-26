@@ -451,21 +451,26 @@ def aggregate_columns(columns, function='SUM', suffix='', decimals=None):
 # --------------------------------------------------------------------------- #
 # Map data
 # --------------------------------------------------------------------------- #
-def bike_car_ratios(cursor, period=None):
+def bike_car_ratios(cursor, filter_sql='TRUE', filter_params=(), period=None):
     """Aggregate the bike/car ratio per segment, optionally for a single period.
 
-    ``period`` is ``(start_date, end_date, (first_hour, last_hour))``, the same
-    shape :func:`materialise_traffic` takes, so that the map colours follow the
-    date and hour selection of the charts.  Without a period the ratios cover
-    the whole table.
+    ``filter_sql``/``filter_params`` are the WHERE fragment of
+    :func:`build_filter`.  They have to be applied here, not just to the map
+    frame, because a filter such as ``uptime > 0.7`` drops individual hours: a
+    ratio summed over unfiltered hours can land in a different colour bin than
+    the same hours aggregated for the charts.  ``period`` is
+    ``(start_date, end_date, (first_hour, last_hour))``, the same shape
+    :func:`materialise_traffic` takes, so that the map colours follow the date
+    and hour selection of the charts.  Without a period the ratios cover the
+    whole table.
     """
-    conditions, params = ['TRUE'], []
+    conditions, params = [filter_sql], list(filter_params)
     if period is not None:
         conditions.append('date_local >= CAST(? AS DATE)')
         conditions.append('date_local <  CAST(? AS DATE) + INTERVAL 1 DAY')
         conditions.append('hour BETWEEN ? AND ?')
         start_date, end_date, hour_range = period
-        params = [start_date, end_date, hour_range[0], hour_range[1]]
+        params += [start_date, end_date, hour_range[0], hour_range[1]]
 
     frame = cursor.execute(f"""
         SELECT segment_id,
@@ -500,18 +505,25 @@ def selected_period(start_date, end_date, hour_range):
     return to_iso(start_date), to_iso(end_date), (hour_range[0], hour_range[1])
 
 
-@lru_cache(maxsize=32)
-def map_data(active_only: bool, hardware: tuple, street_type: str, period) -> pd.DataFrame:
+@lru_cache(maxsize=64)
+def map_data(uptime_filter: tuple, active_filter: tuple, hardware: tuple,
+             street_type: str, period) -> pd.DataFrame:
     """Return the map frame for one filter and period combination.
 
+    The filter toggles are taken as tuples (not lists) so that the combination
+    stays hashable for the cache, and they are handed to :func:`build_filter` so
+    that the colours come from exactly the measurements the charts aggregate.
     ``period`` is the ``(start, end, hours)`` key from :func:`selected_period`,
     or ``None`` to colour the map from all data.  There are only a few dozen
     filter combinations and the frame is small (one row per geometry vertex), so
     caching avoids repeating the ratio query, the join, the category fill and
     the sort on every single map interaction.
     """
+    filter_sql, filter_params = build_filter(
+        uptime_filter, active_filter, list(hardware), street_type)
+
     with request_cursor() as cursor:
-        ratios = bike_car_ratios(cursor, period)
+        ratios = bike_car_ratios(cursor, filter_sql, filter_params, period)
 
     df_map = df_map_base.join(ratios)
     df_map = df_map[df_map['segment_id'].notnull()]
@@ -520,8 +532,10 @@ def map_data(active_only: bool, hardware: tuple, street_type: str, period) -> pd
     # and so appear as hardware version "0", the below puts these to "1"
     df_map['hardware_version'] = df_map['hardware_version'].replace(0, 1)
 
-    # TODO: Filter uptime although at the moment it looks like there are no streets with < 0.7 uptime only
-    if active_only:
+    # The remaining filters also drop whole segments from the frame.  They are
+    # per segment properties, so applying them again here removes nothing the
+    # query above did not already account for.
+    if 'filter_active_selected' in active_filter:
         active_ids = df_map.loc[df_map['last_data_package'] >= TWO_WEEKS_AGO, 'segment_id'].unique()
         df_map = df_map[df_map['segment_id'].isin(active_ids)]
 
@@ -710,6 +724,9 @@ def get_language(lang_code_dd):
     Input('street_name_dd', 'value'),
     Input('street_type_dd', 'value'),
     Input('hardware_version', 'value'),
+    # The uptime filter drops individual hours, so the map colours have to be
+    # recomputed when it is toggled instead of only re-filtering the frame.
+    Input('toggle_uptime_filter', 'value'),
     Input('toggle_active_filter', 'value'),
     Input('toggle_map_style', 'value'),
     # Read as inputs instead of being served from update_graphs: a callback that
@@ -719,8 +736,8 @@ def get_language(lang_code_dd):
     Input('date_filter', 'end_date'),
     Input('range_slider', 'value'),
 )
-def update_map(click_data, id_street, street_type_dd, hardware_version, toggle_active_filter,
-               toggle_map_style, start_date, end_date, hour_range):
+def update_map(click_data, id_street, street_type_dd, hardware_version, toggle_uptime_filter,
+               toggle_active_filter, toggle_map_style, start_date, end_date, hour_range):
     trigger = ctx.triggered_id
 
     # Do not allow both hardware versions to be switched off
@@ -728,7 +745,7 @@ def update_map(click_data, id_street, street_type_dd, hardware_version, toggle_a
         hardware_version = [1, 2]
 
     period = selected_period(start_date, end_date, hour_range)
-    df_map = map_data('filter_active_selected' in (toggle_active_filter or []),
+    df_map = map_data(tuple(toggle_uptime_filter or ()), tuple(toggle_active_filter or ()),
                       tuple(sorted(hardware_version)), street_type_dd, period)
 
     # Streets that can be selected: everything the map shows that holds data

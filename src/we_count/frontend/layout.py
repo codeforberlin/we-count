@@ -132,7 +132,7 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                                 style={
                                     'color': ADFC_darkgrey}),
                             dbc.Popover(dbc.PopoverBody(
-                                _('Note: street colors represent bike/car ratios based on all data available and do not change with date- or hour selection. The map allows street segments to be selected by mouse-click. Upon selection, the map will zoom with the selected street in the center.')),
+                                _('Note: street colors show the bike/car ratio for the selected date and hour range. Segments without data in that range are shown in grey. The map allows street segments to be selected by mouse-click. Upon selection, the map will zoom with the selected street in the center.')),
                                 target='popover_map_info', trigger='hover', placement='bottom'),
                         ], sm=8),
                         dbc.Col([

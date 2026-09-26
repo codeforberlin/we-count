@@ -24,7 +24,6 @@ create temp tables with fixed names without clobbering each other and without
 serialising all readers behind a lock.
 """
 import gettext
-import json
 import os
 import random
 from contextlib import contextmanager
@@ -237,12 +236,6 @@ def duckdb_info(con):
 # --------------------------------------------------------------------------- #
 def retrieve_data():
     """Load the geo data and build the DuckDB database from the parquet files."""
-    config = {}
-    for d in (ASSET_DIR, DATA_DIR):
-        if os.path.exists(os.path.join(d, 'config.json')):
-            with open(os.path.join(d, 'config.json')) as cfg:
-                config.update(json.load(cfg))
-
     data_dir = DATA_DIR
     if not os.path.exists(os.path.join(data_dir, 'bzm_telraam_segments.geojson')):
         data_dir = ASSET_DIR
@@ -274,19 +267,6 @@ def retrieve_data():
         # TODO: remove from parquet files
         connection.execute('ALTER TABLE all_traffic DROP COLUMN last_data_package')
 
-    # Consolidated bike/car ratio per segment, used to colour the map
-    with db_lock:
-        traffic_df_id_bc = connection.execute("""
-            SELECT segment_id,
-                   SUM(bike_total) AS bike_total,
-                   SUM(car_total) AS car_total,
-                   CASE WHEN SUM(car_total) = 0 THEN NULL   -- avoid division by zero
-                        ELSE CAST(SUM(bike_total) AS DOUBLE) / SUM(car_total)
-                   END AS bike_car_ratio
-            FROM all_traffic
-            GROUP BY segment_id
-        """).fetch_df()
-
     # Add last_data_package and osm.highway from the geo features to all_traffic
     features = json_df_features[['segment_id', 'last_data_package', 'osm.highway']].copy()
     features['last_data_package'] = pd.to_datetime(features['last_data_package'], format='mixed')
@@ -306,7 +286,7 @@ def retrieve_data():
         connection.unregister('last_data_package_table')
 
     del features
-    return geo_df, json_df_features, traffic_df_id_bc, connection, config
+    return geo_df, json_df_features, connection
 
 
 @contextmanager
@@ -464,23 +444,69 @@ def aggregate_columns(columns, function='SUM', suffix='', decimals=None):
 # --------------------------------------------------------------------------- #
 # Map data
 # --------------------------------------------------------------------------- #
-def get_bike_car_ratios(traffic_df_id_bc):
+def bike_car_ratios(cursor, period=None):
+    """Aggregate the bike/car ratio per segment, optionally for a single period.
+
+    ``period`` is ``(start_date, end_date, (first_hour, last_hour))``, the same
+    shape :func:`materialise_traffic` takes, so that the map colours follow the
+    date and hour selection of the charts.  Without a period the ratios cover
+    the whole table.
+    """
+    conditions, params = ['TRUE'], []
+    if period is not None:
+        conditions.append('date_local >= CAST(? AS DATE)')
+        conditions.append('date_local <  CAST(? AS DATE) + INTERVAL 1 DAY')
+        conditions.append('hour BETWEEN ? AND ?')
+        start_date, end_date, hour_range = period
+        params = [start_date, end_date, hour_range[0], hour_range[1]]
+
+    frame = cursor.execute(f"""
+        SELECT segment_id,
+               SUM(bike_total) AS bike_total,
+               SUM(car_total) AS car_total,
+               CASE WHEN SUM(car_total) = 0 THEN NULL   -- avoid division by zero
+                    ELSE CAST(SUM(bike_total) AS DOUBLE) / SUM(car_total)
+               END AS bike_car_ratio
+        FROM all_traffic
+        WHERE {' AND '.join(conditions)}
+        GROUP BY segment_id
+    """, params).fetch_df()
+    return get_bike_car_ratios(frame)
+
+
+def get_bike_car_ratios(ratio_df):
     """Bin the bike/car ratio into the colour categories used by the map."""
-    traffic_df_id_bc['map_line_color'] = pd.cut(
-        traffic_df_id_bc['bike_car_ratio'], bins=RATIO_BINS, labels=RATIO_LABELS)
-    traffic_df_id_bc.set_index('segment_id', inplace=True)
-    return traffic_df_id_bc
+    ratio_df['map_line_color'] = pd.cut(
+        ratio_df['bike_car_ratio'], bins=RATIO_BINS, labels=RATIO_LABELS)
+    ratio_df.set_index('segment_id', inplace=True)
+    return ratio_df
+
+
+def selected_period(start_date, end_date, hour_range):
+    """Build the hashable period key of the current date and hour selection.
+
+    Returns ``None`` while the selection is incomplete, which makes the map fall
+    back to the ratios over all data instead of failing.
+    """
+    if not start_date or not end_date or not hour_range or len(hour_range) != 2:
+        return None
+    return to_iso(start_date), to_iso(end_date), (hour_range[0], hour_range[1])
 
 
 @lru_cache(maxsize=32)
-def map_data(active_only: bool, hardware: tuple, street_type: str) -> pd.DataFrame:
-    """Return the map frame for one filter combination.
+def map_data(active_only: bool, hardware: tuple, street_type: str, period) -> pd.DataFrame:
+    """Return the map frame for one filter and period combination.
 
-    There are only a few dozen possible combinations and the frame is small
-    (one row per geometry vertex), so caching avoids repeating the join, the
-    category fill and the sort on every single map interaction.
+    ``period`` is the ``(start, end, hours)`` key from :func:`selected_period`,
+    or ``None`` to colour the map from all data.  There are only a few dozen
+    filter combinations and the frame is small (one row per geometry vertex), so
+    caching avoids repeating the ratio query, the join, the category fill and
+    the sort on every single map interaction.
     """
-    df_map = df_map_base.join(traffic_df_id_bc)
+    with request_cursor() as cursor:
+        ratios = bike_car_ratios(cursor, period)
+
+    df_map = df_map_base.join(ratios)
     df_map = df_map[df_map['segment_id'].notnull()]
 
     # TODO: some streets in "bzm_telraam_segments.geojson" have no camera info
@@ -498,8 +524,17 @@ def map_data(active_only: bool, hardware: tuple, street_type: str) -> pd.DataFra
     if street_type in STREET_TYPES:
         df_map = df_map[df_map['osm.highway'] == street_type]
 
-    # Mark segments without a ratio as inactive and sort for the legend order
-    df_map['map_line_color'] = df_map['map_line_color'].cat.add_categories([INACTIVE])
+    # A street stays selectable as long as it has data at all, even when the
+    # selected period holds none of it.  Deriving the selectable streets from
+    # the colours instead would let a narrow period drop the current street,
+    # and the replacement would in turn change the period again.
+    df_map['has_data'] = df_map.index.isin(SEGMENTS_WITH_DATA)
+
+    # Mark segments without a ratio in this period as inactive and sort for the
+    # legend order.  The category is rebuilt explicitly because a period
+    # without any data joins an empty frame and loses the categorical dtype.
+    df_map['map_line_color'] = pd.Categorical(df_map['map_line_color'],
+                                              categories=[*RATIO_LABELS, INACTIVE], ordered=True)
     df_map = df_map.fillna({'map_line_color': INACTIVE}).sort_values(by=['map_line_color'])
 
     # Move the segment_id index into a column (avoids the ambiguity of two
@@ -570,7 +605,7 @@ def apply_facet_layout(fig, street_name, segment_id, *, y_title=None, legend_tit
 # --------------------------------------------------------------------------- #
 # Module initialisation
 # --------------------------------------------------------------------------- #
-geo_df, json_df_features, traffic_df_id_bc, conn, config = retrieve_data()
+geo_df, json_df_features, conn = retrieve_data()
 
 update_language(INITIAL_LANGUAGE)
 
@@ -615,7 +650,12 @@ df_map_base = geo_df_map_info.join(json_df_features)
 # Remove rows w/o street names
 df_map_base = df_map_base[df_map_base['osm.name'].notnull()]
 
-traffic_df_id_bc = get_bike_car_ratios(traffic_df_id_bc)
+#: Segment ids that hold data at all.  The map colours follow the selected
+#: period, but a street only leaves the selection when it has no data ever, so
+#: that narrowing a period cannot start a street/period feedback loop.
+with db_lock:
+    SEGMENTS_WITH_DATA = frozenset(
+        row[0] for row in conn.execute('SELECT DISTINCT segment_id FROM all_traffic').fetchall())
 
 #: Speed limit per segment, looked up once instead of scanning a map frame that
 #: may have been filtered down by the time the chart callback needs it.
@@ -627,12 +667,11 @@ SEGMENT_MAXSPEED = {
 del geo_df_map_info, json_df_features
 
 if not DEPLOYED:
-    print('Starting dash ...', config)
+    print('Starting dash ...')
 
 app = Dash(__name__,
            external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP, '/assets/main.css'],
-           meta_tags=[{'name': 'viewport', 'content': 'width=device-width, initial-scale=1'}],
-           requests_pathname_prefix=config.get('requests_pathname_prefix'))
+           meta_tags=[{'name': 'viewport', 'content': 'width=device-width, initial-scale=1'}])
 
 app.title = 'Berlin-zaehlt'
 app.layout = lambda: serve_layout(app, id_street_options, start_date, end_date, min_date, max_date)
@@ -664,25 +703,33 @@ def get_language(lang_code_dd):
     Input('hardware_version', 'value'),
     Input('toggle_active_filter', 'value'),
     Input('toggle_map_style', 'value'),
+    # Read as inputs instead of being served from update_graphs: a callback that
+    # both takes the street selection and writes the date range would close a
+    # dependency cycle with the map that colours itself from that range.
+    Input('date_filter', 'start_date'),
+    Input('date_filter', 'end_date'),
+    Input('range_slider', 'value'),
 )
-def update_map(click_data, id_street, street_type_dd, hardware_version, toggle_active_filter, toggle_map_style):
+def update_map(click_data, id_street, street_type_dd, hardware_version, toggle_active_filter,
+               toggle_map_style, start_date, end_date, hour_range):
     trigger = ctx.triggered_id
 
     # Do not allow both hardware versions to be switched off
     if not hardware_version:
         hardware_version = [1, 2]
 
+    period = selected_period(start_date, end_date, hour_range)
     df_map = map_data('filter_active_selected' in (toggle_active_filter or []),
-                      tuple(sorted(hardware_version)), street_type_dd)
+                      tuple(sorted(hardware_version)), street_type_dd, period)
 
-    # Streets that can be selected: everything the map shows except inactive ones
-    street_options = sorted(df_map.loc[df_map['map_line_color'] != INACTIVE, 'id_street'].unique())
+    # Streets that can be selected: everything the map shows that holds data
+    street_options = sorted(df_map.loc[df_map['has_data'], 'id_street'].unique())
 
     if trigger == 'street_map' and click_data:
         street_name = click_data['points'][0]['hovertext']
         segment_id = click_data['points'][0]['customdata'][0]
         selected = df_map.loc[df_map['segment_id'] == segment_id]
-        if selected.empty or selected['map_line_color'].iloc[0] == INACTIVE:
+        if selected.empty or not selected['has_data'].iloc[0]:
             raise PreventUpdate
         id_street = f'{street_name} ({segment_id})'
         zoom_factor = 13
@@ -753,8 +800,6 @@ def update_map(click_data, id_street, street_type_dd, hardware_version, toggle_a
     Output('selected_street_header', 'style'),
     Output('street_id_text', 'children'),
     Output('date_range_text', 'children'),
-    Output('date_filter', 'start_date', allow_duplicate=True),
-    Output('date_filter', 'end_date', allow_duplicate=True),
     Output('date_filter', 'min_date_allowed'),
     Output('date_filter', 'max_date_allowed'),
     Output('date_range_text', 'style'),
@@ -777,7 +822,6 @@ def update_map(click_data, id_street, street_type_dd, hardware_version, toggle_a
     Input('hardware_version', 'value'),
     Input('radio_y_axis', 'value'),
     Input('language_selector', 'value'),
-    prevent_initial_call='initial_duplicate',
 )
 def update_graphs(radio_time_division, radio_time_unit, id_street, street_type_dd, start_date,
                   end_date, hour_range, toggle_uptime_filter, toggle_active_filter,
@@ -1025,7 +1069,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, street_type_d
                 arrowcolor=ADFC_darkgrey, xanchor='left', font={'size': 14})
 
     return (street_name, selected_street_header_color, street_id_text, date_range_text,
-            start_date, end_date, min_date, max_date, date_range_color,
+            min_date, max_date, date_range_color,
             pie_traffic, line_abs_traffic, bar_avg_traffic_hr, bar_avg_traffic,
             bar_perc_speed, bar_v85, bar_ranking)
 

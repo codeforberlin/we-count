@@ -40,6 +40,7 @@ import pandas as pd
 import plotly.express as px
 from dash import Dash, Input, Output, callback, ctx
 from dash.exceptions import PreventUpdate
+from flask import has_request_context, request
 
 from .layout import (ADFC_blue, ADFC_crimson, ADFC_darkgrey, ADFC_green, ADFC_green_L,
                      ADFC_lightblue, ADFC_lightblue_D, ADFC_lightgrey, ADFC_orange,
@@ -313,10 +314,35 @@ def request_cursor():
 # --------------------------------------------------------------------------- #
 # Translation
 # --------------------------------------------------------------------------- #
+#: Languages the UI is translated into.
+LANGUAGES = ('en', 'de')
+#: Cookie mirroring the language of the page on screen.  Dash serves the layout
+#: and runs the callbacks from ``/_dash-*`` requests that do not repeat the
+#: page's query string, so the cookie is what tells those requests which
+#: catalogue to install.
+LANGUAGE_COOKIE = 'bzm_lang'
+LANGUAGE_COOKIE_MAX_AGE = 365 * 24 * 60 * 60
+
+
+def normalise_language(lang_code):
+    """Return ``lang_code`` if it is supported, otherwise the default."""
+    return lang_code if lang_code in LANGUAGES else INITIAL_LANGUAGE
+
+
+def request_language():
+    """Language of the request being served.
+
+    The query parameter wins over the cookie: a shared or bookmarked link opens
+    in the language it was built with, while a plain ``/`` reopens in the
+    language last used in this browser.
+    """
+    return normalise_language(request.args.get('lang') or request.cookies.get(LANGUAGE_COOKIE))
+
+
 def update_language(lang_code):
     """Install the gettext catalogue for ``lang_code`` process wide."""
     global language
-    language = lang_code if lang_code in ('en', 'de') else INITIAL_LANGUAGE
+    language = normalise_language(lang_code)
     localedir = os.path.join(os.path.dirname(__file__), 'locales')
     gettext.translation('bzm', localedir, fallback=True, languages=[language]).install()
 
@@ -697,7 +723,37 @@ app = Dash(__name__,
 
 
 app.title = 'Berlin-zaehlt'
-app.layout = lambda: serve_layout(app, id_street_options, start_date, end_date, min_date, max_date)
+
+
+def current_layout():
+    """Serve the layout in the language of the request being handled.
+
+    Layout text is translated while the layout is built, so the language has to
+    be known here rather than in a callback: the dropdown must show the same
+    language the surrounding text is rendered in.  ``/_dash-layout`` is a request
+    of its own and only carries the cookie, not the page's query string.
+    """
+    lang = request_language() if has_request_context() else normalise_language(None)
+    return serve_layout(app, id_street_options, start_date, end_date, min_date, max_date,
+                        lang_code=lang)
+
+
+app.layout = current_layout
+
+
+@app.server.before_request
+def install_request_language():
+    """Translate everything this request produces into the requested language."""
+    update_language(request_language())
+
+
+@app.server.after_request
+def remember_request_language(response):
+    """Keep the cookie in step with the language the page was rendered in."""
+    lang = request_language()
+    if request.cookies.get(LANGUAGE_COOKIE) != lang:
+        response.set_cookie(LANGUAGE_COOKIE, lang, max_age=LANGUAGE_COOKIE_MAX_AGE, samesite='Lax')
+    return response
 
 
 # --------------------------------------------------------------------------- #
@@ -709,9 +765,14 @@ app.layout = lambda: serve_layout(app, id_street_options, start_date, end_date, 
     prevent_initial_call=True,
 )
 def get_language(lang_code_dd):
-    """Switch the catalogue and reload so the whole layout is re-rendered."""
-    update_language(lang_code_dd)
-    return '/'
+    """Point the browser at the language URL so the page reloads into it.
+
+    The layout is translated server side, so switching needs a real page load.
+    Returning the bare ``/`` the browser was already on changed nothing, which
+    left the rendered text in the previous language while the callbacks, running
+    after ``update_language``, already answered in the new one.
+    """
+    return f'/?lang={normalise_language(lang_code_dd)}'
 
 
 @callback(

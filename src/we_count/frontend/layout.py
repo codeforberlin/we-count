@@ -53,7 +53,15 @@ PIE_HEIGHT = 260
 RANKING_HEIGHT = 600
 
 
-def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, max_date):
+def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, max_date,
+                 lang_code: str = INITIAL_LANGUAGE):
+    """Build the dashboard layout in ``lang_code``.
+
+    ``lang_code`` decides both the text and the initial dropdown selection.  The
+    selector is deliberately not persisted in the browser: its value has to be
+    rendered together with the text it belongs to, and a value restored from
+    ``localStorage`` would be applied to a page rendered in another language.
+    """
     return dbc.Container(
         [
             # Navigation bar
@@ -143,9 +151,7 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                                     {'label': '🇬🇧' + ' ' + _('English'), 'value': 'en'},
                                     {'label': '🇩🇪' + ' ' + _('Deutsch'), 'value': 'de'},
                                 ],
-                                value=INITIAL_LANGUAGE,
-                                persistence=True,
-                                persistence_type='local',
+                                value=lang_code,
                                 className='g-0',
                                 clearable=False,
                             ),

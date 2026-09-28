@@ -5,7 +5,7 @@
 # @file    app.py
 # @author  Egbert Klaassen
 # @author  Michael Behrisch
-# @date    2026-08-31
+# @date    2026-09-28
 
 """Dash application for the Berlin zählt Mobilität traffic dashboard.
 
@@ -38,7 +38,7 @@ import duckdb
 import geopandas as gpd
 import pandas as pd
 import plotly.express as px
-from dash import Dash, Input, Output, callback, ctx
+from dash import Dash, Input, Output, State, callback, ctx, no_update
 from dash.exceptions import PreventUpdate
 from flask import has_request_context, request
 
@@ -46,6 +46,8 @@ from .layout import (ADFC_blue, ADFC_crimson, ADFC_darkgrey, ADFC_green, ADFC_gr
                      ADFC_lightblue, ADFC_lightblue_D, ADFC_lightgrey, ADFC_orange,
                      ADFC_orange_L, ADFC_palegrey, ADFC_pink, ADFC_red,
                      INITIAL_LANGUAGE, INITIAL_STREET_ID, serve_layout)
+from .scenarios import (STATE_VERSION, delete_scenario, get_scenario, list_scenarios,
+                        save_scenario)
 
 # the following is basically to suppress warnings about "_" being undefined
 # "from gettext import gettext as _" does not work because we use gettext.install later on, which installs "_"
@@ -321,6 +323,7 @@ LANGUAGES = ('en', 'de')
 #: page's query string, so the cookie is what tells those requests which
 #: catalogue to install.
 LANGUAGE_COOKIE = 'bzm_lang'
+SCENARIO_COOKIE = 'bzm_scenario'
 LANGUAGE_COOKIE_MAX_AGE = 365 * 24 * 60 * 60
 
 
@@ -734,8 +737,35 @@ def current_layout():
     of its own and only carries the cookie, not the page's query string.
     """
     lang = request_language() if has_request_context() else normalise_language(None)
+
+    scenario_state = None
+    scenario_id = None
+    scenario_url = None
+    if has_request_context():
+        sid = request.args.get('scenario') or request.cookies.get(SCENARIO_COOKIE)
+        if sid:
+            try:
+                scenario = get_scenario(DATA_DIR, int(sid))
+                if scenario and scenario['state'].get('_version') == STATE_VERSION:
+                    scenario_state = scenario['state']
+                    scenario_id = scenario['id']
+                    scenario_url = f'/?scenario={scenario_id}'
+                    if request.args.get('lang'):
+                        scenario_url += f'&lang={request.args.get("lang")}'
+            except (ValueError, TypeError):
+                pass
+
+    scenario_options = [
+        {'label': f"{s['name']} ({s['updated_at']})", 'value': s['id']}
+        for s in list_scenarios(DATA_DIR)
+    ]
+
     return serve_layout(app, id_street_options, start_date, end_date, min_date, max_date,
-                        lang_code=lang)
+                        lang_code=lang,
+                        scenario_state=scenario_state,
+                        scenario_options=scenario_options,
+                        scenario_id=scenario_id,
+                        scenario_url=scenario_url)
 
 
 app.layout = current_layout
@@ -749,10 +779,13 @@ def install_request_language():
 
 @app.server.after_request
 def remember_request_language(response):
-    """Keep the cookie in step with the language the page was rendered in."""
+    """Keep the cookie in step with the language and scenario the page was rendered in."""
     lang = request_language()
     if request.cookies.get(LANGUAGE_COOKIE) != lang:
         response.set_cookie(LANGUAGE_COOKIE, lang, max_age=LANGUAGE_COOKIE_MAX_AGE, samesite='Lax')
+    sid = request.args.get('scenario')
+    if sid:
+        response.set_cookie(SCENARIO_COOKIE, sid, max_age=LANGUAGE_COOKIE_MAX_AGE, samesite='Lax')
     return response
 
 
@@ -764,15 +797,64 @@ def remember_request_language(response):
     Input('language_selector', 'value'),
     prevent_initial_call=True,
 )
-def get_language(lang_code_dd):
-    """Point the browser at the language URL so the page reloads into it.
+def navigate_language(lang_code_dd):
+    lang = normalise_language(lang_code_dd) if lang_code_dd else request_language() or INITIAL_LANGUAGE
+    sid = request.args.get('scenario') if has_request_context() else None
 
-    The layout is translated server side, so switching needs a real page load.
-    Returning the bare ``/`` the browser was already on changed nothing, which
-    left the rendered text in the previous language while the callbacks, running
-    after ``update_language``, already answered in the new one.
+    params = [f'lang={lang}']
+    if sid:
+        params.insert(0, f'scenario={sid}')
+
+    return '/?' + '&'.join(params)
+
+
+@callback(
+    Output('scenario_id_store', 'data', allow_duplicate=True),
+    Output('scenario_name', 'value', allow_duplicate=True),
+    Output('scenario_url_store', 'data', allow_duplicate=True),
+    Output('scenario_delete_btn', 'disabled', allow_duplicate=True),
+    Output('scenario_copy_link_btn', 'disabled', allow_duplicate=True),
+    Output('scenario_load_btn', 'disabled', allow_duplicate=True),
+    Output('scenario_alert', 'children', allow_duplicate=True),
+    Input('scenario_dd', 'value'),
+    State('language_selector', 'value'),
+    prevent_initial_call=True,
+)
+def select_scenario(scenario_value, lang_code_dd):
+    if not scenario_value:
+        return None, '', None, True, True, True, no_update
+
+    lang = lang_code_dd if lang_code_dd in ('en', 'de') else INITIAL_LANGUAGE
+    try:
+        scenario = get_scenario(DATA_DIR, int(scenario_value))
+    except (ValueError, TypeError):
+        return no_update
+
+    if not scenario:
+        return no_update
+
+    name = scenario.get('name', '')
+    share_url = f'/?scenario={scenario["id"]}'
+    if lang:
+        share_url += f'&lang={lang}'
+
+    return scenario['id'], name, share_url, False, False, False, no_update
+
+
+app.clientside_callback(
     """
-    return f'/?lang={normalise_language(lang_code_dd)}'
+    function(n_clicks, url) {
+        if (n_clicks && url) {
+            window.location = url;
+        }
+        return '';
+    }
+    """,
+    Output('scenario_clipboard', 'children', allow_duplicate=True),
+    Input('scenario_load_btn', 'n_clicks'),
+    State('scenario_url_store', 'data'),
+    prevent_initial_call=True,
+)
 
 
 @callback(
@@ -1269,12 +1351,12 @@ def comparison_chart(period_values_year, period_options_year, period_type_others
     # most recent years that are actually available for this street.
     if not period_values_others or len(period_values_others) != 2:
         select_two_text = _('Select (exactly) two periods to compare:')
-        select_two_color = {'color': ADFC_orange}
+        select_two_color = {'display': 'block', 'color': ADFC_orange}
         period_type_others = 'year'
         period_values_others = list(period_values_year or period_options_year or [])[-2:]
     else:
         select_two_text = _('Select two periods to compare:')
-        select_two_color = {'color': 'black'}
+        select_two_color = {'display': 'block', 'color': 'black'}
 
     group_key, label_key = COMPARISON_GROUPING.get(period_type_others,
                                                    COMPARISON_GROUPING[DEFAULT_PERIOD_TYPE])
@@ -1342,6 +1424,147 @@ def comparison_chart(period_values_year, period_options_year, period_type_others
                        independent_x=True)
 
     return line_avg_delta_traffic, select_two_text, select_two_color
+
+
+# --------------------------------------------------------------------------- #
+# Scenario management
+# --------------------------------------------------------------------------- #
+@app.callback(
+    Output('scenario_dd', 'options'),
+    Output('scenario_id_store', 'data'),
+    Output('scenario_name', 'value'),
+    Output('scenario_url_store', 'data'),
+    Output('scenario_delete_btn', 'disabled', allow_duplicate=True),
+    Output('scenario_copy_link_btn', 'disabled', allow_duplicate=True),
+    Output('scenario_load_btn', 'disabled', allow_duplicate=True),
+    Output('scenario_alert', 'children'),
+    Input('scenario_save_btn', 'n_clicks'),
+    State('scenario_name', 'value'),
+    State('scenario_author', 'value'),
+    State('scenario_id_store', 'data'),
+    State('street_name_dd', 'value'),
+    State('street_type_dd', 'value'),
+    State('toggle_uptime_filter', 'value'),
+    State('toggle_active_filter', 'value'),
+    State('hardware_version', 'value'),
+    State('toggle_map_style', 'value'),
+    State('date_filter', 'start_date'),
+    State('date_filter', 'end_date'),
+    State('range_slider', 'value'),
+    State('radio_time_division', 'value'),
+    State('radio_time_unit', 'value'),
+    State('radio_y_axis', 'value'),
+    State('period_values_year', 'value'),
+    State('period_type_others', 'value'),
+    State('period_values_others', 'value'),
+    State('language_selector', 'value'),
+    prevent_initial_call=True,
+)
+def save_scenario_callback(save_clicks, name, author, scenario_id,
+                           street_name_dd, street_type_dd, uptime_filter,
+                           active_filter, hardware_version, map_style,
+                           date_start, date_end, hour_range,
+                           time_division, time_unit, y_axis,
+                           period_year, period_type, period_others,
+                           lang):
+    if not save_clicks:
+        raise PreventUpdate
+
+    state = {
+        '_version': STATE_VERSION,
+        '_name': (name or '').strip(),
+        'street_name_dd': street_name_dd,
+        'street_type_dd': street_type_dd,
+        'toggle_uptime_filter': uptime_filter,
+        'toggle_active_filter': active_filter,
+        'hardware_version': hardware_version,
+        'toggle_map_style': map_style,
+        'date_filter_start': date_start,
+        'date_filter_end': date_end,
+        'range_slider': hour_range,
+        'radio_time_division': time_division,
+        'radio_time_unit': time_unit,
+        'radio_y_axis': y_axis,
+        'period_values_year': period_year,
+        'period_type_others': period_type,
+        'period_values_others': period_others,
+        'lang': lang,
+    }
+    author = (author or '').strip()
+
+    try:
+        saved = save_scenario(DATA_DIR, name, state, author, scenario_id)
+    except ValueError as e:
+        options = [
+            {'label': f"{s['name']} ({s['updated_at']})", 'value': s['id']}
+            for s in list_scenarios(DATA_DIR)
+        ]
+        return options, scenario_id, name, no_update, no_update, no_update, no_update, \
+            dbc.Alert(str(e), color='warning', duration=4000)
+    except Exception as e:
+        options = [
+            {'label': f"{s['name']} ({s['updated_at']})", 'value': s['id']}
+            for s in list_scenarios(DATA_DIR)
+        ]
+        return options, scenario_id, name, no_update, no_update, no_update, no_update, \
+            dbc.Alert(str(e), color='danger', duration=4000)
+
+    options = [
+        {'label': f"{s['name']} ({s['updated_at']})", 'value': s['id']}
+        for s in list_scenarios(DATA_DIR)
+    ]
+    share_url = f'/?scenario={saved["id"]}'
+    if lang:
+        share_url += f'&lang={lang}'
+
+    return options, saved['id'], saved['name'], share_url, False, False, False, \
+        dbc.Alert(_('Scenario saved!'), color='success', duration=4000)
+
+
+@app.callback(
+    Output('scenario_dd', 'options', allow_duplicate=True),
+    Output('scenario_id_store', 'data', allow_duplicate=True),
+    Output('scenario_name', 'value', allow_duplicate=True),
+    Output('scenario_url_store', 'data', allow_duplicate=True),
+    Output('scenario_delete_btn', 'disabled', allow_duplicate=True),
+    Output('scenario_copy_link_btn', 'disabled', allow_duplicate=True),
+    Output('scenario_load_btn', 'disabled', allow_duplicate=True),
+    Output('scenario_alert', 'children', allow_duplicate=True),
+    Input('scenario_delete_btn', 'n_clicks'),
+    State('scenario_id_store', 'data'),
+    prevent_initial_call=True,
+)
+def delete_scenario_callback(delete_clicks, scenario_id):
+    if not delete_clicks or not scenario_id:
+        raise PreventUpdate
+
+    delete_scenario(DATA_DIR, scenario_id)
+    options = [
+        {'label': f"{s['name']} ({s['updated_at']})", 'value': s['id']}
+        for s in list_scenarios(DATA_DIR)
+    ]
+    return options, None, '', None, True, True, True, \
+        dbc.Alert(_('Scenario deleted.'), color='info', duration=4000)
+
+
+app.clientside_callback(
+    """
+    function(n_clicks, url) {
+        if (n_clicks && url) {
+            const full = window.location.origin + url;
+            navigator.clipboard.writeText(full).then(function() {
+                const el = document.getElementById('scenario_alert');
+                if (el) { el.innerText = 'Link copied!'; }
+            });
+        }
+        return '';
+    }
+    """,
+    Output('scenario_clipboard', 'children', allow_duplicate=True),
+    Input('scenario_copy_link_btn', 'n_clicks'),
+    State('scenario_url_store', 'data'),
+    prevent_initial_call=True,
+)
 
 
 if __name__ == '__main__':

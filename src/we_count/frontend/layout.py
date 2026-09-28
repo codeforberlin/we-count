@@ -54,14 +54,49 @@ RANKING_HEIGHT = 600
 
 
 def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, max_date,
-                 lang_code: str = INITIAL_LANGUAGE):
+                 lang_code: str = INITIAL_LANGUAGE,
+                 scenario_state: dict | None = None,
+                 scenario_options: list | None = None,
+                 scenario_id: int | None = None,
+                 scenario_url: str | None = None):
     """Build the dashboard layout in ``lang_code``.
 
     ``lang_code`` decides both the text and the initial dropdown selection.  The
     selector is deliberately not persisted in the browser: its value has to be
     rendered together with the text it belongs to, and a value restored from
     ``localStorage`` would be applied to a page rendered in another language.
+
+    ``scenario_state`` seeds the component defaults from a saved scenario.
+    ``scenario_options`` populates the scenario dropdown when the page loads.
+    ``scenario_id`` preselects the loaded scenario in the dropdown.
+    ``scenario_url`` is the share link for the currently loaded scenario.
     """
+    sc = scenario_state or {}
+
+    # Seed component values from scenario state (fall back to defaults)
+    _street_value = sc.get('street_name_dd', INITIAL_STREET_ID)
+    _date_start = sc.get('date_filter_start', start_date)
+    _date_end = sc.get('date_filter_end', end_date)
+    _hour_range = sc.get('range_slider', INITIAL_HOUR_RANGE)
+    _street_type = sc.get('street_type_dd', 'all')
+    _uptime_filter = sc.get('toggle_uptime_filter', ['filter_uptime_selected'])
+    _active_filter = sc.get('toggle_active_filter', ['filter_active_selected'])
+    _hardware = sc.get('hardware_version', [1, 2])
+    _map_style = sc.get('toggle_map_style', 'streets')
+    _time_division = sc.get('radio_time_division', 'date')
+    _time_unit = sc.get('radio_time_unit', 'weekday')
+    _y_axis = sc.get('radio_y_axis', 'car_total')
+    _period_year = sc.get('period_values_year', ['2025', '2026'])
+    _period_type = sc.get('period_type_others', 'year')
+    _period_others = sc.get('period_values_others', ['2025', '2026'])
+    _scenario_name = sc.get('_name', '')
+
+    # The saved street may not be in the current options (e.g. after data
+    # reload).  Prepend it so the dropdown still renders it, and the
+    # update_map callback will fall back to a preferred street if needed.
+    _street_options = list(id_street_options)
+    if _street_value not in _street_options:
+        _street_options.insert(0, _street_value)
     return dbc.Container(
         [
             # Navigation bar
@@ -159,8 +194,8 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                     ]),
                     html.H4(_('Select street:'), className='my-2'),
                     dcc.Dropdown(id='street_name_dd',
-                                 options=id_street_options,
-                                 value=INITIAL_STREET_ID,
+                                 options=_street_options,
+                                 value=_street_value,
                                  clearable=False,
                                  ),
                     html.Span([
@@ -207,13 +242,13 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                     html.H6(_('Map style:'), className='ms-2 fw-bold d-inline'),
                 ], sm=1),
                 dbc.Col([
-                    dcc.Dropdown(
-                        id='toggle_map_style',
-                        options=[{'label': _('Streets'), 'value': 'streets'},
-                                 {'label': _('OSM'), 'value': 'open-street-map'},
-                                 {'label': _('Carto'), 'value': 'carto-positron'},
-                                 {'label': _('Satellite'), 'value': 'satellite'}],
-                        value='streets',
+dcc.Dropdown(
+                            id='toggle_map_style',
+                            options=[{'label': _('Streets'), 'value': 'streets'},
+                                     {'label': _('OSM'), 'value': 'open-street-map'},
+                                     {'label': _('Carto'), 'value': 'carto-positron'},
+                                     {'label': _('Satellite'), 'value': 'satellite'}],
+                            value=_map_style,
                         clearable=False,
                         className='toggle_map_style',
                         style={'overflow': 'visible'},
@@ -224,14 +259,14 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                     html.H6(_('Street type:'), className='ms-2 fw-bold d-inline'),
                 ], sm=1),
                 dbc.Col([
-                    dcc.Dropdown(
-                        id='street_type_dd',
-                        options=[{'label': _('All'), 'value': 'all'},
-                                 {'label': _('Primary'), 'value': 'primary'},
-                                 {'label': _('Secondary'), 'value': 'secondary'},
-                                 {'label': _('Tertiary'), 'value': 'tertiary'},
-                                 {'label': _('Residential'), 'value': 'residential'}],
-                        value='all',
+dcc.Dropdown(
+                            id='street_type_dd',
+                            options=[{'label': _('All'), 'value': 'all'},
+                                     {'label': _('Primary'), 'value': 'primary'},
+                                     {'label': _('Secondary'), 'value': 'secondary'},
+                                     {'label': _('Tertiary'), 'value': 'tertiary'},
+                                     {'label': _('Residential'), 'value': 'residential'}],
+                            value=_street_type,
                         clearable=False,
                         className='street_type',
                         searchable=False
@@ -240,11 +275,11 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                 dbc.Col([
                     html.H6(_('Filters:'), className='ms-2 fw-bold d-inline'),
                     html.Span([
-                        dbc.Checklist(
-                            id='toggle_uptime_filter',
-                            options=[{'label': html.Div([_(' Uptime > 70%'), html.I(className='bi bi-info-circle-fill h6 ms-2', id='popover_filter_uptime', style={'color': ADFC_middlegrey})]),
-                                      'value': 'filter_uptime_selected'}],
-                            value=['filter_uptime_selected'],
+dbc.Checklist(
+                                id='toggle_uptime_filter',
+                                options=[{'label': html.Div([_(' Uptime > 70%'), html.I(className='bi bi-info-circle-fill h6 ms-2', id='popover_filter_uptime', style={'color': ADFC_middlegrey})]),
+                                          'value': 'filter_uptime_selected'}],
+                                value=_uptime_filter,
                             inline=False,
                             switch=True,
                             className='ms-2 d-inline-block'
@@ -255,11 +290,11 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                             target='popover_filter_uptime', trigger="hover"),
                     ]),
                     html.Span([
-                        dbc.Checklist(
-                            id='toggle_active_filter',
-                            options=[{'label': html.Div([_(' Active only'), html.I(className='bi bi-info-circle-fill h6 ms-2', id='popover_filter_active', style={'color': ADFC_middlegrey})]),
-                                      'value': 'filter_active_selected'}],
-                            value=['filter_active_selected'],
+dbc.Checklist(
+                                id='toggle_active_filter',
+                                options=[{'label': html.Div([_(' Active only'), html.I(className='bi bi-info-circle-fill h6 ms-2', id='popover_filter_active', style={'color': ADFC_middlegrey})]),
+                                          'value': 'filter_active_selected'}],
+                                value=_active_filter,
                             inline=True,
                             switch=True,
                             className='ms-2 d-inline-block'
@@ -270,13 +305,13 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                             target='popover_filter_active', trigger="hover"),
                     ]),
                     html.Span([
-                        dbc.Checklist(
-                            id='hardware_version',
-                            options=[{'label': _('V1 Sensor'), 'value': 1},
-                                     # {'label': html.Div([_('S2 Sensor'), html.I(className='bi bi-info-circle-fill h6 ms-2', id='popover_hardware_version', style={'color': ADFC_middlegrey})]),
-                                     #                                        'value': 2}],
-                                     {'label': _('S2 Sensor'), 'value': 2}],
-                            value=[1, 2],
+dbc.Checklist(
+                                id='hardware_version',
+                                options=[{'label': _('V1 Sensor'), 'value': 1},
+                                         # {'label': html.Div([_('S2 Sensor'), html.I(className='bi bi-info-circle-fill h6 ms-2', id='popover_hardware_version', style={'color': ADFC_middlegrey})]),
+                                         #                                        'value': 2}],
+                                         {'label': _('S2 Sensor'), 'value': 2}],
+                                value=_hardware,
                             inline=True,
                             switch=True,
                             className='ms-2 d-inline-block'
@@ -308,12 +343,12 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                     ]),
                     # Hour slider
                     dbc.Row([
-                        dcc.RangeSlider(
-                            id='range_slider',
-                            min=0,
-                            max=24,
-                            step=1,
-                            value=INITIAL_HOUR_RANGE,
+dcc.RangeSlider(
+                                id='range_slider',
+                                min=0,
+                                max=24,
+                                step=1,
+                                value=_hour_range,
                             className='align-items-bottom ms-2 mb-2',
                             allowCross=False,
                             tooltip={'always_visible': False, 'placement': 'bottom', 'template': '{value}' + _(" Hour")}),
@@ -324,11 +359,11 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                 dbc.Col([
                     html.H6(_('Pick date range:'), className='fw-bold text-nowrap', id='date_range_text'),
                     # Date picker
-                    dcc.DatePickerRange(
-                        id="date_filter",
-                        updatemode='bothdates',
-                        start_date=start_date,
-                        end_date=end_date,
+dcc.DatePickerRange(
+                            id="date_filter",
+                            updatemode='bothdates',
+                            start_date=_date_start,
+                            end_date=_date_end,
                         min_date_allowed=min_date,
                         max_date_allowed=max_date,
                         display_format='DD-MM-YYYY',
@@ -347,16 +382,16 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                     # Radio time division
                     html.H4(_('Absolute traffic'), className='my-3'),
                     # Select a time division
-                    dcc.RadioItems(
-                        id='radio_time_division',
-                        options=[
-                            {'label': _('Year'), 'value': 'year'},
-                            {'label': _('Month'), 'value': 'year_month'},
-                            {'label': _('Week'), 'value': 'year_week'},
-                            {'label': _('Day'), 'value': 'date'},
-                            {'label': _('Hour'), 'value': 'date_hour'}
-                        ],
-                        value='date',
+dcc.RadioItems(
+                            id='radio_time_division',
+                            options=[
+                                {'label': _('Year'), 'value': 'year'},
+                                {'label': _('Month'), 'value': 'year_month'},
+                                {'label': _('Week'), 'value': 'year_week'},
+                                {'label': _('Day'), 'value': 'date'},
+                                {'label': _('Hour'), 'value': 'date_hour'}
+                            ],
+                            value=_time_division,
                         inline=True,
                         inputStyle={"margin-right": "5px", "margin-left": "20px"},
                     ),
@@ -384,16 +419,16 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                     # Radio time unit
                     html.H4(_('Average traffic'), className='my-3'),
 
-                    dcc.RadioItems(
-                        id='radio_time_unit',
-                        options=[
-                            {'label': _('Yearly'), 'value': 'year'},
-                            {'label': _('Monthly'), 'value': 'month'},
-                            {'label': _('Weekly'), 'value': 'weekday'},
-                            {'label': _('Daily'), 'value': 'day'},
-                            {'label': _('Hourly'), 'value': 'hour'}
-                        ],
-                        value='weekday',
+dcc.RadioItems(
+                            id='radio_time_unit',
+                            options=[
+                                {'label': _('Yearly'), 'value': 'year'},
+                                {'label': _('Monthly'), 'value': 'month'},
+                                {'label': _('Weekly'), 'value': 'weekday'},
+                                {'label': _('Daily'), 'value': 'day'},
+                                {'label': _('Hourly'), 'value': 'hour'}
+                            ],
+                            value=_time_unit,
                         inline=True,
                         inputStyle={"margin-right": "5px", "margin-left": "20px"},
                     ),
@@ -449,15 +484,15 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
             ], className='g-2 p-1'),
             dbc.Row([
                 dbc.Col([
-                    dcc.RadioItems(
-                        id='radio_y_axis',
-                        options=[
-                            {'label': _('Pedestrians'), 'value': 'ped_total'},
-                            {'label': _('Bikes'), 'value': 'bike_total'},
-                            {'label': _('Cars'), 'value': 'car_total'},
-                            {'label': _('Heavy'), 'value': 'heavy_total'},
-                        ],
-                        value='car_total',
+dcc.RadioItems(
+                            id='radio_y_axis',
+                            options=[
+                                {'label': _('Pedestrians'), 'value': 'ped_total'},
+                                {'label': _('Bikes'), 'value': 'bike_total'},
+                                {'label': _('Cars'), 'value': 'car_total'},
+                                {'label': _('Heavy'), 'value': 'heavy_total'},
+                            ],
+                            value=_y_axis,
                         inline=True,
                         inputStyle={"margin-right": "5px", "margin-left": "20px"},
                     ),
@@ -486,10 +521,11 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                                 dbc.Label(_('Select year scope:'), style={"display": "block"})
                             ], className='ms-2 fw-bold'
                         ),
-                        dcc.Dropdown(
-                            id='period_values_year',
-                            multi=True,
-                            options=['2025', '2026'],
+dcc.Dropdown(
+                                id='period_values_year',
+                                multi=True,
+                                options=['2025', '2026'],
+                                value=_period_year,
                             className='ms-2 mb-2',
                             clearable=False,
                             searchable=False,
@@ -514,7 +550,7 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                             {'label': _('Week'), 'value': 'year_week'},
                             {'label': _('Day'), 'value': 'date'}
                         ],
-                        value='year',
+                        value=_period_type,
                         className='ms-2 mb-2',
                         clearable=False,
                         searchable=False
@@ -530,7 +566,7 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                     ),
                     dcc.Dropdown(
                         id='period_values_others',
-                        value=['2025', '2026'],
+                        value=_period_others,
                         multi=True,
                         className='ms-2 mb-2 me-2',
                         clearable=False,
@@ -561,6 +597,66 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
             ], className='g-2 p-1 mb-3'),
 
             dcc.Store(id='intermediate-value'),
+
+            # ------------------------------------------------------------------- #
+            # Scenario management
+            # ------------------------------------------------------------------- #
+            dbc.Row([
+                html.H4(_('Dashboard scenarios'), className='my-3'),
+            ]),
+            dbc.Row([
+                dbc.Col([
+                    dbc.Label(_('Saved scenarios:')),
+                    dcc.Dropdown(
+                        id='scenario_dd',
+                        options=scenario_options or [],
+                        value=scenario_id,
+                        placeholder=_('Select to load...'),
+                        clearable=True,
+                        searchable=False,
+                    ),
+                ], sm=4),
+                dbc.Col([
+                    dbc.Label(_('Name:')),
+                    dbc.Input(
+                        id='scenario_name',
+                        type='text',
+                        placeholder=_('Scenario name'),
+                        maxLength=80,
+                        value=_scenario_name,
+                    ),
+                ], sm=3),
+                dbc.Col([
+                    dbc.Label(_('Author:')),
+                    dbc.Input(
+                        id='scenario_author',
+                        type='text',
+                        placeholder=_('Optional'),
+                        maxLength=40,
+                    ),
+                ], sm=2),
+                dbc.Col([
+                    dbc.Button(_('Save'), id='scenario_save_btn', size='sm', className='me-1 mt-2',
+                               style={'background-color': ADFC_green, 'border-color': ADFC_green}),
+                    dbc.Button(_('Load'), id='scenario_load_btn', size='sm', className='me-1 mt-2',
+                               disabled=scenario_id is None,
+                               style={'background-color': ADFC_blue, 'border-color': ADFC_blue}),
+                    dbc.Button(_('Delete'), id='scenario_delete_btn', size='sm', className='me-1 mt-2',
+                               disabled=scenario_id is None,
+                               style={'background-color': ADFC_red, 'border-color': ADFC_red}),
+                    dbc.Button(_('Copy link'), id='scenario_copy_link_btn', size='sm', className='me-1 mt-2',
+                               disabled=scenario_id is None,
+                               style={'background-color': ADFC_darkgrey, 'border-color': ADFC_darkgrey}),
+                ], sm=3),
+            ], className='g-2 align-items-end'),
+            dbc.Row([
+                dbc.Col([
+                    html.Div(id='scenario_alert'),
+                ], sm=12),
+            ], className='mt-2'),
+            dcc.Store(id='scenario_id_store', data=scenario_id),
+            dcc.Store(id='scenario_url_store', data=scenario_url),
+            html.Div(id='scenario_clipboard', style={'display': 'none'}),
 
             # Feedback and contact
             dbc.Row([

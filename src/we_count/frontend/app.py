@@ -728,6 +728,15 @@ app = Dash(__name__,
 app.title = 'Berlin-zaehlt'
 
 
+def _scenario_option_label(s):
+    """Build a dropdown label like 'My Scenario (by Author) (2026-09-29 14:30)'."""
+    label = s['name']
+    if s.get('saved_by'):
+        label += f" ({s['saved_by']})"
+    label += f" ({s['updated_at']})"
+    return label
+
+
 def current_layout():
     """Serve the layout in the language of the request being handled.
 
@@ -756,7 +765,7 @@ def current_layout():
                 pass
 
     scenario_options = [
-        {'label': f"{s['name']} ({s['updated_at']})", 'value': s['id']}
+        {'label': _scenario_option_label(s), 'value': s['id']}
         for s in list_scenarios(DATA_DIR)
     ]
 
@@ -1493,24 +1502,24 @@ def save_scenario_callback(save_clicks, name, author, scenario_id,
     author = (author or '').strip()
 
     try:
-        saved = save_scenario(DATA_DIR, name, state, author, scenario_id)
+        saved = save_scenario(DATA_DIR, name, state, author)
     except ValueError as e:
         options = [
-            {'label': f"{s['name']} ({s['updated_at']})", 'value': s['id']}
+            {'label': _scenario_option_label(s), 'value': s['id']}
             for s in list_scenarios(DATA_DIR)
         ]
         return options, scenario_id, name, no_update, no_update, no_update, no_update, \
             dbc.Alert(str(e), color='warning', duration=4000)
     except Exception as e:
         options = [
-            {'label': f"{s['name']} ({s['updated_at']})", 'value': s['id']}
+            {'label': _scenario_option_label(s), 'value': s['id']}
             for s in list_scenarios(DATA_DIR)
         ]
         return options, scenario_id, name, no_update, no_update, no_update, no_update, \
             dbc.Alert(str(e), color='danger', duration=4000)
 
     options = [
-        {'label': f"{s['name']} ({s['updated_at']})", 'value': s['id']}
+        {'label': _scenario_option_label(s), 'value': s['id']}
         for s in list_scenarios(DATA_DIR)
     ]
     share_url = f'/?scenario={saved["id"]}'
@@ -1540,7 +1549,7 @@ def delete_scenario_callback(delete_clicks, scenario_id):
 
     delete_scenario(DATA_DIR, scenario_id)
     options = [
-        {'label': f"{s['name']} ({s['updated_at']})", 'value': s['id']}
+        {'label': _scenario_option_label(s), 'value': s['id']}
         for s in list_scenarios(DATA_DIR)
     ]
     return options, None, '', None, True, True, True, \

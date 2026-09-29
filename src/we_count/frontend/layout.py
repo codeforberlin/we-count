@@ -606,17 +606,6 @@ dcc.Dropdown(
             ]),
             dbc.Row([
                 dbc.Col([
-                    dbc.Label(_('Saved scenarios:')),
-                    dcc.Dropdown(
-                        id='scenario_dd',
-                        options=scenario_options or [],
-                        value=scenario_id,
-                        placeholder=_('Select to load...'),
-                        clearable=True,
-                        searchable=False,
-                    ),
-                ], sm=4),
-                dbc.Col([
                     dbc.Label(_('Name:')),
                     dbc.Input(
                         id='scenario_name',
@@ -636,24 +625,37 @@ dcc.Dropdown(
                     ),
                 ], sm=2),
                 dbc.Col([
-                    dbc.Button(_('Save'), id='scenario_save_btn', size='sm', className='me-1 mt-2',
+                    dbc.Button(_('Save'), id='scenario_save_btn', size='sm', className='mt-2 w-100',
                                style={'background-color': ADFC_green, 'border-color': ADFC_green}),
+                ], sm=1),
+                dbc.Col([
+                    dbc.Label(_('Saved scenarios:')),
+                    dcc.Dropdown(
+                        id='scenario_dd',
+                        options=scenario_options or [],
+                        value=scenario_id,
+                        placeholder=_('Select to load...'),
+                        clearable=True,
+                        searchable=False,
+                    ),
+                ], sm=3),
+                dbc.Col([
                     dbc.Button(_('Load'), id='scenario_load_btn', size='sm', className='me-1 mt-2',
                                disabled=scenario_id is None,
                                style={'background-color': ADFC_blue, 'border-color': ADFC_blue}),
                     dbc.Button(_('Delete'), id='scenario_delete_btn', size='sm', className='me-1 mt-2',
                                disabled=scenario_id is None,
                                style={'background-color': ADFC_red, 'border-color': ADFC_red}),
-                    dbc.Button(_('Copy link'), id='scenario_copy_link_btn', size='sm', className='me-1 mt-2',
+                    dbc.Button(_('Copy link'), id='scenario_copy_link_btn', size='sm', className='mt-2',
                                disabled=scenario_id is None,
                                style={'background-color': ADFC_darkgrey, 'border-color': ADFC_darkgrey}),
-                ], sm=3),
+                ], sm=3, className='text-nowrap'),
             ], className='g-2 align-items-end'),
             dbc.Row([
                 dbc.Col([
                     html.Div(id='scenario_alert'),
                 ], sm=12),
-            ], className='mt-2'),
+            ], className='mt-2 mb-3'),
             dcc.Store(id='scenario_id_store', data=scenario_id),
             dcc.Store(id='scenario_url_store', data=scenario_url),
             html.Div(id='scenario_clipboard', style={'display': 'none'}),

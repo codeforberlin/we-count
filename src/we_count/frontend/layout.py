@@ -700,14 +700,14 @@ dcc.Dropdown(
             # Legal disclaimeers
             dbc.Row([
                 dbc.Col([
-                    html.P(_('Disclaimer'), style={'font-size': 12, 'color': ADFC_darkgrey}),
-                    html.P(
+                    html.H5(_('Disclaimer'), style={'font-size': 12, 'color': ADFC_darkgrey}),
+                    html.H5(
                         _('The content published in the offer has been researched with the greatest care. Nevertheless, the Berlin Counts Mobility team cannot assume any liability for the topicality, correctness or completeness of the information provided. All information is provided without guarantee. liability claims against the Berlin zählt Mobilität team or its supporting organizations derived from the use of this information are excluded. Despite careful control of the content, the Berlin zählt Mobilität team and its supporting organizations assume no liability for the content of external links. The operators of the linked pages are solely responsible for their content. A constant control of the external links is not possible for the provider. If there are indications or knowledge of legal violations, the illegal links will be deleted immediately.'),
                         style={
                             'font-size': 10,
                             'color': ADFC_darkgrey}),
-                    html.P(_('Copyright'), style={'font-size': 12, 'color': ADFC_darkgrey}),
-                    html.P(
+                    html.H5(_('Copyright'), style={'font-size': 12, 'color': ADFC_darkgrey}),
+                    html.H5(
                         _('The layout and design of the offer as a whole as well as its individual elements are protected by copyright. The same applies to the images, graphics and editorial contributions used in detail as well as their selection and compilation. Further use and reproduction are only permitted for private purposes. No changes may be made to it. Public use of the offer may only take place with the consent of the operator.'),
                         style={
                             'font-size': 10,

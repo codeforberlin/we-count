@@ -1075,7 +1075,8 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, street_type_d
             ORDER BY first_seen
         """).pl()
 
-        facet_order = {'street_selection': [street_name, ALL_STREETS]}
+        division_order = df_line_abs.sort('first_seen').get_column(time_division).unique(maintain_order=True).to_list()
+        facet_order = {'street_selection': [street_name, ALL_STREETS], time_division: division_order}
         division_label = {time_division: _(TIME_DIVISION_LABELS.get(radio_time_division, 'Day'))}
         unit_label = {time_unit: _(TIME_UNIT_LABELS.get(radio_time_unit, 'Week'))}
 
@@ -1089,7 +1090,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, street_type_d
         rename_traffic_traces(line_abs_traffic)
         apply_facet_layout(line_abs_traffic, street_name, segment_id,
                            y_title=_('Absolute traffic count'), legend_title=_('Traffic Type'),
-                           independent_x=True)
+                           independent_x=False)
 
         # ---- Average traffic per hour ------------------------------------ #
         df_avg_hr = cursor.execute(f"""

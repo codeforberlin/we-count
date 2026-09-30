@@ -49,7 +49,7 @@ INITIAL_HOUR_RANGE = [0, 24]
 MAP_HEIGHT = 520
 #: Pie-chart height leaves room for the headers above and info lines below
 #: within a column of MAP_HEIGHT.
-PIE_HEIGHT = 260
+PIE_HEIGHT = 320
 RANKING_HEIGHT = 600
 
 

@@ -22,5 +22,6 @@ body {
 }
 
 .traffic-pie-col > .pie-chart-wrap {
-    margin-top: auto;
+    margin-top: 0;
+    margin-bottom: 0;
 }

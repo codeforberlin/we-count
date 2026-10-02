@@ -37,6 +37,7 @@ import dash_bootstrap_components as dbc
 import duckdb
 import geopandas as gpd
 import pandas as pd
+import polars as pl
 import plotly.express as px
 from dash import Dash, Input, Output, State, callback, ctx, no_update
 from dash.exceptions import PreventUpdate
@@ -614,6 +615,40 @@ def range_suffix(start_str, end_str, hour_range):
     return f' ({start_str} - {end_str}, {hour_range[0]} - {hour_range[1]} h)'
 
 
+def fill_time_gaps(df, time_division, start_date, end_date):
+    """Pad missing time divisions with NaN rows and return the full order.
+
+    Plotly's ``connectgaps=False`` only breaks a line on NaN y-values, not on
+    missing x-values, so a sparse series (e.g. a street with data only in March
+    2025 and April 2026) is drawn as one continuous line.  Padding the missing
+    divisions with NaN makes the break visible.  Returns ``(df, order)`` where
+    ``order`` is the full chronological list of division labels, or
+    ``(df, None)`` for divisions that are not day/hour based.
+    """
+    if time_division not in ('date', 'date_hour'):
+        return df, None
+
+    start = datetime.strptime(start_date, ISO_FORMAT)
+    end = datetime.strptime(end_date, ISO_FORMAT)
+
+    if time_division == 'date':
+        start, end = start.date(), end.date()
+        step = timedelta(days=1)
+        count = (end - start).days + 1
+        fmt = '%d-%m-%Y'
+    else:
+        step = timedelta(hours=1)
+        count = int((end - start).total_seconds() // 3600) + 1
+        fmt = '%d-%m-%y - %H'
+
+    order = [(start + i * step).strftime(fmt) for i in range(count)]
+
+    spine = pl.DataFrame({time_division: order})
+    selections = df.select('street_selection').unique()
+    full = selections.join(spine, how='cross')
+    return full.join(df, on=['street_selection', time_division], how='left'), order
+
+
 def rename_traffic_traces(fig, suffix='', columns=TRAFFIC_COLUMNS):
     for col in columns:
         fig.update_traces({'name': _(TRAFFIC_TRACE_LABELS[col]) + suffix}, selector={'name': col})
@@ -1076,6 +1111,9 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, street_type_d
         """).pl()
 
         division_order = df_line_abs.sort('first_seen').get_column(time_division).unique(maintain_order=True).to_list()
+        df_line_abs, filled_order = fill_time_gaps(df_line_abs, time_division, start_date, end_date)
+        if filled_order is not None:
+            division_order = filled_order
         facet_order = {'street_selection': [street_name, ALL_STREETS], time_division: division_order}
         division_label = {time_division: _(TIME_DIVISION_LABELS.get(radio_time_division, 'Day'))}
         unit_label = {time_unit: _(TIME_UNIT_LABELS.get(radio_time_unit, 'Week'))}

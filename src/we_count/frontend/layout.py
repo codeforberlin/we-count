@@ -376,6 +376,13 @@ dcc.DatePickerRange(
                 ], sm=3),
             ], className='g-2 sticky-top rounded', style={'background-color': ADFC_skyblue}),
 
+            # Data gap notification
+            dbc.Row([
+                dbc.Col([
+                    html.Div(id='gap_notification'),
+                ], sm=12),
+            ], className='g-2'),
+
             # Absolute traffic
             dbc.Row([
                 dbc.Col([

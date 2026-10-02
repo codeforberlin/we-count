@@ -615,6 +615,62 @@ def range_suffix(start_str, end_str, hour_range):
     return f' ({start_str} - {end_str}, {hour_range[0]} - {hour_range[1]} h)'
 
 
+EN_MONTHS = ('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+             'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec')
+DE_MONTHS = ('Jan', 'Feb', 'Mrz', 'Apr', 'Mai', 'Jun',
+             'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez')
+
+
+def division_spine(time_division, start_date, end_date):
+    """Return the full chronological list of division labels in the range.
+
+    The labels match the string format of the corresponding ``all_traffic``
+    column (e.g. ``'Jan 2025'`` for ``year_month``, ``'01-2025'`` for
+    ``year_week``) so they can be joined against the aggregated data.
+    """
+    start = datetime.strptime(start_date, ISO_FORMAT)
+    end = datetime.strptime(end_date, ISO_FORMAT)
+    labels = []
+
+    if time_division == 'year':
+        for year in range(start.year, end.year + 1):
+            labels.append(str(year))
+
+    elif time_division in ('year_month', 'jahr_monat'):
+        months = DE_MONTHS if time_division == 'jahr_monat' else EN_MONTHS
+        year, month = start.year, start.month
+        while (year, month) <= (end.year, end.month):
+            labels.append(f'{months[month - 1]} {year}')
+            month += 1
+            if month > 12:
+                month, year = 1, year + 1
+
+    elif time_division == 'year_week':
+        day = start.date()
+        end_day = end.date()
+        while day <= end_day:
+            iso = day.isocalendar()
+            label = f'{iso.week:02d}-{iso.year}'
+            if not labels or labels[-1] != label:
+                labels.append(label)
+            day += timedelta(days=1)
+
+    elif time_division == 'date':
+        day = start.date()
+        end_day = end.date()
+        while day <= end_day:
+            labels.append(day.strftime('%d-%m-%Y'))
+            day += timedelta(days=1)
+
+    elif time_division == 'date_hour':
+        hour = start
+        while hour <= end:
+            labels.append(hour.strftime('%d-%m-%y - %H'))
+            hour += timedelta(hours=1)
+
+    return labels
+
+
 def fill_time_gaps(df, time_division, start_date, end_date):
     """Pad missing time divisions with NaN rows and return the full order.
 
@@ -622,31 +678,41 @@ def fill_time_gaps(df, time_division, start_date, end_date):
     missing x-values, so a sparse series (e.g. a street with data only in March
     2025 and April 2026) is drawn as one continuous line.  Padding the missing
     divisions with NaN makes the break visible.  Returns ``(df, order)`` where
-    ``order`` is the full chronological list of division labels, or
-    ``(df, None)`` for divisions that are not day/hour based.
+    ``order`` is the full chronological list of division labels.
     """
-    if time_division not in ('date', 'date_hour'):
-        return df, None
-
-    start = datetime.strptime(start_date, ISO_FORMAT)
-    end = datetime.strptime(end_date, ISO_FORMAT)
-
-    if time_division == 'date':
-        start, end = start.date(), end.date()
-        step = timedelta(days=1)
-        count = (end - start).days + 1
-        fmt = '%d-%m-%Y'
-    else:
-        step = timedelta(hours=1)
-        count = int((end - start).total_seconds() // 3600) + 1
-        fmt = '%d-%m-%y - %H'
-
-    order = [(start + i * step).strftime(fmt) for i in range(count)]
-
+    order = division_spine(time_division, start_date, end_date)
     spine = pl.DataFrame({time_division: order})
     selections = df.select('street_selection').unique()
     full = selections.join(spine, how='cross')
     return full.join(df, on=['street_selection', time_division], how='left'), order
+
+
+def day_gaps(cursor, start_date, end_date):
+    """Return the days in ``[start_date, end_date]`` with no data for the street.
+
+    A gap is a calendar day for which the selected street (``is_selected``) has
+    no row in the ``traffic`` temp table at all, i.e. no traffic of any type.
+    """
+    present = {row[0] for row in cursor.execute(
+        'SELECT DISTINCT CAST(date_local AS DATE) FROM traffic WHERE is_selected').fetchall()}
+    start = datetime.strptime(start_date, ISO_FORMAT).date()
+    end = datetime.strptime(end_date, ISO_FORMAT).date()
+    if end < start:
+        return []
+    return sorted(start + timedelta(days=i)
+                  for i in range((end - start).days + 1)
+                  if start + timedelta(days=i) not in present)
+
+
+def gap_ranges(gap_days):
+    """Group consecutive missing days into ``(start, end)`` ranges."""
+    ranges = []
+    for day in gap_days:
+        if ranges and day == ranges[-1][1] + timedelta(days=1):
+            ranges[-1] = (ranges[-1][0], day)
+        else:
+            ranges.append((day, day))
+    return ranges
 
 
 def rename_traffic_traces(fig, suffix='', columns=TRAFFIC_COLUMNS):
@@ -1023,6 +1089,7 @@ def update_map(click_data, id_street, street_type_dd, hardware_version, toggle_u
     Output('bar_perc_speed', 'figure'),
     Output('bar_v85', 'figure'),
     Output('bar_ranking', 'figure'),
+    Output('gap_notification', 'children'),
     Input('radio_time_division', 'value'),
     Input('radio_time_unit', 'value'),
     Input('street_name_dd', 'value'),
@@ -1070,6 +1137,21 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, street_type_d
         materialise_traffic(cursor, filter_sql, filter_params, start_date, end_date,
                             hour_range, id_street, street_name)
 
+        # ---- Data gaps --------------------------------------------------- #
+        gap_days = day_gaps(cursor, start_date, end_date)
+        gap_ranges_list = gap_ranges(gap_days)
+        if gap_ranges_list:
+            parts = []
+            for gap_start, gap_end in gap_ranges_list:
+                n = (gap_end - gap_start).days + 1
+                parts.append(f'{gap_start.strftime("%d-%m-%Y")} - '
+                             f'{gap_end.strftime("%d-%m-%Y")} ({n} ' + _('days') + ')')
+            gap_notification = dbc.Alert(
+                _('Data gap detected: ') + ', '.join(parts),
+                color='warning', className='mb-0')
+        else:
+            gap_notification = None
+
         # ---- Warnings about missing data -------------------------------- #
         start_date_str = format_str_date(start_date, ISO_FORMAT, DISPLAY_DATE_FORMAT)
         end_date_str = format_str_date(end_date, ISO_FORMAT, DISPLAY_DATE_FORMAT)
@@ -1110,10 +1192,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, street_type_d
             ORDER BY first_seen
         """).pl()
 
-        division_order = df_line_abs.sort('first_seen').get_column(time_division).unique(maintain_order=True).to_list()
-        df_line_abs, filled_order = fill_time_gaps(df_line_abs, time_division, start_date, end_date)
-        if filled_order is not None:
-            division_order = filled_order
+        df_line_abs, division_order = fill_time_gaps(df_line_abs, time_division, start_date, end_date)
         facet_order = {'street_selection': [street_name, ALL_STREETS], time_division: division_order}
         division_label = {time_division: _(TIME_DIVISION_LABELS.get(radio_time_division, 'Day'))}
         unit_label = {time_unit: _(TIME_UNIT_LABELS.get(radio_time_unit, 'Week'))}
@@ -1288,7 +1367,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, street_type_d
     return (street_name, selected_street_header_color, street_id_text, date_range_text,
             min_date, max_date, date_range_color,
             pie_traffic, line_abs_traffic, bar_avg_traffic_hr, bar_avg_traffic,
-            bar_perc_speed, bar_v85, bar_ranking)
+            bar_perc_speed, bar_v85, bar_ranking, gap_notification)
 
 
 # --------------------------------------------------------------------------- #

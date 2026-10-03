@@ -662,3 +662,6 @@ msgstr "Datenlücke erkannt: "
 
 msgid "days"
 msgstr "Tage"
+
+msgid "New dashboard - Berlin Open Data Day 2026"
+msgstr "Neues Dashboard - Berlin Open Data Day 2026"

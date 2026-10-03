@@ -41,7 +41,7 @@ import polars as pl
 import plotly.express as px
 from dash import Dash, Input, Output, State, callback, ctx, no_update
 from dash.exceptions import PreventUpdate
-from flask import has_request_context, request
+from flask import has_request_context, request, send_from_directory
 
 from .layout import (ADFC_blue, ADFC_crimson, ADFC_darkgrey, ADFC_green, ADFC_green_L,
                      ADFC_lightblue, ADFC_lightblue_D, ADFC_lightgrey, ADFC_orange,
@@ -827,6 +827,12 @@ app = Dash(__name__,
 
 
 app.title = 'Berlin-zaehlt'
+
+
+@app.server.route('/data/<path:filename>')
+def serve_data_file(filename):
+    """Serve a file from the data directory (e.g. presentation downloads)."""
+    return send_from_directory(DATA_DIR, filename)
 
 
 def _scenario_option_label(s):

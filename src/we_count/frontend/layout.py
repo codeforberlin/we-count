@@ -8,6 +8,7 @@
 
 import dash_bootstrap_components as dbc
 from dash import Dash, html, dcc
+from urllib.parse import quote
 # suppress warnings, see app.py
 from typing import Callable
 
@@ -699,6 +700,9 @@ dcc.Dropdown(
                             html.Li([_('Dashboard development: ') + 'Egbert Klaassen' + _(' and ') + 'Michael Behrisch']),
                             html.Li([_('For dashboard improvement requests: '),
                                      html.A(_('email us'), href='mailto: kontakt@berlin-zaehlt.de')]),
+                            html.Li([html.A(_('New dashboard - Berlin Open Data Day 2026'),
+                                           href='/data/' + quote('Neues Dashboard zu BzM - Open Data Day 2026 Final - Subtitles.ppsx'),
+                                           target="_blank")]),
                         ]),
                     ], sm=6),
                 ]),

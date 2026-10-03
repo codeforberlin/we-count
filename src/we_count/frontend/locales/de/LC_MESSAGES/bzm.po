@@ -656,3 +656,9 @@ msgstr "Szenario gespeichert!"
 
 msgid "Scenario deleted."
 msgstr "Szenario gelöscht."
+
+msgid "Data gap detected: "
+msgstr "Datenlücke erkannt: "
+
+msgid "days"
+msgstr "Tage"

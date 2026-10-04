@@ -9,4 +9,3 @@ duckdb
 geopandas>=1.0.0
 plotly>=6.6.0
 polars
-random

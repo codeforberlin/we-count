@@ -238,16 +238,15 @@ def duckdb_info(con):
 # --------------------------------------------------------------------------- #
 def retrieve_data():
     """Load the geo data and build the DuckDB database from the parquet files."""
-    data_dir = DATA_DIR
     config = {}
-    if os.path.exists(os.path.join(data_dir, 'config.json')):
-        with open(os.path.join(data_dir, 'config.json')) as cfg:
-            config = json.load(cfg)
+    for d in (ASSET_DIR, DATA_DIR):
+        if os.path.exists(os.path.join(d, 'config.json')):
+            with open(os.path.join(d, 'config.json')) as cfg:
+                config.update(json.load(cfg))
+
+    data_dir = DATA_DIR
     if not os.path.exists(os.path.join(data_dir, 'bzm_telraam_segments.geojson')):
         data_dir = ASSET_DIR
-        if os.path.exists(os.path.join(data_dir, 'config.json')):
-            with open(os.path.join(data_dir, 'config.json')) as cfg:
-                config.update(json.load(cfg))
 
     if not DEPLOYED:
         print('Reading geojson data...')
@@ -629,7 +628,7 @@ SEGMENT_MAXSPEED = {
 del geo_df_map_info, json_df_features
 
 if not DEPLOYED:
-    print('Starting dash ...')
+    print('Starting dash ...', config)
 
 app = Dash(__name__,
            external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP, '/assets/main.css'],

@@ -138,5 +138,5 @@ python src/we_count/backend/bzm_get_data.py
 Run the following script to serve a data app built with Dash by Plotly. 
 
 ```sh
-python src/bzm_v01.py
+python -m src.we_count.frontend.app
 ```

@@ -24,6 +24,7 @@ create temp tables with fixed names without clobbering each other and without
 serialising all readers behind a lock.
 """
 import gettext
+import json
 import os
 import random
 from contextlib import contextmanager
@@ -236,6 +237,12 @@ def duckdb_info(con):
 # --------------------------------------------------------------------------- #
 def retrieve_data():
     """Load the geo data and build the DuckDB database from the parquet files."""
+    config = {}
+    for d in (ASSET_DIR, DATA_DIR):
+        if os.path.exists(os.path.join(d, 'config.json')):
+            with open(os.path.join(d, 'config.json')) as cfg:
+                config.update(json.load(cfg))
+
     data_dir = DATA_DIR
     if not os.path.exists(os.path.join(data_dir, 'bzm_telraam_segments.geojson')):
         data_dir = ASSET_DIR
@@ -286,7 +293,7 @@ def retrieve_data():
         connection.unregister('last_data_package_table')
 
     del features
-    return geo_df, json_df_features, connection
+    return geo_df, json_df_features, connection, config
 
 
 @contextmanager
@@ -605,7 +612,7 @@ def apply_facet_layout(fig, street_name, segment_id, *, y_title=None, legend_tit
 # --------------------------------------------------------------------------- #
 # Module initialisation
 # --------------------------------------------------------------------------- #
-geo_df, json_df_features, conn = retrieve_data()
+geo_df, json_df_features, traffic_df_id_bc, conn, config = retrieve_data()
 
 update_language(INITIAL_LANGUAGE)
 
@@ -667,11 +674,13 @@ SEGMENT_MAXSPEED = {
 del geo_df_map_info, json_df_features
 
 if not DEPLOYED:
-    print('Starting dash ...')
+    print('Starting dash ...', config)
 
 app = Dash(__name__,
            external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP, '/assets/main.css'],
-           meta_tags=[{'name': 'viewport', 'content': 'width=device-width, initial-scale=1'}])
+           meta_tags=[{'name': 'viewport', 'content': 'width=device-width, initial-scale=1'}],
+           requests_pathname_prefix=config.get('requests_pathname_prefix'))
+
 
 app.title = 'Berlin-zaehlt'
 app.layout = lambda: serve_layout(app, id_street_options, start_date, end_date, min_date, max_date)

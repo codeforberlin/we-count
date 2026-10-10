@@ -865,7 +865,7 @@ def current_layout():
                 if scenario and scenario['state'].get('_version') == STATE_VERSION:
                     scenario_state = scenario['state']
                     scenario_id = scenario['id']
-                    scenario_url = f'/?scenario={scenario_id}'
+                    scenario_url = config.get('requests_pathname_prefix', '/') + f'?scenario={scenario_id}'
                     if request.args.get('lang'):
                         scenario_url += f'&lang={request.args.get("lang")}'
             except (ValueError, TypeError):
@@ -921,7 +921,7 @@ def navigate_language(lang_code_dd):
     if sid:
         params.insert(0, f'scenario={sid}')
 
-    return '/?' + '&'.join(params)
+    return config.get('requests_pathname_prefix', '/') + '?' + '&'.join(params)
 
 
 @callback(
@@ -950,7 +950,7 @@ def select_scenario(scenario_value, lang_code_dd):
         return no_update
 
     name = scenario.get('name', '')
-    share_url = f'/?scenario={scenario["id"]}'
+    share_url = config.get('requests_pathname_prefix', '/') + f'?scenario={scenario["id"]}'
     if lang:
         share_url += f'&lang={lang}'
 
@@ -1646,7 +1646,7 @@ def save_scenario_callback(save_clicks, name, author, scenario_id,
         {'label': _scenario_option_label(s), 'value': s['id']}
         for s in list_scenarios(DATA_DIR)
     ]
-    share_url = f'/?scenario={saved["id"]}'
+    share_url = config.get('requests_pathname_prefix', '/') + f'?scenario={saved["id"]}'
     if lang:
         share_url += f'&lang={lang}'
 

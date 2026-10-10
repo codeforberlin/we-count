@@ -612,7 +612,7 @@ def apply_facet_layout(fig, street_name, segment_id, *, y_title=None, legend_tit
 # --------------------------------------------------------------------------- #
 # Module initialisation
 # --------------------------------------------------------------------------- #
-geo_df, json_df_features, traffic_df_id_bc, conn, config = retrieve_data()
+geo_df, json_df_features, conn, config = retrieve_data()
 
 update_language(INITIAL_LANGUAGE)
 

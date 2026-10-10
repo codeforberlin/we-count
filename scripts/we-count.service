@@ -18,6 +18,10 @@ Environment=GUNICORN_TIMEOUT=30
 Environment=GUNICORN_PID_FILE=/run/gunicorn/we-count/pid
 Environment=GUNICORN_ACCESS_LOG_FILE=/var/log/gunicorn/we-count/access.log
 Environment=GUNICORN_ERROR_LOG_FILE=/var/log/gunicorn/we-count/error.log
+# the following two should help if there are debug messages
+# or warnings issued by imported modules which can block the entire gunicorn
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONWARNINGS=ignore
 
 ExecStart=/bin/sh -c '${GUNICORN_BIN} \
   --workers ${GUNICORN_WORKER} \

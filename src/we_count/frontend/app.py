@@ -47,8 +47,8 @@ from .layout import (ADFC_blue, ADFC_crimson, ADFC_darkgrey, ADFC_green, ADFC_gr
                      ADFC_lightblue, ADFC_lightblue_D, ADFC_lightgrey, ADFC_orange,
                      ADFC_orange_L, ADFC_palegrey, ADFC_pink, ADFC_red,
                      INITIAL_LANGUAGE, INITIAL_STREET_ID, serve_layout)
-from .scenarios import (STATE_VERSION, delete_scenario, get_scenario, list_scenarios,
-                        save_scenario)
+from .scenarios import (STATE_VERSION, ScenarioNameTaken, delete_scenario, get_scenario,
+                        list_scenarios, save_scenario)
 
 # the following is basically to suppress warnings about "_" being undefined
 # "from gettext import gettext as _" does not work because we use gettext.install later on, which installs "_"
@@ -1625,27 +1625,31 @@ def save_scenario_callback(save_clicks, name, author, scenario_id,
     }
     author = (author or '').strip()
 
+    def scenario_options():
+        return [
+            {'label': _scenario_option_label(s), 'value': s['id']}
+            for s in list_scenarios(DATA_DIR)
+        ]
+
+    if not (name or '').strip():
+        return scenario_options(), scenario_id, name, no_update, no_update, no_update, \
+            no_update, dbc.Alert(_('Please enter a scenario name.'), color='warning', duration=4000)
+
     try:
         saved = save_scenario(DATA_DIR, name, state, author)
-    except ValueError as e:
-        options = [
-            {'label': _scenario_option_label(s), 'value': s['id']}
-            for s in list_scenarios(DATA_DIR)
-        ]
-        return options, scenario_id, name, no_update, no_update, no_update, no_update, \
-            dbc.Alert(str(e), color='warning', duration=4000)
+    except ScenarioNameTaken:
+        return scenario_options(), scenario_id, name, no_update, no_update, no_update, \
+            no_update, dbc.Alert(_('A scenario with this name already exists.'),
+                                 color='warning', duration=4000)
+    except ValueError:
+        return scenario_options(), scenario_id, name, no_update, no_update, no_update, \
+            no_update, dbc.Alert(_('This scenario no longer exists.'),
+                                 color='warning', duration=4000)
     except Exception as e:
-        options = [
-            {'label': _scenario_option_label(s), 'value': s['id']}
-            for s in list_scenarios(DATA_DIR)
-        ]
-        return options, scenario_id, name, no_update, no_update, no_update, no_update, \
-            dbc.Alert(str(e), color='danger', duration=4000)
+        return scenario_options(), scenario_id, name, no_update, no_update, no_update, \
+            no_update, dbc.Alert(str(e), color='danger', duration=4000)
 
-    options = [
-        {'label': _scenario_option_label(s), 'value': s['id']}
-        for s in list_scenarios(DATA_DIR)
-    ]
+    options = scenario_options()
     share_url = config.get('requests_pathname_prefix', '/') + f'?scenario={saved["id"]}'
     if lang:
         share_url += f'&lang={lang}'

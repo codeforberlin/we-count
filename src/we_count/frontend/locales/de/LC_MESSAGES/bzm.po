@@ -657,6 +657,15 @@ msgstr "Szenario gespeichert!"
 msgid "Scenario deleted."
 msgstr "Szenario gelöscht."
 
+msgid "Please enter a scenario name."
+msgstr "Bitte geben Sie einen Szenarionamen ein."
+
+msgid "A scenario with this name already exists."
+msgstr "Ein Szenario mit diesem Namen existiert bereits."
+
+msgid "This scenario no longer exists."
+msgstr "Dieses Szenario existiert nicht mehr."
+
 msgid "Data gap detected: "
 msgstr "Datenlücke erkannt: "
 

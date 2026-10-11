@@ -34,6 +34,14 @@ from datetime import datetime
 #: half-apply a layout it no longer describes.
 STATE_VERSION = 1
 
+
+class ScenarioNameTaken(Exception):
+    """Raised when saving would reuse the name of an existing scenario."""
+
+    def __init__(self, name):
+        super().__init__(name)
+        self.name = name
+
 #: Database file inside the data directory, overridable with ``BZM_SCENARIO_DB``
 #: so a test or a second dashboard can keep its scenarios apart.
 DEFAULT_DB_NAME = 'scenarios.db'
@@ -116,7 +124,7 @@ def save_scenario(data_dir, name, state, saved_by='', scenario_id=None):
     ``scenario_id`` of ``None`` creates a new scenario, anything else overwrites
     that one and keeps its id, so links to it stay valid.  Raises ``ValueError``
     for an empty name and for an id that no longer exists, and
-    ``sqlite3.IntegrityError`` if the name is taken.
+    :class:`ScenarioNameTaken` if the name is already used by another scenario.
     """
     name = (name or '').strip()[:MAX_NAME_LENGTH]
     if not name:
@@ -125,21 +133,26 @@ def save_scenario(data_dir, name, state, saved_by='', scenario_id=None):
     payload = json.dumps(state, sort_keys=True)
     stamp = datetime.now().strftime(TIMESTAMP_FORMAT)
 
-    with closing(connect(data_dir)) as connection:
-        with connection:
-            if scenario_id is None:
-                cursor = connection.execute(
-                    'INSERT INTO scenarios (name, state, saved_by, updated_at) VALUES (?, ?, ?, ?)',
-                    (name, payload, saved_by, stamp))
-                scenario_id = cursor.lastrowid
-            else:
-                connection.execute(
-                    'UPDATE scenarios SET name = ?, state = ?, saved_by = ?, updated_at = ?'
-                    ' WHERE id = ?', (name, payload, saved_by, stamp, scenario_id))
-        row = connection.execute('SELECT * FROM scenarios WHERE id = ?', (scenario_id,)).fetchone()
-        if row is None:
-            # Somebody deleted the scenario from another tab in the meantime
-            raise ValueError(f'no scenario with id {scenario_id}')
+    try:
+        with closing(connect(data_dir)) as connection:
+            with connection:
+                if scenario_id is None:
+                    cursor = connection.execute(
+                        'INSERT INTO scenarios (name, state, saved_by, updated_at) VALUES (?, ?, ?, ?)',
+                        (name, payload, saved_by, stamp))
+                    scenario_id = cursor.lastrowid
+                else:
+                    connection.execute(
+                        'UPDATE scenarios SET name = ?, state = ?, saved_by = ?, updated_at = ?'
+                        ' WHERE id = ?', (name, payload, saved_by, stamp, scenario_id))
+            row = connection.execute('SELECT * FROM scenarios WHERE id = ?', (scenario_id,)).fetchone()
+            if row is None:
+                # Somebody deleted the scenario from another tab in the meantime
+                raise ValueError(f'no scenario with id {scenario_id}')
+    except sqlite3.IntegrityError as error:
+        if 'scenarios.name' in str(error):
+            raise ScenarioNameTaken(name) from error
+        raise
 
     return _decode(dict(row))
 

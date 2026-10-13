@@ -128,6 +128,18 @@ COMPARISON_GROUPING = {
     'date': ('hour', 'Day'),
 }
 
+#: Chronological sort key for the grouping column of the comparison chart.
+#: Ordering by ``first_seen`` alone pushes units that only occur in the second
+#: period (i.e. across a data gap) to the end of the x-axis, scrambling the
+#: order.  Sorting by the calendar part keeps the axis in order no matter which
+#: period a unit shows up in.
+COMPARISON_GROUP_ORDER = {
+    'month': 'MONTH(date_local)',
+    'day': 'DAY(date_local)',
+    'weekday': 'ISODOW(date_local)',
+    'hour': 'EXTRACT(HOUR FROM date_local)',
+}
+
 DEFAULT_TIME_UNIT = 'weekday'
 DEFAULT_TIME_DIVISION = 'date'
 DEFAULT_PERIOD_TYPE = 'year'
@@ -1494,6 +1506,7 @@ def comparison_chart(period_values_year, period_options_year, period_type_others
     group_key, label_key = COMPARISON_GROUPING.get(period_type_others,
                                                    COMPARISON_GROUPING[DEFAULT_PERIOD_TYPE])
     group_by = resolve_column(TIME_UNIT_COLUMNS, group_key, lang, DEFAULT_TIME_UNIT)
+    group_order = COMPARISON_GROUP_ORDER[group_key]
     period_column = resolve_column(TIME_DIVISION_COLUMNS, period_type_others, lang, DEFAULT_PERIOD_TYPE)
     label = _(label_key)
 
@@ -1518,24 +1531,24 @@ def comparison_chart(period_values_year, period_options_year, period_type_others
             WITH period_a AS (
                 SELECT street_selection, {group_by},
                        {aggregate_columns(TRAFFIC_COLUMNS)},
-                       MIN(date_local) AS first_seen_a
+                       MIN({group_order}) AS group_order_a
                 FROM traffic WHERE {period_column} = ?
                 GROUP BY street_selection, {group_by}
             ),
             period_b AS (
                 SELECT street_selection, {group_by},
                        {aggregate_columns(TRAFFIC_COLUMNS, suffix='_d')},
-                       MIN(date_local) AS first_seen_b
+                       MIN({group_order}) AS group_order_b
                 FROM traffic WHERE {period_column} = ?
                 GROUP BY street_selection, {group_by}
             )
-            SELECT * EXCLUDE (first_seen_a, first_seen_b)
+            SELECT * EXCLUDE (group_order_a, group_order_b)
             FROM period_b FULL OUTER JOIN period_a USING ({group_by}, street_selection)
-            ORDER BY COALESCE(first_seen_a, first_seen_b)
+            ORDER BY COALESCE(group_order_a, group_order_b)
         """, [period_a, period_b]).fetch_df()
 
     line_avg_delta_traffic = px.line(
-        df_delta, x=group_by, y=[*TRAFFIC_COLUMNS, *delta_columns],
+        df_delta, x=group_by, y=[*TRAFFIC_COLUMNS, *delta_columns], markers=True,
         facet_col='street_selection', facet_col_spacing=0.04,
         category_orders={'street_selection': [street_name, ALL_STREETS]},
         labels={group_by: _(TIME_UNIT_LABELS.get(group_key, 'Day'))},

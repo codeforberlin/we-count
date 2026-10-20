@@ -632,6 +632,10 @@ EN_MONTHS = ('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
 DE_MONTHS = ('Jan', 'Feb', 'Mrz', 'Apr', 'Mai', 'Jun',
              'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez')
 
+#: The calendar columns that label a division with "%b %Y".
+MONTH_DIVISION_COLUMNS = TIME_DIVISION_COLUMNS['year_month']
+MONTH_DIVISIONS = tuple(MONTH_DIVISION_COLUMNS.values())
+
 
 def division_spine(time_division, start_date, end_date):
     """Return the full chronological list of division labels in the range.
@@ -648,8 +652,8 @@ def division_spine(time_division, start_date, end_date):
         for year in range(start.year, end.year + 1):
             labels.append(str(year))
 
-    elif time_division in ('year_month', 'jahr_monat'):
-        months = DE_MONTHS if time_division == 'jahr_monat' else EN_MONTHS
+    elif time_division in MONTH_DIVISIONS:
+        months = DE_MONTHS if time_division == MONTH_DIVISION_COLUMNS['de'] else EN_MONTHS
         year, month = start.year, start.month
         while (year, month) <= (end.year, end.month):
             labels.append(f'{months[month - 1]} {year}')

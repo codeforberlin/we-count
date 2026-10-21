@@ -168,9 +168,9 @@ HOUR_DIVISION = 'date_hour'
 #: default [0, 24] covers every hour of a day.
 FULL_HOUR_RANGE = (0, 24)
 
-#: Last hour that holds data on a day, filled at module initialisation.  The
-#: slider's "until the end of the day" depends on it, because the data of the
-#: last day ends where the last data package ends.
+#: First and last hour that hold data on a day, filled at module initialisation.
+#: The slider's "until the end of the day" depends on it, because the data of
+#: the last day ends where the last data package ends.
 HOUR_COVERAGE = {}
 
 #: Which time division a "average per <unit>" chart has to average over.
@@ -476,29 +476,41 @@ def last_hour_of(value):
     for every end date, so the effective last hour depends on it.
     """
     day = datetime.strptime(to_iso(value), ISO_FORMAT).date()
-    last = HOUR_COVERAGE.get(day)
-    return FULL_HOUR_RANGE[1] if last is None else last + 1
+    first_and_last = HOUR_COVERAGE.get(day)
+    return FULL_HOUR_RANGE[1] if first_and_last is None else first_and_last[1] + 1
 
 
 def clamp_hour_range(start_date, end_date, hour_range):
     """Clip the hour selection to the hours the selected dates actually hold.
 
-    Selecting out-of-range hours silently yields empty charts, so the slider is
-    bounded to the hours present on the first and the last selected day.  A day
-    without any data keeps the full range, so a range of gap days is still
-    selectable.  Returns ``(start_hour, end_hour, adjusted)`` with ``end_hour``
-    exclusive (24 = end of day).
+    The bounds are the union of the covered hours over all selected days, not
+    just the first and last day: taking the end day alone would drop the later
+    hours of the (full) days before it, and taking the *last* hour of the first
+    day as the lower bound would collapse a ``[0, 24]`` selection onto that one
+    hour.  A period without any data keeps the full range, so a range of gap
+    days is still selectable.  Returns ``(start_hour, end_hour, adjusted)`` with
+    ``end_hour`` exclusive (24 = end of day).
     """
-    first = HOUR_COVERAGE.get(datetime.strptime(to_iso(start_date), ISO_FORMAT).date()) \
-        if start_date else None
-    last = HOUR_COVERAGE.get(datetime.strptime(to_iso(end_date), ISO_FORMAT).date()) \
-        if end_date else None
+    if not start_date or not end_date:
+        return hour_range[0], hour_range[1], False
+
+    start = datetime.strptime(to_iso(start_date), ISO_FORMAT).date()
+    end = datetime.strptime(to_iso(end_date), ISO_FORMAT).date()
+    if end < start:
+        return hour_range[0], hour_range[1], False
+
+    covered = [HOUR_COVERAGE[day] for day in
+               (start + timedelta(days=offset) for offset in range((end - start).days + 1))
+               if day in HOUR_COVERAGE]
+    if not covered:
+        return hour_range[0], hour_range[1], False
 
     # The measurements of an hour are stamped with the start of that hour, so
-    # the first hour of a day is 0 and the last one 23.  A day that only holds
-    # early hours must not claim the later ones as selected.
-    start_hour = max(hour_range[0], first) if first is not None else hour_range[0]
-    end_hour = min(hour_range[1], last + 1) if last is not None else hour_range[1]
+    # the first hour of a day is 0 and the last one 23.
+    first = min(first_hour for first_hour, _ in covered)
+    last = max(last_hour for _, last_hour in covered)
+    start_hour = max(hour_range[0], first)
+    end_hour = min(hour_range[1], last + 1)
     if start_hour >= end_hour:
         return hour_range[0], hour_range[1], False
     return start_hour, end_hour, (start_hour, end_hour) != (hour_range[0], hour_range[1])
@@ -773,6 +785,7 @@ def division_spine(time_division, start_date, end_date, hour_range=FULL_HOUR_RAN
             labels.append(str(year))
 
     elif time_division in MONTH_DIVISIONS:
+
         months = DE_MONTHS if language == 'de' else EN_MONTHS
         year, month = start.year, start.month
         while (year, month) <= (end.year, end.month):
@@ -916,13 +929,14 @@ with request_cursor() as _cursor:
     min_date, max_date = _min or start_date, _max or end_date
     start_date, end_date, _message, _missing = clamp_date_range(start_date, end_date, min_date, max_date)
 
-    # Last hour that holds any data on a day, i.e. the end time of the last
-    # data package of that day.  The range slider ends where the data ends, so
-    # the end date of the default range (today) must not claim hours that have
-    # not been measured yet.
+    # First and last hour that hold any data on a day, i.e. the start and end
+    # time of the data packages of that day.  The range slider ends where the
+    # data ends, so the end date of the default range (today) must not claim
+    # hours that have not been measured yet.
     HOUR_COVERAGE.update({
-        day: last_hour for day, last_hour in _cursor.execute("""
+        day: (first_hour, last_hour) for day, first_hour, last_hour in _cursor.execute("""
             SELECT CAST(date_local AS DATE) AS day,
+                   MIN(EXTRACT(HOUR FROM date_local)) AS first_hour,
                    MAX(EXTRACT(HOUR FROM date_local)) AS last_hour
             FROM all_traffic
             GROUP BY CAST(date_local AS DATE)

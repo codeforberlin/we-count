@@ -630,6 +630,9 @@ msgstr "Gespeicherte Szenarien:"
 msgid "Select to load..."
 msgstr "Zum Laden auswählen..."
 
+msgid "Load"
+msgstr "Laden"
+
 msgid "Name:"
 msgstr "Name:"
 

@@ -90,26 +90,88 @@ PREFERRED_STREETS = (
     'Alte Jakobstraße (9000002582)',
 )
 
-# The parquet files carry both English and German spellings of the calendar
-# columns (e.g. "Mar" in `month` and "Mrz" in `Monat`) so that axis ticks appear
-# in the user's language.  Mapping them explicitly here keeps the UI values
-# locale independent and doubles as the allow list for the column names that get
-# interpolated into SQL.
-TIME_UNIT_COLUMNS = {
-    'year': {'en': 'year', 'de': 'year'},
-    'month': {'en': 'month', 'de': 'Monat'},
-    'weekday': {'en': 'weekday', 'de': 'Wochentag'},
-    'day': {'en': 'day', 'de': 'day'},
-    'hour': {'en': 'hour', 'de': 'hour'},
+# The dashboard only stores ``date_local`` and derives every calendar label in
+# SQL, in the language of the request.  Keeping the expressions here (instead of
+# the former precomputed ``year``/``month``/``Wochentag``/... parquet columns)
+# means a single source of truth for date/time data, and the mapping doubles as
+# the allow list for the expressions that get interpolated into SQL.
+EN_MONTHS = ('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+             'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec')
+DE_MONTHS = ('Jan', 'Feb', 'Mrz', 'Apr', 'Mai', 'Jun',
+             'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez')
+EN_WEEKDAYS = ('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')
+DE_WEEKDAYS = ('Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So')
+
+#: SQL list of the month and weekday abbreviations, indexed by the calendar part
+#: of ``date_local`` (``month`` is 1-12, ``isodow`` is 1-7).
+MONTH_NAMES_SQL = {
+    'en': f"list_value({', '.join(repr(name) for name in EN_MONTHS)})",
+    'de': f"list_value({', '.join(repr(name) for name in DE_MONTHS)})",
+}
+WEEKDAY_NAMES_SQL = {
+    'en': f"list_value({', '.join(repr(name) for name in EN_WEEKDAYS)})",
+    'de': f"list_value({', '.join(repr(name) for name in DE_WEEKDAYS)})",
 }
 
-TIME_DIVISION_COLUMNS = {
-    'year': {'en': 'year', 'de': 'year'},
-    'year_month': {'en': 'year_month', 'de': 'jahr_monat'},
-    'year_week': {'en': 'year_week', 'de': 'year_week'},
-    'date': {'en': 'date', 'de': 'date'},
-    'date_hour': {'en': 'date_hour', 'de': 'date_hour'},
+
+def month_name():
+    """SQL expression of the month label, e.g. ``'Mrz'``."""
+    return f"{MONTH_NAMES_SQL[language]}[month(date_local)]"
+
+
+def month_division():
+    """SQL expression of the month label including the year, e.g. ``'Mrz 2025'``."""
+    return f"{month_name()} || ' ' || strftime(date_local, '%Y')"
+
+
+def weekday_name():
+    """SQL expression of the weekday label, e.g. ``'Wed'`` or ``'Mi'``."""
+    return f"{WEEKDAY_NAMES_SQL[language]}[isodow(date_local)]"
+
+
+#: Calendar value of each time unit, i.e. what a chart groups by.
+TIME_UNIT_EXPRESSIONS = {
+    'year': lambda: "strftime(date_local, '%Y')",
+    'month': month_name,
+    'weekday': weekday_name,
+    'day': lambda: "strftime(date_local, '%d')",
+    'hour': lambda: 'EXTRACT(HOUR FROM date_local)',
 }
+
+#: Calendar value of each time division, i.e. what the x-axis steps through.
+TIME_DIVISION_EXPRESSIONS = {
+    'year': TIME_UNIT_EXPRESSIONS['year'],
+    'year_month': month_division,
+    'year_week': lambda: "strftime(date_local, '%V-%G')",
+    'date': lambda: "strftime(date_local, '%d-%m-%Y')",
+    'date_hour': lambda: "strftime(date_local, '%d-%m-%y - %H')",
+}
+
+#: Date/time columns the parquet files derive from ``date_local``.  The
+#: dashboard rebuilds all of them in SQL, so they are dropped on load.
+DERIVED_DATE_COLUMNS = (
+    'hour', 'year', 'Monat', 'jahr_monat', 'year_week', 'Wochentag', 'date',
+    'date_hour', 'day', 'month', 'weekday', 'year_month',
+)
+
+#: The expressions above depend on the request language, so they are built per
+#: callback and passed around under a fixed column name in the chart queries.
+TIME_UNIT_COLUMN = 'time_unit'
+TIME_DIVISION_COLUMN = 'time_division'
+
+#: Hour divisions need a full timestamp to be plotted chronologically.  The
+#: formatted ``date_hour`` label only carries day and hour, so a range spanning
+#: several days (e.g. 18 May 10 h to 19 May 10 h) repeats its labels.
+HOUR_DIVISION = 'date_hour'
+
+#: The hour range the slider works with.  24 is the exclusive end, i.e. the
+#: default [0, 24] covers every hour of a day.
+FULL_HOUR_RANGE = (0, 24)
+
+#: Last hour that holds data on a day, filled at module initialisation.  The
+#: slider's "until the end of the day" depends on it, because the data of the
+#: last day ends where the last data package ends.
+HOUR_COVERAGE = {}
 
 #: Which time division a "average per <unit>" chart has to average over.
 TIME_UNIT_TO_DIVISION = {
@@ -128,16 +190,16 @@ COMPARISON_GROUPING = {
     'date': ('hour', 'Day'),
 }
 
-#: Chronological sort key for the grouping column of the comparison chart.
+#: Chronological sort key for the grouping value of the comparison chart.
 #: Ordering by ``first_seen`` alone pushes units that only occur in the second
 #: period (i.e. across a data gap) to the end of the x-axis, scrambling the
 #: order.  Sorting by the calendar part keeps the axis in order no matter which
 #: period a unit shows up in.
 COMPARISON_GROUP_ORDER = {
-    'month': 'MONTH(date_local)',
-    'day': 'DAY(date_local)',
-    'weekday': 'ISODOW(date_local)',
-    'hour': 'EXTRACT(HOUR FROM date_local)',
+    'month': "MONTH(date_local)",
+    'day': "DAY(date_local)",
+    'weekday': "ISODOW(date_local)",
+    'hour': "EXTRACT(HOUR FROM date_local)",
 }
 
 DEFAULT_TIME_UNIT = 'weekday'
@@ -285,8 +347,11 @@ def retrieve_data():
                             union_by_name=True).to_table('all_traffic')
 
     with db_lock:
-        # Alter dtypes for data processing and to enable sort order
-        connection.execute('ALTER TABLE all_traffic ALTER COLUMN day SET DATA TYPE INTEGER')
+        # ``date_local`` is the only date/time column the dashboard uses; every
+        # calendar label is derived from it in SQL, so the pre-derived columns
+        # in the parquet files are dropped on load.
+        for column in DERIVED_DATE_COLUMNS:
+            connection.execute(f'ALTER TABLE all_traffic DROP COLUMN IF EXISTS {column}')
         # TODO: remove from parquet files
         connection.execute('ALTER TABLE all_traffic DROP COLUMN last_data_package')
 
@@ -363,14 +428,14 @@ def update_language(lang_code):
     gettext.translation('bzm', localedir, fallback=True, languages=[language]).install()
 
 
-def resolve_column(mapping, key, lang, default):
-    """Map a UI value onto the matching DuckDB column for ``lang``.
+def resolve_expression(expressions, key, default):
+    """Build the SQL expression behind a UI value.
 
-    Unknown keys fall back to ``default``, so only column names that appear in
+    Unknown keys fall back to ``default``, so only expressions that appear in
     the mapping can ever reach an f-string interpolated query.
     """
-    entry = mapping.get(key) or mapping[default]
-    return entry.get(lang, entry['en'])
+    entry = expressions.get(key) or expressions[default]
+    return entry() if callable(entry) else entry
 
 
 # --------------------------------------------------------------------------- #
@@ -388,6 +453,55 @@ def to_iso(value):
         # DatePickerRange hands back either "YYYY-MM-DD" or a full ISO timestamp
         return value if 'T' in value else value + 'T00:00:00'
     return datetime.combine(value, datetime.min.time()).strftime(ISO_FORMAT)
+
+
+def to_end_iso(value):
+    """Normalise a selected end date to the last second of that day.
+
+    The date picker only selects whole days, and the charts select an end date
+    to include all of it.  Turning it into ``00:00:00`` would make the SQL
+    ``date_local < end + 1 day`` only drop the midnight row of the end date,
+    while everything else derived from the timestamp (e.g. the hour spine of
+    the hourly chart) started at midnight and therefore cut off the end day.
+    """
+    return datetime.strptime(to_iso(value), ISO_FORMAT).strftime('%Y-%m-%dT23:59:59')
+
+
+def last_hour_of(value):
+    """Last hour of the day the given (end) date has data for.
+
+    The measurement data ends where the last data package ends, so the end date
+    often only holds the first hours of the day.  The range slider counts up to
+    24, which means "until the end of the selected day" - that end is different
+    for every end date, so the effective last hour depends on it.
+    """
+    day = datetime.strptime(to_iso(value), ISO_FORMAT).date()
+    last = HOUR_COVERAGE.get(day)
+    return FULL_HOUR_RANGE[1] if last is None else last + 1
+
+
+def clamp_hour_range(start_date, end_date, hour_range):
+    """Clip the hour selection to the hours the selected dates actually hold.
+
+    Selecting out-of-range hours silently yields empty charts, so the slider is
+    bounded to the hours present on the first and the last selected day.  A day
+    without any data keeps the full range, so a range of gap days is still
+    selectable.  Returns ``(start_hour, end_hour, adjusted)`` with ``end_hour``
+    exclusive (24 = end of day).
+    """
+    first = HOUR_COVERAGE.get(datetime.strptime(to_iso(start_date), ISO_FORMAT).date()) \
+        if start_date else None
+    last = HOUR_COVERAGE.get(datetime.strptime(to_iso(end_date), ISO_FORMAT).date()) \
+        if end_date else None
+
+    # The measurements of an hour are stamped with the start of that hour, so
+    # the first hour of a day is 0 and the last one 23.  A day that only holds
+    # early hours must not claim the later ones as selected.
+    start_hour = max(hour_range[0], first) if first is not None else hour_range[0]
+    end_hour = min(hour_range[1], last + 1) if last is not None else hour_range[1]
+    if start_hour >= end_hour:
+        return hour_range[0], hour_range[1], False
+    return start_hour, end_hour, (start_hour, end_hour) != (hour_range[0], hour_range[1])
 
 
 def clamp_date_range(start_date, end_date, min_date, max_date):
@@ -459,6 +573,10 @@ def materialise_traffic(cursor, filter_sql, filter_params, start_date, end_date,
     Streets" facet) and once relabelled with the selected street name, flagged
     by ``is_selected``.  Narrowing by date, hour and filters happens in the same
     single pass over ``all_traffic``.
+
+    ``end_date`` is an inclusive whole day: it is compared as a full timestamp,
+    so the end day is included up to its last hour.  ``hour_range`` is
+    ``(first_hour, last_hour_exclusive)``, the same convention the slider uses.
     """
     dropped = ['uptime', 'hardware_version', 'last_data_package_naive', 'street_type']
     if drop_speed:
@@ -471,15 +589,15 @@ def materialise_traffic(cursor, filter_sql, filter_params, start_date, end_date,
             SELECT * EXCLUDE ({', '.join(dropped)})
             FROM all_traffic
             WHERE {filter_sql}
-              AND date_local >= CAST(? AS DATE)
-              AND date_local <  CAST(? AS DATE) + INTERVAL 1 DAY
-              AND hour BETWEEN ? AND ?
+              AND date_local BETWEEN CAST(? AS TIMESTAMP) AND CAST(? AS TIMESTAMP)
+              AND EXTRACT(HOUR FROM date_local) >= ? AND EXTRACT(HOUR FROM date_local) < ?
         )
         SELECT *, FALSE AS is_selected FROM filtered
         UNION ALL
         SELECT * REPLACE (? AS street_selection), TRUE AS is_selected
         FROM filtered WHERE id_street = ?
-    """, [*filter_params, start_date, end_date, hour_range[0], hour_range[1], street_name, id_street])
+    """, [*filter_params, start_date, to_end_iso(end_date),
+          hour_range[0], hour_range[1], street_name, id_street])
 
 
 def aggregate_columns(columns, function='SUM', suffix='', decimals=None):
@@ -508,11 +626,10 @@ def bike_car_ratios(cursor, filter_sql='TRUE', filter_params=(), period=None):
     """
     conditions, params = [filter_sql], list(filter_params)
     if period is not None:
-        conditions.append('date_local >= CAST(? AS DATE)')
-        conditions.append('date_local <  CAST(? AS DATE) + INTERVAL 1 DAY')
-        conditions.append('hour BETWEEN ? AND ?')
+        conditions.append('date_local BETWEEN CAST(? AS TIMESTAMP) AND CAST(? AS TIMESTAMP)')
+        conditions.append('EXTRACT(HOUR FROM date_local) >= ? AND EXTRACT(HOUR FROM date_local) < ?')
         start_date, end_date, hour_range = period
-        params += [start_date, end_date, hour_range[0], hour_range[1]]
+        params += [start_date, to_end_iso(end_date), hour_range[0], hour_range[1]]
 
     frame = cursor.execute(f"""
         SELECT segment_id,
@@ -539,12 +656,15 @@ def get_bike_car_ratios(ratio_df):
 def selected_period(start_date, end_date, hour_range):
     """Build the hashable period key of the current date and hour selection.
 
-    Returns ``None`` while the selection is incomplete, which makes the map fall
-    back to the ratios over all data instead of failing.
+    The hour range is clipped to the hours the selected dates hold, so the map
+    is coloured by exactly the hours the charts aggregate.  Returns ``None``
+    while the selection is incomplete, which makes the map fall back to the
+    ratios over all data instead of failing.
     """
     if not start_date or not end_date or not hour_range or len(hour_range) != 2:
         return None
-    return to_iso(start_date), to_iso(end_date), (hour_range[0], hour_range[1])
+    start_hour, end_hour, _ = clamp_hour_range(start_date, end_date, hour_range)
+    return to_iso(start_date), to_iso(end_date), (start_hour, end_hour)
 
 
 @lru_cache(maxsize=64)
@@ -627,22 +747,22 @@ def range_suffix(start_str, end_str, hour_range):
     return f' ({start_str} - {end_str}, {hour_range[0]} - {hour_range[1]} h)'
 
 
-EN_MONTHS = ('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-             'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec')
-DE_MONTHS = ('Jan', 'Feb', 'Mrz', 'Apr', 'Mai', 'Jun',
-             'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez')
-
-#: The calendar columns that label a division with "%b %Y".
-MONTH_DIVISION_COLUMNS = TIME_DIVISION_COLUMNS['year_month']
-MONTH_DIVISIONS = tuple(MONTH_DIVISION_COLUMNS.values())
+#: The time divisions that label a step with "%b %Y".
+MONTH_DIVISIONS = ('year_month',)
 
 
-def division_spine(time_division, start_date, end_date):
+def division_spine(time_division, start_date, end_date, hour_range=FULL_HOUR_RANGE):
     """Return the full chronological list of division labels in the range.
 
-    The labels match the string format of the corresponding ``all_traffic``
-    column (e.g. ``'Jan 2025'`` for ``year_month``, ``'01-2025'`` for
-    ``year_week``) so they can be joined against the aggregated data.
+    ``time_division`` is the UI value of the division.  The labels match the
+    string format of :data:`TIME_DIVISION_EXPRESSIONS` (e.g. ``'Jan 2025'`` for
+    ``year_month``, ``'01-2025'`` for ``year_week``) so they can be joined
+    against the aggregated data.
+
+    The hourly spine honours the hour selection, otherwise a range such as
+    "18 May, 10 - 20 h" would be padded with hours the selection never holds.
+    ``end_date`` is a whole day, so its last hour is the last hour of
+    ``hour_range`` on that date.
     """
     start = datetime.strptime(start_date, ISO_FORMAT)
     end = datetime.strptime(end_date, ISO_FORMAT)
@@ -653,7 +773,7 @@ def division_spine(time_division, start_date, end_date):
             labels.append(str(year))
 
     elif time_division in MONTH_DIVISIONS:
-        months = DE_MONTHS if time_division == MONTH_DIVISION_COLUMNS['de'] else EN_MONTHS
+        months = DE_MONTHS if language == 'de' else EN_MONTHS
         year, month = start.year, start.month
         while (year, month) <= (end.year, end.month):
             labels.append(f'{months[month - 1]} {year}')
@@ -678,29 +798,32 @@ def division_spine(time_division, start_date, end_date):
             labels.append(day.strftime('%d-%m-%Y'))
             day += timedelta(days=1)
 
-    elif time_division == 'date_hour':
-        hour = start
-        while hour <= end:
+    elif time_division == HOUR_DIVISION:
+        hour = start.replace(hour=0, minute=0, second=0) + timedelta(hours=hour_range[0])
+        last = end.replace(hour=0, minute=0, second=0) + timedelta(hours=hour_range[1] - 1)
+        while hour <= last:
             labels.append(hour.strftime('%d-%m-%y - %H'))
             hour += timedelta(hours=1)
 
     return labels
 
 
-def fill_time_gaps(df, time_division, start_date, end_date):
+def fill_time_gaps(df, column, division, start_date, end_date, hour_range=FULL_HOUR_RANGE):
     """Pad missing time divisions with NaN rows and return the full order.
 
-    Plotly's ``connectgaps=False`` only breaks a line on NaN y-values, not on
-    missing x-values, so a sparse series (e.g. a street with data only in March
-    2025 and April 2026) is drawn as one continuous line.  Padding the missing
-    divisions with NaN makes the break visible.  Returns ``(df, order)`` where
-    ``order`` is the full chronological list of division labels.
+    ``column`` is the frame column holding the division labels and ``division``
+    the UI value that describes them.  Plotly's ``connectgaps=False`` only breaks
+    a line on NaN y-values, not on missing x-values, so a sparse series (e.g. a
+    street with data only in March 2025 and April 2026) is drawn as one
+    continuous line.  Padding the missing divisions with NaN makes the break
+    visible.  Returns ``(df, order)`` where ``order`` is the full chronological
+    list of division labels.
     """
-    order = division_spine(time_division, start_date, end_date)
-    spine = pl.DataFrame({time_division: order})
+    order = division_spine(division, start_date, end_date, hour_range)
+    spine = pl.DataFrame({column: order})
     selections = df.select('street_selection').unique()
     full = selections.join(spine, how='cross')
-    return full.join(df, on=['street_selection', time_division], how='left'), order
+    return full.join(df, on=['street_selection', column], how='left'), order
 
 
 def day_gaps(cursor, start_date, end_date):
@@ -792,6 +915,19 @@ with request_cursor() as _cursor:
     _min, _max = street_date_range(_cursor, 'TRUE', [], INITIAL_STREET_ID)
     min_date, max_date = _min or start_date, _max or end_date
     start_date, end_date, _message, _missing = clamp_date_range(start_date, end_date, min_date, max_date)
+
+    # Last hour that holds any data on a day, i.e. the end time of the last
+    # data package of that day.  The range slider ends where the data ends, so
+    # the end date of the default range (today) must not claim hours that have
+    # not been measured yet.
+    HOUR_COVERAGE.update({
+        day: last_hour for day, last_hour in _cursor.execute("""
+            SELECT CAST(date_local AS DATE) AS day,
+                   MAX(EXTRACT(HOUR FROM date_local)) AS last_hour
+            FROM all_traffic
+            GROUP BY CAST(date_local AS DATE)
+        """).fetchall()
+    })
 
     # Street options for the dropdown: only streets with usable, recent data
     id_street_options = [row[0] for row in _cursor.execute("""
@@ -1019,6 +1155,9 @@ def update_map(click_data, id_street, street_type_dd, hardware_version, toggle_u
     if not hardware_version:
         hardware_version = [1, 2]
 
+    # An empty slider value carries no hour selection at all
+    hour_range = hour_range or list(FULL_HOUR_RANGE)
+
     period = selected_period(start_date, end_date, hour_range)
     df_map = map_data(tuple(toggle_uptime_filter or ()), tuple(toggle_active_filter or ()),
                       tuple(sorted(hardware_version)), street_type_dd, period)
@@ -1131,12 +1270,21 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, street_type_d
     if not id_street:
         raise PreventUpdate
 
+    # An empty slider value carries no hour selection at all
+    hour_range = hour_range or list(FULL_HOUR_RANGE)
+
+    global language
     lang = lang_code_dd if lang_code_dd in ('en', 'de') else INITIAL_LANGUAGE
-    time_unit = resolve_column(TIME_UNIT_COLUMNS, radio_time_unit, lang, DEFAULT_TIME_UNIT)
-    time_division = resolve_column(TIME_DIVISION_COLUMNS, radio_time_division, lang, DEFAULT_TIME_DIVISION)
-    unit_division = resolve_column(TIME_DIVISION_COLUMNS,
-                                   TIME_UNIT_TO_DIVISION.get(radio_time_unit, DEFAULT_TIME_DIVISION),
-                                   lang, DEFAULT_TIME_DIVISION)
+    # The calendar labels are built in SQL from ``date_local``, in the language
+    # of the page the dropdown belongs to.
+    language = normalise_language(lang)
+    time_unit = resolve_expression(TIME_UNIT_EXPRESSIONS, radio_time_unit, DEFAULT_TIME_UNIT)
+    time_division = resolve_expression(
+        TIME_DIVISION_EXPRESSIONS, radio_time_division, DEFAULT_TIME_DIVISION)
+    unit_division = resolve_expression(
+        TIME_DIVISION_EXPRESSIONS,
+        TIME_UNIT_TO_DIVISION.get(radio_time_unit, DEFAULT_TIME_DIVISION),
+        DEFAULT_TIME_DIVISION)
     y_axis = radio_y_axis if radio_y_axis in RANKING_COLUMNS else 'car_total'
 
     segment_id = id_street[-11:-1]
@@ -1155,6 +1303,10 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, street_type_d
         start_date, end_date, message, missing_data = clamp_date_range(
             start_date, end_date, min_date, max_date)
         min_date, max_date = min_date or start_date, max_date or end_date
+
+        # The end date is a whole day and only holds the hours the data reaches,
+        # so the hour range has to follow the (possibly clipped) dates.
+        hour_range = list(clamp_hour_range(start_date, end_date, hour_range)[:2])
 
         materialise_traffic(cursor, filter_sql, filter_params, start_date, end_date,
                             hour_range, id_street, street_name)
@@ -1206,7 +1358,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, street_type_d
 
         # ---- Absolute traffic over time ---------------------------------- #
         df_line_abs = cursor.execute(f"""
-            SELECT {time_division}, street_selection,
+            SELECT {time_division} AS {TIME_DIVISION_COLUMN}, street_selection,
                    {aggregate_columns(TRAFFIC_COLUMNS)},
                    MIN(date_local) AS first_seen
             FROM traffic
@@ -1214,13 +1366,16 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, street_type_d
             ORDER BY first_seen
         """).pl()
 
-        df_line_abs, division_order = fill_time_gaps(df_line_abs, time_division, start_date, end_date)
-        facet_order = {'street_selection': [street_name, ALL_STREETS], time_division: division_order}
-        division_label = {time_division: _(TIME_DIVISION_LABELS.get(radio_time_division, 'Day'))}
-        unit_label = {time_unit: _(TIME_UNIT_LABELS.get(radio_time_unit, 'Week'))}
+        df_line_abs, division_order = fill_time_gaps(df_line_abs, TIME_DIVISION_COLUMN,
+                                                     radio_time_division, start_date, end_date,
+                                                     hour_range)
+        facet_order = {'street_selection': [street_name, ALL_STREETS],
+                       TIME_DIVISION_COLUMN: division_order}
+        division_label = {TIME_DIVISION_COLUMN: _(TIME_DIVISION_LABELS.get(radio_time_division, 'Day'))}
+        unit_label = {TIME_UNIT_COLUMN: _(TIME_UNIT_LABELS.get(radio_time_unit, 'Week'))}
 
         line_abs_traffic = px.scatter(
-            df_line_abs, x=time_division, y=list(TRAFFIC_COLUMNS),
+            df_line_abs, x=TIME_DIVISION_COLUMN, y=list(TRAFFIC_COLUMNS),
             facet_col='street_selection', facet_col_spacing=0.04,
             category_orders=facet_order, labels=division_label,
             color_discrete_map=TRAFFIC_COLOURS,
@@ -1233,7 +1388,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, street_type_d
 
         # ---- Average traffic per hour ------------------------------------ #
         df_avg_hr = cursor.execute(f"""
-            SELECT {time_unit}, street_selection,
+            SELECT {time_unit} AS {TIME_UNIT_COLUMN}, street_selection,
                    {aggregate_columns(TRAFFIC_COLUMNS, 'AVG', decimals=1)},
                    MIN(date_local) AS first_seen
             FROM traffic
@@ -1242,7 +1397,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, street_type_d
         """).pl()
 
         bar_avg_traffic_hr = px.bar(
-            df_avg_hr, x=time_unit, y=list(TRAFFIC_COLUMNS), barmode='stack',
+            df_avg_hr, x=TIME_UNIT_COLUMN, y=list(TRAFFIC_COLUMNS), barmode='stack',
             facet_col='street_selection', facet_col_spacing=0.04,
             category_orders=facet_order, labels=unit_label,
             color_discrete_map=TRAFFIC_COLOURS,
@@ -1258,23 +1413,22 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, street_type_d
         # those sums over the unit (e.g. per weekday).
         df_avg = cursor.execute(f"""
             WITH per_division AS (
-                SELECT {unit_division}, {time_unit}, street_selection,
+                SELECT {unit_division}, {time_unit} AS {TIME_UNIT_COLUMN}, street_selection,
                        {aggregate_columns(TRAFFIC_COLUMNS)},
                        MIN(date_local) AS first_seen
                 FROM traffic
                 GROUP BY {unit_division}, {time_unit}, street_selection
             )
-            SELECT {time_unit}, street_selection,
+            SELECT {TIME_UNIT_COLUMN}, street_selection,
                    {aggregate_columns(TRAFFIC_COLUMNS, 'AVG', decimals=1)},
                    MIN(first_seen) AS first_seen
             FROM per_division
-            GROUP BY {time_unit}, street_selection
+            GROUP BY {TIME_UNIT_COLUMN}, street_selection
             ORDER BY first_seen
         """).pl()
-
         unit_title = _('Average traffic count per ') + _(TIME_UNIT_LABELS.get(radio_time_unit, 'Week'))
         bar_avg_traffic = px.bar(
-            df_avg, x=time_unit, y=list(TRAFFIC_COLUMNS), barmode='stack',
+            df_avg, x=TIME_UNIT_COLUMN, y=list(TRAFFIC_COLUMNS), barmode='stack',
             facet_col='street_selection', facet_col_spacing=0.04,
             category_orders=facet_order, labels=unit_label,
             color_discrete_map=TRAFFIC_COLOURS,
@@ -1293,7 +1447,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, street_type_d
 
         df_speed = cursor.execute(f"""
             WITH grouped AS (
-                SELECT {time_unit}, street_selection,
+                SELECT {time_unit} AS {TIME_UNIT_COLUMN}, street_selection,
                        {speed_avgs},
                        MIN(date_local) AS first_seen
                 FROM traffic
@@ -1304,7 +1458,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, street_type_d
                 FROM grouped
                 WHERE ({speed_total}) > 0
             )
-            SELECT {time_unit}, street_selection,
+            SELECT {TIME_UNIT_COLUMN}, street_selection,
                    {speed_shares}
             FROM totals
             ORDER BY first_seen
@@ -1319,7 +1473,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, street_type_d
             speed_colour_map = SPEED_COLOUR_MAP_50
 
         bar_perc_speed = px.bar(
-            df_speed, x=time_unit, y=list(SPEED_COLUMNS), barmode='stack',
+            df_speed, x=TIME_UNIT_COLUMN, y=list(SPEED_COLUMNS), barmode='stack',
             facet_col='street_selection', facet_col_spacing=0.04,
             category_orders=facet_order, labels=unit_label,
             color_discrete_map=speed_colour_map,
@@ -1333,7 +1487,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, street_type_d
 
         # ---- v85 ---------------------------------------------------------- #
         df_v85 = cursor.execute(f"""
-            SELECT {time_unit}, street_selection,
+            SELECT {time_unit} AS {TIME_UNIT_COLUMN}, street_selection,
                    ROUND(MEAN(v85), 1) AS v85,
                    MIN(date_local) AS first_seen
             FROM traffic
@@ -1341,7 +1495,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, street_type_d
             ORDER BY first_seen
         """).pl()
 
-        bar_v85 = px.bar(df_v85, x=time_unit, y='v85', color='v85',
+        bar_v85 = px.bar(df_v85, x=TIME_UNIT_COLUMN, y='v85', color='v85',
                          color_continuous_scale='temps',
                          facet_col='street_selection', facet_col_spacing=0.04,
                          category_orders=facet_order, labels=unit_label,
@@ -1415,8 +1569,9 @@ def update_period_year_values(id_street, min_date, max_date, toggle_uptime_filte
         toggle_uptime_filter, toggle_active_filter, hardware_version, street_type_dd)
 
     with request_cursor() as cursor:
+        year_value = resolve_expression(TIME_DIVISION_EXPRESSIONS, 'year', DEFAULT_PERIOD_TYPE)
         years = [row[0] for row in cursor.execute(f"""
-            SELECT DISTINCT year
+            SELECT DISTINCT {year_value} AS year
             FROM all_traffic
             WHERE {filter_sql} AND id_street = ?
               AND date_local >= ? AND date_local <= ?
@@ -1446,7 +1601,11 @@ def update_period_other_values(period_values_year, period_type_others, id_street
         return []
 
     lang = lang_code_dd if lang_code_dd in ('en', 'de') else INITIAL_LANGUAGE
-    period_column = resolve_column(TIME_DIVISION_COLUMNS, period_type_others, lang, DEFAULT_PERIOD_TYPE)
+    global language
+    language = normalise_language(lang)
+    period_column = resolve_expression(
+        TIME_DIVISION_EXPRESSIONS, period_type_others, DEFAULT_PERIOD_TYPE)
+    year_value = resolve_expression(TIME_DIVISION_EXPRESSIONS, 'year', DEFAULT_PERIOD_TYPE)
 
     filter_sql, filter_params = build_filter(
         toggle_uptime_filter, toggle_active_filter, hardware_version, street_type_dd)
@@ -1460,7 +1619,7 @@ def update_period_other_values(period_values_year, period_type_others, id_street
             SELECT {period_column}, MIN(date_local) AS first_seen
             FROM all_traffic
             WHERE {filter_sql}
-              AND year IN ({placeholders})
+              AND {year_value} IN ({placeholders})
               AND id_street = ?
               AND date_local >= ? AND date_local <= ?
             GROUP BY {period_column}
@@ -1509,9 +1668,12 @@ def comparison_chart(period_values_year, period_options_year, period_type_others
 
     group_key, label_key = COMPARISON_GROUPING.get(period_type_others,
                                                    COMPARISON_GROUPING[DEFAULT_PERIOD_TYPE])
-    group_by = resolve_column(TIME_UNIT_COLUMNS, group_key, lang, DEFAULT_TIME_UNIT)
+    global language
+    language = normalise_language(lang)
+    group_by = resolve_expression(TIME_UNIT_EXPRESSIONS, group_key, DEFAULT_TIME_UNIT)
     group_order = COMPARISON_GROUP_ORDER[group_key]
-    period_column = resolve_column(TIME_DIVISION_COLUMNS, period_type_others, lang, DEFAULT_PERIOD_TYPE)
+    period_column = resolve_expression(
+        TIME_DIVISION_EXPRESSIONS, period_type_others, DEFAULT_PERIOD_TYPE)
     label = _(label_key)
 
     filter_sql, filter_params = build_filter(
@@ -1533,29 +1695,29 @@ def comparison_chart(period_values_year, period_options_year, period_type_others
 
         df_delta = cursor.execute(f"""
             WITH period_a AS (
-                SELECT street_selection, {group_by},
+                SELECT street_selection, {group_by} AS {TIME_UNIT_COLUMN},
                        {aggregate_columns(TRAFFIC_COLUMNS)},
                        MIN({group_order}) AS group_order_a
                 FROM traffic WHERE {period_column} = ?
                 GROUP BY street_selection, {group_by}
             ),
             period_b AS (
-                SELECT street_selection, {group_by},
+                SELECT street_selection, {group_by} AS {TIME_UNIT_COLUMN},
                        {aggregate_columns(TRAFFIC_COLUMNS, suffix='_d')},
                        MIN({group_order}) AS group_order_b
                 FROM traffic WHERE {period_column} = ?
                 GROUP BY street_selection, {group_by}
             )
             SELECT * EXCLUDE (group_order_a, group_order_b)
-            FROM period_b FULL OUTER JOIN period_a USING ({group_by}, street_selection)
+            FROM period_b FULL OUTER JOIN period_a USING ({TIME_UNIT_COLUMN}, street_selection)
             ORDER BY COALESCE(group_order_a, group_order_b)
         """, [period_a, period_b]).fetch_df()
 
     line_avg_delta_traffic = px.line(
-        df_delta, x=group_by, y=[*TRAFFIC_COLUMNS, *delta_columns], markers=True,
+        df_delta, x=TIME_UNIT_COLUMN, y=[*TRAFFIC_COLUMNS, *delta_columns], markers=True,
         facet_col='street_selection', facet_col_spacing=0.04,
         category_orders={'street_selection': [street_name, ALL_STREETS]},
-        labels={group_by: _(TIME_UNIT_LABELS.get(group_key, 'Day'))},
+        labels={TIME_UNIT_COLUMN: _(TIME_UNIT_LABELS.get(group_key, 'Day'))},
         color_discrete_map={**TRAFFIC_COLOURS,
                             **{f'{col}_d': colour for col, colour in TRAFFIC_COLOURS.items()}})
 

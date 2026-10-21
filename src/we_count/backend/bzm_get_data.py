@@ -12,7 +12,6 @@
 
 import argparse
 import json
-import locale
 import os
 from datetime import datetime
 
@@ -114,26 +113,6 @@ def _read_csv(start_year=None, start_month=None, end_year=None, end_month=None, 
     df['date_local'] = pd.to_datetime(df['date_local'])
     return df
 
-def add_date_columns(traffic_df, verbose):
-    if verbose:
-        print('Break down date_local to new columns...')
-    locale.setlocale(locale.LC_ALL, 'de_DE.UTF-8')
-    traffic_df['year'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%Y')
-    traffic_df['Monat'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%b')
-    traffic_df['jahr_monat'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%b %Y')
-    traffic_df['year_week'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%V-%G')
-    traffic_df['Wochentag'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%a')
-    traffic_df['date'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%d-%m-%Y')
-    traffic_df['date_hour'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%d-%m-%y - %H')
-    traffic_df['day'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%d')
-    traffic_df.insert(0, 'hour', traffic_df['date_local'].dt.hour)
-
-    locale.setlocale(locale.LC_ALL, 'en_GB.UTF-8')
-    traffic_df['month'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%b')
-    traffic_df['weekday'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%a')
-    traffic_df['year_month'] = pd.to_datetime(traffic_df.date_local).dt.strftime('%b %Y')
-
-
 def merge_data(locations, cache_file=os.path.join(DATA_DIR, 'traffic_df_2024_Q4_2025_YTD.csv.gz'), traffic_data=None, verbose=False):
     if cache_file and os.path.exists(cache_file):
         return pd.read_csv(cache_file)
@@ -159,7 +138,6 @@ def merge_data(locations, cache_file=os.path.join(DATA_DIR, 'traffic_df_2024_Q4_
                         'id_street','street_selection',
                         'car_speed0','car_speed10','car_speed20','car_speed30','car_speed40','car_speed50','car_speed60','car_speed70']
     traffic_df = pd.DataFrame(df_comb, columns=selected_columns)
-    add_date_columns(traffic_df, verbose)
     return traffic_df.reset_index(drop=True)
 
 

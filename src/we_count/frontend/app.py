@@ -50,6 +50,10 @@ from .layout import (ADFC_blue, ADFC_crimson, ADFC_darkgrey, ADFC_green, ADFC_gr
 from .scenarios import (STATE_VERSION, ScenarioNameTaken, delete_scenario, get_scenario,
                         list_scenarios, save_scenario)
 
+#: Category for segments that are active but hold no bike and/or no car data in
+#: the selected period, so no bike/car ratio can be calculated for them.
+NO_RATIO = 'No bike/car ratio'
+
 # the following is basically to suppress warnings about "_" being undefined
 # "from gettext import gettext as _" does not work because we use gettext.install later on, which installs "_"
 _: Callable[[str], str]
@@ -244,6 +248,7 @@ MAP_COLOURS = {
     'Over 2x more cars': ADFC_orange,
     'Over 5x more cars': ADFC_crimson,
     'Over 10x more cars': ADFC_pink,
+    NO_RATIO: ADFC_darkgrey,
     INACTIVE: ADFC_lightgrey,
 }
 
@@ -727,12 +732,22 @@ def map_data(uptime_filter: tuple, active_filter: tuple, hardware: tuple,
     # and the replacement would in turn change the period again.
     df_map['has_data'] = df_map.index.isin(SEGMENTS_WITH_DATA)
 
-    # Mark segments without a ratio in this period as inactive and sort for the
-    # legend order.  The category is rebuilt explicitly because a period
-    # without any data joins an empty frame and loses the categorical dtype.
+    # Segments without a ratio, i.e. without bike data, car data or both in the
+    # period, get their own category (a zero car sum yields a NULL ratio).  They
+    # are not inactive as long as they still deliver data within the active
+    # window.  The category is rebuilt explicitly because a period without any
+    # data joins an empty frame and loses the categorical dtype.
+    active = df_map['last_data_package'] >= TWO_WEEKS_AGO
+    no_ratio = df_map['map_line_color'].isna()
+    # ``pd.cut`` already returns a categorical, which cannot take the new label
+    # without registering it first; going through object keeps it simple.
+    df_map['map_line_color'] = df_map['map_line_color'].astype(object)
+    df_map.loc[no_ratio & active, 'map_line_color'] = NO_RATIO
+    df_map.loc[no_ratio & ~active, 'map_line_color'] = INACTIVE
     df_map['map_line_color'] = pd.Categorical(df_map['map_line_color'],
-                                              categories=[*RATIO_LABELS, INACTIVE], ordered=True)
-    df_map = df_map.fillna({'map_line_color': INACTIVE}).sort_values(by=['map_line_color'])
+                                              categories=[*RATIO_LABELS, NO_RATIO, INACTIVE],
+                                              ordered=True)
+    df_map = df_map.sort_values(by=['map_line_color'])
 
     # Move the segment_id index into a column (avoids the ambiguity of two
     # segment_id columns in line_map since Plotly 6.0)

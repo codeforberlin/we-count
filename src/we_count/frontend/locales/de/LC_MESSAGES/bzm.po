@@ -508,6 +508,10 @@ msgstr "Über 10x mehr Autos"
 msgid "Inactive - no data"
 msgstr "Inaktiv - keine Daten"
 
+#: bzm_v01.py:932
+msgid "No bike/car ratio"
+msgstr "Kein Fahrrad/Auto-Verhältnis"
+
 #: bzm_v01.py:934
 msgid "Street color"
 msgstr "Straßenfarbe"

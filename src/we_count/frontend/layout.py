@@ -4,7 +4,7 @@
 # @file    layout.py
 # @author  Egbert Klaassen
 # @author  Michael Behrisch
-# @date    2025-12-01
+# @date    2026-10-22
 
 import dash_bootstrap_components as dbc
 from dash import Dash, html, dcc
@@ -54,7 +54,7 @@ PIE_HEIGHT = 320
 RANKING_HEIGHT = 600
 
 
-def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, max_date,
+def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, max_date, UPDATED,
                  lang_code: str = INITIAL_LANGUAGE,
                  scenario_state: dict | None = None,
                  scenario_options: list | None = None,
@@ -704,7 +704,8 @@ dcc.Dropdown(
                                            href='/data/' + quote('Neues Dashboard zu BzM - Open Data Day 2026 Final - Subtitles.ppsx'),
                                            target="_blank")]),
                         ]),
-                    ], sm=6),
+                        html.H4(('Updated: ', UPDATED), className='text-end mt-auto', style={'font-size': 12, 'color': ADFC_darkgrey}),
+                    ], sm=6, className='d-flex flex-column'),
                 ]),
             ], className='rounded text-black g-0 p-1 mb-3', style={'background-color': ADFC_yellow, 'opacity': 1.0}),
 

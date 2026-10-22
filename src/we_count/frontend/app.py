@@ -5,7 +5,7 @@
 # @file    app.py
 # @author  Egbert Klaassen
 # @author  Michael Behrisch
-# @date    2026-09-28
+# @date    2026-10-22
 
 """Dash application for the Berlin zählt Mobilität traffic dashboard.
 
@@ -61,6 +61,8 @@ _: Callable[[str], str]
 DEPLOYED = __name__ != '__main__'
 ASSET_DIR = os.path.join(os.path.dirname(__file__), 'assets')
 DATA_DIR = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'data')
+
+UPDATED = '22.10.2026'
 
 ISO_FORMAT = '%Y-%m-%dT%H:%M:%S'
 DISPLAY_DATE_FORMAT = '%d %b %Y'
@@ -1042,7 +1044,7 @@ def current_layout():
         for s in list_scenarios(DATA_DIR)
     ]
 
-    return serve_layout(app, id_street_options, start_date, end_date, min_date, max_date,
+    return serve_layout(app, id_street_options, start_date, end_date, min_date, max_date, UPDATED,
                         lang_code=lang,
                         scenario_state=scenario_state,
                         scenario_options=scenario_options,

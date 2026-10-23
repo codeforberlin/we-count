@@ -13,6 +13,47 @@ body {
     z-index: 2000;
 }
 
+/* Both filter dropdowns share one width on tablet/desktop, so the filter row
+   keeps a regular rhythm.  Below md they fill their responsive column. */
+@media (min-width: 768px) {
+    .dash-dropdown-wrapper:has(> .dash-dropdown.toggle_map_style),
+    .dash-dropdown-wrapper:has(> .dash-dropdown.street_type) {
+        width: 8.5rem;
+        flex: 0 0 auto;
+    }
+}
+
+/* Align switches and their info popovers with the neighbouring dropdowns.
+   Dash 4 dropdowns are 36px high; Bootstrap switches are ~24px, so their top
+   margin would otherwise push them off the shared centre line. */
+.filter-group .form-check {
+    min-height: 0;
+    margin-bottom: 0;
+}
+
+/* Keep inline options (V1/S2) side by side instead of turning each one into
+   a block-level flex item, which would stack them. */
+.filter-group .form-check:not(.form-check-inline) {
+    display: flex;
+    align-items: center;
+}
+
+.filter-group .form-check.form-check-inline {
+    display: inline-flex;
+    align-items: center;
+}
+
+.filter-group .form-check .form-check-input {
+    margin-top: 0;
+    margin-right: 0.5rem;
+    flex-shrink: 0;
+}
+
+.filter-group .form-check .form-check-label {
+    display: flex;
+    align-items: center;
+}
+
 /* Bottom-align the pie chart and the segment info below it with the map.
    The column height is set in layout.py to match the map height. */
 .traffic-pie-col {

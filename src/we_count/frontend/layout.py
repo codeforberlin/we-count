@@ -241,7 +241,7 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
             dbc.Row([
                 dbc.Col([
                     html.H6(_('Map style:'), className='ms-2 fw-bold d-inline'),
-                ], sm=1),
+                ], xs=6, sm=2, md='auto', className='d-flex align-items-center'),
                 dbc.Col([
 dcc.Dropdown(
                             id='toggle_map_style',
@@ -255,10 +255,10 @@ dcc.Dropdown(
                         style={'overflow': 'visible'},
                         searchable=False
                     ),
-                ], sm=1),
+                ], xs=6, sm=2, md='auto', className='d-flex align-items-center'),
                 dbc.Col([
                     html.H6(_('Street type:'), className='ms-2 fw-bold d-inline'),
-                ], sm=1),
+                ], xs=6, sm=2, md='auto', className='d-flex align-items-center'),
                 dbc.Col([
 dcc.Dropdown(
                             id='street_type_dd',
@@ -272,10 +272,10 @@ dcc.Dropdown(
                         className='street_type',
                         searchable=False
                     ),
-                ], sm=2),
+                ], xs=6, sm=2, md='auto', className='d-flex align-items-center'),
                 dbc.Col([
-                    html.H6(_('Filters:'), className='ms-2 fw-bold d-inline'),
-                    html.Span([
+                    html.H6(_('Filters:'), className='ms-2 fw-bold d-inline flex-shrink-0'),
+                    html.Div([
 dbc.Checklist(
                                 id='toggle_uptime_filter',
                                 options=[{'label': html.Div([_(' Uptime > 70%'), html.I(className='bi bi-info-circle-fill h6 ms-2', id='popover_filter_uptime', style={'color': ADFC_middlegrey})]),
@@ -283,14 +283,14 @@ dbc.Checklist(
                                 value=_uptime_filter,
                             inline=False,
                             switch=True,
-                            className='ms-2 d-inline-block'
+                            className='ms-2'
                         ),
                         dbc.Popover(
                             dbc.PopoverBody(
                                 _('A high uptime of >70% will always mean very good data. The first and last daylight hour of the day will always have lower uptimes. If uptimes during the day are below 0.5, that is usually a clear sign that something is probably wrong with the sensor.')),
                             target='popover_filter_uptime', trigger="hover"),
-                    ]),
-                    html.Span([
+                    ], className='filter-group d-flex align-items-center flex-shrink-0'),
+                    html.Div([
 dbc.Checklist(
                                 id='toggle_active_filter',
                                 options=[{'label': html.Div([_(' Active only'), html.I(className='bi bi-info-circle-fill h6 ms-2', id='popover_filter_active', style={'color': ADFC_middlegrey})]),
@@ -298,43 +298,37 @@ dbc.Checklist(
                                 value=_active_filter,
                             inline=True,
                             switch=True,
-                            className='ms-2 d-inline-block'
+                            className='ms-2'
                         ),
                         dbc.Popover(
                             dbc.PopoverBody(
                                 _('Active only means that only cameras that are or have been active during the last 14 days are included. Switching off this feature will include all cameras with data.')),
                             target='popover_filter_active', trigger="hover"),
-                    ]),
-                    html.Span([
+                    ], className='filter-group d-flex align-items-center flex-shrink-0'),
+                    html.Div([
 dbc.Checklist(
                                 id='hardware_version',
                                 options=[{'label': _('V1 Sensor'), 'value': 1},
-                                         # {'label': html.Div([_('S2 Sensor'), html.I(className='bi bi-info-circle-fill h6 ms-2', id='popover_hardware_version', style={'color': ADFC_middlegrey})]),
-                                         #                                        'value': 2}],
-                                         {'label': _('S2 Sensor'), 'value': 2}],
+                                         {'label': html.Div([_('S2 Sensor'), html.I(className='bi bi-info-circle-fill h6 ms-2', id='popover_hardware_version', style={'color': ADFC_middlegrey})]),
+                                          'value': 2}],
                                 value=_hardware,
                             inline=True,
                             switch=True,
-                            className='ms-2 d-inline-block'
+                            className='ms-2'
                         ),
-                        html.I(
-                            className='bi bi-info-circle-fill h6',
-                            id='popover_hardware_version',
-                            style={
-                                'color': ADFC_middlegrey}),
                         dbc.Popover(
                             dbc.PopoverBody(
                                 _("Click to show/hide cameras with hardware versions 1 and or 2. Switching off both, will re-enable both automatically. Note: the 'All streets' graphs below are based on all streets, regardless which camera hardware version is selected")),
                             target="popover_hardware_version", trigger="hover"),
-                    ]),
-                ], sm=6),
+                    ], className='filter-group d-flex align-items-center flex-shrink-0'),
+                ], xs=12, lg=True, className='d-flex align-items-center flex-wrap flex-xxl-nowrap gap-3 ms-md-2'),
                 # Horizontal line
                 html.Hr(style={
                     "border": "none",
                     "border-top": "2px solid #53917E",  # custom color
                     "margin": "10px 0"
                 }),
-            ], className='g-2 rounded d-flex align-items-center', style={'background-color': ADFC_skyblue}),
+            ], className='g-2 rounded d-flex flex-wrap align-items-center', style={'background-color': ADFC_skyblue}),
 
             # Date and hour range selection
             dbc.Row([
@@ -704,7 +698,7 @@ dcc.Dropdown(
                                            href='/data/' + quote('Neues Dashboard zu BzM - Open Data Day 2026 Final - Subtitles.ppsx'),
                                            target="_blank")]),
                         ]),
-                        html.H4(('Updated: ', UPDATED), className='text-end mt-auto', style={'font-size': 12, 'color': ADFC_darkgrey}),
+                        html.H4((_('Updated: '), UPDATED), className='text-end mt-auto', style={'font-size': 12, 'color': ADFC_darkgrey}),
                     ], sm=6, className='d-flex flex-column'),
                 ]),
             ], className='rounded text-black g-0 p-1 mb-3', style={'background-color': ADFC_yellow, 'opacity': 1.0}),

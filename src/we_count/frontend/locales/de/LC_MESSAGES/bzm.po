@@ -113,8 +113,8 @@ msgid "Pick date range:"
 msgstr "Wähle Start- und Enddatum:"
 
 #: bzm_v01.py:480
-msgid " Filter uptime > 70%"
-msgstr " Filtere Verfügbarkeit > 70%"
+msgid " Uptime > 70%"
+msgstr " Verfügbarkeit > 70%"
 
 #: bzm_v01.py:490
 msgid ""
@@ -681,3 +681,6 @@ msgstr "Tage"
 
 msgid "New dashboard - Berlin Open Data Day 2026"
 msgstr "Neues Dashboard - Berlin Open Data Day 2026"
+
+msgid "Updated: "
+msgstr "Aktualisiert: "

@@ -66,10 +66,10 @@ DEPLOYED = __name__ != '__main__'
 ASSET_DIR = os.path.join(os.path.dirname(__file__), 'assets')
 DATA_DIR = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'data')
 
-UPDATED = '22.10.2026'
+UPDATED = '23.10.2026'
 
 ISO_FORMAT = '%Y-%m-%dT%H:%M:%S'
-DISPLAY_DATE_FORMAT = '%d %b %Y'
+DISPLAY_DATE_FORMAT = '%d-%m-%Y'
 ACTIVE_WINDOW = timedelta(weeks=2)
 DEFAULT_RANGE = timedelta(days=14)
 

@@ -5,7 +5,7 @@ cd $HOME/we-count
 # update local code
 git fetch -q
 # to make a new release update the tag / commit hash below
-git checkout 211bb64b54a8d8e7656880d929155a043629fd9a
+git checkout 8cef9dedc1df50dc7a6f0e3003b5f255d2513e76
 
 # update local data and restart
 scripts/update_data.sh /srv/www/

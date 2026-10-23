@@ -773,8 +773,7 @@ def traffic_labels():
 
 
 def range_suffix(start_str, end_str, hour_range):
-    return f' ({start_str} - {end_str}, {hour_range[0]} - {hour_range[1]} h)'
-
+    return f' ({start_str} — {end_str}, {hour_range[0]} — {hour_range[1]} h)'
 
 #: The time divisions that label a step with "%b %Y".
 MONTH_DIVISIONS = ('year_month',)
@@ -1177,9 +1176,14 @@ app.clientside_callback(
     Input('date_filter', 'start_date'),
     Input('date_filter', 'end_date'),
     Input('range_slider', 'value'),
+    # Read as State, not Input: dcc.Graph republishes its figure on every pan
+    # and zoom, so an Input would re-run the callback whenever the map moves.
+    # As a State it still carries the zoom seeded by the layout / left by the user.
+    State('street_map', 'figure'),
 )
 def update_map(click_data, id_street, street_type_dd, hardware_version, toggle_uptime_filter,
-               toggle_active_filter, toggle_map_style, start_date, end_date, hour_range):
+               toggle_active_filter, toggle_map_style, start_date, end_date, hour_range,
+               map_figure):
     trigger = ctx.triggered_id
 
     # Do not allow both hardware versions to be switched off
@@ -1196,6 +1200,9 @@ def update_map(click_data, id_street, street_type_dd, hardware_version, toggle_u
     # Streets that can be selected: everything the map shows that holds data
     street_options = sorted(df_map.loc[df_map['has_data'], 'id_street'].unique())
 
+    # Zoom the user left behind (or the one a scenario restored)
+    saved_zoom = (map_figure or {}).get('layout', {}).get('map', {}).get('zoom')
+
     if trigger == 'street_map' and click_data:
         street_name = click_data['points'][0]['hovertext']
         segment_id = click_data['points'][0]['customdata'][0]
@@ -1204,8 +1211,10 @@ def update_map(click_data, id_street, street_type_dd, hardware_version, toggle_u
             raise PreventUpdate
         id_street = f'{street_name} ({segment_id})'
         zoom_factor = 13
+    elif trigger == 'street_name_dd':
+        zoom_factor = 13
     else:
-        zoom_factor = 13 if trigger == 'street_name_dd' else 11
+        zoom_factor = saved_zoom if saved_zoom is not None else 11
 
     # Keep the current street whenever it survives the filters, otherwise fall
     # back to a preferred one so the charts always have something to show
@@ -1794,6 +1803,7 @@ def comparison_chart(period_values_year, period_options_year, period_type_others
     State('date_filter', 'start_date'),
     State('date_filter', 'end_date'),
     State('range_slider', 'value'),
+    State('street_map', 'figure'),
     State('radio_time_division', 'value'),
     State('radio_time_unit', 'value'),
     State('radio_y_axis', 'value'),
@@ -1806,7 +1816,7 @@ def comparison_chart(period_values_year, period_options_year, period_type_others
 def save_scenario_callback(save_clicks, name, author, scenario_id,
                            street_name_dd, street_type_dd, uptime_filter,
                            active_filter, hardware_version, map_style,
-                           date_start, date_end, hour_range,
+                           date_start, date_end, hour_range, street_map_figure,
                            time_division, time_unit, y_axis,
                            period_year, period_type, period_others,
                            lang):
@@ -1825,6 +1835,7 @@ def save_scenario_callback(save_clicks, name, author, scenario_id,
         'date_filter_start': date_start,
         'date_filter_end': date_end,
         'range_slider': hour_range,
+        'zoom_factor': (street_map_figure or {}).get('layout', {}).get('map', {}).get('zoom'),
         'radio_time_division': time_division,
         'radio_time_unit': time_unit,
         'radio_y_axis': y_axis,

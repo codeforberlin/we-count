@@ -79,6 +79,11 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
     _date_start = sc.get('date_filter_start', start_date)
     _date_end = sc.get('date_filter_end', end_date)
     _hour_range = sc.get('range_slider', INITIAL_HOUR_RANGE)
+    _zoom_factor = sc.get('zoom_factor')
+    # ``update_map`` reads the zoom back from the map figure, so seeding the
+    # layout with it is what restores the saved view (the centre still follows
+    # the selected street).
+    _map_figure = {'layout': {'map': {'zoom': _zoom_factor}}} if _zoom_factor is not None else {}
     _street_type = sc.get('street_type_dd', 'all')
     _uptime_filter = sc.get('toggle_uptime_filter', ['filter_uptime_selected'])
     _active_filter = sc.get('toggle_active_filter', ['filter_active_selected'])
@@ -161,7 +166,7 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                 # Street Map
                 dbc.Col([
                     dcc.Loading(id="loading-icon_street_map", children=[html.Div(
-                        dcc.Graph(id='street_map', figure={}, config={'ScrollZoom': True, 'displayModeBar': False, 'staticPlot': False, 'responsive': True}, className='bg-#F2F2F2', style={'height': MAP_HEIGHT}))]),
+                        dcc.Graph(id='street_map', figure=_map_figure, config={'ScrollZoom': True, 'displayModeBar': False, 'staticPlot': False, 'responsive': True}, className='bg-#F2F2F2', style={'height': MAP_HEIGHT}))]),
                 ], sm=8),
 
                 # Pie chart and infos

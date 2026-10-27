@@ -790,7 +790,7 @@ def traffic_labels():
 
 
 def range_suffix(start_str, end_str, hour_range):
-    return f' ({start_str} — {end_str}, {hour_range[0]} — {hour_range[1]} h)'
+    return f' ({start_str} - {end_str}, {hour_range[0]} - {hour_range[1]} h)'
 
 #: The time divisions that label a step with "%b %Y".
 MONTH_DIVISIONS = ('year_month',)
@@ -1041,6 +1041,49 @@ def _scenario_option_label(s):
         label += f" ({s['saved_by']})"
     label += f" ({s['updated_at']})"
     return label
+
+
+def _scenario_control_state(values):
+    """Return the comparable control state of a scenario or of the live controls.
+
+    ``values`` is either a stored scenario state or a dict built from the
+    current component values.  Dates are normalised to ISO timestamps and the
+    order-insensitive controls (filters and hardware switches) are sorted, so a
+    scenario restored with exactly its saved settings compares equal to the
+    saved state even when Dash hands the values back in another shape.
+
+    The language and the map zoom are deliberately excluded: switching the
+    language reloads the page (and therefore the scenario), and reading the map
+    figure back would make every pan or zoom look like a configuration change.
+    """
+    values = values or {}
+
+    def as_set(value):
+        return sorted(value or [])
+
+    def as_sequence(value):
+        return list(value or [])
+
+    def as_date(value):
+        return to_iso(value) if value else None
+
+    return {
+        'street_name_dd': values.get('street_name_dd') or INITIAL_STREET_ID,
+        'street_type_dd': values.get('street_type_dd') or 'all',
+        'toggle_uptime_filter': as_set(values.get('toggle_uptime_filter')),
+        'toggle_active_filter': as_set(values.get('toggle_active_filter')),
+        'hardware_version': as_set(values.get('hardware_version')),
+        'toggle_map_style': values.get('toggle_map_style') or 'streets',
+        'date_filter_start': as_date(values.get('date_filter_start')),
+        'date_filter_end': as_date(values.get('date_filter_end')),
+        'range_slider': as_sequence(values.get('range_slider')),
+        'radio_time_division': values.get('radio_time_division') or DEFAULT_TIME_DIVISION,
+        'radio_time_unit': values.get('radio_time_unit') or DEFAULT_TIME_UNIT,
+        'radio_y_axis': values.get('radio_y_axis') or 'car_total',
+        'period_values_year': as_sequence(values.get('period_values_year')),
+        'period_type_others': values.get('period_type_others') or DEFAULT_PERIOD_TYPE,
+        'period_values_others': as_sequence(values.get('period_values_others')),
+    }
 
 
 def current_layout():
@@ -1617,9 +1660,12 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, street_type_d
     Input('toggle_active_filter', 'value'),
     Input('hardware_version', 'value'),
     Input('street_type_dd', 'value'),
+    State('period_values_year', 'value'),
+    State('scenario_baseline_store', 'data'),
 )
 def update_period_year_values(id_street, min_date, max_date, toggle_uptime_filter,
-                              toggle_active_filter, hardware_version, street_type_dd):
+                              toggle_active_filter, hardware_version, street_type_dd,
+                              current_years, baseline):
     if not id_street or not min_date or not max_date:
         raise PreventUpdate
 
@@ -1636,6 +1682,13 @@ def update_period_year_values(id_street, min_date, max_date, toggle_uptime_filte
             ORDER BY year
         """, [*filter_params, id_street, to_iso(min_date), to_iso(max_date)]).fetchall()]
 
+    # Without a loaded scenario the year scope is simply everything that is
+    # available.  A saved scenario, however, restores the years it selected;
+    # replacing them with all years would make the view diverge from the
+    # scenario on load and mark it as modified before the user touches anything.
+    if baseline:
+        selected = [year for year in (current_years or []) if year in years]
+        return years, selected or years
     return years, years
 
 
@@ -1802,6 +1855,64 @@ def comparison_chart(period_values_year, period_options_year, period_type_others
 # Scenario management
 # --------------------------------------------------------------------------- #
 @app.callback(
+    Output('scenario_modified', 'children'),
+    Output('scenario_modified', 'style'),
+    Input('street_name_dd', 'value'),
+    Input('street_type_dd', 'value'),
+    Input('toggle_uptime_filter', 'value'),
+    Input('toggle_active_filter', 'value'),
+    Input('hardware_version', 'value'),
+    Input('toggle_map_style', 'value'),
+    Input('date_filter', 'start_date'),
+    Input('date_filter', 'end_date'),
+    Input('range_slider', 'value'),
+    Input('radio_time_division', 'value'),
+    Input('radio_time_unit', 'value'),
+    Input('radio_y_axis', 'value'),
+    Input('period_values_year', 'value'),
+    Input('period_type_others', 'value'),
+    Input('period_values_others', 'value'),
+    State('scenario_baseline_store', 'data'),
+    prevent_initial_call=True,
+)
+def mark_scenario_modified(street_name_dd, street_type_dd, uptime_filter, active_filter,
+                           hardware_version, map_style, date_start, date_end, hour_range,
+                           time_division, time_unit, y_axis, period_year, period_type,
+                           period_others, baseline):
+    """Show whether the live controls still match the scenario in the URL.
+
+    ``?scenario=`` stays the provenance of the view: it is never rewritten by a
+    control change.  Divergence is detected against the state that was loaded,
+    so editing a control and setting it back to the saved value clears the
+    marker again.  The share URL in ``scenario_url_store`` is deliberately not
+    touched here - Copy link keeps pointing at the saved scenario.
+    """
+    if not baseline or not baseline.get('state'):
+        return '', {'display': 'none'}
+
+    live = _scenario_control_state({
+        'street_name_dd': street_name_dd,
+        'street_type_dd': street_type_dd,
+        'toggle_uptime_filter': uptime_filter,
+        'toggle_active_filter': active_filter,
+        'hardware_version': hardware_version,
+        'toggle_map_style': map_style,
+        'date_filter_start': date_start,
+        'date_filter_end': date_end,
+        'range_slider': hour_range,
+        'radio_time_division': time_division,
+        'radio_time_unit': time_unit,
+        'radio_y_axis': y_axis,
+        'period_values_year': period_year,
+        'period_type_others': period_type,
+        'period_values_others': period_others,
+    })
+    if live == _scenario_control_state(baseline['state']):
+        return '', {'display': 'none'}
+    return _('Modified'), {'display': 'inline-block'}
+
+
+@app.callback(
     Output('scenario_dd', 'options'),
     Output('scenario_id_store', 'data'),
     Output('scenario_name', 'value'),
@@ -1810,6 +1921,9 @@ def comparison_chart(period_values_year, period_options_year, period_type_others
     Output('scenario_copy_link_btn', 'disabled', allow_duplicate=True),
     Output('scenario_load_btn', 'disabled', allow_duplicate=True),
     Output('scenario_alert', 'children'),
+    Output('scenario_baseline_store', 'data'),
+    Output('scenario_modified', 'children', allow_duplicate=True),
+    Output('scenario_modified', 'style', allow_duplicate=True),
     Input('scenario_save_btn', 'n_clicks'),
     State('scenario_name', 'value'),
     State('scenario_author', 'value'),
@@ -1874,21 +1988,23 @@ def save_scenario_callback(save_clicks, name, author, scenario_id,
 
     if not (name or '').strip():
         return scenario_options(), scenario_id, name, no_update, no_update, no_update, \
-            no_update, dbc.Alert(_('Please enter a scenario name.'), color='warning', duration=4000)
+            no_update, dbc.Alert(_('Please enter a scenario name.'), color='warning', duration=4000), \
+            no_update, no_update, no_update
 
     try:
         saved = save_scenario(DATA_DIR, name, state, author)
     except ScenarioNameTaken:
         return scenario_options(), scenario_id, name, no_update, no_update, no_update, \
             no_update, dbc.Alert(_('A scenario with this name already exists.'),
-                                 color='warning', duration=4000)
+                                 color='warning', duration=4000), no_update, no_update, no_update
     except ValueError:
         return scenario_options(), scenario_id, name, no_update, no_update, no_update, \
             no_update, dbc.Alert(_('This scenario no longer exists.'),
-                                 color='warning', duration=4000)
+                                 color='warning', duration=4000), no_update, no_update, no_update
     except Exception as e:
         return scenario_options(), scenario_id, name, no_update, no_update, no_update, \
-            no_update, dbc.Alert(str(e), color='danger', duration=4000)
+            no_update, dbc.Alert(str(e), color='danger', duration=4000), \
+            no_update, no_update, no_update
 
     options = scenario_options()
     share_url = config.get('requests_pathname_prefix', '/') + f'?scenario={saved["id"]}'
@@ -1896,7 +2012,8 @@ def save_scenario_callback(save_clicks, name, author, scenario_id,
         share_url += f'&lang={lang}'
 
     return options, saved['id'], saved['name'], share_url, False, False, False, \
-        dbc.Alert(_('Scenario saved!'), color='success', duration=4000)
+        dbc.Alert(_('Scenario saved!'), color='success', duration=4000), \
+        {'id': saved['id'], 'state': saved['state']}, '', {'display': 'none'}
 
 
 @app.callback(
@@ -1908,11 +2025,15 @@ def save_scenario_callback(save_clicks, name, author, scenario_id,
     Output('scenario_copy_link_btn', 'disabled', allow_duplicate=True),
     Output('scenario_load_btn', 'disabled', allow_duplicate=True),
     Output('scenario_alert', 'children', allow_duplicate=True),
+    Output('scenario_baseline_store', 'data', allow_duplicate=True),
+    Output('scenario_modified', 'children', allow_duplicate=True),
+    Output('scenario_modified', 'style', allow_duplicate=True),
     Input('scenario_delete_btn', 'n_clicks'),
     State('scenario_id_store', 'data'),
+    State('scenario_baseline_store', 'data'),
     prevent_initial_call=True,
 )
-def delete_scenario_callback(delete_clicks, scenario_id):
+def delete_scenario_callback(delete_clicks, scenario_id, baseline):
     if not delete_clicks or not scenario_id:
         raise PreventUpdate
 
@@ -1921,8 +2042,16 @@ def delete_scenario_callback(delete_clicks, scenario_id):
         {'label': _scenario_option_label(s), 'value': s['id']}
         for s in list_scenarios(DATA_DIR)
     ]
+    # Only the scenario the page was loaded from is the baseline.  Deleting a
+    # merely selected scenario leaves the modified marker of the loaded one
+    # untouched.
+    if baseline and baseline.get('id') == scenario_id:
+        return options, None, '', None, True, True, True, \
+            dbc.Alert(_('Scenario deleted.'), color='info', duration=4000), \
+            None, '', {'display': 'none'}
     return options, None, '', None, True, True, True, \
-        dbc.Alert(_('Scenario deleted.'), color='info', duration=4000)
+        dbc.Alert(_('Scenario deleted.'), color='info', duration=4000), \
+        no_update, no_update, no_update
 
 
 app.clientside_callback(

@@ -78,10 +78,18 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
 
     ``scenario_state`` seeds the component defaults from a saved scenario.
     ``scenario_options`` populates the scenario dropdown when the page loads.
-    ``scenario_id`` preselects the loaded scenario in the dropdown.
+    ``scenario_id`` preselects the loaded scenario in the dropdown and identifies
+    the provenance of the view; it is not changed when controls are edited.
     ``scenario_url`` is the share link for the currently loaded scenario.
+
+    The saved state is also kept in ``scenario_baseline_store`` so that the
+    callbacks can tell whether the controls still match the scenario named in
+    the URL.  Loading a scenario is a full page navigation, so storing the
+    baseline with the layout is enough to survive the load.
     """
     sc = scenario_state or {}
+    scenario_baseline = ({'id': scenario_id, 'state': scenario_state}
+                         if scenario_id is not None else None)
 
     # Seed component values from scenario state (fall back to defaults)
     _street_value = sc.get('street_name_dd', INITIAL_STREET_ID)
@@ -618,7 +626,24 @@ dcc.Dropdown(
             # Scenario management
             # ------------------------------------------------------------------- #
             dbc.Row([
-                html.H4(_('Dashboard scenarios'), className='my-3'),
+                html.Span([
+                    html.H4(_('Dashboard scenarios'), className='my-3 me-2',
+                            style={'display': 'inline-block'}),
+                    html.I(className='bi bi-info-circle-fill h6', id='popover_dashboard_scenarios',
+                           style={'display': 'inline-block', 'color': ADFC_middlegrey}),
+                ]),
+                dbc.Popover(
+                    dbc.PopoverBody(
+                        _('Save the current dashboard settings as a named scenario so you can '
+                          'reopen them later or share them with others. Select a saved scenario '
+                          'and click Load to restore it. If you change any control after loading, '
+                          'the scenario is marked as Modified. The address bar and Copy link keep '
+                          'pointing to the last loaded scenario, not to the changed view; save the '
+                          'changed view under a new name to share it.')),
+                    target='popover_dashboard_scenarios',
+                    trigger='hover',
+                    placement='bottom',
+                ),
             ]),
             dbc.Row([
                 dbc.Col([
@@ -645,7 +670,18 @@ dcc.Dropdown(
                                style={'background-color': ADFC_green, 'border-color': ADFC_green}),
                 ], sm=1),
                 dbc.Col([
-                    dbc.Label(_('Saved scenarios:')),
+                    dbc.Label([
+                        _('Saved scenarios:'),
+                        dbc.Badge(
+                            _('Modified'),
+                            id='scenario_modified',
+                            color='warning',
+                            className='ms-2',
+                            style={'display': 'none'},
+                            title=_('The controls differ from the saved scenario. '
+                                    'Copy link still opens the saved scenario.'),
+                        ),
+                    ]),
                     dcc.Dropdown(
                         id='scenario_dd',
                         options=scenario_options or [],
@@ -674,6 +710,7 @@ dcc.Dropdown(
             ], className='mt-2 mb-3'),
             dcc.Store(id='scenario_id_store', data=scenario_id),
             dcc.Store(id='scenario_url_store', data=scenario_url),
+            dcc.Store(id='scenario_baseline_store', data=scenario_baseline),
             html.Div(id='scenario_clipboard', style={'display': 'none'}),
 
             # Feedback and contact

@@ -628,6 +628,22 @@ msgstr "Dez"
 msgid "Dashboard scenarios"
 msgstr "Dashboard-Szenarien"
 
+msgid ""
+"Save the current dashboard settings as a named scenario so you can reopen "
+"them later or share them with others. Select a saved scenario and click "
+"Load to restore it. If you change any control after loading, the scenario "
+"is marked as Modified. The address bar and Copy link keep pointing to the "
+"last loaded scenario, not to the changed view; save the changed view under "
+"a new name to share it."
+msgstr ""
+"Speichern Sie die aktuellen Dashboard-Einstellungen als benanntes Szenario, "
+"um sie später erneut zu öffnen oder mit anderen zu teilen. Wählen Sie ein "
+"gespeichertes Szenario und klicken Sie auf Laden, um es wiederherzustellen. "
+"Wenn Sie nach dem Laden eine Einstellung ändern, wird das Szenario als "
+"Geändert markiert. Adresszeile und Link kopieren verweisen weiterhin auf "
+"das zuletzt geladene Szenario, nicht auf die geänderte Ansicht. Speichern "
+"Sie die geänderte Ansicht unter einem neuen Namen, um sie zu teilen."
+
 msgid "Saved scenarios:"
 msgstr "Gespeicherte Szenarien:"
 
@@ -657,6 +673,12 @@ msgstr "Löschen"
 
 msgid "Copy link"
 msgstr "Link kopieren"
+
+msgid "Modified"
+msgstr "Geändert"
+
+msgid "The controls differ from the saved scenario. Copy link still opens the saved scenario."
+msgstr "Die Einstellungen weichen vom gespeicherten Szenario ab. „Link kopieren“ öffnet weiterhin das gespeicherte Szenario."
 
 msgid "Scenario saved!"
 msgstr "Szenario gespeichert!"

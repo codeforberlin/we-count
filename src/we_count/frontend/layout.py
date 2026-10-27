@@ -45,6 +45,15 @@ INITIAL_STREET_ID = 'Dresdener Straße (9000006667)'
 INITIAL_LANGUAGE = 'de'
 INITIAL_HOUR_RANGE = [0, 24]
 
+#: Date-picker display format per language (Dash tokens, not strftime).
+DATE_PICKER_FORMATS = {'de': 'DD.MM.YYYY', 'en': 'DD/MM/YYYY'}
+DEFAULT_DATE_PICKER_FORMAT = 'DD-MM-YYYY'
+
+
+def date_picker_format(lang_code):
+    """Return the date-picker display format for ``lang_code``."""
+    return DATE_PICKER_FORMATS.get(lang_code, DEFAULT_DATE_PICKER_FORMAT)
+
 #: Height of the street map; the pie-chart column is matched to it so the
 #: pie chart and the segment info below it align with the bottom of the map.
 MAP_HEIGHT = 520
@@ -366,8 +375,8 @@ dcc.DatePickerRange(
                             end_date=_date_end,
                         min_date_allowed=min_date,
                         max_date_allowed=max_date,
-                        display_format='DD-MM-YYYY',
-                        end_date_placeholder_text='DD-MM-YYYY',
+                        display_format=date_picker_format(lang_code),
+                        end_date_placeholder_text=date_picker_format(lang_code),
                         number_of_months_shown=2,
                         minimum_nights=0,
                         clearable=False,

@@ -69,7 +69,23 @@ DATA_DIR = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'data')
 UPDATED = '23.10.2026'
 
 ISO_FORMAT = '%Y-%m-%dT%H:%M:%S'
-DISPLAY_DATE_FORMAT = '%d-%m-%Y'
+
+#: Language of the current request, kept in sync by :func:`update_language`.
+language = INITIAL_LANGUAGE
+
+
+def get_display_date_format():
+    """Return the format used for displayed dates in the current language."""
+    if language == 'de':
+        return '%d.%m.%Y'
+    elif language == 'en':
+        return '%d/%m/%Y'
+    else:
+        return '%d-%m-%Y'
+
+
+#: Format used for the date range in chart headers and warnings.
+DISPLAY_DATE_FORMAT = get_display_date_format()
 ACTIVE_WINDOW = timedelta(weeks=2)
 DEFAULT_RANGE = timedelta(days=14)
 
@@ -149,8 +165,8 @@ TIME_DIVISION_EXPRESSIONS = {
     'year': TIME_UNIT_EXPRESSIONS['year'],
     'year_month': month_division,
     'year_week': lambda: "strftime(date_local, '%V-%G')",
-    'date': lambda: "strftime(date_local, '%d-%m-%Y')",
-    'date_hour': lambda: "strftime(date_local, '%d-%m-%y - %H')",
+    'date': lambda: f"strftime(date_local, '{DISPLAY_DATE_FORMAT}')",
+    'date_hour': lambda: f"strftime(date_local, '{DISPLAY_DATE_FORMAT.replace('%Y', '%y')} - %H')",
 }
 
 #: Date/time columns the parquet files derive from ``date_local``.  The
@@ -429,8 +445,9 @@ def request_language():
 
 def update_language(lang_code):
     """Install the gettext catalogue for ``lang_code`` process wide."""
-    global language
+    global language, DISPLAY_DATE_FORMAT
     language = normalise_language(lang_code)
+    DISPLAY_DATE_FORMAT = get_display_date_format()
     localedir = os.path.join(os.path.dirname(__file__), 'locales')
     gettext.translation('bzm', localedir, fallback=True, languages=[language]).install()
 
@@ -824,14 +841,14 @@ def division_spine(time_division, start_date, end_date, hour_range=FULL_HOUR_RAN
         day = start.date()
         end_day = end.date()
         while day <= end_day:
-            labels.append(day.strftime('%d-%m-%Y'))
+            labels.append(day.strftime(DISPLAY_DATE_FORMAT))
             day += timedelta(days=1)
 
     elif time_division == HOUR_DIVISION:
         hour = start.replace(hour=0, minute=0, second=0) + timedelta(hours=hour_range[0])
         last = end.replace(hour=0, minute=0, second=0) + timedelta(hours=hour_range[1] - 1)
         while hour <= last:
-            labels.append(hour.strftime('%d-%m-%y - %H'))
+            labels.append(hour.strftime(DISPLAY_DATE_FORMAT.replace('%Y', '%y') + ' - %H'))
             hour += timedelta(hours=1)
 
     return labels
@@ -1313,11 +1330,12 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, street_type_d
     # An empty slider value carries no hour selection at all
     hour_range = hour_range or list(FULL_HOUR_RANGE)
 
-    global language
+    global language, DISPLAY_DATE_FORMAT
     lang = lang_code_dd if lang_code_dd in ('en', 'de') else INITIAL_LANGUAGE
     # The calendar labels are built in SQL from ``date_local``, in the language
     # of the page the dropdown belongs to.
     language = normalise_language(lang)
+    DISPLAY_DATE_FORMAT = get_display_date_format()
     time_unit = resolve_expression(TIME_UNIT_EXPRESSIONS, radio_time_unit, DEFAULT_TIME_UNIT)
     time_division = resolve_expression(
         TIME_DIVISION_EXPRESSIONS, radio_time_division, DEFAULT_TIME_DIVISION)
@@ -1358,8 +1376,8 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, street_type_d
             parts = []
             for gap_start, gap_end in gap_ranges_list:
                 n = (gap_end - gap_start).days + 1
-                parts.append(f'{gap_start.strftime("%d-%m-%Y")} - '
-                             f'{gap_end.strftime("%d-%m-%Y")} ({n} ' + _('days') + ')')
+                parts.append(f'{gap_start.strftime(DISPLAY_DATE_FORMAT)} - '
+                             f'{gap_end.strftime(DISPLAY_DATE_FORMAT)} ({n} ' + _('days') + ')')
             gap_notification = dbc.Alert(
                 _('Data gap detected: ') + ', '.join(parts),
                 color='warning', className='mb-0')
@@ -1394,7 +1412,7 @@ def update_graphs(radio_time_division, radio_time_unit, id_street, street_type_d
                              color_discrete_map={traffic_label_map[col]: TRAFFIC_COLOURS[col]
                                                  for col in TRAFFIC_COLUMNS})
         pie_traffic.update_layout(margin={'l': 0, 'r': 0, 't': 0, 'b': 0}, showlegend=False)
-        pie_traffic.update_traces(textposition='inside', textinfo='percent+label')
+        pie_traffic.update_traces(textposition='auto', textinfo='percent+label')
 
         # ---- Absolute traffic over time ---------------------------------- #
         df_line_abs = cursor.execute(f"""
@@ -1641,8 +1659,9 @@ def update_period_other_values(period_values_year, period_type_others, id_street
         return []
 
     lang = lang_code_dd if lang_code_dd in ('en', 'de') else INITIAL_LANGUAGE
-    global language
+    global language, DISPLAY_DATE_FORMAT
     language = normalise_language(lang)
+    DISPLAY_DATE_FORMAT = get_display_date_format()
     period_column = resolve_expression(
         TIME_DIVISION_EXPRESSIONS, period_type_others, DEFAULT_PERIOD_TYPE)
     year_value = resolve_expression(TIME_DIVISION_EXPRESSIONS, 'year', DEFAULT_PERIOD_TYPE)
@@ -1708,8 +1727,9 @@ def comparison_chart(period_values_year, period_options_year, period_type_others
 
     group_key, label_key = COMPARISON_GROUPING.get(period_type_others,
                                                    COMPARISON_GROUPING[DEFAULT_PERIOD_TYPE])
-    global language
+    global language, DISPLAY_DATE_FORMAT
     language = normalise_language(lang)
+    DISPLAY_DATE_FORMAT = get_display_date_format()
     group_by = resolve_expression(TIME_UNIT_EXPRESSIONS, group_key, DEFAULT_TIME_UNIT)
     group_order = COMPARISON_GROUP_ORDER[group_key]
     period_column = resolve_expression(

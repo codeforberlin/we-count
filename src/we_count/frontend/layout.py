@@ -173,11 +173,30 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                 dcc.Location(id='url', refresh=True),
             ]),
             # Announcement - keep for potential use!
-            # dbc.Row([
-            #     dbc.Col(
-            #         html.H5(_('Notice: we are moving server, until then, the maximum selectable date will be 04-02-2026.'), className='my-2', style={'background-color': ADFC_yellow, 'color': ADFC_crimson})
-            #     ),
-            # ]),
+            # ``mx-0`` on the row and ``w-100`` on the alert make the alert span
+            # the container's content box, so its left and right edges line up
+            # with the NavbarSimple above.  ``mt-2`` adds the white space below
+            # the navbar.  The alert's default bottom margin is removed with
+            # ``mb-0``; the ``g-2`` gutter of the map row below then provides
+            # the same 0.5rem gap below the alert.  The reduced padding and
+            # font size make the alert about 30 % shorter, and the inline
+            # transition makes the fade-out last two seconds instead of the
+            # Bootstrap default.
+            dbc.Row([
+                dbc.Alert(
+                    [_('Notice: the Dashboard has just received a major update, bringing new features and improved performance! Please take a look at the '),
+                            html.A(_('flyer'), href='/data/' + quote('BzM Dashboard Update Oct 2026 - DE & EN.pdf'), target="_blank")],
+                    duration=15000,
+                    fade=True,
+                    className='w-100 mb-0 mt-2',
+                    style={'padding': '0.6rem 1rem',
+                           'font-size': '0.9rem',
+                           'line-height': '1.4',
+                           'transition': 'opacity 2s ease-in-out'},
+                    color='warning',
+                ),
+
+            ], className='mx-0'),
 
             dbc.Row([
                 # Street Map
@@ -257,7 +276,7 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
                         style={
                             'color': ADFC_darkgrey}),
                 ], sm=4, className='traffic-pie-col', style={'height': MAP_HEIGHT}),
-            ], className='g-2 mt-1 mb-3 text-start'),
+            ], className='g-2 mt-0 mb-3 text-start'),
 
             # Filters
             dbc.Row([

@@ -5,7 +5,7 @@
 # @file    app.py
 # @author  Egbert Klaassen
 # @author  Michael Behrisch
-# @date    2026-10-22
+# @date    2026-10-30
 
 """Dash application for the Berlin zählt Mobilität traffic dashboard.
 
@@ -66,7 +66,7 @@ DEPLOYED = __name__ != '__main__'
 ASSET_DIR = os.path.join(os.path.dirname(__file__), 'assets')
 DATA_DIR = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'data')
 
-UPDATED = '23.10.2026'
+UPDATED = '30.10.2026'
 
 ISO_FORMAT = '%Y-%m-%dT%H:%M:%S'
 

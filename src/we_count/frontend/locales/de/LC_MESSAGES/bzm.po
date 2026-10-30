@@ -19,6 +19,12 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.16.0\n"
 
+msgid "Notice: the Dashboard has just received a major update, bringing new features and improved performance! Please take a look at the "
+msgstr "Das Dashboard hat gerade ein großes Update erhalten, das neue Funktionen und eine verbesserte Leistung mit sich bringt. Hier geht's zum "
+
+msgid "flyer"
+msgstr "Flyer"
+
 #: bzm_v01.py:179
 msgid "full street"
 msgstr "gesamte Straße"

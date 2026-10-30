@@ -185,7 +185,7 @@ def serve_layout(app: Dash, id_street_options, start_date, end_date, min_date, m
             dbc.Row([
                 dbc.Alert(
                     [_('Notice: the Dashboard has just received a major update, bringing new features and improved performance! Please take a look at the '),
-                            html.A(_('flyer'), href='/data/' + quote('BzM Dashboard Update Oct 2026 - DE & EN.pdf'), target="_blank")],
+                            html.A(_('flyer'), href='/data/' + quote('BzM Dashboard Update Oct 2026 - DE EN.pdf'), target="_blank")],
                     duration=15000,
                     fade=True,
                     className='w-100 mb-0 mt-2',

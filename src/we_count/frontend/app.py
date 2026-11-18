@@ -66,7 +66,7 @@ DEPLOYED = __name__ != '__main__'
 ASSET_DIR = os.path.join(os.path.dirname(__file__), 'assets')
 DATA_DIR = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'data')
 
-UPDATED = '30.10.2026'
+UPDATED = '18.11.2026'
 
 ISO_FORMAT = '%Y-%m-%dT%H:%M:%S'
 
@@ -1135,15 +1135,35 @@ def install_request_language():
     update_language(request_language())
 
 
+def is_dashboard_page_request():
+    """Whether the request loads the dashboard page, not one of its endpoints.
+
+    ``/_dash-layout`` and the callback endpoints are requests of their own; only
+    the page request (Dash registers it under the bare ``routes_pathname_prefix``
+    endpoint) stands for a visit the user made.
+    """
+    return request.method == 'GET' and request.endpoint == app.config.routes_pathname_prefix
+
+
 @app.server.after_request
 def remember_request_language(response):
-    """Keep the cookie in step with the language and scenario the page was rendered in."""
+    """Keep the cookies in step with the language and scenario of the page.
+
+    ``SCENARIO_COOKIE`` is only a hand-off from a page request to the
+    ``/_dash-layout`` request that follows it, which does not repeat the page's
+    query string.  The cookie is dropped again when the dashboard is opened
+    without a ``?scenario=``, so a plain visit starts from the defaults instead
+    of resurrecting the scenario of the last visit; a share link still restores
+    its scenario.
+    """
     lang = request_language()
     if request.cookies.get(LANGUAGE_COOKIE) != lang:
         response.set_cookie(LANGUAGE_COOKIE, lang, max_age=LANGUAGE_COOKIE_MAX_AGE, samesite='Lax')
     sid = request.args.get('scenario')
     if sid:
         response.set_cookie(SCENARIO_COOKIE, sid, max_age=LANGUAGE_COOKIE_MAX_AGE, samesite='Lax')
+    elif is_dashboard_page_request() and SCENARIO_COOKIE in request.cookies:
+        response.delete_cookie(SCENARIO_COOKIE)
     return response
 
 
@@ -1153,15 +1173,20 @@ def remember_request_language(response):
 @app.callback(
     Output('url', 'href'),
     Input('language_selector', 'value'),
+    State('scenario_baseline_store', 'data'),
     prevent_initial_call=True,
 )
-def navigate_language(lang_code_dd):
+def navigate_language(lang_code_dd, baseline):
     lang = normalise_language(lang_code_dd) if lang_code_dd else request_language() or INITIAL_LANGUAGE
-    sid = request.args.get('scenario') if has_request_context() else None
 
     params = [f'lang={lang}']
-    if sid:
-        params.insert(0, f'scenario={sid}')
+    # The callback request does not carry the page's query string, so the
+    # scenario the page was loaded from is read back from the store.  Without
+    # it, switching the language would drop the scenario and reload the page
+    # with the default settings.
+    scenario_id = (baseline or {}).get('id')
+    if scenario_id is not None:
+        params.insert(0, f'scenario={scenario_id}')
 
     return config.get('requests_pathname_prefix', '/') + '?' + '&'.join(params)
 
